@@ -1,0 +1,29 @@
+version: '3.4'
+
+services:
+  db:
+    image: postgres
+    container_name: sgl-analytics-db
+    environment:
+      POSTGRES_PASSWORD:
+  
+  sgl.analytics.backend.logcollector:
+    image: ${DOCKER_REGISTRY-}sglanalytics/logcollector
+    build:
+      context: .
+      dockerfile: SGL.Analytics.Backend.LogCollector/Dockerfile
+    environment:
+      ConnectionStrings__LogCollectorContext:
+    depends_on:
+    - db
+
+  sgl.analytics.backend.userdb:
+    image: ${DOCKER_REGISTRY-}sglanalytics/userdb
+    build:
+      context: .
+      dockerfile: SGL.Analytics.Backend.UserDB/Dockerfile
+    environment:
+      ConnectionStrings__UserDBContext:
+    depends_on:
+    - db
+    
