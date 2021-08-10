@@ -44,8 +44,7 @@ namespace SGL.Analytics.Client {
 		public void RecordEventUnshared(string channel, object eventObject) {
 			// TODO: Wrap eventObject in a LogEntry object that associates it with metadata (channel, timestamp, type ...) and insert into current log queue
 		}
-
-		public void RecordSnapshotUnshared(string channel, object objectId, JsonElement snapshotPayloadData) {
+		public void RecordSnapshotUnshared(string channel, object objectId, object snapshotPayloadData) {
 			// TODO: Wrap snapshotPayloadData in a LogEntry object that associates it with metadata (channel, objectId, timestamp, type ...) and insert into current log queue
 		}
 	}
