@@ -17,9 +17,10 @@ namespace SGL.Analytics.Client {
 
 		/// <summary>
 		/// Checks if the user registration for this client was already done.
-		/// If this returns false, call RegisterAsync and ensure the registration is complete before creating logs or issuing Record-operations.
+		/// If this returns false, call RegisterAsync and ensure the registration before relying on logs being uploaded.
+		/// When logs are recorded on an unregistered client, they are stored locally and are not uploaded until the registration is completed and a user id is obtained.
 		/// </summary>
-		/// <returns>true is the client is already registered, false if the registration is not yet done.</returns>
+		/// <returns>true if the client is already registered, false if the registration is not yet done.</returns>
 		public bool IsRegistered() {
 			return rootDataStore.UserID is not null;
 		}
@@ -28,7 +29,7 @@ namespace SGL.Analytics.Client {
 		/// Registers the user with the given data in the backend database, obtains a user id and stores it locally on the client using the configured rootDataStore for future use.
 		/// </summary>
 		/// <param name="userData">The user data for the registration, that is to be sent to the server.</param>
-		/// <returns>A Task representing the registration operation. Wait for it's completion before creating log files or issuing Record-operations.</returns>
+		/// <returns>A Task representing the registration operation. Wait for it's completion before relying on logs being uploaded. Logs recorded on a client that hasn't completed registration are stored only locally until the registration is complete and the user id required for the upload is obtained.</returns>
 		public async Task RegisterAsync(UserData userData) {
 			// TODO: Perform POST to Backend
 			// TODO: Store returned UserID in rootDataStore.UserID
@@ -37,7 +38,7 @@ namespace SGL.Analytics.Client {
 
 		/// <summary>
 		/// Ends the current analytics log file if there is one, and begin a new log file to which subsequent Record-operations write their data.
-		/// Call this when starting a new session, e.g. a new game playthrough.
+		/// Call this when starting a new session, e.g. a new game playthrough or a more short-term game session.
 		/// </summary>
 		public void StartNewLog() {
 			// TODO: Create new queue object and add it to front of queue of pending queues.
@@ -49,6 +50,16 @@ namespace SGL.Analytics.Client {
 		/// This method needs to be called before the exiting the application, waiting for the returned Task object, to ensure all log entries are written to disk and to attempt to upload the pending log files.
 		/// </summary>
 		/// <returns>A Task object that represents the asynchronous finishing operations.</returns>
+		/// <remarks>
+		/// Uploading may fail for various reasons:
+		/// <list type="bullet">
+		///		<item>The client is not yet fully registered and has thus not obtained a valid user id yet. In this case, the upload is not attempted in the first place and this method only flushed in-memory queues to the log files. Those are only kept locally.</item>
+		///		<item>The client has no connection to the internet. The upload will be retried later, when the application is used again.</item>
+		///		<item>The backend server is not operating correctly. The upload will be retried later, when the application is used again.</item>
+		///		<item>The server rejects the upload due to an invalid user id or application id. In case of a transient configuration error, the upload will be retried later, when the application is used again. The server should also log this problem for investigation.</item>
+		///		<item>The server rejects the upload due to exceeding the maximum file size. In this case, the file is moved to a special directory for further investigation to not waste the users bandwidth with further attempts. The server should also log this problem to indicate, that an application generates larger than expected log files.</item>
+		/// </list>
+		/// </remarks>
 		public async Task FinishAsync() {
 			// TODO: Flush pending queues to files.
 			// TODO: Attempt to upload pending files.
