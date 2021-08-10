@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SGL.Analytics.DTO
-{
-    public class LogMetadataDTO
-    {
-    }
+namespace SGL.Analytics.DTO {
+	public class LogMetadataDTO {
+	}
 }

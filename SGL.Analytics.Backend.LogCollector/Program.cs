@@ -9,27 +9,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.LogCollector
-{
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            IHost host = CreateHostBuilder(args).Build();
-            // TODO: Change this to use DB migrations when first real version of database schema is defined.
-            using (var serviceScope = host.Services.CreateScope())
-            {
-                var context = serviceScope.ServiceProvider.GetRequiredService<LogCollectorContext>();
-                context.Database.EnsureCreated();
-            }
-            host.Run();
-        }
+namespace SGL.Analytics.Backend.LogCollector {
+	public class Program {
+		public static void Main(string[] args) {
+			IHost host = CreateHostBuilder(args).Build();
+			// TODO: Change this to use DB migrations when first real version of database schema is defined.
+			using (var serviceScope = host.Services.CreateScope()) {
+				var context = serviceScope.ServiceProvider.GetRequiredService<LogCollectorContext>();
+				context.Database.EnsureCreated();
+			}
+			host.Run();
+		}
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+		public static IHostBuilder CreateHostBuilder(string[] args) =>
+			Host.CreateDefaultBuilder(args)
+				.ConfigureWebHostDefaults(webBuilder => {
+					webBuilder.UseStartup<Startup>();
+				});
+	}
 }

@@ -1,8 +1,7 @@
 ﻿using System;
 
-namespace SGL.Analytics.Client
-{
-    public class SGLAnalytics
-    {
-    }
+namespace SGL.Analytics.Client {
+	public class SGLAnalytics {
+
+	}
 }
