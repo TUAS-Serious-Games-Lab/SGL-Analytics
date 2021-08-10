@@ -38,7 +38,7 @@ namespace SGL.Analytics.Client {
 			// TODO: Archive / delete sucessfully uploaded files.
 		}
 
-		public void RecordEvent(string channel, object eventObject) {
+		public void RecordEvent(string channel, ICloneable eventObject) {
 			// TODO: Deep-Copy eventObject and pass copy to RecordEventUnshared
 		}
 		public void RecordEventUnshared(string channel, object eventObject) {
