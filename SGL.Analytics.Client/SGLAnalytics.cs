@@ -13,20 +13,20 @@ namespace SGL.Analytics.Client {
 	}
 
 	public class SGLAnalytics {
-		private string appID;
+		private string appName;
 		private string appAPIToken;
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
-		SGLAnalytics(string appID, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
+		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
 			this.rootDataStore = rootDataStore;
 			this.logStorage = logStorage;
 		}
 
-		SGLAnalytics(string appID, string appAPIToken) : this(appID, appAPIToken, new FileRootDataStore(), new DirectoryLogStorage()) { }
-		SGLAnalytics(string appID, string appAPIToken, IRootDataStore rootDataStore) : this(appID, appAPIToken, rootDataStore, new DirectoryLogStorage()) { }
-		SGLAnalytics(string appID, string appAPIToken, ILogStorage logStorage) : this(appID, appAPIToken, new FileRootDataStore(), logStorage) { }
+		SGLAnalytics(string appName, string appAPIToken) : this(appName, appAPIToken, new FileRootDataStore(), new DirectoryLogStorage()) { }
+		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore) : this(appName, appAPIToken, rootDataStore, new DirectoryLogStorage()) { }
+		SGLAnalytics(string appName, string appAPIToken, ILogStorage logStorage) : this(appName, appAPIToken, new FileRootDataStore(), logStorage) { }
 
-		public string AppID { get => appID; }
+		public string AppName { get => appName; }
 
 		/// <summary>
 		/// Checks if the user registration for this client was already done.
