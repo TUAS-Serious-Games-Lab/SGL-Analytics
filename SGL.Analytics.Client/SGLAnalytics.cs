@@ -19,6 +19,8 @@ namespace SGL.Analytics.Client {
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
 		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
+			this.appName = appName;
+			this.appAPIToken = appAPIToken;
 			this.rootDataStore = rootDataStore;
 			this.logStorage = logStorage;
 		}
