@@ -50,7 +50,7 @@ namespace SGL.Analytics.Client {
 			return (writeStream, logFile);
 		}
 
-		public IEnumerable<ILogStorage.ILogFile> ListLogs(string appID) {
+		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs(string appID) {
 			return from filename in Directory.EnumerateFiles(directory, "*" + FileSuffix)
 				   let idString = Path.GetFileNameWithoutExtension(filename)
 				   let id = Guid.TryParse(idString, out var guid) ? guid : (Guid?)null
