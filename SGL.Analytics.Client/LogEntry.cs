@@ -31,5 +31,9 @@ namespace SGL.Analytics.Client {
 		public EntryMetadata Metadata { get; private set; }
 		public object Payload { get; private set; }
 
+		public LogEntry(EntryMetadata metadata, object payload) {
+			Metadata = metadata;
+			Payload = payload;
+		}
 	}
 }

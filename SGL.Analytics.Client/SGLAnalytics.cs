@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -22,8 +23,8 @@ namespace SGL.Analytics.Client {
 			this.logStorage = logStorage;
 		}
 
-		SGLAnalytics(string appName, string appAPIToken) : this(appName, appAPIToken, new FileRootDataStore(appName), new DirectoryLogStorage()) { }
-		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore) : this(appName, appAPIToken, rootDataStore, new DirectoryLogStorage()) { }
+		SGLAnalytics(string appName, string appAPIToken) : this(appName, appAPIToken, new FileRootDataStore(appName)) { }
+		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore) : this(appName, appAPIToken, rootDataStore, new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"))) { }
 		SGLAnalytics(string appName, string appAPIToken, ILogStorage logStorage) : this(appName, appAPIToken, new FileRootDataStore(appName), logStorage) { }
 
 		public string AppName { get => appName; }

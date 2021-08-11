@@ -12,6 +12,10 @@ namespace SGL.Analytics.Client {
 		public string FileSuffix { get; set; } = ".log";
 		public bool Archiving { get; private set; }
 
+		public DirectoryLogStorage(string directory) {
+			this.directory = directory;
+		}
+
 		public class LogFile : ILogStorage.ILogFile {
 			private DirectoryLogStorage storage;
 			public Guid ID { get; private set; }
