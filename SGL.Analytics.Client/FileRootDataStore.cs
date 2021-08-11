@@ -6,10 +6,14 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
 	public class FileRootDataStore : IRootDataStore {
+		string appName;
+
 		public Guid? UserID { get; set; }
 
-		public string GetDataDirectory(string appID) {
-			throw new NotImplementedException();
+		public string DataDirectory => throw new NotImplementedException();
+
+		public FileRootDataStore(string appName) {
+			this.appName = appName;
 		}
 
 		public Task SaveAsync() {

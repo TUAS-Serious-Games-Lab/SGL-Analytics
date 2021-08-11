@@ -5,7 +5,7 @@ namespace SGL.Analytics.Client {
 	public interface IRootDataStore {
 		Guid? UserID { get; set; }
 
-		string GetDataDirectory(string appName);
+		string DataDirectory { get; }
 
 		Task SaveAsync();
 	}
