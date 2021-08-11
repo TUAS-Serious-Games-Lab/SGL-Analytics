@@ -5,6 +5,8 @@
     <UserSecretsId>fb10d495-0e38-4cea-b398-a7dd25f58472</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+    <Nullable>enable</Nullable>
+    <AnalysisLevel>Preview</AnalysisLevel>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

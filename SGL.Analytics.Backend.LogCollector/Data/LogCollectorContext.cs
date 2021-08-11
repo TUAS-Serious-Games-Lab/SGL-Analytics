@@ -11,6 +11,6 @@ namespace SGL.Analytics.Backend.LogCollector.Data {
 			: base(options) {
 		}
 
-		public DbSet<SGL.Analytics.Backend.Model.LogMetadata> LogMetadata { get; set; }
+		public DbSet<LogMetadata> LogMetadata => Set<LogMetadata>();
 	}
 }
