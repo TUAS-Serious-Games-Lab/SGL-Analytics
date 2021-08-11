@@ -22,6 +22,10 @@ namespace SGL.Analytics.Client {
 			this.logStorage = logStorage;
 		}
 
+		SGLAnalytics(string appID, string appAPIToken) : this(appID, appAPIToken, new FileRootDataStore(), new DirectoryLogStorage()) { }
+		SGLAnalytics(string appID, string appAPIToken, IRootDataStore rootDataStore) : this(appID, appAPIToken, rootDataStore, new DirectoryLogStorage()) { }
+		SGLAnalytics(string appID, string appAPIToken, ILogStorage logStorage) : this(appID, appAPIToken, new FileRootDataStore(), logStorage) { }
+
 		public string AppID { get => appID; }
 
 		/// <summary>
