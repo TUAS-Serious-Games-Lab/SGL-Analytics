@@ -24,6 +24,8 @@ build:
     paths:
       - 'bin/${CONFIG}/'
       - '*/bin/${CONFIG}/'
+      - 'obj/${CONFIG}/'
+      - '*/obj/${CONFIG}/'
 
 test:
   stage: test
