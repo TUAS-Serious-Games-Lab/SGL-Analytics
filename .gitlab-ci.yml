@@ -20,6 +20,11 @@ build:
   parallel:
     matrix:
       - CONFIG: [Debug, Release]
+  artifacts:
+    expire_in: 2 days
+    paths:
+      - 'bin/${CONFIG}/'
+      - '*/bin/${CONFIG}/'
 
 test:
   stage: test
