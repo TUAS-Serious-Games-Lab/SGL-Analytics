@@ -20,18 +20,11 @@ build:
   parallel:
     matrix:
       - CONFIG: [Debug, Release]
-  artifacts:
-    expire_in: 2 days
-    paths:
-      - 'bin/${CONFIG}/'
-      - '*/bin/${CONFIG}/'
-      - 'obj/${CONFIG}/'
-      - '*/obj/${CONFIG}/'
 
 test:
   stage: test
   script:
-    - 'dotnet test --no-restore --no-build --configuration Debug --test-adapter-path:. --logger:"junit;LogFilePath=../TestResults/{assembly}.xml;MethodFormat=Class;FailureBodyFormat=Verbose" SGL.Analytics.sln'
+    - 'dotnet test --no-restore --configuration Debug --test-adapter-path:. --logger:"junit;LogFilePath=../TestResults/{assembly}.xml;MethodFormat=Class;FailureBodyFormat=Verbose" SGL.Analytics.sln'
   artifacts:
     expire_in: 14 days
     when: always
