@@ -28,4 +28,11 @@ build:
 test:
   stage: test
   script:
-    - 'dotnet test --no-restore --no-build --configuration Debug .\SGL.Analytics.sln'
+    - 'dotnet test --no-restore --no-build --configuration Debug --test-adapter-path:. --logger:"junit;LogFilePath=..\TestResults\{assembly}.xml;MethodFormat=Class;FailureBodyFormat=Verbose" .\SGL.Analytics.sln'
+  artifacts:
+    when: always
+    paths:
+     - .\TestResults\*.xml
+    reports:
+      junit:
+       - .\TestResults\*.xml
