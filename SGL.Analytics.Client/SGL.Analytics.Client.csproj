@@ -1,11 +1,26 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageId>SGL.Analytics.Client</PackageId>
+    <Version>0.0.0-dev</Version>
+    <Authors>Stefan Bodenschatz</Authors>
+    <Company>Hochschule Trier, Serious Games Lab</Company>
+    <Description>The engine-neutral .NET Core client library for the SGL Analytics service.</Description>
+  </PropertyGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
+    <Content Include="bin\$(Configuration)\$(TargetFramework)\SGL.Analytics.DTO.dll">
+      <PackagePath>lib\$(TargetFramework)\</PackagePath>
+      <Pack>true</Pack>
+    </Content>
+
+    <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" >
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>
