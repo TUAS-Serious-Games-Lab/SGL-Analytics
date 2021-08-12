@@ -20,3 +20,8 @@ build:
   parallel:
     matrix:
       - CONFIG: [Debug, Release]
+
+test:
+  stage: test
+  script:
+    - 'dotnet test --no-restore --no-build --configuration Debug .\SGL.Analytics.sln'
