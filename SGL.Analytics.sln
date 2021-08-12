@@ -32,13 +32,14 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{065153F8-5B80-4698-8FE6-46659D1E4BC9}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		.gitlab-ci.yml = .gitlab-ci.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Client.Tests", "SGL.Analytics.Client.Tests\SGL.Analytics.Client.Tests.csproj", "{437E71CA-095B-48AA-A527-2FF000AD5D84}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Client.Tests", "SGL.Analytics.Client.Tests\SGL.Analytics.Client.Tests.csproj", "{437E71CA-095B-48AA-A527-2FF000AD5D84}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Backend.LogCollector.Tests", "SGL.Analytics.Backend.LogCollector.Tests\SGL.Analytics.Backend.LogCollector.Tests.csproj", "{7F305487-2E89-4802-8E44-08355F23ACE0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.LogCollector.Tests", "SGL.Analytics.Backend.LogCollector.Tests\SGL.Analytics.Backend.LogCollector.Tests.csproj", "{7F305487-2E89-4802-8E44-08355F23ACE0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Backend.UserDB.Tests", "SGL.Analytics.Backend.UserDB.Tests\SGL.Analytics.Backend.UserDB.Tests.csproj", "{AC7F1A5F-9E5C-4A99-814A-827307B720D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.UserDB.Tests", "SGL.Analytics.Backend.UserDB.Tests\SGL.Analytics.Backend.UserDB.Tests.csproj", "{AC7F1A5F-9E5C-4A99-814A-827307B720D4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
