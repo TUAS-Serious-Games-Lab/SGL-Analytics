@@ -10,9 +10,10 @@ cache:
     - '*/obj/*.csproj.nuget.*'
     - '$NUGET_PACKAGES_DIRECTORY'
 
+before_script:
+  - 'dotnet restore --packages $NUGET_PACKAGES_DIRECTORY SGL.Analytics.sln'
+
 build:
-  before_script:
-    - 'dotnet restore --packages $NUGET_PACKAGES_DIRECTORY SGL.Analytics.sln'
   stage: build
   script:
     - 'dotnet build --configuration ${CONFIG} --no-restore SGL.Analytics.sln'
