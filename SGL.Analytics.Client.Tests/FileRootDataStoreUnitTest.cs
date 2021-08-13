@@ -37,5 +37,13 @@ namespace SGL.Analytics.Client.Tests {
 			var store = getDS();
 			Assert.Null(store.UserID);
 		}
+		[Fact]
+		public async Task NullUserIdCanBeCorrectlyStored() {
+			var store1 = getDS();
+			await store1.SaveAsync();
+			var store2 = getDS();
+			Assert.Null(store2.UserID);
+		}
+
 	}
 }
