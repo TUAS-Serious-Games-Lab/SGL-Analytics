@@ -44,6 +44,14 @@ namespace SGL.Analytics.Client.Tests {
 			var store2 = getDS();
 			Assert.Null(store2.UserID);
 		}
-
+		[Fact]
+		public async Task NonNullUserIdCanBeCorrectlyStored() {
+			var id = Guid.NewGuid();
+			var store1 = getDS();
+			store1.UserID = id;
+			await store1.SaveAsync();
+			var store2 = getDS();
+			Assert.Equal(id, store2.UserID);
+		}
 	}
 }
