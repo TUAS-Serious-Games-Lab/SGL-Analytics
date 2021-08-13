@@ -27,5 +27,10 @@ namespace SGL.Analytics.Client.Tests {
 			File.Delete(testFile);
 			Assert.False(File.Exists(testFile));
 		}
+		[Fact]
+		public void UserIdIsInitiallyNull() {
+			var store = getDS();
+			Assert.Null(store.UserID);
+		}
 	}
 }
