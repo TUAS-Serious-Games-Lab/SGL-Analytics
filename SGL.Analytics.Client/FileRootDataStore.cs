@@ -31,7 +31,7 @@ namespace SGL.Analytics.Client {
 				// No saved state found, use default state.
 				return;
 			}
-			await using (var storageFileStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, useAsync: true)) {
+			await using (var storageFileStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true)) {
 				storage = await JsonSerializer.DeserializeAsync<StorageStructure>(storageFileStream, jsonOptions);
 			}
 		}
@@ -41,7 +41,7 @@ namespace SGL.Analytics.Client {
 		public string StorageFile => Path.Combine(DataDirectory, "AppDataStore.json");
 
 		public async Task SaveAsync() {
-			await using (var storageFileStream = new FileStream(StorageFile, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, useAsync: true)) {
+			await using (var storageFileStream = new FileStream(StorageFile, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
 				await JsonSerializer.SerializeAsync<StorageStructure>(storageFileStream, storage, jsonOptions);
 			}
 		}
