@@ -20,6 +20,7 @@ namespace SGL.Analytics.Client.Tests {
 			FileRootDataStore temp = getDS();
 			filename = temp.StorageFile;
 			File.Delete(filename);
+			File.Delete(Path.ChangeExtension(filename, ".invalid.json"));
 		}
 
 		[Fact]
