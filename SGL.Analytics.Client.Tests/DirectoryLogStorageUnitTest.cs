@@ -64,5 +64,12 @@ namespace SGL.Analytics.Client.Tests {
 			// There is a small tolerance window where fileTime can be few milliseconds earlier than before, probably due to too low precission of the filesystem timestamps.
 			Assert.InRange(fileTime, before.AddMilliseconds(-10), after.AddMilliseconds(10));
 		}
+		[Fact]
+		public void RemovedFilesAreNotEnumerated() {
+			ILogStorage.ILogFile? metadata;
+			using (var stream = fixture.Storage.CreateLogFile(out metadata)) { }
+			metadata.Remove();
+			Assert.DoesNotContain(metadata, fixture.Storage.EnumerateLogs());
+		}
 	}
 }
