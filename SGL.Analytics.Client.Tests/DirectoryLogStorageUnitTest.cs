@@ -52,5 +52,17 @@ namespace SGL.Analytics.Client.Tests {
 			// There is a small tolerance window where fileTime can be few milliseconds earlier than before, probably due to too low precission of the filesystem timestamps.
 			Assert.InRange(fileTime, before.AddMilliseconds(-10), after.AddMilliseconds(10));
 		}
+		[Fact]
+		public void EndTimeIsCorrect() {
+			ILogStorage.ILogFile? metadata;
+			DateTime before;
+			using (var stream = fixture.Storage.CreateLogFile(out metadata)) {
+				before = DateTime.Now;
+			}
+			DateTime after = DateTime.Now;
+			var fileTime = metadata.EndTime;
+			// There is a small tolerance window where fileTime can be few milliseconds earlier than before, probably due to too low precission of the filesystem timestamps.
+			Assert.InRange(fileTime, before.AddMilliseconds(-10), after.AddMilliseconds(10));
+		}
 	}
 }
