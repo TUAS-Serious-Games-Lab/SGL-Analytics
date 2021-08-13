@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Client {
 	public class FileRootDataStore : IRootDataStore {
 		private struct StorageStructure {
-			public Guid? UserID;
+			public Guid? UserID { get; set; }
 		}
 		private StorageStructure storage;
 		string appName;
