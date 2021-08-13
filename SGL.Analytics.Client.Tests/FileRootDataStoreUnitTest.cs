@@ -53,5 +53,16 @@ namespace SGL.Analytics.Client.Tests {
 			var store2 = getDS();
 			Assert.Equal(id, store2.UserID);
 		}
+		[Fact]
+		public async Task LoadAsyncCorrectlyLoadsUserIdInplace() {
+			var id = Guid.NewGuid();
+			var store1 = getDS();
+			var store2 = getDS();
+			store1.UserID = id;
+			await store1.SaveAsync();
+			await store2.LoadAsync();
+			Assert.Equal(id, store2.UserID);
+		}
+
 	}
 }
