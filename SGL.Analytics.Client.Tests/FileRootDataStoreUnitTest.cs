@@ -17,6 +17,15 @@ namespace SGL.Analytics.Client.Tests {
 			File.Delete(filename);
 		}
 
-
+		[Fact]
+		public void DataDirectoryIsWritable() {
+			var store = getDS();
+			Assert.True(Directory.Exists(store.DataDirectory));
+			var testFile = Path.Combine(store.DataDirectory, "WriteTest.json");
+			using (File.Create(testFile)) { }
+			Assert.True(File.Exists(testFile));
+			File.Delete(testFile);
+			Assert.False(File.Exists(testFile));
+		}
 	}
 }
