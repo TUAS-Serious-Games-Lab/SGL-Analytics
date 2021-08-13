@@ -4,24 +4,36 @@ using System.Linq;
 using Xunit;
 
 namespace SGL.Analytics.Client.Tests {
-	public class DirectoryLogStorageUnitTest {
-		private DirectoryLogStorage storage;
-		public DirectoryLogStorageUnitTest() {
+	public class DirectoryLogStorageFixture : IDisposable {
+		public DirectoryLogStorage Storage { get; private set; }
+		public DirectoryLogStorageFixture() {
 			string directory = Path.Combine(Directory.GetCurrentDirectory(), "UnitTestTemp", "DirectoryLogStorageUnitTest");
 			Directory.CreateDirectory(directory);
-			storage = new DirectoryLogStorage(directory);
+			Storage = new DirectoryLogStorage(directory);
+		}
+		public void Dispose() {
+			Storage.Archiving = false;
+			foreach (var log in Storage.EnumerateLogs()) {
+				log.Remove();
+			}
+		}
+	}
+	public class DirectoryLogStorageUnitTest : IClassFixture<DirectoryLogStorageFixture> {
+		private DirectoryLogStorageFixture fixture;
+		public DirectoryLogStorageUnitTest(DirectoryLogStorageFixture fixture) {
+			this.fixture = fixture;
 		}
 		[Fact]
 		public void CreatedLogFileIsEnumerated() {
 			ILogStorage.ILogFile? metadata;
-			using (var stream = storage.CreateLogFile(out metadata)) { }
-			Assert.Contains(metadata, storage.EnumerateLogs());
+			using (var stream = fixture.Storage.CreateLogFile(out metadata)) { }
+			Assert.Contains(metadata, fixture.Storage.EnumerateLogs());
 		}
 		[Fact]
 		public void WrittenLogContentsArePreserved() {
 			var content = Enumerable.Range(0, 16).Select(_ => StringGenerator.GenerateRandomString(256)).ToList();
 			ILogStorage.ILogFile? metadata;
-			using (var writer = new StreamWriter(storage.CreateLogFile(out metadata))) {
+			using (var writer = new StreamWriter(fixture.Storage.CreateLogFile(out metadata))) {
 				content.ForEach(c => writer.WriteLine(c));
 			}
 			using (var reader = new StreamReader(metadata.OpenRead())) {
@@ -33,7 +45,7 @@ namespace SGL.Analytics.Client.Tests {
 			ILogStorage.ILogFile? metadata;
 			DateTime before = DateTime.Now;
 			DateTime after;
-			using (var stream = storage.CreateLogFile(out metadata)) {
+			using (var stream = fixture.Storage.CreateLogFile(out metadata)) {
 				after = DateTime.Now;
 			}
 			var fileTime = metadata.CreationTime;
