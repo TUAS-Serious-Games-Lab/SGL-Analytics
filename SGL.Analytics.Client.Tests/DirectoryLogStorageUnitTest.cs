@@ -22,9 +22,7 @@ namespace SGL.Analytics.Client.Tests {
 		}
 		[Fact]
 		public void WrittenLogContentsArePreserved() {
-			Random rnd = new Random();
-			var characters = Enumerable.Range('A', 26).Concat(Enumerable.Range('a', 26)).Concat(Enumerable.Range('0', 10)).Append(' ').Select(c => (char)c).ToArray();
-			var content = Enumerable.Range(0, 16).Select(_ => new string(Enumerable.Range(0, 256).Select(_ => characters[rnd.Next(characters.Length)]).ToArray())).ToList();
+			var content = Enumerable.Range(0, 16).Select(_ => StringGenerator.GenerateRandomString(256)).ToList();
 			ILogStorage.ILogFile? metadata;
 			using (var writer = new StreamWriter(storage.CreateLogFile(out metadata))) {
 				content.ForEach(c => writer.WriteLine(c));
