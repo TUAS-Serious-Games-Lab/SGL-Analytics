@@ -27,7 +27,7 @@ namespace SGL.Analytics.Client {
 
 		public async Task LoadAsync() {
 			var file = StorageFile;
-			if (!File.Exists(file)) {
+			if (!File.Exists(file) || (new FileInfo(file)).Length == 0) {
 				// No saved state found, use default state.
 				return;
 			}
