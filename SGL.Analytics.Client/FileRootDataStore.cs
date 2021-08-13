@@ -31,8 +31,13 @@ namespace SGL.Analytics.Client {
 				// No saved state found, use default state.
 				return;
 			}
-			await using (var storageFileStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true)) {
-				storage = await JsonSerializer.DeserializeAsync<StorageStructure>(storageFileStream, jsonOptions);
+			try {
+				await using (var storageFileStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true)) {
+					storage = await JsonSerializer.DeserializeAsync<StorageStructure>(storageFileStream, jsonOptions);
+				}
+			}
+			catch (JsonException) {
+				File.Move(file, Path.ChangeExtension(file, ".invalid.json"), overwrite: true);
 			}
 		}
 
