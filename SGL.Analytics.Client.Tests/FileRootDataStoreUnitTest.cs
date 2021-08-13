@@ -7,10 +7,15 @@ using System.Threading.Tasks;
 using Xunit;
 
 namespace SGL.Analytics.Client.Tests {
-	public class FileRootDataStoreUnitTest : IDisposable {
+	public class FileRootDataStoreUnitTest {
 		private const string appName = "FileRootDataStoreUnitTest";
 		private FileRootDataStore getDS() => new FileRootDataStore(appName);
-		public void Dispose() {
+
+		public FileRootDataStoreUnitTest() {
+			cleanUp();
+		}
+
+		private void cleanUp() {
 			string filename;
 			FileRootDataStore temp = getDS();
 			filename = temp.StorageFile;
