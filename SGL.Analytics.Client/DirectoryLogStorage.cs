@@ -30,7 +30,7 @@ namespace SGL.Analytics.Client {
 			}
 
 			public Stream OpenRead() {
-				throw new NotImplementedException();
+				return new FileStream(FullFileName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
 			}
 
 			public void Remove() {
