@@ -64,6 +64,12 @@ namespace SGL.Analytics.Client.Tests {
 			await store2.LoadAsync();
 			Assert.Equal(id, store2.UserID);
 		}
-
+		[Fact]
+		public void EmptyStorageFileIsEquivalentToInitialState() {
+			var store1 = getDS();
+			using (File.Create(store1.StorageFile)) { }
+			var store2 = getDS();
+			Assert.Null(store2.UserID);
+		}
 	}
 }
