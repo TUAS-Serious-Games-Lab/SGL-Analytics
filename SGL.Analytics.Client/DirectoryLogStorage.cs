@@ -43,11 +43,11 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		public (Stream, ILogStorage.ILogFile) CreateLogFile() {
+		public Stream CreateLogFile(out ILogStorage.ILogFile logFileMetadata) {
 			var id = Guid.NewGuid();
 			var logFile = new LogFile(id, this);
-			var writeStream = new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
-			return (writeStream, logFile);
+			logFileMetadata = logFile;
+			return new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
 		}
 
 		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() {
