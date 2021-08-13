@@ -10,7 +10,7 @@ namespace SGL.Analytics.Client {
 		private string directory;
 
 		public string FileSuffix { get; set; } = ".log";
-		public bool Archiving { get; private set; }
+		public bool Archiving { get; set; } = false;
 
 		public DirectoryLogStorage(string directory) {
 			this.directory = directory;
