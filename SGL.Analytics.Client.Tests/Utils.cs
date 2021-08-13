@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client.Tests {
-	public static class Utils {
+	public static class UtilExtensions {
 		public static IEnumerable<string> EnumerateLines(this TextReader reader) {
 			string? line;
 			while ((line = reader.ReadLine()) != null) {
