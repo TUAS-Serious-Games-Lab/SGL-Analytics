@@ -24,7 +24,7 @@ namespace SGL.Analytics.Client {
 			LoadAsync().Wait();
 		}
 
-		private async Task LoadAsync() {
+		public async Task LoadAsync() {
 			var file = GetStorageFile();
 			if (!File.Exists(file)) {
 				// No saved state found, use default state.
@@ -37,7 +37,7 @@ namespace SGL.Analytics.Client {
 
 		public string DataDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), appName);
 
-		private string GetStorageFile() {
+		public string GetStorageFile() {
 			return Path.Combine(DataDirectory, "AppDataStore.json");
 		}
 
