@@ -41,6 +41,8 @@ namespace SGL.Analytics.Client {
 					File.Delete(FullFileName);
 				}
 			}
+
+			public bool Equals(ILogStorage.ILogFile? other) => other is LogFile lfo ? (ID == other.ID && storage.directory == lfo.storage.directory) : false;
 		}
 
 		public Stream CreateLogFile(out ILogStorage.ILogFile logFileMetadata) {
