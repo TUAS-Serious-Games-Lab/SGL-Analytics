@@ -31,5 +31,17 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.Equal(content, reader.EnumerateLines());
 			}
 		}
+		[Fact]
+		public void CreationTimeIsCorrect() {
+			ILogStorage.ILogFile? metadata;
+			DateTime before = DateTime.Now;
+			DateTime after;
+			using (var stream = storage.CreateLogFile(out metadata)) {
+				after = DateTime.Now;
+			}
+			var fileTime = metadata.CreationTime;
+			// There is a small tolerance window where fileTime can be few milliseconds earlier than before, probably due to too low precission of the filesystem timestamps.
+			Assert.InRange(fileTime, before.AddMilliseconds(-10), after.AddMilliseconds(10));
+		}
 	}
 }
