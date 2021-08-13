@@ -25,7 +25,7 @@ namespace SGL.Analytics.Client {
 		}
 
 		public async Task LoadAsync() {
-			var file = GetStorageFile();
+			var file = StorageFile;
 			if (!File.Exists(file)) {
 				// No saved state found, use default state.
 				return;
@@ -37,12 +37,10 @@ namespace SGL.Analytics.Client {
 
 		public string DataDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), appName);
 
-		public string GetStorageFile() {
-			return Path.Combine(DataDirectory, "AppDataStore.json");
-		}
+		public string StorageFile => Path.Combine(DataDirectory, "AppDataStore.json");
 
 		public async Task SaveAsync() {
-			await using (var storageFileStream = new FileStream(GetStorageFile(), FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, useAsync: true)) {
+			await using (var storageFileStream = new FileStream(StorageFile, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, useAsync: true)) {
 				await JsonSerializer.SerializeAsync<StorageStructure>(storageFileStream, storage, jsonOptions);
 			}
 		}
