@@ -43,14 +43,14 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		public (Stream, ILogStorage.ILogFile) CreateLogFile(string appID) {
+		public (Stream, ILogStorage.ILogFile) CreateLogFile() {
 			var id = Guid.NewGuid();
 			var logFile = new LogFile(id, this);
 			var writeStream = new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
 			return (writeStream, logFile);
 		}
 
-		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs(string appID) {
+		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() {
 			return from filename in Directory.EnumerateFiles(directory, "*" + FileSuffix)
 				   let idString = Path.GetFileNameWithoutExtension(filename)
 				   let id = Guid.TryParse(idString, out var guid) ? guid : (Guid?)null

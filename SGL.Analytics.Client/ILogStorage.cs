@@ -12,7 +12,7 @@ namespace SGL.Analytics.Client {
 			public void Remove();
 		}
 
-		(Stream, ILogFile) CreateLogFile(string appID);
-		IEnumerable<ILogFile> EnumerateLogs(string appID);
+		(Stream, ILogFile) CreateLogFile();
+		IEnumerable<ILogFile> EnumerateLogs();
 	}
 }
