@@ -71,5 +71,16 @@ namespace SGL.Analytics.Client.Tests {
 			var store2 = getDS();
 			Assert.Null(store2.UserID);
 		}
+		[Fact]
+		public void InvalidStorageFileIsEquivalentToInitialStateAndBackedUp() {
+			var store1 = getDS();
+			var file = store1.StorageFile;
+			using (var writer = File.CreateText(file)) {
+				writer.WriteLine("This is not valid JSON.");
+			}
+			var store2 = getDS();
+			Assert.Null(store2.UserID);
+			Assert.True(File.Exists(Path.ChangeExtension(file, ".invalid.json")));
+		}
 	}
 }
