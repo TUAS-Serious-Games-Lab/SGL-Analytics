@@ -75,16 +75,16 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
+		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
 			this.rootDataStore = rootDataStore;
 			this.logStorage = logStorage;
 		}
 
-		SGLAnalytics(string appName, string appAPIToken) : this(appName, appAPIToken, new FileRootDataStore(appName)) { }
-		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore) : this(appName, appAPIToken, rootDataStore, new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"))) { }
-		SGLAnalytics(string appName, string appAPIToken, ILogStorage logStorage) : this(appName, appAPIToken, new FileRootDataStore(appName), logStorage) { }
+		public SGLAnalytics(string appName, string appAPIToken) : this(appName, appAPIToken, new FileRootDataStore(appName)) { }
+		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore) : this(appName, appAPIToken, rootDataStore, new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"))) { }
+		public SGLAnalytics(string appName, string appAPIToken, ILogStorage logStorage) : this(appName, appAPIToken, new FileRootDataStore(appName), logStorage) { }
 
 		public string AppName { get => appName; }
 
