@@ -20,6 +20,9 @@ namespace SGL.Analytics.Client {
 		private string appAPIToken;
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
+
+		private LogQueue? currentLogQueue;
+		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
 		private class AsyncConsumerQueue<T> {
 			private Channel<T> channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions() { AllowSynchronousContinuations = false, SingleReader = true, SingleWriter = false });
 			public void Enqueue(T item) {
@@ -35,6 +38,16 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		private class LogQueue {
+			internal AsyncConsumerQueue<LogEntry> entryQueue = new AsyncConsumerQueue<LogEntry>();
+			internal Stream writeStream;
+			internal ILogStorage.ILogFile logFile;
+
+			public LogQueue(Stream writeStream, ILogStorage.ILogFile logFile) {
+				this.writeStream = writeStream;
+				this.logFile = logFile;
+			}
+		}
 		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
