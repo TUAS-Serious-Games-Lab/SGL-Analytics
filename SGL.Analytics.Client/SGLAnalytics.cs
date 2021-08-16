@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
@@ -28,6 +29,17 @@ namespace SGL.Analytics.Client {
 		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
 
 		private Task? logUploader = null;
+
+		private class EnumNamingPolicy : JsonNamingPolicy {
+			public override string ConvertName(string name) {
+				return name;
+			}
+		}
+
+		private readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions() {
+			WriteIndented = true,
+			Converters = { new JsonStringEnumConverter(new EnumNamingPolicy()) }
+		};
 
 		private class AsyncConsumerQueue<T> {
 			private Channel<T> channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions() { AllowSynchronousContinuations = false, SingleReader = true, SingleWriter = false });
@@ -59,7 +71,7 @@ namespace SGL.Analytics.Client {
 			await foreach (var logQueue in pendingLogQueues.DequeueAllAsync()) {
 				await using (var stream = logQueue.writeStream) {
 					await foreach (var logEntry in logQueue.entryQueue.DequeueAllAsync()) {
-						await JsonSerializer.SerializeAsync(stream, logEntry);
+						await JsonSerializer.SerializeAsync(stream, logEntry, jsonSerializerOptions);
 					}
 				}
 				uploadQueue.Enqueue(logQueue.logFile);
