@@ -25,6 +25,7 @@ namespace SGL.Analytics.Client {
 		private LogQueue? currentLogQueue;
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
 		private Task? logWriter = null;
+		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
 		private class AsyncConsumerQueue<T> {
 			private Channel<T> channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions() { AllowSynchronousContinuations = false, SingleReader = true, SingleWriter = false });
 			public void Enqueue(T item) {
@@ -58,7 +59,10 @@ namespace SGL.Analytics.Client {
 						await JsonSerializer.SerializeAsync(stream, logEntry);
 					}
 				}
+				uploadQueue.Enqueue(logQueue.logFile);
+				// TODO: Start Uploading if not already running
 			}
+			uploadQueue.Finish();
 		}
 		private void ensureLogWritingActive() {
 			if (logWriter is null) {
