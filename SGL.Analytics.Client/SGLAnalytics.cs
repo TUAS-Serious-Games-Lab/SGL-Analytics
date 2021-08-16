@@ -70,7 +70,7 @@ namespace SGL.Analytics.Client {
 
 		private void ensureLogWritingActive() {
 			if (logWriter is null) {
-				// TODO: Verify again that this runs on an actually decoupled thread.
+				// Enforce that the log writer runs on some threadpool thread to avoid putting additional load on app thread.
 				logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
 			}
 		}
