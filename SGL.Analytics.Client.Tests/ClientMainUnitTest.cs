@@ -65,7 +65,7 @@ namespace SGL.Analytics.Client.Tests {
 		}
 
 		[Fact]
-		public async Task SharedEventWithCustomNameIsStoredAsExpected() {
+		public async Task SharedEventWithoutCustomNameIsStoredAsExpected() {
 			analytics.StartNewLog();
 			analytics.RecordEvent("TestChannel", new ClonableTestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new ICloneable[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
