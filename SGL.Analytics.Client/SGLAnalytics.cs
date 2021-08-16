@@ -24,6 +24,7 @@ namespace SGL.Analytics.Client {
 
 		private LogQueue? currentLogQueue;
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
+		private Task? logWriter = null;
 		private class AsyncConsumerQueue<T> {
 			private Channel<T> channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions() { AllowSynchronousContinuations = false, SingleReader = true, SingleWriter = false });
 			public void Enqueue(T item) {
@@ -57,6 +58,12 @@ namespace SGL.Analytics.Client {
 						await JsonSerializer.SerializeAsync(stream, logEntry);
 					}
 				}
+			}
+		}
+		private void ensureLogWritingActive() {
+			if (logWriter is null) {
+				// TODO: Verify again that this runs on an actually decoupled thread.
+				logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
 			}
 		}
 		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
@@ -102,8 +109,7 @@ namespace SGL.Analytics.Client {
 			currentLogQueue = new LogQueue(logStorage.CreateLogFile(out var logFile), logFile);
 			pendingLogQueues.Enqueue(currentLogQueue);
 			oldLogQueue?.entryQueue?.Finish();
-			// TODO: If not already running, spwan background worker thread for log flushing.
-			//		Note: Actual log file is created by background thread asynchronously when it reaches the new queue object.
+			ensureLogWritingActive();
 		}
 
 		/// <summary>
