@@ -132,6 +132,8 @@ namespace SGL.Analytics.Client.Tests {
 
 			public DateTime EndTime { get; set; } = DateTime.Now;
 
+			public bool WriteClosed { get; set; } = false;
+
 			public MemoryStream Content => content;
 
 			internal LogFile(InMemoryLogStorage storage, Guid id) {
@@ -157,7 +159,7 @@ namespace SGL.Analytics.Client.Tests {
 			var log = new LogFile(this, Guid.NewGuid());
 			logs.Add(log);
 			logFileMetadata = log;
-			return new WriteStreamWrapper(log.Content, () => log.EndTime = DateTime.Now);
+			return new WriteStreamWrapper(log.Content, () => { log.EndTime = DateTime.Now; log.WriteClosed = true; });
 		}
 
 		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() {

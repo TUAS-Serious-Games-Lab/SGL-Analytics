@@ -33,5 +33,15 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Equal(4, storage.EnumerateLogs().Count());
 		}
 
+		[Fact]
+		public async Task AllLogsAreClosedAfterFinish() {
+			analytics.StartNewLog();
+			analytics.StartNewLog();
+			analytics.StartNewLog();
+			analytics.StartNewLog();
+			analytics.StartNewLog();
+			await analytics.FinishAsync();
+			Assert.All(storage.EnumerateLogs().Cast<InMemoryLogStorage.LogFile>(), log => Assert.True(log.WriteClosed));
+		}
 	}
 }
