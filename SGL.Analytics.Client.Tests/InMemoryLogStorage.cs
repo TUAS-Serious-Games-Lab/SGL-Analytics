@@ -94,7 +94,7 @@ namespace SGL.Analytics.Client.Tests {
 
 			public override ValueTask DisposeAsync() {
 				invokeOnClose();
-				return default;
+				return ValueTask.CompletedTask;
 			}
 
 			public override void Flush() {
