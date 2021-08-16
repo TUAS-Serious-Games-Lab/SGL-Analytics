@@ -100,6 +100,7 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.True(someArray.Current.TryGetProperty("Y", out var childY));
 				Assert.True(childY.TryGetInt32(out var childYInt));
 				Assert.Equal(12345, childYInt);
+				Assert.False(someArray.MoveNext());
 			}
 		}
 	}
