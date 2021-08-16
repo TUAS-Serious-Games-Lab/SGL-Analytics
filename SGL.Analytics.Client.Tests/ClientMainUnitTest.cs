@@ -57,11 +57,16 @@ namespace SGL.Analytics.Client.Tests {
 				return new TestChildObject() { X = this.X, Y = this.Y };
 			}
 		}
-		public class ClonableTestEvent : ICloneable {
+
+		public class TestEvent {
 			public string SomeString { get; set; } = "";
 			public int SomeNumber { get; set; }
 			public bool SomeBool { get; set; }
 			public object[] SomeArray { get; set; } = new object[0];
+
+		}
+
+		public class ClonableTestEvent : TestEvent, ICloneable {
 
 			public object Clone() {
 				return new ClonableTestEvent() { SomeString = this.SomeString, SomeNumber = this.SomeNumber, SomeBool = this.SomeBool, SomeArray = this.SomeArray.Select(elem => (elem as ICloneable)?.Clone()).Cast<ICloneable>().ToArray() };
@@ -73,6 +78,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.StartNewLog();
 			analytics.RecordEvent("TestChannel", new ClonableTestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
+
 			outputLogContents(storage.EnumerateLogs().Single());
 			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
@@ -107,6 +113,52 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.Equal(12345, childYInt);
 				Assert.False(someArray.MoveNext());
 			}
+		}
+
+		[Fact]
+		public async Task UnsharedEventWithoutCustomNameIsStoredAsExpected() {
+			analytics.StartNewLog();
+			analytics.RecordEventUnshared("TestChannel", new TestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
+			await analytics.FinishAsync();
+
+			outputLogContents(storage.EnumerateLogs().Single());
+			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
+				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
+				Assert.True(json.TryGetProperty("Metadata", out var metadata));
+				Assert.True(metadata.TryGetProperty("Channel", out var channel));
+				Assert.Equal("TestChannel", channel.GetString());
+				Assert.True(metadata.TryGetProperty("TimeStamp", out var timestamp));
+				Assert.True(timestamp.TryGetDateTime(out var timestampDT));
+				Assert.True(metadata.TryGetProperty("EntryType", out var entryType));
+				Assert.Equal("Event", entryType.GetString());
+				Assert.True(metadata.TryGetProperty("EventType", out var eventType));
+				Assert.Equal("TestEvent", eventType.GetString());
+
+				Assert.True(json.TryGetProperty("Payload", out var payload));
+				Assert.True(payload.TryGetProperty("SomeString", out var someString));
+				Assert.Equal("Hello World", someString.GetString());
+				Assert.True(payload.TryGetProperty("SomeNumber", out var someNumber));
+				Assert.True(someNumber.TryGetInt32(out var someNumberInt));
+				Assert.Equal(42, someNumberInt);
+				Assert.True(payload.TryGetProperty("SomeBool", out var someBool));
+				Assert.True(someBool.GetBoolean());
+
+				Assert.True(payload.TryGetProperty("SomeArray", out var someArrayJson));
+				var someArray = someArrayJson.EnumerateArray();
+				Assert.True(someArray.MoveNext());
+				Assert.Equal("This is a test!", someArray.Current.GetString());
+				Assert.True(someArray.MoveNext());
+				Assert.True(someArray.Current.TryGetProperty("X", out var childX));
+				Assert.Equal("Test Test Test", childX.GetString());
+				Assert.True(someArray.Current.TryGetProperty("Y", out var childY));
+				Assert.True(childY.TryGetInt32(out var childYInt));
+				Assert.Equal(12345, childYInt);
+				Assert.True(someArray.MoveNext());
+				Assert.True(someArray.Current.TryGetInt32(out var numberInArray));
+				Assert.Equal(98765, numberInArray);
+				Assert.False(someArray.MoveNext());
+			}
+
 		}
 
 		private void outputLogContents(ILogStorage.ILogFile logFile) {
