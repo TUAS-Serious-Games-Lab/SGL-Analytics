@@ -20,5 +20,18 @@ namespace SGL.Analytics.Client.Tests {
 			storage.Dispose();
 		}
 
+		[Fact]
+		public void EachStartNewLogCreatesLogFile() {
+			Assert.Empty(storage.EnumerateLogs());
+			analytics.StartNewLog();
+			Assert.Single(storage.EnumerateLogs());
+			analytics.StartNewLog();
+			Assert.Equal(2, storage.EnumerateLogs().Count());
+			analytics.StartNewLog();
+			Assert.Equal(3, storage.EnumerateLogs().Count());
+			analytics.StartNewLog();
+			Assert.Equal(4, storage.EnumerateLogs().Count());
+		}
+
 	}
 }
