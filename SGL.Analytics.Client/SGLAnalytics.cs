@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
@@ -18,6 +20,21 @@ namespace SGL.Analytics.Client {
 		private string appAPIToken;
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
+		private class AsyncConsumerQueue<T> {
+			private Channel<T> channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions() { AllowSynchronousContinuations = false, SingleReader = true, SingleWriter = false });
+			public void Enqueue(T item) {
+				if (!channel.Writer.TryWrite(item)) {
+					throw new InvalidOperationException("Can't enqueue to this queue object because it is already finished.");
+				}
+			}
+			public IAsyncEnumerable<T> DequeueAllAsync() {
+				return channel.Reader.ReadAllAsync();
+			}
+			public void Finish() {
+				channel.Writer.Complete();
+			}
+		}
+
 		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
