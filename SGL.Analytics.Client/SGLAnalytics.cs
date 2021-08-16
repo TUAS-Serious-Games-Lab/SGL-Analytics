@@ -49,6 +49,16 @@ namespace SGL.Analytics.Client {
 				this.logFile = logFile;
 			}
 		}
+
+		private async Task writePendingLogsAsync() {
+			await foreach (var logQueue in pendingLogQueues.DequeueAllAsync()) {
+				await using (var stream = logQueue.writeStream) {
+					await foreach (var logEntry in logQueue.entryQueue.DequeueAllAsync()) {
+						await JsonSerializer.SerializeAsync(stream, logEntry);
+					}
+				}
+			}
+		}
 		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
