@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SGL.Analytics.Client.Tests {
 	public class ClientMainUnitTest : IDisposable {
@@ -12,9 +14,11 @@ namespace SGL.Analytics.Client.Tests {
 		private InMemoryLogStorage storage = new InMemoryLogStorage();
 		private FakeRootDataStore ds = new FakeRootDataStore();
 		private SGLAnalytics analytics;
+		private ITestOutputHelper output;
 
-		public ClientMainUnitTest() {
+		public ClientMainUnitTest(ITestOutputHelper output) {
 			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage);
+			this.output = output;
 		}
 
 		public void Dispose() {
@@ -69,6 +73,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.StartNewLog();
 			analytics.RecordEvent("TestChannel", new ClonableTestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
+			outputLogContents(storage.EnumerateLogs().Single());
 			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				Assert.True(json.TryGetProperty("Metadata", out var metadata));
@@ -101,6 +106,14 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.True(childY.TryGetInt32(out var childYInt));
 				Assert.Equal(12345, childYInt);
 				Assert.False(someArray.MoveNext());
+			}
+		}
+
+		private void outputLogContents(ILogStorage.ILogFile logFile) {
+			using (var rdr = new StreamReader(logFile.OpenRead())) {
+				foreach (var line in rdr.EnumerateLines()) {
+					output.WriteLine(line);
+				}
 			}
 		}
 	}
