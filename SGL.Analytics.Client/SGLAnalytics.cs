@@ -12,7 +12,7 @@ namespace SGL.Analytics.Client {
 	[AttributeUsage(AttributeTargets.Class)]
 	public class EventTypeAttribute : Attribute {
 		public string EventTypeName { get; private set; }
-		EventTypeAttribute(string eventTypeName) {
+		public EventTypeAttribute(string eventTypeName) {
 			EventTypeName = eventTypeName;
 		}
 	}
