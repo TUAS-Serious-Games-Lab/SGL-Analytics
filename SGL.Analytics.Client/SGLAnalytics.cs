@@ -137,6 +137,7 @@ namespace SGL.Analytics.Client {
 		/// </list>
 		/// </remarks>
 		public async Task FinishAsync() {
+			currentLogQueue?.entryQueue?.Finish();
 			pendingLogQueues.Finish();
 			if (logWriter is not null) {
 				await logWriter;
