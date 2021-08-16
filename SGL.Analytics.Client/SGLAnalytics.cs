@@ -106,6 +106,7 @@ namespace SGL.Analytics.Client {
 		public async Task RegisterAsync(UserData userData) {
 			// TODO: Perform POST to Backend
 			// TODO: Store returned UserID in rootDataStore.UserID
+			// TODO: Ensure thread-safety of rootDataStore (Upload worker might access UserID while it is being set from here)
 			await rootDataStore.SaveAsync();
 		}
 
