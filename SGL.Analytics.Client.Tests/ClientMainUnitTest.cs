@@ -168,5 +168,53 @@ namespace SGL.Analytics.Client.Tests {
 				}
 			}
 		}
+
+		[EventType("MyEvent")]
+		public class TestEventB : TestEvent { }
+
+		[Fact]
+		public async Task UnsharedEventWithCustomNameIsStoredAsExpected() {
+			analytics.StartNewLog();
+			analytics.RecordEventUnshared("TestChannel", new TestEventB() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
+			await analytics.FinishAsync();
+
+			outputLogContents(storage.EnumerateLogs().Single());
+			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
+				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
+				Assert.True(json.TryGetProperty("Metadata", out var metadata));
+				Assert.True(metadata.TryGetProperty("Channel", out var channel));
+				Assert.Equal("TestChannel", channel.GetString());
+				Assert.True(metadata.TryGetProperty("TimeStamp", out var timestamp));
+				Assert.True(timestamp.TryGetDateTime(out var timestampDT));
+				Assert.True(metadata.TryGetProperty("EntryType", out var entryType));
+				Assert.Equal("Event", entryType.GetString());
+				Assert.True(metadata.TryGetProperty("EventType", out var eventType));
+				Assert.Equal("MyEvent", eventType.GetString());
+
+				Assert.True(json.TryGetProperty("Payload", out var payload));
+				Assert.True(payload.TryGetProperty("SomeString", out var someString));
+				Assert.Equal("Hello World", someString.GetString());
+				Assert.True(payload.TryGetProperty("SomeNumber", out var someNumber));
+				Assert.True(someNumber.TryGetInt32(out var someNumberInt));
+				Assert.Equal(42, someNumberInt);
+				Assert.True(payload.TryGetProperty("SomeBool", out var someBool));
+				Assert.True(someBool.GetBoolean());
+
+				Assert.True(payload.TryGetProperty("SomeArray", out var someArrayJson));
+				var someArray = someArrayJson.EnumerateArray();
+				Assert.True(someArray.MoveNext());
+				Assert.Equal("This is a test!", someArray.Current.GetString());
+				Assert.True(someArray.MoveNext());
+				Assert.True(someArray.Current.TryGetProperty("X", out var childX));
+				Assert.Equal("Test Test Test", childX.GetString());
+				Assert.True(someArray.Current.TryGetProperty("Y", out var childY));
+				Assert.True(childY.TryGetInt32(out var childYInt));
+				Assert.Equal(12345, childYInt);
+				Assert.True(someArray.MoveNext());
+				Assert.True(someArray.Current.TryGetInt32(out var numberInArray));
+				Assert.Equal(98765, numberInArray);
+				Assert.False(someArray.MoveNext());
+			}
+		}
 	}
 }
