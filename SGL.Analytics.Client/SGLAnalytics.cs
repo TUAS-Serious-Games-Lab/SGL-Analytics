@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -123,7 +124,8 @@ namespace SGL.Analytics.Client {
 		/// <param name="eventObject">The event payload data to write to the log in JSON form. The object needs to be clonable to obtain an unshared copy because the log recording to disk is done asynchronously and the object content otherwise might have changed when it is read leater. If the object is created specifically for this call, or will not be modified after the call, call RecordEventUnshared instead to avoid this copy.</param>
 		/// <remarks>The recorded entry has a field containing the event type as a string. If the dynamic type of eventObject has an <c>[EventType(name)]</c> attribute (<see cref="EventTypeAttribute"/>), the name given there ist used. Otherwise the name of the class itself is used.</remarks>
 		public void RecordEvent(string channel, ICloneable eventObject) {
-			// TODO: Deep-Copy eventObject and pass copy to RecordEventUnshared
+			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
+			RecordEventUnshared(channel, eventObject.Clone());
 		}
 		/// <summary>
 		/// Record the given event object to the current analytics log file, tagged with the given channel for categorization and with the current time according to the client's local clock.
@@ -132,7 +134,11 @@ namespace SGL.Analytics.Client {
 		/// <param name="eventObject">The event payload data to write to the log in JSON form. As the log recording to disk is done asynchronously, the ownership of the given object is transferred to the analytics client and must not be changed by the caller afterwards. The easiest way to ensure this is by creating the event object inside the call and not holding other references to it.</param>
 		/// <remarks>The recorded entry has a field containing the event type as a string. If the dynamic type of eventObject has an <c>[EventType(name)]</c> attribute (<see cref="EventTypeAttribute"/>), the name given there ist used. Otherwise the name of the class itself is used.</remarks>
 		public void RecordEventUnshared(string channel, object eventObject) {
-			// TODO: Wrap eventObject in a LogEntry object that associates it with metadata (channel, timestamp, type ...) and insert into current log queue
+			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
+			var eventType = eventObject.GetType();
+			var attributes = eventType.GetCustomAttributes(typeof(EventTypeAttribute), false);
+			var eventTypeName = attributes.Cast<EventTypeAttribute>().SingleOrDefault()?.EventTypeName ?? eventType.Name;
+			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewEventEntry(channel, DateTime.Now, eventTypeName), eventObject));
 		}
 		/// <summary>
 		/// Record the given snapshot data for an application object to the current analytics log file, tagged with the given channel for categorization, with the id of the object, and with the current time according to the client's local clock.
@@ -141,7 +147,8 @@ namespace SGL.Analytics.Client {
 		/// <param name="objectId">An ID of the snapshotted object.</param>
 		/// <param name="snapshotPayloadData">An object encapsulating the snapshotted object state to write to the log in JSON form. As the log recording to disk is done asynchronously, the ownership of the given object is transferred to the analytics client and must not be changed by the caller afterwards. The easiest way to ensure this is by creating the snapshot state object inside the call and not holding other references to it.</param>
 		public void RecordSnapshotUnshared(string channel, object objectId, object snapshotPayloadData) {
-			// TODO: Wrap snapshotPayloadData in a LogEntry object that associates it with metadata (channel, objectId, timestamp, type ...) and insert into current log queue
+			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
+			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewSnapshotEntry(channel, DateTime.Now, objectId), snapshotPayloadData));
 		}
 	}
 }
