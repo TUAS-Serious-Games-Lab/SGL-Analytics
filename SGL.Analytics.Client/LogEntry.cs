@@ -14,17 +14,25 @@ namespace SGL.Analytics.Client {
 			public DateTime TimeStamp { get; private set; }
 			public LogEntryType EntryType { get; private set; }
 			public string? EventType { get; private set; } = null;
+			public object? ObjectID { get; private set; } = null;
 
-			public EntryMetadata(string channel, DateTime timeStamp) {
+			// TODO: Prevent the serializer from outputting both, EventType and ObjectID, while only one can ever be active at a time.
+
+			private EntryMetadata(string channel, DateTime timeStamp, LogEntryType entryType) {
 				Channel = channel;
 				TimeStamp = timeStamp;
-				EntryType = LogEntryType.Snapshot;
+				EntryType = entryType;
 			}
-			public EntryMetadata(string channel, DateTime timeStamp, string eventType) {
-				Channel = channel;
-				TimeStamp = timeStamp;
-				EntryType = LogEntryType.Event;
-				EventType = eventType;
+
+			public static EntryMetadata NewSnapshotEntry(string channel, DateTime timeStamp, object objectId) {
+				EntryMetadata em = new EntryMetadata(channel, timeStamp, LogEntryType.Snapshot);
+				em.ObjectID = objectId;
+				return em;
+			}
+			public static EntryMetadata NewEventEntry(string channel, DateTime timeStamp, string eventType) {
+				EntryMetadata em = new EntryMetadata(channel, timeStamp, LogEntryType.Event);
+				em.EventType = eventType;
+				return em;
 			}
 		}
 
