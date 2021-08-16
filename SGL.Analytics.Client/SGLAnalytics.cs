@@ -26,6 +26,9 @@ namespace SGL.Analytics.Client {
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
 		private Task? logWriter = null;
 		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
+
+		private Task? logUploader = null;
+
 		private class AsyncConsumerQueue<T> {
 			private Channel<T> channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions() { AllowSynchronousContinuations = false, SingleReader = true, SingleWriter = false });
 			public void Enqueue(T item) {
@@ -64,12 +67,14 @@ namespace SGL.Analytics.Client {
 			}
 			uploadQueue.Finish();
 		}
+
 		private void ensureLogWritingActive() {
 			if (logWriter is null) {
 				// TODO: Verify again that this runs on an actually decoupled thread.
 				logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
 			}
 		}
+
 		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
@@ -131,10 +136,19 @@ namespace SGL.Analytics.Client {
 		/// </list>
 		/// </remarks>
 		public async Task FinishAsync() {
-			// TODO: Flush pending queues to files.
-			// TODO: Attempt to upload pending files.
-			// TODO: Update pending logs list if needed.
-			// TODO: Archive / delete sucessfully uploaded files.
+			pendingLogQueues.Finish();
+			if (logWriter is not null) {
+				await logWriter;
+			}
+			else {
+				uploadQueue.Finish();
+			}
+			if (logUploader is not null) {
+				await logUploader;
+			}
+			// TODO: Do we need an else here? (Maybe start a new upload attempt and await it?)
+
+			// TODO: Archive / delete sucessfully uploaded files (in logUploader).
 		}
 
 		/// <summary>
