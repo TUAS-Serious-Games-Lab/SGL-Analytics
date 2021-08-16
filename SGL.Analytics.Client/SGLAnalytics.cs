@@ -87,7 +87,10 @@ namespace SGL.Analytics.Client {
 		/// Call this when starting a new session, e.g. a new game playthrough or a more short-term game session.
 		/// </summary>
 		public void StartNewLog() {
-			// TODO: Create new queue object and add it to front of queue of pending queues.
+			var oldLogQueue = currentLogQueue;
+			currentLogQueue = new LogQueue(logStorage.CreateLogFile(out var logFile), logFile);
+			pendingLogQueues.Enqueue(currentLogQueue);
+			oldLogQueue?.entryQueue?.Finish();
 			// TODO: If not already running, spwan background worker thread for log flushing.
 			//		Note: Actual log file is created by background thread asynchronously when it reaches the new queue object.
 		}
