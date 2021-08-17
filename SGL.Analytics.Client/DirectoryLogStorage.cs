@@ -1,15 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace SGL.Analytics.Client {
 	public class DirectoryLogStorage : ILogStorage {
 		private string directory;
+		private bool useCompressedFiles = true;
 
-		public string FileSuffix { get; set; } = ".log";
+		public bool UseCompressedFiles {
+			get => useCompressedFiles;
+			set {
+				useCompressedFiles = value;
+				FileSuffix = useCompressedFiles ? ".log.gz" : ".log";
+			}
+		}
+		public string FileSuffix { get; set; } = ".log.gz";
 		public bool Archiving { get; set; } = false;
 
 		public DirectoryLogStorage(string directory) {
@@ -30,7 +40,13 @@ namespace SGL.Analytics.Client {
 			}
 
 			public Stream OpenRead() {
-				return new FileStream(FullFileName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
+				var fileStream = new FileStream(FullFileName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
+				if (storage.UseCompressedFiles) {
+					return new GZipStream(fileStream, CompressionMode.Decompress);
+				}
+				else {
+					return fileStream;
+				}
 			}
 
 			public void Remove() {
@@ -49,12 +65,27 @@ namespace SGL.Analytics.Client {
 			var id = Guid.NewGuid();
 			var logFile = new LogFile(id, this);
 			logFileMetadata = logFile;
-			return new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
+			var fileStream = new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
+			if (UseCompressedFiles) {
+				return new GZipStream(fileStream, CompressionLevel.Optimal);
+			}
+			else {
+				return fileStream;
+			}
 		}
 
+		private string getFilename(string path) {
+			path = Path.GetFileName(path);
+			if (path.EndsWith(FileSuffix, StringComparison.OrdinalIgnoreCase)) {
+				return path.Remove(path.Length - FileSuffix.Length);
+			}
+			else {
+				return path;
+			}
+		}
 		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() {
 			return from filename in Directory.EnumerateFiles(directory, "*" + FileSuffix)
-				   let idString = Path.GetFileNameWithoutExtension(filename)
+				   let idString = getFilename(filename)
 				   let id = Guid.TryParse(idString, out var guid) ? guid : (Guid?)null
 				   where id.HasValue
 				   select new LogFile(id.Value, this);
