@@ -9,6 +9,7 @@ namespace SGL.Analytics.Client {
 			public DateTime CreationTime { get; }
 			public DateTime EndTime { get; }
 			public Stream OpenRead();
+			public Stream OpenReadRaw();
 			public void Remove();
 		}
 

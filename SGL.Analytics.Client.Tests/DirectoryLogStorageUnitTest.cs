@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SGL.Analytics.Client.Tests {
 	public class DirectoryLogStorageFixture : IDisposable {
@@ -20,8 +21,10 @@ namespace SGL.Analytics.Client.Tests {
 	}
 	public class DirectoryLogStorageUnitTest : IClassFixture<DirectoryLogStorageFixture> {
 		private DirectoryLogStorageFixture fixture;
-		public DirectoryLogStorageUnitTest(DirectoryLogStorageFixture fixture) {
+		private ITestOutputHelper output;
+		public DirectoryLogStorageUnitTest(DirectoryLogStorageFixture fixture, ITestOutputHelper output) {
 			this.fixture = fixture;
+			this.output = output;
 		}
 		[Fact]
 		public void CreatedLogFileIsEnumerated() {
@@ -36,6 +39,7 @@ namespace SGL.Analytics.Client.Tests {
 			using (var writer = new StreamWriter(fixture.Storage.CreateLogFile(out metadata))) {
 				content.ForEach(c => writer.WriteLine(c));
 			}
+			output.WriteLogContents(metadata);
 			using (var reader = new StreamReader(metadata.OpenRead())) {
 				Assert.Equal(content, reader.EnumerateLines());
 			}
