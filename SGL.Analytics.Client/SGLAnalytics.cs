@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
@@ -8,7 +12,7 @@ namespace SGL.Analytics.Client {
 	[AttributeUsage(AttributeTargets.Class)]
 	public class EventTypeAttribute : Attribute {
 		public string EventTypeName { get; private set; }
-		EventTypeAttribute(string eventTypeName) {
+		public EventTypeAttribute(string eventTypeName) {
 			EventTypeName = eventTypeName;
 		}
 	}
@@ -18,16 +22,97 @@ namespace SGL.Analytics.Client {
 		private string appAPIToken;
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
-		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
+
+		private LogQueue? currentLogQueue;
+		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
+		private Task? logWriter = null;
+		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
+
+		private Task? logUploader = null;
+
+		private class EnumNamingPolicy : JsonNamingPolicy {
+			public override string ConvertName(string name) => name;
+		}
+
+		private readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions() {
+			WriteIndented = true,
+			Converters = { new JsonStringEnumConverter(new EnumNamingPolicy()) }
+		};
+
+		private class AsyncConsumerQueue<T> {
+			private Channel<T> channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions() { AllowSynchronousContinuations = false, SingleReader = true, SingleWriter = false });
+			public void Enqueue(T item) {
+				if (!channel.Writer.TryWrite(item)) {
+					throw new InvalidOperationException("Can't enqueue to this queue object because it is already finished.");
+				}
+			}
+			public IAsyncEnumerable<T> DequeueAllAsync() {
+				return channel.Reader.ReadAllAsync();
+			}
+			public void Finish() {
+				channel.Writer.Complete();
+			}
+		}
+
+		private class LogQueue {
+			internal AsyncConsumerQueue<LogEntry> entryQueue = new AsyncConsumerQueue<LogEntry>();
+			internal Stream writeStream;
+			internal ILogStorage.ILogFile logFile;
+
+			public LogQueue(Stream writeStream, ILogStorage.ILogFile logFile) {
+				this.writeStream = writeStream;
+				this.logFile = logFile;
+			}
+		}
+
+		private async Task writePendingLogsAsync() {
+			var writerOptions = new JsonWriterOptions() {
+				Encoder = jsonSerializerOptions.Encoder,
+				Indented = jsonSerializerOptions.WriteIndented,
+#if !DEBUG
+				SkipValidation = true
+#else
+				SkipValidation = false
+#endif
+			};
+			await foreach (var logQueue in pendingLogQueues.DequeueAllAsync()) {
+				await using (var stream = logQueue.writeStream) {
+					await using (var jsonWriter = new Utf8JsonWriter(stream, writerOptions)) {
+						jsonWriter.WriteStartArray();
+						await foreach (var logEntry in logQueue.entryQueue.DequeueAllAsync()) {
+							JsonSerializer.Serialize(jsonWriter, logEntry, jsonSerializerOptions);
+							// Unfortunately, there is no async version of JsonSerializer.Serialize that works on an Utf8JsonWriter and both overloads working on also flush synchronously on their own.
+							// Therefore we can perform neither the writing nor the flushing asynchronlously here.
+							// Writing using Utf8JsonWriter is however required to allow streaming.
+							// await jsonWriter.FlushAsync();
+						}
+						jsonWriter.WriteEndArray();
+						await jsonWriter.FlushAsync();
+					}
+				}
+				uploadQueue.Enqueue(logQueue.logFile);
+				// TODO: Start Uploading if not already running
+			}
+			uploadQueue.Finish();
+		}
+
+		private void ensureLogWritingActive() {
+			if (logWriter is null) {
+				// Enforce that the log writer runs on some threadpool thread to avoid putting additional load on app thread.
+				logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
+			}
+		}
+
+		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
 			this.rootDataStore = rootDataStore;
 			this.logStorage = logStorage;
 		}
 
-		SGLAnalytics(string appName, string appAPIToken) : this(appName, appAPIToken, new FileRootDataStore(appName)) { }
-		SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore) : this(appName, appAPIToken, rootDataStore, new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"))) { }
-		SGLAnalytics(string appName, string appAPIToken, ILogStorage logStorage) : this(appName, appAPIToken, new FileRootDataStore(appName), logStorage) { }
+		public SGLAnalytics(string appName, string appAPIToken) : this(appName, appAPIToken, new FileRootDataStore(appName)) { }
+		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore) : this(appName, appAPIToken, rootDataStore, new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"))) { }
+		public SGLAnalytics(string appName, string appAPIToken, ILogStorage logStorage) : this(appName, appAPIToken, new FileRootDataStore(appName), logStorage) { }
 
 		public string AppName { get => appName; }
 
@@ -49,6 +134,7 @@ namespace SGL.Analytics.Client {
 		public async Task RegisterAsync(UserData userData) {
 			// TODO: Perform POST to Backend
 			// TODO: Store returned UserID in rootDataStore.UserID
+			// TODO: Ensure thread-safety of rootDataStore (Upload worker might access UserID while it is being set from here)
 			await rootDataStore.SaveAsync();
 		}
 
@@ -57,9 +143,11 @@ namespace SGL.Analytics.Client {
 		/// Call this when starting a new session, e.g. a new game playthrough or a more short-term game session.
 		/// </summary>
 		public void StartNewLog() {
-			// TODO: Create new queue object and add it to front of queue of pending queues.
-			// TODO: If not already running, spwan background worker thread for log flushing.
-			//		Note: Actual log file is created by background thread asynchronously when it reaches the new queue object.
+			var oldLogQueue = currentLogQueue;
+			currentLogQueue = new LogQueue(logStorage.CreateLogFile(out var logFile), logFile);
+			pendingLogQueues.Enqueue(currentLogQueue);
+			oldLogQueue?.entryQueue?.Finish();
+			ensureLogWritingActive();
 		}
 
 		/// <summary>
@@ -77,10 +165,20 @@ namespace SGL.Analytics.Client {
 		/// </list>
 		/// </remarks>
 		public async Task FinishAsync() {
-			// TODO: Flush pending queues to files.
-			// TODO: Attempt to upload pending files.
-			// TODO: Update pending logs list if needed.
-			// TODO: Archive / delete sucessfully uploaded files.
+			currentLogQueue?.entryQueue?.Finish();
+			pendingLogQueues.Finish();
+			if (logWriter is not null) {
+				await logWriter;
+			}
+			else {
+				uploadQueue.Finish();
+			}
+			if (logUploader is not null) {
+				await logUploader;
+			}
+			// TODO: Do we need an else here? (Maybe start a new upload attempt and await it?)
+
+			// TODO: Archive / delete sucessfully uploaded files (in logUploader).
 		}
 
 		/// <summary>
@@ -90,7 +188,8 @@ namespace SGL.Analytics.Client {
 		/// <param name="eventObject">The event payload data to write to the log in JSON form. The object needs to be clonable to obtain an unshared copy because the log recording to disk is done asynchronously and the object content otherwise might have changed when it is read leater. If the object is created specifically for this call, or will not be modified after the call, call RecordEventUnshared instead to avoid this copy.</param>
 		/// <remarks>The recorded entry has a field containing the event type as a string. If the dynamic type of eventObject has an <c>[EventType(name)]</c> attribute (<see cref="EventTypeAttribute"/>), the name given there ist used. Otherwise the name of the class itself is used.</remarks>
 		public void RecordEvent(string channel, ICloneable eventObject) {
-			// TODO: Deep-Copy eventObject and pass copy to RecordEventUnshared
+			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
+			RecordEventUnshared(channel, eventObject.Clone());
 		}
 		/// <summary>
 		/// Record the given event object to the current analytics log file, tagged with the given channel for categorization and with the current time according to the client's local clock.
@@ -99,7 +198,11 @@ namespace SGL.Analytics.Client {
 		/// <param name="eventObject">The event payload data to write to the log in JSON form. As the log recording to disk is done asynchronously, the ownership of the given object is transferred to the analytics client and must not be changed by the caller afterwards. The easiest way to ensure this is by creating the event object inside the call and not holding other references to it.</param>
 		/// <remarks>The recorded entry has a field containing the event type as a string. If the dynamic type of eventObject has an <c>[EventType(name)]</c> attribute (<see cref="EventTypeAttribute"/>), the name given there ist used. Otherwise the name of the class itself is used.</remarks>
 		public void RecordEventUnshared(string channel, object eventObject) {
-			// TODO: Wrap eventObject in a LogEntry object that associates it with metadata (channel, timestamp, type ...) and insert into current log queue
+			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
+			var eventType = eventObject.GetType();
+			var attributes = eventType.GetCustomAttributes(typeof(EventTypeAttribute), false);
+			var eventTypeName = attributes.Cast<EventTypeAttribute>().SingleOrDefault()?.EventTypeName ?? eventType.Name;
+			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewEventEntry(channel, DateTime.Now, eventTypeName), eventObject));
 		}
 		/// <summary>
 		/// Record the given snapshot data for an application object to the current analytics log file, tagged with the given channel for categorization, with the id of the object, and with the current time according to the client's local clock.
@@ -108,7 +211,8 @@ namespace SGL.Analytics.Client {
 		/// <param name="objectId">An ID of the snapshotted object.</param>
 		/// <param name="snapshotPayloadData">An object encapsulating the snapshotted object state to write to the log in JSON form. As the log recording to disk is done asynchronously, the ownership of the given object is transferred to the analytics client and must not be changed by the caller afterwards. The easiest way to ensure this is by creating the snapshot state object inside the call and not holding other references to it.</param>
 		public void RecordSnapshotUnshared(string channel, object objectId, object snapshotPayloadData) {
-			// TODO: Wrap snapshotPayloadData in a LogEntry object that associates it with metadata (channel, objectId, timestamp, type ...) and insert into current log queue
+			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
+			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewSnapshotEntry(channel, DateTime.Now, objectId), snapshotPayloadData));
 		}
 	}
 }
