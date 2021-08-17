@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Channels;
@@ -66,29 +67,25 @@ namespace SGL.Analytics.Client {
 		}
 
 		private async Task writePendingLogsAsync() {
-			var writerOptions = new JsonWriterOptions() {
-				Encoder = jsonSerializerOptions.Encoder,
-				Indented = jsonSerializerOptions.WriteIndented,
-#if !DEBUG
-				SkipValidation = true
-#else
-				SkipValidation = false
-#endif
-			};
+			var arrOpen = Encoding.UTF8.GetBytes(jsonSerializerOptions.WriteIndented ? ("[" + Environment.NewLine) : "[");
+			var arrClose = Encoding.UTF8.GetBytes(jsonSerializerOptions.WriteIndented ? (Environment.NewLine + "]") : "]");
+			var delim = Encoding.UTF8.GetBytes(jsonSerializerOptions.WriteIndented ? ("," + Environment.NewLine) : ",");
 			await foreach (var logQueue in pendingLogQueues.DequeueAllAsync()) {
 				await using (var stream = logQueue.writeStream) {
-					await using (var jsonWriter = new Utf8JsonWriter(stream, writerOptions)) {
-						jsonWriter.WriteStartArray();
-						await foreach (var logEntry in logQueue.entryQueue.DequeueAllAsync()) {
-							JsonSerializer.Serialize(jsonWriter, logEntry, jsonSerializerOptions);
-							// Unfortunately, there is no async version of JsonSerializer.Serialize that works on an Utf8JsonWriter and both overloads working on also flush synchronously on their own.
-							// Therefore we can perform neither the writing nor the flushing asynchronlously here.
-							// Writing using Utf8JsonWriter is however required to allow streaming.
-							// await jsonWriter.FlushAsync();
+					bool first = true;
+					await stream.WriteAsync(arrOpen.AsMemory());
+					await foreach (var logEntry in logQueue.entryQueue.DequeueAllAsync()) {
+						if (!first) {
+							await stream.WriteAsync(delim.AsMemory());
 						}
-						jsonWriter.WriteEndArray();
-						await jsonWriter.FlushAsync();
+						else {
+							first = false;
+						}
+						await JsonSerializer.SerializeAsync(stream, logEntry, jsonSerializerOptions);
+						await stream.FlushAsync();
 					}
+					await stream.WriteAsync(arrClose.AsMemory());
+					await stream.FlushAsync();
 				}
 				uploadQueue.Enqueue(logQueue.logFile);
 				// TODO: Start Uploading if not already running
