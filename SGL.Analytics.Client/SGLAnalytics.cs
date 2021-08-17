@@ -31,9 +31,7 @@ namespace SGL.Analytics.Client {
 		private Task? logUploader = null;
 
 		private class EnumNamingPolicy : JsonNamingPolicy {
-			public override string ConvertName(string name) {
-				return name;
-			}
+			public override string ConvertName(string name) => name;
 		}
 
 		private readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions() {
