@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Xunit.Abstractions;
 
 namespace SGL.Analytics.Client.Tests {
 	public static class UtilExtensions {
@@ -11,6 +12,20 @@ namespace SGL.Analytics.Client.Tests {
 			string? line;
 			while ((line = reader.ReadLine()) != null) {
 				yield return line;
+			}
+		}
+		public static void WriteLogContents(this ITestOutputHelper output, ILogStorage.ILogFile logFile) {
+			using (var rdr = new StreamReader(logFile.OpenRead())) {
+				foreach (var line in rdr.EnumerateLines()) {
+					output.WriteLine(line);
+				}
+			}
+		}
+		public static void WriteLogContents(this ITestOutputHelper output, Stream logStream) {
+			using (var rdr = new StreamReader(logStream, leaveOpen: true)) {
+				foreach (var line in rdr.EnumerateLines()) {
+					output.WriteLine(line);
+				}
 			}
 		}
 

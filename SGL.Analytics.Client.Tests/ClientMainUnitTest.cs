@@ -79,7 +79,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEvent("TestChannel", new ClonableTestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
 
-			outputLogContents(storage.EnumerateLogs().Single());
+			output.WriteLogContents(storage.EnumerateLogs().Single());
 			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				Assert.True(json.TryGetProperty("Metadata", out var metadata));
@@ -121,7 +121,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("TestChannel", new TestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
 			await analytics.FinishAsync();
 
-			outputLogContents(storage.EnumerateLogs().Single());
+			output.WriteLogContents(storage.EnumerateLogs().Single());
 			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				Assert.True(json.TryGetProperty("Metadata", out var metadata));
@@ -159,14 +159,6 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.False(someArray.MoveNext());
 			}
 		}
-		private void outputLogContents(ILogStorage.ILogFile logFile) {
-			using (var rdr = new StreamReader(logFile.OpenRead())) {
-				foreach (var line in rdr.EnumerateLines()) {
-					output.WriteLine(line);
-				}
-			}
-		}
-
 		[EventType("MyEvent")]
 		public class TestEventB : TestEvent { }
 
@@ -176,7 +168,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("TestChannel", new TestEventB() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
 			await analytics.FinishAsync();
 
-			outputLogContents(storage.EnumerateLogs().Single());
+			output.WriteLogContents(storage.EnumerateLogs().Single());
 			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				Assert.True(json.TryGetProperty("Metadata", out var metadata));
@@ -228,7 +220,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEvent("TestChannel", new ClonableTestEventB() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
 
-			outputLogContents(storage.EnumerateLogs().Single());
+			output.WriteLogContents(storage.EnumerateLogs().Single());
 			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				Assert.True(json.TryGetProperty("Metadata", out var metadata));
