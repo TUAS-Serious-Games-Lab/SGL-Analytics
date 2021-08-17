@@ -82,14 +82,13 @@ namespace SGL.Analytics.Client.Tests {
 			output.WriteLogContents(storage.EnumerateLogs().Single());
 			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
-				Assert.True(json.TryGetProperty("Metadata", out var metadata));
-				Assert.True(metadata.TryGetProperty("Channel", out var channel));
+				Assert.True(json.TryGetProperty("Channel", out var channel));
 				Assert.Equal("TestChannel", channel.GetString());
-				Assert.True(metadata.TryGetProperty("TimeStamp", out var timestamp));
+				Assert.True(json.TryGetProperty("TimeStamp", out var timestamp));
 				Assert.True(timestamp.TryGetDateTime(out var timestampDT));
-				Assert.True(metadata.TryGetProperty("EntryType", out var entryType));
+				Assert.True(json.TryGetProperty("EntryType", out var entryType));
 				Assert.Equal("Event", entryType.GetString());
-				Assert.True(metadata.TryGetProperty("EventType", out var eventType));
+				Assert.True(json.TryGetProperty("EventType", out var eventType));
 				Assert.Equal("ClonableTestEvent", eventType.GetString());
 
 				Assert.True(json.TryGetProperty("Payload", out var payload));
@@ -124,14 +123,13 @@ namespace SGL.Analytics.Client.Tests {
 			output.WriteLogContents(storage.EnumerateLogs().Single());
 			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
-				Assert.True(json.TryGetProperty("Metadata", out var metadata));
-				Assert.True(metadata.TryGetProperty("Channel", out var channel));
+				Assert.True(json.TryGetProperty("Channel", out var channel));
 				Assert.Equal("TestChannel", channel.GetString());
-				Assert.True(metadata.TryGetProperty("TimeStamp", out var timestamp));
+				Assert.True(json.TryGetProperty("TimeStamp", out var timestamp));
 				Assert.True(timestamp.TryGetDateTime(out var timestampDT));
-				Assert.True(metadata.TryGetProperty("EntryType", out var entryType));
+				Assert.True(json.TryGetProperty("EntryType", out var entryType));
 				Assert.Equal("Event", entryType.GetString());
-				Assert.True(metadata.TryGetProperty("EventType", out var eventType));
+				Assert.True(json.TryGetProperty("EventType", out var eventType));
 				Assert.Equal("TestEvent", eventType.GetString());
 
 				Assert.True(json.TryGetProperty("Payload", out var payload));
@@ -171,14 +169,13 @@ namespace SGL.Analytics.Client.Tests {
 			output.WriteLogContents(storage.EnumerateLogs().Single());
 			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
-				Assert.True(json.TryGetProperty("Metadata", out var metadata));
-				Assert.True(metadata.TryGetProperty("Channel", out var channel));
+				Assert.True(json.TryGetProperty("Channel", out var channel));
 				Assert.Equal("TestChannel", channel.GetString());
-				Assert.True(metadata.TryGetProperty("TimeStamp", out var timestamp));
+				Assert.True(json.TryGetProperty("TimeStamp", out var timestamp));
 				Assert.True(timestamp.TryGetDateTime(out var timestampDT));
-				Assert.True(metadata.TryGetProperty("EntryType", out var entryType));
+				Assert.True(json.TryGetProperty("EntryType", out var entryType));
 				Assert.Equal("Event", entryType.GetString());
-				Assert.True(metadata.TryGetProperty("EventType", out var eventType));
+				Assert.True(json.TryGetProperty("EventType", out var eventType));
 				Assert.Equal("MyEvent", eventType.GetString());
 
 				Assert.True(json.TryGetProperty("Payload", out var payload));
@@ -223,14 +220,13 @@ namespace SGL.Analytics.Client.Tests {
 			output.WriteLogContents(storage.EnumerateLogs().Single());
 			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
-				Assert.True(json.TryGetProperty("Metadata", out var metadata));
-				Assert.True(metadata.TryGetProperty("Channel", out var channel));
+				Assert.True(json.TryGetProperty("Channel", out var channel));
 				Assert.Equal("TestChannel", channel.GetString());
-				Assert.True(metadata.TryGetProperty("TimeStamp", out var timestamp));
+				Assert.True(json.TryGetProperty("TimeStamp", out var timestamp));
 				Assert.True(timestamp.TryGetDateTime(out var timestampDT));
-				Assert.True(metadata.TryGetProperty("EntryType", out var entryType));
+				Assert.True(json.TryGetProperty("EntryType", out var entryType));
 				Assert.Equal("Event", entryType.GetString());
-				Assert.True(metadata.TryGetProperty("EventType", out var eventType));
+				Assert.True(json.TryGetProperty("EventType", out var eventType));
 				Assert.Equal("MyClonable", eventType.GetString());
 
 				Assert.True(json.TryGetProperty("Payload", out var payload));
