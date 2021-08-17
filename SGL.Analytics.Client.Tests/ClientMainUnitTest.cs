@@ -252,5 +252,67 @@ namespace SGL.Analytics.Client.Tests {
 			}
 		}
 
+		[Fact]
+		public async Task SnapshotIsStoredAsExpected() {
+			analytics.StartNewLog();
+			var snap = new Dictionary<string, object?>();
+			snap["TestNumber"] = 12345;
+			snap["TestString"] = "Hello World";
+			snap["TestBool"] = true;
+			snap["TestArray"] = new object[] { 9876, false, "TestTestTest", new Dictionary<string, object?> { ["Foo"] = "Bar" } };
+			snap["TestObject"] = new Dictionary<string, object?> { ["A"] = 456, ["B"] = "Baz", ["C"] = null };
+			analytics.RecordSnapshotUnshared("TestChannel", 42, snap);
+			await analytics.FinishAsync();
+
+			output.WriteLogContents(storage.EnumerateLogs().Single());
+			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
+				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
+				Assert.True(json.TryGetProperty("Channel", out var channel));
+				Assert.Equal("TestChannel", channel.GetString());
+				Assert.True(json.TryGetProperty("TimeStamp", out var timestamp));
+				Assert.True(timestamp.TryGetDateTime(out var timestampDT));
+				Assert.True(json.TryGetProperty("EntryType", out var entryType));
+				Assert.Equal("Snapshot", entryType.GetString());
+				Assert.True(json.TryGetProperty("ObjectID", out var objectId));
+				Assert.True(objectId.TryGetInt32(out var objectIdInt));
+				Assert.Equal(42, objectIdInt);
+
+				Assert.True(json.TryGetProperty("Payload", out var payload));
+				Assert.True(payload.TryGetProperty("TestNumber", out var testNumber));
+				Assert.True(testNumber.TryGetInt32(out var testNumberInt));
+				Assert.Equal(12345, testNumberInt);
+				Assert.True(payload.TryGetProperty("TestString", out var testString));
+				Assert.Equal("Hello World", testString.GetString());
+				Assert.True(payload.TryGetProperty("TestBool", out var testBool));
+				Assert.True(testBool.GetBoolean());
+
+				Assert.True(payload.TryGetProperty("TestArray", out var testArray));
+				Assert.Equal(4, testArray.GetArrayLength());
+				var testArr = testArray.EnumerateArray();
+
+				Assert.True(testArr.MoveNext());
+				Assert.True(testArr.Current.TryGetInt32(out var testArr0));
+				Assert.Equal(9876, testArr0);
+
+				Assert.True(testArr.MoveNext());
+				Assert.False(testArr.Current.GetBoolean());
+
+				Assert.True(testArr.MoveNext());
+				Assert.Equal("TestTestTest", testArr.Current.GetString());
+
+				Assert.True(testArr.MoveNext());
+				Assert.True(testArr.Current.TryGetProperty("Foo", out var testArr3Foo));
+				Assert.Equal("Bar", testArr3Foo.GetString());
+
+				Assert.True(payload.TryGetProperty("TestObject", out var testObject));
+				Assert.True(testObject.TryGetProperty("A", out var testObjectA));
+				Assert.True(testObjectA.TryGetInt32(out var testObjectAInt));
+				Assert.Equal(456, testObjectAInt);
+				Assert.True(testObject.TryGetProperty("B", out var testObjectB));
+				Assert.Equal("Baz", testObjectB.GetString());
+				Assert.True(testObject.TryGetProperty("C", out var testObjectC));
+				Assert.Equal(JsonValueKind.Null, testObjectC.ValueKind);
+			}
+		}
 	}
 }
