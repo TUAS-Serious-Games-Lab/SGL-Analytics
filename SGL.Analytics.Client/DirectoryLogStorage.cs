@@ -40,7 +40,7 @@ namespace SGL.Analytics.Client {
 			}
 
 			public Stream OpenRead() {
-				var fileStream = new FileStream(FullFileName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
+				var fileStream = OpenReadRaw();
 				if (storage.UseCompressedFiles) {
 					return new GZipStream(fileStream, CompressionMode.Decompress);
 				}
@@ -48,6 +48,8 @@ namespace SGL.Analytics.Client {
 					return fileStream;
 				}
 			}
+
+			public Stream OpenReadRaw() => new FileStream(FullFileName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
 
 			public void Remove() {
 				if (storage.Archiving) {
