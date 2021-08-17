@@ -89,7 +89,7 @@ namespace SGL.Analytics.Client {
 					await stream.FlushAsync();
 				}
 				uploadQueue.Enqueue(logQueue.logFile);
-				// TODO: Start Uploading if not already running
+				startFileUploadingIfNotRunning();
 			}
 			uploadQueue.Finish();
 		}
@@ -99,6 +99,36 @@ namespace SGL.Analytics.Client {
 				// Enforce that the log writer runs on some threadpool thread to avoid putting additional load on app thread.
 				logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
 			}
+		}
+
+		private async Task uploadFilesAsync() {
+			var userIDOpt = rootDataStore.UserID;
+			if (userIDOpt is null) return;
+			var userID = (Guid)userIDOpt;
+			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
+				try {
+					await logCollectorClient.UploadLogFileAsync(appName, appAPIToken, userID, logFile);
+					logFile.Remove();
+				}
+				catch (Exception) { }
+			}
+		}
+
+		private void startFileUploadingIfNotRunning() {
+			if (!IsRegistered()) return;
+			if (logUploader is null) {
+				// Enforce that the uploader runs on some threadpool thread to avoid putting additional load on app thread.
+				logUploader = Task.Run(async () => await uploadFilesAsync().ConfigureAwait(false));
+			}
+		}
+
+		// TODO: Call this when appropriate.
+		private void startUploadingExistingLogs() {
+			if (!IsRegistered()) return;
+			foreach (var logFile in logStorage.EnumerateLogs()) {
+				uploadQueue.Enqueue(logFile);
+			}
+			startFileUploadingIfNotRunning();
 		}
 
 		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage, ILogCollectorClient logCollectorClient) {
@@ -179,9 +209,6 @@ namespace SGL.Analytics.Client {
 			if (logUploader is not null) {
 				await logUploader;
 			}
-			// TODO: Do we need an else here? (Maybe start a new upload attempt and await it?)
-
-			// TODO: Archive / delete sucessfully uploaded files (in logUploader).
 		}
 
 		/// <summary>

@@ -92,5 +92,6 @@ namespace SGL.Analytics.Client {
 				   where id.HasValue
 				   select new LogFile(id.Value, this);
 		}
+		// TODO: Add EnumerateFinishedLogs to filter out log files that are currently open for writing, so we don't attempt to upload unfinished logs.
 	}
 }
