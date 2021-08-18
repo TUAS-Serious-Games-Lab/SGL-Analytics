@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SGL.Analytics.Client\SGL.Analytics.Client.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
   </ItemGroup>
 
 </Project>
