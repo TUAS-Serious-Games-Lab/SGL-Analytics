@@ -85,13 +85,13 @@ namespace SGL.Analytics.Client {
 				return path;
 			}
 		}
-		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() {
-			return from filename in Directory.EnumerateFiles(directory, "*" + FileSuffix)
-				   let idString = getFilename(filename)
-				   let id = Guid.TryParse(idString, out var guid) ? guid : (Guid?)null
-				   where id.HasValue
-				   select new LogFile(id.Value, this);
-		}
+		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() => from file in (from filename in Directory.EnumerateFiles(directory, "*" + FileSuffix)
+																				  let idString = getFilename(filename)
+																				  let id = Guid.TryParse(idString, out var guid) ? guid : (Guid?)null
+																				  where id.HasValue
+																				  select new LogFile(id.Value, this))
+																	orderby file.CreationTime
+																	select file;
 		// TODO: Add EnumerateFinishedLogs to filter out log files that are currently open for writing, so we don't attempt to upload unfinished logs.
 	}
 }
