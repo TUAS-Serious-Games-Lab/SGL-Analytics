@@ -19,6 +19,7 @@ namespace SGL.Analytics.Client {
 	}
 
 	public class SGLAnalytics {
+		private readonly object lockObject = new object();
 		private string appName;
 		private string appAPIToken;
 		private IRootDataStore rootDataStore;
@@ -94,9 +95,11 @@ namespace SGL.Analytics.Client {
 		}
 
 		private void ensureLogWritingActive() {
-			if (logWriter is null) {
-				// Enforce that the log writer runs on some threadpool thread to avoid putting additional load on app thread.
-				logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
+			lock (lockObject) { // Ensure that only one log writer is active
+				if (logWriter is null) {
+					// Enforce that the log writer runs on some threadpool thread to avoid putting additional load on app thread.
+					logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
+				}
 			}
 		}
 
@@ -120,7 +123,9 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <returns>true if the client is already registered, false if the registration is not yet done.</returns>
 		public bool IsRegistered() {
-			return rootDataStore.UserID is not null;
+			lock (lockObject) {
+				return rootDataStore.UserID is not null;
+			}
 		}
 
 		/// <summary>
@@ -130,8 +135,10 @@ namespace SGL.Analytics.Client {
 		/// <returns>A Task representing the registration operation. Wait for it's completion before relying on logs being uploaded. Logs recorded on a client that hasn't completed registration are stored only locally until the registration is complete and the user id required for the upload is obtained.</returns>
 		public async Task RegisterAsync(UserData userData) {
 			// TODO: Perform POST to Backend
-			// TODO: Store returned UserID in rootDataStore.UserID
-			// TODO: Ensure thread-safety of rootDataStore (Upload worker might access UserID while it is being set from here)
+			lock (lockObject) {
+				// TODO: Store returned UserID in rootDataStore.UserID
+			}
+			// TODO: Ensure thread-safety of rootDataStore. If a new RegisterAsync operation is started while another one is still running, they could race on rootDataStore.UserID. => Forbid this in API contract. The public methods are not supposed to be used concurrently anyway.
 			await rootDataStore.SaveAsync();
 		}
 
@@ -140,9 +147,13 @@ namespace SGL.Analytics.Client {
 		/// Call this when starting a new session, e.g. a new game playthrough or a more short-term game session.
 		/// </summary>
 		public void StartNewLog() {
-			var oldLogQueue = currentLogQueue;
-			currentLogQueue = new LogQueue(logStorage.CreateLogFile(out var logFile), logFile);
-			pendingLogQueues.Enqueue(currentLogQueue);
+			LogQueue? oldLogQueue;
+			LogQueue? newLogQueue;
+			lock (lockObject) {
+				oldLogQueue = currentLogQueue;
+				currentLogQueue = newLogQueue = new LogQueue(logStorage.CreateLogFile(out var logFile), logFile);
+			}
+			pendingLogQueues.Enqueue(newLogQueue);
 			oldLogQueue?.entryQueue?.Finish();
 			ensureLogWritingActive();
 		}
@@ -162,8 +173,16 @@ namespace SGL.Analytics.Client {
 		/// </list>
 		/// </remarks>
 		public async Task FinishAsync() {
+			Task? logWriter;
+			Task? logUploader;
+			lock (lockObject) { // Read needed values safely into locals
+				logWriter = this.logWriter;
+				logUploader = this.logUploader;
+			}
+
 			currentLogQueue?.entryQueue?.Finish();
 			pendingLogQueues.Finish();
+
 			if (logWriter is not null) {
 				await logWriter;
 			}
