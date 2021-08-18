@@ -17,7 +17,7 @@ namespace SGL.Analytics.Client.Tests {
 		private ITestOutputHelper output;
 
 		public ClientMainUnitTest(ITestOutputHelper output) {
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage);
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, logCollectorClient: null);
 			this.output = output;
 		}
 
