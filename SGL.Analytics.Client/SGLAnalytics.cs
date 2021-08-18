@@ -74,7 +74,8 @@ namespace SGL.Analytics.Client {
 			var arrClose = Encoding.UTF8.GetBytes(jsonSerializerOptions.WriteIndented ? (Environment.NewLine + "]") : "]");
 			var delim = Encoding.UTF8.GetBytes(jsonSerializerOptions.WriteIndented ? ("," + Environment.NewLine) : ",");
 			await foreach (var logQueue in pendingLogQueues.DequeueAllAsync()) {
-				await using (var stream = logQueue.writeStream) {
+				var stream = logQueue.writeStream;
+				try {
 					bool first = true;
 					await stream.WriteAsync(arrOpen.AsMemory());
 					await foreach (var logEntry in logQueue.entryQueue.DequeueAllAsync()) {
@@ -89,6 +90,11 @@ namespace SGL.Analytics.Client {
 					}
 					await stream.WriteAsync(arrClose.AsMemory());
 					await stream.FlushAsync();
+				}
+				finally { // Need to do this instead of a using block to allow ILogStorage implementations to remove the file behind stream from their 'open for writing'-list in a thread-safe way.
+					lock (lockObject) {
+						stream.Dispose();
+					}
 				}
 				uploadQueue.Enqueue(logQueue.logFile);
 				startFileUploadingIfNotRunning();
@@ -106,14 +112,20 @@ namespace SGL.Analytics.Client {
 		}
 
 		private async Task uploadFilesAsync() {
+			if (logCollectorClient is null) return;
 			var userIDOpt = rootDataStore.UserID;
 			if (userIDOpt is null) return;
 			var userID = (Guid)userIDOpt;
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
 				try {
-					if (logCollectorClient is null) return;
-					await logCollectorClient.UploadLogFileAsync(appName, appAPIToken, userID, logFile);
-					logFile.Remove();
+					Task uploadTask;
+					lock (lockObject) { // At the beginning, of the upload task, the stream for the log file needs to be aquired under lock.
+						uploadTask = logCollectorClient.UploadLogFileAsync(appName, appAPIToken, userID, logFile);
+					}
+					await uploadTask;
+					lock (lockObject) { // ILogStorage implementations may need to do this under lock.
+						logFile.Remove();
+					}
 				}
 				catch (Exception ex) {
 					// TODO: Proper logging
@@ -123,11 +135,13 @@ namespace SGL.Analytics.Client {
 		}
 
 		private void startFileUploadingIfNotRunning() {
-			if (logCollectorClient is null) return;
-			if (!IsRegistered()) return;
-			if (logUploader is null) {
-				// Enforce that the uploader runs on some threadpool thread to avoid putting additional load on app thread.
-				logUploader = Task.Run(async () => await uploadFilesAsync().ConfigureAwait(false));
+			if (logCollectorClient is null) return; // logCollectorClient is only set in constructor and otherwise only read -> thread-safe
+			if (!IsRegistered()) return; // IsRegistered does it's own locking
+			lock (lockObject) { // Ensure that only one log uploader is active
+				if (logUploader is null) {
+					// Enforce that the uploader runs on some threadpool thread to avoid putting additional load on app thread.
+					logUploader = Task.Run(async () => await uploadFilesAsync().ConfigureAwait(false));
+				}
 			}
 		}
 
@@ -135,7 +149,11 @@ namespace SGL.Analytics.Client {
 		private void startUploadingExistingLogs() {
 			if (logCollectorClient is null) return;
 			if (!IsRegistered()) return;
-			foreach (var logFile in logStorage.EnumerateFinishedLogs()) {
+			List<ILogStorage.ILogFile> existingCompleteLogs;
+			lock (lockObject) {
+				existingCompleteLogs = logStorage.EnumerateFinishedLogs().ToList();
+			}
+			foreach (var logFile in existingCompleteLogs) {
 				uploadQueue.Enqueue(logFile);
 			}
 			startFileUploadingIfNotRunning();
