@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -13,8 +14,9 @@ namespace SGL.Analytics.Client {
 				case Type _ when type == typeof(string):
 				case Type _ when type == typeof(Guid):
 				case { IsEnum: true }:
-				case { IsPrimitive: true }:
 					return source => prop.GetValue(source)?.ToString();
+				case { IsPrimitive: true }:
+					return source => String.Format(CultureInfo.InvariantCulture, "{0}", prop.GetValue(source));
 				default:
 					return null;
 			}
