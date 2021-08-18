@@ -161,9 +161,8 @@ namespace SGL.Analytics.Client.Tests {
 			return new WriteStreamWrapper(log.Content, () => { log.EndTime = DateTime.Now; log.WriteClosed = true; });
 		}
 
-		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() {
-			return logs;
-		}
+		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() => logs;
+		public IEnumerable<ILogStorage.ILogFile> EnumerateFinishedLogs() => logs.Where(log => log.WriteClosed);
 
 		public void Dispose() {
 			foreach (var log in logs) {

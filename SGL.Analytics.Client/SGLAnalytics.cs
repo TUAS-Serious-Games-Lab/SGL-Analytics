@@ -125,7 +125,7 @@ namespace SGL.Analytics.Client {
 		// TODO: Call this when appropriate.
 		private void startUploadingExistingLogs() {
 			if (!IsRegistered()) return;
-			foreach (var logFile in logStorage.EnumerateLogs()) {
+			foreach (var logFile in logStorage.EnumerateFinishedLogs()) {
 				uploadQueue.Enqueue(logFile);
 			}
 			startFileUploadingIfNotRunning();

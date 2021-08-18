@@ -11,6 +11,7 @@ namespace SGL.Analytics.Client {
 	public class DirectoryLogStorage : ILogStorage {
 		private string directory;
 		private bool useCompressedFiles = true;
+		private List<Guid> logFilesOpenForWriting = new();
 
 		public bool UseCompressedFiles {
 			get => useCompressedFiles;
@@ -24,6 +25,60 @@ namespace SGL.Analytics.Client {
 
 		public DirectoryLogStorage(string directory) {
 			this.directory = directory;
+		}
+
+		private class StreamWrapper : Stream {
+			private Stream wrapped;
+			private DirectoryLogStorage? storage;
+			private Guid logId;
+
+			public StreamWrapper(Stream wrapped, DirectoryLogStorage storage, Guid logId) {
+				this.wrapped = wrapped;
+				this.storage = storage;
+				this.logId = logId;
+			}
+
+			public override bool CanRead => wrapped.CanRead;
+
+			public override bool CanSeek => wrapped.CanSeek;
+
+			public override bool CanWrite => wrapped.CanWrite;
+
+			public override long Length => wrapped.Length;
+
+			public override long Position { get => wrapped.Position; set => wrapped.Position = value; }
+
+			public override ValueTask DisposeAsync() {
+				storage?.logFilesOpenForWriting?.Remove(logId);
+				storage = null;
+				return wrapped.DisposeAsync();
+			}
+
+			public override void Flush() {
+				wrapped.Flush();
+			}
+
+			public override int Read(byte[] buffer, int offset, int count) {
+				return wrapped.Read(buffer, offset, count);
+			}
+
+			public override long Seek(long offset, SeekOrigin origin) {
+				return wrapped.Seek(offset, origin);
+			}
+
+			public override void SetLength(long value) {
+				wrapped.SetLength(value);
+			}
+
+			public override void Write(byte[] buffer, int offset, int count) {
+				wrapped.Write(buffer, offset, count);
+			}
+
+			protected override void Dispose(bool disposing) {
+				storage?.logFilesOpenForWriting?.Remove(logId);
+				if (disposing) storage = null;
+				wrapped.Dispose();
+			}
 		}
 
 		public class LogFile : ILogStorage.ILogFile {
@@ -69,10 +124,10 @@ namespace SGL.Analytics.Client {
 			logFileMetadata = logFile;
 			var fileStream = new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
 			if (UseCompressedFiles) {
-				return new GZipStream(fileStream, CompressionLevel.Optimal);
+				return new StreamWrapper(new GZipStream(fileStream, CompressionLevel.Optimal), this, id);
 			}
 			else {
-				return fileStream;
+				return new StreamWrapper(fileStream, this, id);
 			}
 		}
 
@@ -92,6 +147,7 @@ namespace SGL.Analytics.Client {
 																				  select new LogFile(id.Value, this))
 																	orderby file.CreationTime
 																	select file;
-		// TODO: Add EnumerateFinishedLogs to filter out log files that are currently open for writing, so we don't attempt to upload unfinished logs.
+
+		public IEnumerable<ILogStorage.ILogFile> EnumerateFinishedLogs() => EnumerateLogs().Where(log => !logFilesOpenForWriting.Contains(log.ID));
 	}
 }

@@ -15,5 +15,6 @@ namespace SGL.Analytics.Client {
 
 		Stream CreateLogFile(out ILogFile logFileMetadata);
 		IEnumerable<ILogFile> EnumerateLogs();
+		IEnumerable<ILogFile> EnumerateFinishedLogs();
 	}
 }
