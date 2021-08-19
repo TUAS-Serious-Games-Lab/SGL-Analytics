@@ -202,6 +202,9 @@ namespace SGL.Analytics.Client {
 		/// <param name="userData">The user data for the registration, that is to be sent to the server.</param>
 		/// <returns>A Task representing the registration operation. Wait for it's completion before relying on logs being uploaded. Logs recorded on a client that hasn't completed registration are stored only locally until the registration is complete and the user id required for the upload is obtained.</returns>
 		public async Task RegisterAsync(UserData userData) {
+			if (IsRegistered()) {
+				throw new InvalidOperationException("User is already registered.");
+			}
 			// TODO: Perform POST to Backend
 			lock (lockObject) {
 				// TODO: Store returned UserID in rootDataStore.UserID
