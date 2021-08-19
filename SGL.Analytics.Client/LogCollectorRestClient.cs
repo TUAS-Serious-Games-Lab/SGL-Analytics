@@ -31,6 +31,7 @@ namespace SGL.Analytics.Client {
 				var content = new StreamContent(stream);
 				content.Headers.MapObjectProperties(new LogMetadataDTO(appName, userID, logFile.ID, logFile.CreationTime, logFile.EndTime));
 				content.Headers.Add("App-API-Token", appAPIToken);
+				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 				var response = await httpClient.PostAsync(logCollectorApiFullUri, content);
 				response.EnsureSuccessStatusCode();
 			}
