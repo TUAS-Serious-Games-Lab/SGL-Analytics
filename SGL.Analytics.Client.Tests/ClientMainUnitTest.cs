@@ -26,7 +26,7 @@ namespace SGL.Analytics.Client.Tests {
 		}
 
 		[Fact]
-		public void EachStartNewLogCreatesLogFile() {
+		public async Task EachStartNewLogCreatesLogFile() {
 			Assert.Empty(storage.EnumerateLogs());
 			analytics.StartNewLog();
 			Assert.Single(storage.EnumerateLogs());
@@ -36,6 +36,7 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Equal(3, storage.EnumerateLogs().Count());
 			analytics.StartNewLog();
 			Assert.Equal(4, storage.EnumerateLogs().Count());
+			await analytics.FinishAsync(); // Cleanup background tasks.
 		}
 
 		[Fact]
