@@ -27,10 +27,12 @@ namespace SGL.Analytics.Client {
 
 
 		public async Task UploadLogFileAsync(string appName, string appAPIToken, Guid userID, ILogStorage.ILogFile logFile) {
-			var content = new StreamContent(logFile.OpenReadRaw());
-			content.Headers.MapObjectProperties(new LogMetadataDTO(appName, userID, logFile.ID, logFile.CreationTime, logFile.EndTime));
-			content.Headers.Add("App-API-Token", appAPIToken);
-			await httpClient.PostAsync(logCollectorApiFullUri, content);
+			using (var stream = logFile.OpenReadRaw()) {
+				var content = new StreamContent(stream);
+				content.Headers.MapObjectProperties(new LogMetadataDTO(appName, userID, logFile.ID, logFile.CreationTime, logFile.EndTime));
+				content.Headers.Add("App-API-Token", appAPIToken);
+				var response = await httpClient.PostAsync(logCollectorApiFullUri, content);
+			}
 		}
 	}
 }
