@@ -243,10 +243,8 @@ namespace SGL.Analytics.Client {
 		/// </remarks>
 		public async Task FinishAsync() {
 			Task? logWriter;
-			Task? logUploader;
-			lock (lockObject) { // Read needed values safely into locals
+			lock (lockObject) {
 				logWriter = this.logWriter;
-				logUploader = this.logUploader;
 			}
 
 			currentLogQueue?.entryQueue?.Finish();
@@ -257,6 +255,10 @@ namespace SGL.Analytics.Client {
 			}
 			else {
 				uploadQueue.Finish();
+			}
+			Task? logUploader;
+			lock (lockObject) {
+				logUploader = this.logUploader;
 			}
 			if (logUploader is not null) {
 				await logUploader;
