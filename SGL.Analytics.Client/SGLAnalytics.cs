@@ -155,7 +155,6 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		// TODO: Call this when appropriate.
 		private void startUploadingExistingLogs() {
 			if (logCollectorClient is null) return;
 			if (!IsRegistered()) return;
@@ -176,6 +175,9 @@ namespace SGL.Analytics.Client {
 			this.rootDataStore = rootDataStore;
 			this.logStorage = logStorage;
 			this.logCollectorClient = logCollectorClient;
+			if (IsRegistered()) {
+				startUploadingExistingLogs();
+			}
 		}
 
 		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) : this(appName, appAPIToken, rootDataStore, logStorage, new LogCollectorRestClient()) { }
@@ -215,6 +217,7 @@ namespace SGL.Analytics.Client {
 			}
 			// TODO: Ensure thread-safety of rootDataStore. If a new RegisterAsync operation is started while another one is still running, they could race on rootDataStore.UserID. => Forbid this in API contract. The public methods are not supposed to be used concurrently anyway.
 			await rootDataStore.SaveAsync();
+			startUploadingExistingLogs();
 		}
 
 		/// <summary>
