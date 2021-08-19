@@ -438,5 +438,27 @@ namespace SGL.Analytics.Client.Tests {
 			}
 			Assert.False(logs.MoveNext());
 		}
+		[Fact]
+		public async Task PreviousPendingLogFilesAreUploadedOnRegisteredStartup() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+
+			List<ILogStorage.ILogFile> logs = new();
+			for (int i = 0; i < 5; ++i) {
+				using (var writer = new StreamWriter(storage.CreateLogFile(out var logFile))) {
+					writer.WriteLine($"Dummy {i}");
+					logs.Add(logFile);
+				}
+			}
+
+			ds.UserID = Guid.NewGuid();
+			var collectorClient = new FakeLogCollectorClient();
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient);
+			await analytics.FinishAsync();
+
+			Assert.Equal(5, collectorClient.UploadedLogFileIds.Count);
+			foreach(var log in logs) {
+				Assert.Contains(log.ID, collectorClient.UploadedLogFileIds);
+			}
+		}
 	}
 }
