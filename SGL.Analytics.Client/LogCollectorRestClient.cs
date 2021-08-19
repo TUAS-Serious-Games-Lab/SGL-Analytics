@@ -32,6 +32,7 @@ namespace SGL.Analytics.Client {
 				content.Headers.MapObjectProperties(new LogMetadataDTO(appName, userID, logFile.ID, logFile.CreationTime, logFile.EndTime));
 				content.Headers.Add("App-API-Token", appAPIToken);
 				var response = await httpClient.PostAsync(logCollectorApiFullUri, content);
+				response.EnsureSuccessStatusCode();
 			}
 		}
 	}
