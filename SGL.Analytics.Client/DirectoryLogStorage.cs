@@ -25,6 +25,7 @@ namespace SGL.Analytics.Client {
 
 		public DirectoryLogStorage(string directory) {
 			this.directory = directory;
+			Directory.CreateDirectory(directory);
 		}
 
 		private class StreamWrapper : Stream {
