@@ -163,6 +163,7 @@ namespace SGL.Analytics.Client {
 			lock (lockObject) {
 				existingCompleteLogs = logStorage.EnumerateFinishedLogs().ToList();
 			}
+			if (existingCompleteLogs.Count == 0) return;
 			foreach (var logFile in existingCompleteLogs) {
 				uploadQueue.Enqueue(logFile);
 			}
