@@ -224,7 +224,6 @@ namespace SGL.Analytics.Client {
 			pendingLogQueues.Enqueue(newLogQueue);
 			oldLogQueue?.entryQueue?.Finish();
 			ensureLogWritingActive();
-			startFileUploadingIfNotRunning();
 		}
 
 		/// <summary>
