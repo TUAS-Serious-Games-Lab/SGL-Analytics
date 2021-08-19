@@ -39,7 +39,7 @@ namespace SGL.Analytics.Client.Tests {
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
 			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsLog").UsingPost()
 						.WithHeader("AppName", new WildcardMatcher("*"))
-						.WithHeader("App-API-Token", new ExactMatcher("*"))
+						.WithHeader("App-API-Token", new WildcardMatcher("*"))
 						.WithHeader("UserId", guidMatcher)
 						.WithHeader("LogFileId", guidMatcher))
 					.RespondWith(Response.Create().WithStatusCode(System.Net.HttpStatusCode.NoContent));
