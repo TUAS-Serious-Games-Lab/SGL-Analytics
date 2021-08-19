@@ -20,7 +20,7 @@
       <Pack>true</Pack>
     </Content>
 
-    <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" >
+    <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj">
       <PrivateAssets>all</PrivateAssets>
     </ProjectReference>
   </ItemGroup>
