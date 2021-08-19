@@ -114,7 +114,10 @@ namespace SGL.Analytics.Client {
 
 		private async Task uploadFilesAsync() {
 			if (logCollectorClient is null) return;
-			var userIDOpt = rootDataStore.UserID;
+			Guid? userIDOpt;
+			lock (lockObject) {
+				userIDOpt = rootDataStore.UserID;
+			}
 			if (userIDOpt is null) return;
 			var userID = (Guid)userIDOpt;
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
