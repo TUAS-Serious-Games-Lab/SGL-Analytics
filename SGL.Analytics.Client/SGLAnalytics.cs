@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -126,6 +127,12 @@ namespace SGL.Analytics.Client {
 					lock (lockObject) { // ILogStorage implementations may need to do this under lock.
 						logFile.Remove();
 					}
+				}
+				catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.RequestEntityTooLarge) {
+					// TODO: Find a better way to handle log files that are too large to upload.
+					// Leaving the file in storage whould imply that it is retried later, which would waste user's bandwidth only to fail again, unless the server-side limit was increased.
+					// Maybe, we could store it locally, in a separate folder (or similar) for potential manual troubleshooting.
+					logFile.Remove();
 				}
 				catch (Exception ex) {
 					// TODO: Proper logging
