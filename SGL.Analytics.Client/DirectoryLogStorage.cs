@@ -123,6 +123,7 @@ namespace SGL.Analytics.Client {
 			var id = Guid.NewGuid();
 			var logFile = new LogFile(id, this);
 			logFileMetadata = logFile;
+			logFilesOpenForWriting.Add(logFile.ID);
 			var fileStream = new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
 			if (UseCompressedFiles) {
 				return new StreamWrapper(new GZipStream(fileStream, CompressionLevel.Optimal), this, id);
