@@ -11,44 +11,44 @@ using WireMock.Server;
 using Xunit;
 
 namespace SGL.Analytics.Client.Tests {
-	public class LogCollectorRestClientUnitTest :IDisposable {
-		private WireMockServer server;
+	[Collection("Mock Web Server")]
+	public class LogCollectorRestClientUnitTest : IDisposable {
+		private MockServerFixture serverFixture;
 		private LogCollectorRestClient client;
 		private InMemoryLogStorage storage;
 
-		public LogCollectorRestClientUnitTest() {
-			server = WireMockServer.Start();
-			client = new LogCollectorRestClient(new Uri(server.Urls.First()));
+		public LogCollectorRestClientUnitTest(MockServerFixture serverFixture) {
+			this.serverFixture = serverFixture;
+			client = new LogCollectorRestClient(new Uri(serverFixture.Server.Urls.First()));
 			storage = new InMemoryLogStorage();
 		}
 
 		public void Dispose() {
-			server.Stop();
-			server.Dispose();
+			serverFixture.Reset();
 		}
 
 		[Fact]
 		public async Task UploadingALogProducesTheExpectedRequest() {
 			var userId = Guid.NewGuid();
-			var content = "This is a test!"+Environment.NewLine;
+			var content = "This is a test!" + Environment.NewLine;
 			ILogStorage.ILogFile logFile;
 			using (var writer = new StreamWriter(storage.CreateLogFile(out logFile))) {
 				writer.Write(content);
 			}
 
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
-			server.Given(Request.Create().WithPath("/api/AnalyticsLog").UsingPost()
-						.WithHeader("AppName",new WildcardMatcher("*"))
+			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsLog").UsingPost()
+						.WithHeader("AppName", new WildcardMatcher("*"))
 						.WithHeader("App-API-Token", new ExactMatcher("*"))
-						.WithHeader("UserId",guidMatcher)
-						.WithHeader("LogFileId",guidMatcher))
+						.WithHeader("UserId", guidMatcher)
+						.WithHeader("LogFileId", guidMatcher))
 					.RespondWith(Response.Create().WithStatusCode(System.Net.HttpStatusCode.NoContent));
 
-			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest","FakeApiToken",userId,logFile);
+			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest", "FakeApiToken", userId, logFile);
 
-			Assert.Single(server.LogEntries);
-			var logEntry = server.LogEntries.Single();
-			Assert.Equal(content,logEntry.RequestMessage.Body);
+			Assert.Single(serverFixture.Server.LogEntries);
+			var logEntry = serverFixture.Server.LogEntries.Single();
+			Assert.Equal(content, logEntry.RequestMessage.Body);
 			var headers = logEntry.RequestMessage.Headers;
 			Assert.Equal("LogCollectorRestClientUnitTest", headers["AppName"].Single());
 			Assert.Equal("FakeApiToken", headers["App-API-Token"].Single());
