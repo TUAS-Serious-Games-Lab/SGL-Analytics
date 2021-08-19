@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using WireMock.Matchers;
@@ -56,6 +58,26 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Equal(logFile.ID, Guid.Parse(headers["LogFileId"].Single()));
 			Assert.Equal(logFile.CreationTime, DateTime.Parse(headers["CreationTime"].Single()));
 			Assert.Equal(logFile.EndTime, DateTime.Parse(headers["EndTime"].Single()));
+		}
+		[Fact]
+		public async Task ServerErrorsAreCorrectlyReportedByException() {
+			var userId = Guid.NewGuid();
+			var content = "This is a test!" + Environment.NewLine;
+			ILogStorage.ILogFile logFile;
+			using (var writer = new StreamWriter(storage.CreateLogFile(out logFile))) {
+				writer.Write(content);
+			}
+
+			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
+			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsLog").UsingPost()
+						.WithHeader("AppName", new WildcardMatcher("*"))
+						.WithHeader("App-API-Token", new WildcardMatcher("*"))
+						.WithHeader("UserId", guidMatcher)
+						.WithHeader("LogFileId", guidMatcher))
+					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
+
+			var ex = await Assert.ThrowsAsync<HttpRequestException>(()=>client.UploadLogFileAsync("LogCollectorRestClientUnitTest", "FakeApiToken", userId, logFile));
+			Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
 		}
 	}
 }
