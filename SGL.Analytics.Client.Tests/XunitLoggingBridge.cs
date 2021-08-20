@@ -53,8 +53,9 @@ namespace SGL.Analytics.Client.Tests {
 	}
 
 	public static class XUnitLoggingExtensions {
-		public static void AddXUnit(this ILoggingBuilder builder, ITestOutputHelper output) {
+		public static ILoggingBuilder AddXUnit(this ILoggingBuilder builder, ITestOutputHelper output) {
 			builder.AddProvider(new XUnitLoggingProvider(output));
+			return builder;
 		}
 	}
 }
