@@ -1,4 +1,4 @@
-﻿namespace SGL.Analytics.Client {
+namespace SGL.Analytics.Client {
 	public class UserData {
 		public string Username { get; set; }
 

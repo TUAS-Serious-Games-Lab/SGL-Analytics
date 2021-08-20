@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -15,5 +15,6 @@ namespace SGL.Analytics.Client {
 
 		Stream CreateLogFile(out ILogFile logFileMetadata);
 		IEnumerable<ILogFile> EnumerateLogs();
+		IEnumerable<ILogFile> EnumerateFinishedLogs();
 	}
 }

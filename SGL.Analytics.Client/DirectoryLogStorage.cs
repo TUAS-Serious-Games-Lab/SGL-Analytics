@@ -1,9 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 
@@ -11,6 +10,7 @@ namespace SGL.Analytics.Client {
 	public class DirectoryLogStorage : ILogStorage {
 		private string directory;
 		private bool useCompressedFiles = true;
+		private List<Guid> logFilesOpenForWriting = new();
 
 		public bool UseCompressedFiles {
 			get => useCompressedFiles;
@@ -24,6 +24,61 @@ namespace SGL.Analytics.Client {
 
 		public DirectoryLogStorage(string directory) {
 			this.directory = directory;
+			Directory.CreateDirectory(directory);
+		}
+
+		private class StreamWrapper : Stream {
+			private Stream wrapped;
+			private DirectoryLogStorage? storage;
+			private Guid logId;
+
+			public StreamWrapper(Stream wrapped, DirectoryLogStorage storage, Guid logId) {
+				this.wrapped = wrapped;
+				this.storage = storage;
+				this.logId = logId;
+			}
+
+			public override bool CanRead => wrapped.CanRead;
+
+			public override bool CanSeek => wrapped.CanSeek;
+
+			public override bool CanWrite => wrapped.CanWrite;
+
+			public override long Length => wrapped.Length;
+
+			public override long Position { get => wrapped.Position; set => wrapped.Position = value; }
+
+			public override ValueTask DisposeAsync() {
+				storage?.logFilesOpenForWriting?.Remove(logId);
+				storage = null;
+				return wrapped.DisposeAsync();
+			}
+
+			public override void Flush() {
+				wrapped.Flush();
+			}
+
+			public override int Read(byte[] buffer, int offset, int count) {
+				return wrapped.Read(buffer, offset, count);
+			}
+
+			public override long Seek(long offset, SeekOrigin origin) {
+				return wrapped.Seek(offset, origin);
+			}
+
+			public override void SetLength(long value) {
+				wrapped.SetLength(value);
+			}
+
+			public override void Write(byte[] buffer, int offset, int count) {
+				wrapped.Write(buffer, offset, count);
+			}
+
+			protected override void Dispose(bool disposing) {
+				storage?.logFilesOpenForWriting?.Remove(logId);
+				if (disposing) storage = null;
+				wrapped.Dispose();
+			}
 		}
 
 		public class LogFile : ILogStorage.ILogFile {
@@ -67,12 +122,13 @@ namespace SGL.Analytics.Client {
 			var id = Guid.NewGuid();
 			var logFile = new LogFile(id, this);
 			logFileMetadata = logFile;
+			logFilesOpenForWriting.Add(logFile.ID);
 			var fileStream = new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
 			if (UseCompressedFiles) {
-				return new GZipStream(fileStream, CompressionLevel.Optimal);
+				return new StreamWrapper(new GZipStream(fileStream, CompressionLevel.Optimal), this, id);
 			}
 			else {
-				return fileStream;
+				return new StreamWrapper(fileStream, this, id);
 			}
 		}
 
@@ -85,12 +141,14 @@ namespace SGL.Analytics.Client {
 				return path;
 			}
 		}
-		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() {
-			return from filename in Directory.EnumerateFiles(directory, "*" + FileSuffix)
-				   let idString = getFilename(filename)
-				   let id = Guid.TryParse(idString, out var guid) ? guid : (Guid?)null
-				   where id.HasValue
-				   select new LogFile(id.Value, this);
-		}
+		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() => from file in (from filename in Directory.EnumerateFiles(directory, "*" + FileSuffix)
+																				  let idString = getFilename(filename)
+																				  let id = Guid.TryParse(idString, out var guid) ? guid : (Guid?)null
+																				  where id.HasValue
+																				  select new LogFile(id.Value, this))
+																	orderby file.CreationTime
+																	select file;
+
+		public IEnumerable<ILogStorage.ILogFile> EnumerateFinishedLogs() => EnumerateLogs().Where(log => !logFilesOpenForWriting.Contains(log.ID));
 	}
 }

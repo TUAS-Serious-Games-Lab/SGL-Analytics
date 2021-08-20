@@ -1,7 +1,9 @@
-﻿using System;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -15,9 +17,11 @@ namespace SGL.Analytics.Client.Tests {
 		private FakeRootDataStore ds = new FakeRootDataStore();
 		private SGLAnalytics analytics;
 		private ITestOutputHelper output;
+		private ILoggerFactory loggerFactory;
 
 		public ClientMainUnitTest(ITestOutputHelper output) {
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage);
+			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, logCollectorClient: null, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
 			this.output = output;
 		}
 
@@ -26,7 +30,7 @@ namespace SGL.Analytics.Client.Tests {
 		}
 
 		[Fact]
-		public void EachStartNewLogCreatesLogFile() {
+		public async Task EachStartNewLogCreatesLogFile() {
 			Assert.Empty(storage.EnumerateLogs());
 			analytics.StartNewLog();
 			Assert.Single(storage.EnumerateLogs());
@@ -36,6 +40,7 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Equal(3, storage.EnumerateLogs().Count());
 			analytics.StartNewLog();
 			Assert.Equal(4, storage.EnumerateLogs().Count());
+			await analytics.FinishAsync(); // Cleanup background tasks.
 		}
 
 		[Fact]
@@ -46,7 +51,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.StartNewLog();
 			analytics.StartNewLog();
 			await analytics.FinishAsync();
-			Assert.All(storage.EnumerateLogs().Cast<InMemoryLogStorage.LogFile>(), log => Assert.True(log.WriteClosed));
+			Assert.All(storage.EnumerateFinishedLogs().Cast<InMemoryLogStorage.LogFile>(), log => Assert.True(log.WriteClosed));
 		}
 
 		public class TestChildObject : ICloneable {
@@ -79,8 +84,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEvent("TestChannel", new ClonableTestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(storage.EnumerateLogs().Single());
-			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
+			output.WriteLogContents(storage.EnumerateFinishedLogs().Single());
+			await using (var stream = storage.EnumerateFinishedLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -124,8 +129,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("TestChannel", new TestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(storage.EnumerateLogs().Single());
-			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
+			output.WriteLogContents(storage.EnumerateFinishedLogs().Single());
+			await using (var stream = storage.EnumerateFinishedLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -174,8 +179,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("TestChannel", new TestEventB() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(storage.EnumerateLogs().Single());
-			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
+			output.WriteLogContents(storage.EnumerateFinishedLogs().Single());
+			await using (var stream = storage.EnumerateFinishedLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -229,8 +234,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEvent("TestChannel", new ClonableTestEventB() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(storage.EnumerateLogs().Single());
-			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
+			output.WriteLogContents(storage.EnumerateFinishedLogs().Single());
+			await using (var stream = storage.EnumerateFinishedLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -280,8 +285,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordSnapshotUnshared("TestChannel", 42, snap);
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(storage.EnumerateLogs().Single());
-			await using (var stream = storage.EnumerateLogs().Single().OpenRead()) {
+			output.WriteLogContents(storage.EnumerateFinishedLogs().Single());
+			await using (var stream = storage.EnumerateFinishedLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -338,6 +343,35 @@ namespace SGL.Analytics.Client.Tests {
 		public class SimpleTestEvent {
 			public string Name { get; set; } = "";
 		}
+
+		private static void readAndAssertSimpleTestEvent(ref JsonElement.ArrayEnumerator arrEnumerator, string expChannel, string expName) {
+			Assert.True(arrEnumerator.MoveNext());
+			var entryElem = arrEnumerator.Current;
+			Assert.True(entryElem.TryGetProperty("Channel", out var actChannel));
+			Assert.Equal(expChannel, actChannel.GetString());
+			Assert.True(entryElem.TryGetProperty("EntryType", out var actEntryType));
+			Assert.Equal("Event", actEntryType.GetString());
+			Assert.True(entryElem.TryGetProperty("EventType", out var actEventType));
+			Assert.Equal("SimpleTestEvent", actEventType.GetString());
+			Assert.True(entryElem.TryGetProperty("Payload", out var payload));
+			Assert.True(payload.TryGetProperty("Name", out var actName));
+			Assert.Equal(expName, actName.GetString());
+		}
+
+		private static void readAndAssertSimpleSnapshot(ref JsonElement.ArrayEnumerator arrEnumerator, string expChannel, int expObjectId, string expPayload) {
+			Assert.True(arrEnumerator.MoveNext());
+			var entryElem = arrEnumerator.Current;
+			Assert.True(entryElem.TryGetProperty("Channel", out var actChannel));
+			Assert.Equal(expChannel, actChannel.GetString());
+			Assert.True(entryElem.TryGetProperty("EntryType", out var actEntryType));
+			Assert.Equal("Snapshot", actEntryType.GetString());
+			Assert.True(entryElem.TryGetProperty("ObjectID", out var actObjectIdElem));
+			Assert.True(actObjectIdElem.TryGetInt32(out var actObjectId));
+			Assert.Equal(expObjectId, actObjectId);
+			Assert.True(entryElem.TryGetProperty("Payload", out var payload));
+			Assert.Equal(expPayload, payload.GetString());
+		}
+
 		[Fact]
 		public async Task RecordedEntriesAreWrittenToTheCorrectLogFile() {
 			analytics.StartNewLog();
@@ -365,41 +399,13 @@ namespace SGL.Analytics.Client.Tests {
 
 			await analytics.FinishAsync();
 
-			foreach (var logFile in storage.EnumerateLogs()) {
+			foreach (var logFile in storage.EnumerateFinishedLogs()) {
 				output.WriteLine("");
 				output.WriteLine($"{logFile.ID}:");
 				output.WriteLogContents(logFile);
 			}
 
-			static void readAndAssertSimpleTestEvent(ref JsonElement.ArrayEnumerator arrEnumerator, string expChannel, string expName) {
-				Assert.True(arrEnumerator.MoveNext());
-				var entryElem = arrEnumerator.Current;
-				Assert.True(entryElem.TryGetProperty("Channel", out var actChannel));
-				Assert.Equal(expChannel, actChannel.GetString());
-				Assert.True(entryElem.TryGetProperty("EntryType", out var actEntryType));
-				Assert.Equal("Event", actEntryType.GetString());
-				Assert.True(entryElem.TryGetProperty("EventType", out var actEventType));
-				Assert.Equal("SimpleTestEvent", actEventType.GetString());
-				Assert.True(entryElem.TryGetProperty("Payload", out var payload));
-				Assert.True(payload.TryGetProperty("Name", out var actName));
-				Assert.Equal(expName, actName.GetString());
-			}
-
-			static void readAndAssertSimpleSnapshot(ref JsonElement.ArrayEnumerator arrEnumerator, string expChannel, int expObjectId, string expPayload) {
-				Assert.True(arrEnumerator.MoveNext());
-				var entryElem = arrEnumerator.Current;
-				Assert.True(entryElem.TryGetProperty("Channel", out var actChannel));
-				Assert.Equal(expChannel, actChannel.GetString());
-				Assert.True(entryElem.TryGetProperty("EntryType", out var actEntryType));
-				Assert.Equal("Snapshot", actEntryType.GetString());
-				Assert.True(entryElem.TryGetProperty("ObjectID", out var actObjectIdElem));
-				Assert.True(actObjectIdElem.TryGetInt32(out var actObjectId));
-				Assert.Equal(expObjectId, actObjectId);
-				Assert.True(entryElem.TryGetProperty("Payload", out var payload));
-				Assert.Equal(expPayload, payload.GetString());
-			}
-
-			var logs = storage.EnumerateLogs().GetEnumerator();
+			var logs = storage.EnumerateFinishedLogs().GetEnumerator();
 			Assert.True(logs.MoveNext());
 			await using (var stream = logs.Current.OpenRead()) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
@@ -436,6 +442,98 @@ namespace SGL.Analytics.Client.Tests {
 				}
 			}
 			Assert.False(logs.MoveNext());
+		}
+		[Fact]
+		public async Task PreviousPendingLogFilesAreUploadedOnRegisteredStartup() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+
+			List<ILogStorage.ILogFile> logs = new();
+			for (int i = 0; i < 5; ++i) {
+				using (var writer = new StreamWriter(storage.CreateLogFile(out var logFile))) {
+					writer.WriteLine($"Dummy {i}");
+					logs.Add(logFile);
+				}
+			}
+
+			ds.UserID = Guid.NewGuid();
+			var collectorClient = new FakeLogCollectorClient();
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
+			await analytics.FinishAsync();
+
+			Assert.Equal(5, collectorClient.UploadedLogFileIds.Count);
+			foreach (var log in logs) {
+				Assert.Contains(log.ID, collectorClient.UploadedLogFileIds);
+			}
+		}
+
+		[Fact]
+		public async Task FailedUploadsAreRetriedOnStartup() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			ds.UserID = Guid.NewGuid();
+			var collectorClient = new FakeLogCollectorClient();
+			collectorClient.StatusCode = HttpStatusCode.InternalServerError;
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
+			List<Guid> logIds = new();
+			logIds.Add(analytics.StartNewLog());
+			logIds.Add(analytics.StartNewLog());
+			logIds.Add(analytics.StartNewLog());
+			await analytics.FinishAsync();
+			Assert.Empty(collectorClient.UploadedLogFileIds);
+
+			collectorClient.StatusCode = HttpStatusCode.NoContent;
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
+			await analytics.FinishAsync();
+			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
+		}
+
+		[Fact]
+		public async Task OperationCanBeResumedAfterFinishCompleted() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			ds.UserID = Guid.NewGuid();
+			var collectorClient = new FakeLogCollectorClient();
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
+			List<Guid> logIds = new();
+
+			logIds.Add(analytics.StartNewLog());
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test A" });
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test B" });
+			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test C" });
+			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap A");
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test D" });
+			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap B");
+			analytics.RecordSnapshotUnshared("Channel 3", 2, "Snap C");
+
+			await analytics.FinishAsync();
+
+			// Atempt to resume operation:
+			logIds.Add(analytics.StartNewLog());
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test E" });
+			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test F" });
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test G" });
+			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap D");
+			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test H" });
+			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test I" });
+			analytics.RecordSnapshotUnshared("Channel 3", 2, "Snap E");
+
+			logIds.Add(analytics.StartNewLog());
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test J" });
+			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test K" });
+			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap F");
+			var lastLog = storage.EnumerateLogs().Last();
+
+			await analytics.FinishAsync();
+
+			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
+
+			await using (var stream = lastLog.OpenRead()) {
+				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
+					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
+					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test J");
+					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 2", "Test K");
+					readAndAssertSimpleSnapshot(ref arrEnumerator, "Channel 3", 1, "Snap F");
+				}
+			}
+
 		}
 	}
 }
