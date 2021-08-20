@@ -73,10 +73,12 @@ namespace SGL.Analytics.Client {
 		}
 
 		private async Task writePendingLogsAsync() {
+			logger.LogDebug("Started log writer to asynchronously flush log entries to disk.");
 			var arrOpen = Encoding.UTF8.GetBytes(jsonSerializerOptions.WriteIndented ? ("[" + Environment.NewLine) : "[");
 			var arrClose = Encoding.UTF8.GetBytes(jsonSerializerOptions.WriteIndented ? (Environment.NewLine + "]") : "]");
 			var delim = Encoding.UTF8.GetBytes(jsonSerializerOptions.WriteIndented ? ("," + Environment.NewLine) : ",");
 			await foreach (var logQueue in pendingLogQueues.DequeueAllAsync()) {
+				logger.LogDebug("Starting to write entries for data log file {logFile}...", logQueue.logFile.ID);
 				var stream = logQueue.writeStream;
 				try {
 					bool first = true;
@@ -99,10 +101,12 @@ namespace SGL.Analytics.Client {
 						stream.Dispose();
 					}
 				}
+				logger.LogDebug("Finished writing entries for data log file {logFile}, queueing it for upload.", logQueue.logFile.ID);
 				uploadQueue.Enqueue(logQueue.logFile);
 				startFileUploadingIfNotRunning();
 			}
 			uploadQueue.Finish();
+			logger.LogDebug("Ending log writer because the pending log queue is finished.");
 		}
 
 		private void ensureLogWritingActive() {
@@ -121,10 +125,12 @@ namespace SGL.Analytics.Client {
 				userIDOpt = rootDataStore.UserID;
 			}
 			if (userIDOpt is null) return;
+			logger.LogDebug("Started log uploader to asynchronously upload finished data logs to the backend.");
 			var userID = (Guid)userIDOpt;
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
 				bool removing = false;
 				try {
+					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
 					Task uploadTask;
 					lock (lockObject) { // At the beginning, of the upload task, the stream for the log file needs to be aquired under lock.
 						uploadTask = logCollectorClient.UploadLogFileAsync(appName, appAPIToken, userID, logFile);
@@ -134,6 +140,7 @@ namespace SGL.Analytics.Client {
 					lock (lockObject) { // ILogStorage implementations may need to do this under lock.
 						logFile.Remove();
 					}
+					logger.LogDebug("Successfully uploaded data log file {logFile}.", logFile.ID);
 				}
 				catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.RequestEntityTooLarge) {
 					// TODO: Find a better way to handle log files that are too large to upload.
@@ -176,6 +183,7 @@ namespace SGL.Analytics.Client {
 				existingCompleteLogs = logStorage.EnumerateFinishedLogs().ToList();
 			}
 			if (existingCompleteLogs.Count == 0) return;
+			logger.LogDebug("Queueing existing data log files for upload...");
 			foreach (var logFile in existingCompleteLogs) {
 				uploadQueue.Enqueue(logFile);
 			}
@@ -239,12 +247,14 @@ namespace SGL.Analytics.Client {
 			if (IsRegistered()) {
 				throw new InvalidOperationException("User is already registered.");
 			}
+			logger.LogInformation("Starting user registration process...");
 			// TODO: Perform POST to Backend
 			lock (lockObject) {
 				// TODO: Store returned UserID in rootDataStore.UserID
 			}
 			// TODO: Ensure thread-safety of rootDataStore. If a new RegisterAsync operation is started while another one is still running, they could race on rootDataStore.UserID. => Forbid this in API contract. The public methods are not supposed to be used concurrently anyway.
 			await rootDataStore.SaveAsync();
+			logger.LogInformation("Successfully registered user.");
 			startUploadingExistingLogs();
 		}
 
@@ -266,6 +276,12 @@ namespace SGL.Analytics.Client {
 			}
 			pendingLogQueues.Enqueue(newLogQueue);
 			oldLogQueue?.entryQueue?.Finish();
+			if (oldLogQueue is null) {
+				logger.LogInformation("Started new data log file {newId}.", logId);
+			}
+			else {
+				logger.LogInformation("Started new data log file {newId} and finished old data log file {oldId}.", logId, oldLogQueue.logFile.ID);
+			}
 			ensureLogWritingActive();
 			return logId;
 		}
@@ -287,6 +303,7 @@ namespace SGL.Analytics.Client {
 		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
 		/// </remarks>
 		public async Task FinishAsync() {
+			logger.LogDebug("Finishing asynchronous data log writing and uploading...");
 			Task? logWriter;
 			lock (lockObject) {
 				logWriter = this.logWriter;
@@ -316,6 +333,7 @@ namespace SGL.Analytics.Client {
 			// As a completed channel can not be reopened, we need to replace the queue object (containing the channel) itself.
 			pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
 			uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
+			logger.LogInformation("Finished asynchronous data log writing and uploading.");
 		}
 
 		/// <summary>

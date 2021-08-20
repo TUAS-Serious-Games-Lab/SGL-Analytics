@@ -30,7 +30,7 @@ namespace SGL.Analytics.Client.Tests {
 
 		public ClientIntegrationTest(ITestOutputHelper output, MockServerFixture serverFixture) {
 			this.output = output;
-			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output));
+			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
 			this.serverFixture = serverFixture;
 
 			rootDS = new FileRootDataStore(appName);
