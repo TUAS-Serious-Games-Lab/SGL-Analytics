@@ -461,5 +461,55 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.Contains(log.ID, collectorClient.UploadedLogFileIds);
 			}
 		}
+
+		[Fact]
+		public async Task OperationCanBeResumedAfterFinishCompleted() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			ds.UserID = Guid.NewGuid();
+			var collectorClient = new FakeLogCollectorClient();
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient);
+			List<Guid> logIds = new();
+
+			logIds.Add(analytics.StartNewLog());
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test A" });
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test B" });
+			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test C" });
+			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap A");
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test D" });
+			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap B");
+			analytics.RecordSnapshotUnshared("Channel 3", 2, "Snap C");
+
+			await analytics.FinishAsync();
+
+			// Atempt to resume operation:
+			logIds.Add(analytics.StartNewLog());
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test E" });
+			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test F" });
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test G" });
+			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap D");
+			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test H" });
+			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test I" });
+			analytics.RecordSnapshotUnshared("Channel 3", 2, "Snap E");
+
+			logIds.Add(analytics.StartNewLog());
+			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test J" });
+			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test K" });
+			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap F");
+			var lastLog = storage.EnumerateLogs().Last();
+
+			await analytics.FinishAsync();
+
+			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
+
+			await using (var stream = lastLog.OpenRead()) {
+				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
+					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
+					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test J");
+					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 2", "Test K");
+					readAndAssertSimpleSnapshot(ref arrEnumerator, "Channel 3", 1, "Snap F");
+				}
+			}
+
+		}
 	}
 }
