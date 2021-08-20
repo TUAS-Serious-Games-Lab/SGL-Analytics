@@ -283,6 +283,14 @@ namespace SGL.Analytics.Client {
 			if (logUploader is not null) {
 				await logUploader;
 			}
+			// At this point, logWriter and logUploader are completed or were never started.
+			// We can therefore restore the initial state before the first StartNewLog call safely without lock-based coordination.
+			this.logWriter = null;
+			this.logUploader = null;
+			currentLogQueue = null;
+			// As a completed channel can not be reopened, we need to replace the queue object (containing the channel) itself.
+			pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
+			uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
 		}
 
 		/// <summary>
