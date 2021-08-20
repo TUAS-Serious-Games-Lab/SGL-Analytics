@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -460,6 +461,26 @@ namespace SGL.Analytics.Client.Tests {
 			foreach (var log in logs) {
 				Assert.Contains(log.ID, collectorClient.UploadedLogFileIds);
 			}
+		}
+
+		[Fact]
+		public async Task FailedUploadsAreRetriedOnStartup() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			ds.UserID = Guid.NewGuid();
+			var collectorClient = new FakeLogCollectorClient();
+			collectorClient.StatusCode = HttpStatusCode.InternalServerError;
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient);
+			List<Guid> logIds = new();
+			logIds.Add(analytics.StartNewLog());
+			logIds.Add(analytics.StartNewLog());
+			logIds.Add(analytics.StartNewLog());
+			await analytics.FinishAsync();
+			Assert.Empty(collectorClient.UploadedLogFileIds);
+
+			collectorClient.StatusCode = HttpStatusCode.NoContent;
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient);
+			await analytics.FinishAsync();
+			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
 		}
 
 		[Fact]
