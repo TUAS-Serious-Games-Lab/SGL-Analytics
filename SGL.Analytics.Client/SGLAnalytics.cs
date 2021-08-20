@@ -207,6 +207,9 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="userData">The user data for the registration, that is to be sent to the server.</param>
 		/// <returns>A Task representing the registration operation. Wait for it's completion before relying on logs being uploaded. Logs recorded on a client that hasn't completed registration are stored only locally until the registration is complete and the user id required for the upload is obtained.</returns>
+		/// <remarks>
+		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
+		/// </remarks>
 		public async Task RegisterAsync(UserData userData) {
 			if (IsRegistered()) {
 				throw new InvalidOperationException("User is already registered.");
@@ -224,6 +227,9 @@ namespace SGL.Analytics.Client {
 		/// Ends the current analytics log file if there is one, and begin a new log file to which subsequent Record-operations write their data.
 		/// Call this when starting a new session, e.g. a new game playthrough or a more short-term game session.
 		/// </summary>
+		/// <remarks>
+		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called concurrently with this.
+		/// </remarks>
 		public Guid StartNewLog() {
 			LogQueue? oldLogQueue;
 			LogQueue? newLogQueue;
@@ -252,6 +258,8 @@ namespace SGL.Analytics.Client {
 		///		<item>The server rejects the upload due to an invalid user id or application id. In case of a transient configuration error, the upload will be retried later, when the application is used again. The server should also log this problem for investigation.</item>
 		///		<item>The server rejects the upload due to exceeding the maximum file size. In this case, the file is moved to a special directory for further investigation to not waste the users bandwidth with further attempts. The server should also log this problem to indicate, that an application generates larger than expected log files.</item>
 		/// </list>
+		///
+		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
 		/// </remarks>
 		public async Task FinishAsync() {
 			Task? logWriter;
@@ -282,7 +290,11 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="channel">A channel name that is used to categorize analytics log entries into multiple logical data streams.</param>
 		/// <param name="eventObject">The event payload data to write to the log in JSON form. The object needs to be clonable to obtain an unshared copy because the log recording to disk is done asynchronously and the object content otherwise might have changed when it is read leater. If the object is created specifically for this call, or will not be modified after the call, call RecordEventUnshared instead to avoid this copy.</param>
-		/// <remarks>The recorded entry has a field containing the event type as a string. If the dynamic type of eventObject has an <c>[EventType(name)]</c> attribute (<see cref="EventTypeAttribute"/>), the name given there ist used. Otherwise the name of the class itself is used.</remarks>
+		/// <remarks>
+		/// The recorded entry has a field containing the event type as a string. If the dynamic type of eventObject has an <c>[EventType(name)]</c> attribute (<see cref="EventTypeAttribute"/>), the name given there ist used. Otherwise the name of the class itself is used.
+		///
+		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
+		/// </remarks>
 		public void RecordEvent(string channel, ICloneable eventObject) {
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			RecordEventUnshared(channel, eventObject.Clone());
@@ -292,7 +304,11 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="channel">A channel name that is used to categorize analytics log entries into multiple logical data streams.</param>
 		/// <param name="eventObject">The event payload data to write to the log in JSON form. As the log recording to disk is done asynchronously, the ownership of the given object is transferred to the analytics client and must not be changed by the caller afterwards. The easiest way to ensure this is by creating the event object inside the call and not holding other references to it.</param>
-		/// <remarks>The recorded entry has a field containing the event type as a string. If the dynamic type of eventObject has an <c>[EventType(name)]</c> attribute (<see cref="EventTypeAttribute"/>), the name given there ist used. Otherwise the name of the class itself is used.</remarks>
+		/// <remarks>
+		/// The recorded entry has a field containing the event type as a string. If the dynamic type of eventObject has an <c>[EventType(name)]</c> attribute (<see cref="EventTypeAttribute"/>), the name given there ist used. Otherwise the name of the class itself is used.
+		///
+		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
+		/// </remarks>
 		public void RecordEventUnshared(string channel, object eventObject) {
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			var eventType = eventObject.GetType();
@@ -306,6 +322,7 @@ namespace SGL.Analytics.Client {
 		/// <param name="channel">A channel name that is used to categorize analytics log entries into multiple logical data streams.</param>
 		/// <param name="objectId">An ID of the snapshotted object.</param>
 		/// <param name="snapshotPayloadData">An object encapsulating the snapshotted object state to write to the log in JSON form. As the log recording to disk is done asynchronously, the ownership of the given object is transferred to the analytics client and must not be changed by the caller afterwards. The easiest way to ensure this is by creating the snapshot state object inside the call and not holding other references to it.</param>
+		/// <remarks>This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.</remarks>
 		public void RecordSnapshotUnshared(string channel, object objectId, object snapshotPayloadData) {
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewSnapshotEntry(channel, DateTime.Now, objectId), snapshotPayloadData));
