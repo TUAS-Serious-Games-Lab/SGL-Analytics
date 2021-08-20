@@ -37,7 +37,10 @@ namespace SGL.Analytics.Client.Tests {
 				}
 				builder.Append(" ");
 				scopes.ForEachScope((scope, sb) => sb.AppendFormat("<{0}>", scopes), builder);
-				output.WriteLine(builder.ToString());
+				var str = builder.ToString();
+				lock (output) {
+					output.WriteLine(str);
+				}
 			}
 		}
 
