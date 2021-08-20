@@ -339,6 +339,35 @@ namespace SGL.Analytics.Client.Tests {
 		public class SimpleTestEvent {
 			public string Name { get; set; } = "";
 		}
+
+		private static void readAndAssertSimpleTestEvent(ref JsonElement.ArrayEnumerator arrEnumerator, string expChannel, string expName) {
+			Assert.True(arrEnumerator.MoveNext());
+			var entryElem = arrEnumerator.Current;
+			Assert.True(entryElem.TryGetProperty("Channel", out var actChannel));
+			Assert.Equal(expChannel, actChannel.GetString());
+			Assert.True(entryElem.TryGetProperty("EntryType", out var actEntryType));
+			Assert.Equal("Event", actEntryType.GetString());
+			Assert.True(entryElem.TryGetProperty("EventType", out var actEventType));
+			Assert.Equal("SimpleTestEvent", actEventType.GetString());
+			Assert.True(entryElem.TryGetProperty("Payload", out var payload));
+			Assert.True(payload.TryGetProperty("Name", out var actName));
+			Assert.Equal(expName, actName.GetString());
+		}
+
+		private static void readAndAssertSimpleSnapshot(ref JsonElement.ArrayEnumerator arrEnumerator, string expChannel, int expObjectId, string expPayload) {
+			Assert.True(arrEnumerator.MoveNext());
+			var entryElem = arrEnumerator.Current;
+			Assert.True(entryElem.TryGetProperty("Channel", out var actChannel));
+			Assert.Equal(expChannel, actChannel.GetString());
+			Assert.True(entryElem.TryGetProperty("EntryType", out var actEntryType));
+			Assert.Equal("Snapshot", actEntryType.GetString());
+			Assert.True(entryElem.TryGetProperty("ObjectID", out var actObjectIdElem));
+			Assert.True(actObjectIdElem.TryGetInt32(out var actObjectId));
+			Assert.Equal(expObjectId, actObjectId);
+			Assert.True(entryElem.TryGetProperty("Payload", out var payload));
+			Assert.Equal(expPayload, payload.GetString());
+		}
+
 		[Fact]
 		public async Task RecordedEntriesAreWrittenToTheCorrectLogFile() {
 			analytics.StartNewLog();
@@ -370,34 +399,6 @@ namespace SGL.Analytics.Client.Tests {
 				output.WriteLine("");
 				output.WriteLine($"{logFile.ID}:");
 				output.WriteLogContents(logFile);
-			}
-
-			static void readAndAssertSimpleTestEvent(ref JsonElement.ArrayEnumerator arrEnumerator, string expChannel, string expName) {
-				Assert.True(arrEnumerator.MoveNext());
-				var entryElem = arrEnumerator.Current;
-				Assert.True(entryElem.TryGetProperty("Channel", out var actChannel));
-				Assert.Equal(expChannel, actChannel.GetString());
-				Assert.True(entryElem.TryGetProperty("EntryType", out var actEntryType));
-				Assert.Equal("Event", actEntryType.GetString());
-				Assert.True(entryElem.TryGetProperty("EventType", out var actEventType));
-				Assert.Equal("SimpleTestEvent", actEventType.GetString());
-				Assert.True(entryElem.TryGetProperty("Payload", out var payload));
-				Assert.True(payload.TryGetProperty("Name", out var actName));
-				Assert.Equal(expName, actName.GetString());
-			}
-
-			static void readAndAssertSimpleSnapshot(ref JsonElement.ArrayEnumerator arrEnumerator, string expChannel, int expObjectId, string expPayload) {
-				Assert.True(arrEnumerator.MoveNext());
-				var entryElem = arrEnumerator.Current;
-				Assert.True(entryElem.TryGetProperty("Channel", out var actChannel));
-				Assert.Equal(expChannel, actChannel.GetString());
-				Assert.True(entryElem.TryGetProperty("EntryType", out var actEntryType));
-				Assert.Equal("Snapshot", actEntryType.GetString());
-				Assert.True(entryElem.TryGetProperty("ObjectID", out var actObjectIdElem));
-				Assert.True(actObjectIdElem.TryGetInt32(out var actObjectId));
-				Assert.Equal(expObjectId, actObjectId);
-				Assert.True(entryElem.TryGetProperty("Payload", out var payload));
-				Assert.Equal(expPayload, payload.GetString());
 			}
 
 			var logs = storage.EnumerateFinishedLogs().GetEnumerator();
