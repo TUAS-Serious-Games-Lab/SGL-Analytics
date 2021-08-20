@@ -1,4 +1,5 @@
-﻿using System;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -19,6 +20,7 @@ namespace SGL.Analytics.Client.Tests {
 		private const string appName = "SGLAnalyticsClientIntegrationTest";
 		private const string appAPIToken = "FakeApiToken";
 		private ITestOutputHelper output;
+		private ILoggerFactory loggerFactory;
 		private MockServerFixture serverFixture;
 		private DirectoryLogStorage storage;
 		private FileRootDataStore rootDS;
@@ -28,6 +30,7 @@ namespace SGL.Analytics.Client.Tests {
 
 		public ClientIntegrationTest(ITestOutputHelper output, MockServerFixture serverFixture) {
 			this.output = output;
+			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output));
 			this.serverFixture = serverFixture;
 
 			rootDS = new FileRootDataStore(appName);
@@ -35,7 +38,7 @@ namespace SGL.Analytics.Client.Tests {
 			rootDS.SaveAsync().Wait();
 			storage = new DirectoryLogStorage(Path.Combine(rootDS.DataDirectory, "DataLogs"));
 			client = new LogCollectorRestClient(new Uri(serverFixture.Server.Urls.First()));
-			analytics = new SGLAnalytics(appName, appAPIToken, rootDS, storage, client);
+			analytics = new SGLAnalytics(appName, appAPIToken, rootDS, storage, client, loggerFactory.CreateLogger<SGLAnalytics>());
 		}
 
 		public class SimpleTestEvent {
