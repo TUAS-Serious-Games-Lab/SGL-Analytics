@@ -19,6 +19,7 @@
       <PackagePath>lib\$(TargetFramework)\</PackagePath>
       <Pack>true</Pack>
     </Content>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
 
     <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj">
       <PrivateAssets>all</PrivateAssets>

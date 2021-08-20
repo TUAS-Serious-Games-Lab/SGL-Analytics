@@ -1,4 +1,5 @@
-﻿using System;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -35,6 +36,7 @@ namespace SGL.Analytics.Client {
 
 		private Task? logUploader = null;
 
+		private ILogger<SGLAnalytics> logger;
 		private class EnumNamingPolicy : JsonNamingPolicy {
 			public override string ConvertName(string name) => name;
 		}
@@ -169,9 +171,27 @@ namespace SGL.Analytics.Client {
 			startFileUploadingIfNotRunning();
 		}
 
-		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null) {
+		private class NoOpLogger : ILogger<SGLAnalytics> {
+			private class DummyScope : IDisposable {
+				public void Dispose() { }
+			}
+			public IDisposable BeginScope<TState>(TState state) {
+				return new DummyScope();
+			}
+
+			public bool IsEnabled(LogLevel logLevel) {
+				return false;
+			}
+
+			public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter) {
+			}
+		}
+
+		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
+			if (diagnosticsLogger is null) diagnosticsLogger = new NoOpLogger();
+			logger = diagnosticsLogger;
 			if (rootDataStore is null) rootDataStore = new FileRootDataStore(appName);
 			this.rootDataStore = rootDataStore;
 			if (logStorage is null) logStorage = new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"));
@@ -181,7 +201,6 @@ namespace SGL.Analytics.Client {
 				startUploadingExistingLogs();
 			}
 		}
-
 
 		public string AppName { get => appName; }
 
