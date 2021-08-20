@@ -457,7 +457,7 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync();
 
 			Assert.Equal(5, collectorClient.UploadedLogFileIds.Count);
-			foreach(var log in logs) {
+			foreach (var log in logs) {
 				Assert.Contains(log.ID, collectorClient.UploadedLogFileIds);
 			}
 		}

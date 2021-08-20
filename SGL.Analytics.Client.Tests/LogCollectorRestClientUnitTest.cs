@@ -77,7 +77,7 @@ namespace SGL.Analytics.Client.Tests {
 						.WithHeader("LogFileId", guidMatcher))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
 
-			var ex = await Assert.ThrowsAsync<HttpRequestException>(()=>client.UploadLogFileAsync("LogCollectorRestClientUnitTest", "FakeApiToken", userId, logFile));
+			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.UploadLogFileAsync("LogCollectorRestClientUnitTest", "FakeApiToken", userId, logFile));
 			Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
 		}
 	}
