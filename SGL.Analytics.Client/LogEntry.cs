@@ -14,9 +14,6 @@ namespace SGL.Analytics.Client {
 			public LogEntryType EntryType { get; private set; }
 			public string? EventType { get; private set; } = null;
 			public object? ObjectID { get; private set; } = null;
-
-			// TODO: Prevent the serializer from outputting both, EventType and ObjectID, while only one can ever be active at a time.
-
 			private EntryMetadata(string channel, DateTime timeStamp, LogEntryType entryType) {
 				Channel = channel;
 				TimeStamp = timeStamp;
