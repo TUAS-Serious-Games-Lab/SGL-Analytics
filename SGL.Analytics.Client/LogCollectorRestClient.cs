@@ -16,7 +16,7 @@ namespace SGL.Analytics.Client {
 			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 		}
 
-		// TODO: Make base URI and API endpoint URI configurable.
+		// TODO: Support configuration of URIs through general configuration system.
 		public LogCollectorRestClient() : this(new Uri("http://localhost:5001/")) { }
 		public LogCollectorRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/AnalyticsLog", UriKind.Relative)) { }
 		public LogCollectorRestClient(Uri backendServerBaseUri, Uri logCollectorApiEndpoint) {
