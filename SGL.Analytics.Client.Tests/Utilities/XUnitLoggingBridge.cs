@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit.Abstractions;
 
@@ -10,6 +11,7 @@ namespace SGL.Analytics.Client.Tests {
 
 	public class XUnitLoggingProvider : ILoggerProvider {
 		private ITestOutputHelper output;
+		private static ThreadLocal<StringBuilder> cachedStringBuilder = new(() => new StringBuilder());
 
 		public class XUnitLogger : ILogger {
 			private ITestOutputHelper output;
@@ -30,7 +32,8 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) {
-				StringBuilder builder = new StringBuilder();
+				StringBuilder builder = (cachedStringBuilder.Value ??= new StringBuilder());
+				builder.Clear();
 				builder.AppendFormat("{0} [{1}] {2}", logLevel.ToString(), categoryName, formatter(state, exception));
 				if (exception != null) {
 					builder.Append(exception);
