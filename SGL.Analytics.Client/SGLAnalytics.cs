@@ -169,10 +169,12 @@ namespace SGL.Analytics.Client {
 			startFileUploadingIfNotRunning();
 		}
 
-		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage, ILogCollectorClient? logCollectorClient) {
+		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
+			if (rootDataStore is null) rootDataStore = new FileRootDataStore(appName);
 			this.rootDataStore = rootDataStore;
+			if (logStorage is null) logStorage = new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"));
 			this.logStorage = logStorage;
 			this.logCollectorClient = logCollectorClient;
 			if (IsRegistered()) {
@@ -180,13 +182,6 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogStorage logStorage) : this(appName, appAPIToken, rootDataStore, logStorage, new LogCollectorRestClient()) { }
-		public SGLAnalytics(string appName, string appAPIToken) : this(appName, appAPIToken, new FileRootDataStore(appName)) { }
-		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore) : this(appName, appAPIToken, rootDataStore, new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"))) { }
-		public SGLAnalytics(string appName, string appAPIToken, ILogStorage logStorage) : this(appName, appAPIToken, new FileRootDataStore(appName), logStorage) { }
-		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore rootDataStore, ILogCollectorClient? logCollectorClient) : this(appName, appAPIToken, rootDataStore, new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs")), logCollectorClient) { }
-		public SGLAnalytics(string appName, string appAPIToken, ILogStorage logStorage, ILogCollectorClient? logCollectorClient) : this(appName, appAPIToken, new FileRootDataStore(appName), logStorage, logCollectorClient) { }
-		public SGLAnalytics(string appName, string appAPIToken, ILogCollectorClient? logCollectorClient) : this(appName, appAPIToken, new FileRootDataStore(appName), logCollectorClient) { }
 
 		public string AppName { get => appName; }
 
