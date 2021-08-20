@@ -224,16 +224,19 @@ namespace SGL.Analytics.Client {
 		/// Ends the current analytics log file if there is one, and begin a new log file to which subsequent Record-operations write their data.
 		/// Call this when starting a new session, e.g. a new game playthrough or a more short-term game session.
 		/// </summary>
-		public void StartNewLog() {
+		public Guid StartNewLog() {
 			LogQueue? oldLogQueue;
 			LogQueue? newLogQueue;
+			Guid logId;
 			lock (lockObject) {
 				oldLogQueue = currentLogQueue;
 				currentLogQueue = newLogQueue = new LogQueue(logStorage.CreateLogFile(out var logFile), logFile);
+				logId = logFile.ID;
 			}
 			pendingLogQueues.Enqueue(newLogQueue);
 			oldLogQueue?.entryQueue?.Finish();
 			ensureLogWritingActive();
+			return logId;
 		}
 
 		/// <summary>
