@@ -133,6 +133,7 @@ namespace SGL.Analytics.Client.Tests {
 			public DateTime EndTime { get; set; } = DateTime.Now;
 
 			public bool WriteClosed { get; set; } = false;
+			public bool Deleted { get; set; } = false;
 
 			public MemoryStream Content => content;
 
@@ -147,8 +148,7 @@ namespace SGL.Analytics.Client.Tests {
 			public Stream OpenReadRaw() => new ReadStreamWrapper(content);
 
 			public void Remove() {
-				content.Dispose();
-				storage.logs.Remove(this);
+				Deleted = true;
 			}
 		}
 
@@ -161,8 +161,8 @@ namespace SGL.Analytics.Client.Tests {
 			return new WriteStreamWrapper(log.Content, () => { log.EndTime = DateTime.Now; log.WriteClosed = true; });
 		}
 
-		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() => logs;
-		public IEnumerable<ILogStorage.ILogFile> EnumerateFinishedLogs() => logs.Where(log => log.WriteClosed);
+		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() => logs.Where(log => !log.Deleted);
+		public IEnumerable<ILogStorage.ILogFile> EnumerateFinishedLogs() => logs.Where(log => !log.Deleted && log.WriteClosed);
 
 		public void Dispose() {
 			foreach (var log in logs) {
