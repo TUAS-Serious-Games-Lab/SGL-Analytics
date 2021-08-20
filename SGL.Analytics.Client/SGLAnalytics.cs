@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -37,6 +36,7 @@ namespace SGL.Analytics.Client {
 		private Task? logUploader = null;
 
 		private ILogger<SGLAnalytics> logger;
+
 		private class EnumNamingPolicy : JsonNamingPolicy {
 			public override string ConvertName(string name) => name;
 		}
@@ -123,12 +123,14 @@ namespace SGL.Analytics.Client {
 			if (userIDOpt is null) return;
 			var userID = (Guid)userIDOpt;
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
+				bool removing = false;
 				try {
 					Task uploadTask;
 					lock (lockObject) { // At the beginning, of the upload task, the stream for the log file needs to be aquired under lock.
 						uploadTask = logCollectorClient.UploadLogFileAsync(appName, appAPIToken, userID, logFile);
 					}
 					await uploadTask;
+					removing = true;
 					lock (lockObject) { // ILogStorage implementations may need to do this under lock.
 						logFile.Remove();
 					}
@@ -137,11 +139,20 @@ namespace SGL.Analytics.Client {
 					// TODO: Find a better way to handle log files that are too large to upload.
 					// Leaving the file in storage whould imply that it is retried later, which would waste user's bandwidth only to fail again, unless the server-side limit was increased.
 					// Maybe, we could store it locally, in a separate folder (or similar) for potential manual troubleshooting.
+					logger.LogError("Uploading data log {logId} failed because it was too large, it will be removed, because retrying a too large file would waste bandwidth, just to fail again.", logFile.ID);
 					logFile.Remove();
 				}
+				catch (HttpRequestException ex) when (ex.StatusCode is not null) {
+					logger.LogError("Uploading data log {logId} failed with status code {statusCode}. It will be retried at next startup.", logFile.ID, ex.StatusCode);
+				}
+				catch (HttpRequestException ex) {
+					logger.LogError("Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup.", logFile.ID, ex.Message);
+				}
+				catch (Exception ex) when (!removing) {
+					logger.LogError("Uploading data log {logId} failed with an unexpected exception with message \"{message}\". It will be retried at next startup.", logFile.ID, ex.Message);
+				}
 				catch (Exception ex) {
-					// TODO: Proper logging
-					Debug.WriteLine(ex);
+					logger.LogError("Removing data log {logId} failed with an unexpected exception with message \"{message}\".", logFile.ID, ex.Message);
 				}
 			}
 		}
