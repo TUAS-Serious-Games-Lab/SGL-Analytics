@@ -1,4 +1,5 @@
-﻿using System;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,9 +17,11 @@ namespace SGL.Analytics.Client.Tests {
 		private FakeRootDataStore ds = new FakeRootDataStore();
 		private SGLAnalytics analytics;
 		private ITestOutputHelper output;
+		private ILoggerFactory loggerFactory;
 
 		public ClientMainUnitTest(ITestOutputHelper output) {
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, logCollectorClient: null);
+			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output));
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, logCollectorClient: null, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
 			this.output = output;
 		}
 
@@ -454,7 +457,7 @@ namespace SGL.Analytics.Client.Tests {
 
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient);
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
 			await analytics.FinishAsync();
 
 			Assert.Equal(5, collectorClient.UploadedLogFileIds.Count);
@@ -469,7 +472,7 @@ namespace SGL.Analytics.Client.Tests {
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.StatusCode = HttpStatusCode.InternalServerError;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient);
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
 			List<Guid> logIds = new();
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
@@ -478,7 +481,7 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Empty(collectorClient.UploadedLogFileIds);
 
 			collectorClient.StatusCode = HttpStatusCode.NoContent;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient);
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
 			await analytics.FinishAsync();
 			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
 		}
@@ -488,7 +491,7 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient);
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
 			List<Guid> logIds = new();
 
 			logIds.Add(analytics.StartNewLog());
