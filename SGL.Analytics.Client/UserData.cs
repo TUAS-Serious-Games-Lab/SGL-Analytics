@@ -1,4 +1,3 @@
-using SGL.Analytics.Client.Utilities;
 using SGL.Analytics.DTO;
 
 namespace SGL.Analytics.Client {
