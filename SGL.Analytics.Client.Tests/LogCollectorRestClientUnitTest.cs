@@ -12,6 +12,7 @@ using Xunit;
 namespace SGL.Analytics.Client.Tests {
 	[Collection("Mock Web Server")]
 	public class LogCollectorRestClientUnitTest : IDisposable {
+		private const string appAPIToken = "FakeApiToken";
 		private MockServerFixture serverFixture;
 		private LogCollectorRestClient client;
 		private InMemoryLogStorage storage;
@@ -44,14 +45,14 @@ namespace SGL.Analytics.Client.Tests {
 						.WithHeader("LogFileId", guidMatcher))
 					.RespondWith(Response.Create().WithStatusCode(System.Net.HttpStatusCode.NoContent));
 
-			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest", "FakeApiToken", userId, logFile);
+			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, userId, logFile);
 
 			Assert.Single(serverFixture.Server.LogEntries);
 			var logEntry = serverFixture.Server.LogEntries.Single();
 			Assert.Equal(content, logEntry.RequestMessage.Body);
 			var headers = logEntry.RequestMessage.Headers;
 			Assert.Equal("LogCollectorRestClientUnitTest", headers["AppName"].Single());
-			Assert.Equal("FakeApiToken", headers["App-API-Token"].Single());
+			Assert.Equal(appAPIToken, headers["App-API-Token"].Single());
 			Assert.Equal(userId, Guid.Parse(headers["UserId"].Single()));
 			Assert.Equal(logFile.ID, Guid.Parse(headers["LogFileId"].Single()));
 			Assert.Equal(logFile.CreationTime, DateTime.Parse(headers["CreationTime"].Single()));
@@ -74,7 +75,7 @@ namespace SGL.Analytics.Client.Tests {
 						.WithHeader("LogFileId", guidMatcher))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
 
-			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.UploadLogFileAsync("LogCollectorRestClientUnitTest", "FakeApiToken", userId, logFile));
+			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, userId, logFile));
 			Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
 		}
 	}
