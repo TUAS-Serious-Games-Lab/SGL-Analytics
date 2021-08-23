@@ -1,8 +1,8 @@
 namespace SGL.Analytics.Client {
-	public class UserData {
+	public class BaseUserData {
 		public string Username { get; set; }
 
-		UserData(string username) {
+		public BaseUserData(string username) {
 			Username = username;
 		}
 	}

@@ -243,7 +243,7 @@ namespace SGL.Analytics.Client {
 		/// <remarks>
 		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
 		/// </remarks>
-		public async Task RegisterAsync(UserData userData) {
+		public async Task RegisterAsync(BaseUserData userData) {
 			if (IsRegistered()) {
 				throw new InvalidOperationException("User is already registered.");
 			}
