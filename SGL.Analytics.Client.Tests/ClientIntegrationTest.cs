@@ -25,7 +25,7 @@ namespace SGL.Analytics.Client.Tests {
 		private MockServerFixture serverFixture;
 		private DirectoryLogStorage storage;
 		private FileRootDataStore rootDS;
-		private LogCollectorRestClient client;
+		private LogCollectorRestClient logCollectorClient;
 		private SGLAnalytics analytics;
 		private bool finished = false;
 
@@ -38,8 +38,8 @@ namespace SGL.Analytics.Client.Tests {
 			rootDS.UserID = Guid.NewGuid();
 			rootDS.SaveAsync().Wait();
 			storage = new DirectoryLogStorage(Path.Combine(rootDS.DataDirectory, "DataLogs"));
-			client = new LogCollectorRestClient(new Uri(serverFixture.Server.Urls.First()));
-			analytics = new SGLAnalytics(appName, appAPIToken, rootDS, storage, client, loggerFactory.CreateLogger<SGLAnalytics>());
+			logCollectorClient = new LogCollectorRestClient(new Uri(serverFixture.Server.Urls.First()));
+			analytics = new SGLAnalytics(appName, appAPIToken, rootDS, storage, logCollectorClient, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
 		}
 
 		public class SimpleTestEvent {

@@ -27,6 +27,7 @@ namespace SGL.Analytics.Client {
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
 		private ILogCollectorClient logCollectorClient;
+		private IUserRegistrationClient userRegistrationClient;
 
 		private LogQueue? currentLogQueue;
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
@@ -206,7 +207,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
+		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
 			if (diagnosticsLogger is null) diagnosticsLogger = new NoOpLogger();
@@ -217,6 +218,8 @@ namespace SGL.Analytics.Client {
 			this.logStorage = logStorage;
 			if (logCollectorClient is null) logCollectorClient = new LogCollectorRestClient();
 			this.logCollectorClient = logCollectorClient;
+			if (userRegistrationClient is null) throw new ArgumentNullException(nameof(userRegistrationClient));
+			this.userRegistrationClient = userRegistrationClient;
 			if (IsRegistered()) {
 				startUploadingExistingLogs();
 			}
