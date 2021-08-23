@@ -43,7 +43,7 @@ namespace SGL.Analytics.Client.Tests {
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
 						.WithHeader("UserId", guidMatcher)
 						.WithHeader("LogFileId", guidMatcher))
-					.RespondWith(Response.Create().WithStatusCode(System.Net.HttpStatusCode.NoContent));
+					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
 
 			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, userId, logFile);
 
