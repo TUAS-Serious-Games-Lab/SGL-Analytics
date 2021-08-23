@@ -218,7 +218,7 @@ namespace SGL.Analytics.Client {
 			this.logStorage = logStorage;
 			if (logCollectorClient is null) logCollectorClient = new LogCollectorRestClient();
 			this.logCollectorClient = logCollectorClient;
-			if (userRegistrationClient is null) throw new ArgumentNullException(nameof(userRegistrationClient));
+			if (userRegistrationClient is null) userRegistrationClient = new UserRegistrationRestClient();
 			this.userRegistrationClient = userRegistrationClient;
 			if (IsRegistered()) {
 				startUploadingExistingLogs();
