@@ -252,11 +252,12 @@ namespace SGL.Analytics.Client {
 				throw new InvalidOperationException("User is already registered.");
 			}
 			logger.LogInformation("Starting user registration process...");
-			// TODO: Perform POST to Backend
+			var userDTO = userData.MakeDTO(appName);
+			var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
+			logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
 			lock (lockObject) {
-				// TODO: Store returned UserID in rootDataStore.UserID
+				rootDataStore.UserID = regResult.UserId;
 			}
-			// TODO: Ensure thread-safety of rootDataStore. If a new RegisterAsync operation is started while another one is still running, they could race on rootDataStore.UserID. => Forbid this in API contract. The public methods are not supposed to be used concurrently anyway.
 			await rootDataStore.SaveAsync();
 			logger.LogInformation("Successfully registered user.");
 			startUploadingExistingLogs();
