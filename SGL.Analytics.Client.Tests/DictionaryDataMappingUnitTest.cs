@@ -1,9 +1,21 @@
+using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SGL.Analytics.Client.Tests {
 	public class DictionaryDataMappingUnitTest {
+		private ITestOutputHelper output;
+
+		public DictionaryDataMappingUnitTest(ITestOutputHelper output) {
+			this.output = output;
+		}
+
 		public class TestUserData {
 			public enum SomeEnum { A, B, C, D }
 			public string Username { get; set; } = "Testuser";
@@ -46,6 +58,35 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.Equal(ud.SomeList[i].Value2, measurement?["Value2"]);
 				Assert.Equal(ud.SomeList[i].Location, measurement?["Location"]);
 			}
+		}
+
+		public class JsonConversionTestData {
+			[JsonConverter(typeof(ObjectDictionaryJsonConverter))]
+			public Dictionary<string, object?> ObjectData { get; set; } = new();
+		}
+
+		[Fact]
+		public async Task DataMappingDictionaryRoundTripsThroughJson() {
+			JsonSerializerOptions options = new() { WriteIndented = true };
+			JsonConversionTestData orig = new();
+			orig.ObjectData["Null"] = null;
+			orig.ObjectData["BoolTrue"] = true;
+			orig.ObjectData["BoolFalse"] = false;
+			orig.ObjectData["Int"] = 1234;
+			orig.ObjectData["Long"] = 12345678910111213;
+			orig.ObjectData["Double"] = 12345.6789;
+			orig.ObjectData["Guid"] = Guid.NewGuid();
+			orig.ObjectData["DateTime"] = DateTime.Now;
+			orig.ObjectData["String"] = "Hello World!";
+			orig.ObjectData["Array"] = new List<object?> { null, 12345, "Test", true, Guid.NewGuid(), DateTime.Now };
+			orig.ObjectData["Dict"] = new Dictionary<string, object?> { ["A"] = "X", ["B"] = 42, ["C"] = true };
+			MemoryStream stream = new();
+			await JsonSerializer.SerializeAsync(stream, orig, options);
+			stream.Position = 0;
+			output.WriteLogContents(stream);
+			stream.Position = 0;
+			var deserialized = await JsonSerializer.DeserializeAsync<JsonConversionTestData>(stream, options);
+			Assert.All(orig.ObjectData, origElem => Assert.Equal(origElem.Value, Assert.Contains(origElem.Key, deserialized?.ObjectData as IDictionary<string, object?>)));
 		}
 	}
 }
