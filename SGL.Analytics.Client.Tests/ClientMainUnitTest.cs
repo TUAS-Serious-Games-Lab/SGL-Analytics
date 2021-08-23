@@ -22,7 +22,7 @@ namespace SGL.Analytics.Client.Tests {
 
 		public ClientMainUnitTest(ITestOutputHelper output) {
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, logCollectorClient: null, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, logCollectorClient: new FakeLogCollectorClient { IsActive = false }, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
 			this.output = output;
 		}
 

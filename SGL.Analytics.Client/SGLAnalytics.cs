@@ -26,7 +26,7 @@ namespace SGL.Analytics.Client {
 		private string appAPIToken;
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
-		private ILogCollectorClient? logCollectorClient;
+		private ILogCollectorClient logCollectorClient;
 
 		private LogQueue? currentLogQueue;
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
@@ -119,9 +119,9 @@ namespace SGL.Analytics.Client {
 		}
 
 		private async Task uploadFilesAsync() {
-			if (logCollectorClient is null) return;
 			Guid? userIDOpt;
 			lock (lockObject) {
+				if (!logCollectorClient.IsActive) return;
 				userIDOpt = rootDataStore.UserID;
 			}
 			if (userIDOpt is null) return;
@@ -165,9 +165,9 @@ namespace SGL.Analytics.Client {
 		}
 
 		private void startFileUploadingIfNotRunning() {
-			if (logCollectorClient is null) return; // logCollectorClient is only set in constructor and otherwise only read -> thread-safe
 			if (!IsRegistered()) return; // IsRegistered does it's own locking
 			lock (lockObject) { // Ensure that only one log uploader is active
+				if (!logCollectorClient.IsActive) return;
 				if (logUploader is null) {
 					// Enforce that the uploader runs on some threadpool thread to avoid putting additional load on app thread.
 					logUploader = Task.Run(async () => await uploadFilesAsync().ConfigureAwait(false));
@@ -176,10 +176,10 @@ namespace SGL.Analytics.Client {
 		}
 
 		private void startUploadingExistingLogs() {
-			if (logCollectorClient is null) return;
 			if (!IsRegistered()) return;
 			List<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
+				if (!logCollectorClient.IsActive) return;
 				existingCompleteLogs = logStorage.EnumerateFinishedLogs().ToList();
 			}
 			if (existingCompleteLogs.Count == 0) return;
@@ -215,6 +215,7 @@ namespace SGL.Analytics.Client {
 			this.rootDataStore = rootDataStore;
 			if (logStorage is null) logStorage = new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"));
 			this.logStorage = logStorage;
+			if (logCollectorClient is null) logCollectorClient = new LogCollectorRestClient();
 			this.logCollectorClient = logCollectorClient;
 			if (IsRegistered()) {
 				startUploadingExistingLogs();
