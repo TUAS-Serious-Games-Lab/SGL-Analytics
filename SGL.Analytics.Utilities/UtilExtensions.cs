@@ -12,8 +12,8 @@ namespace SGL.Analytics.Utilities {
 				yield return line;
 			}
 		}
-		public static void WriteStreamContents(this ITestOutputHelper output, Stream logStream) {
-			using (var rdr = new StreamReader(logStream, leaveOpen: true)) {
+		public static void WriteStreamContents(this ITestOutputHelper output, Stream textStream) {
+			using (var rdr = new StreamReader(textStream, leaveOpen: true)) {
 				foreach (var line in rdr.EnumerateLines()) {
 					output.WriteLine(line);
 				}
