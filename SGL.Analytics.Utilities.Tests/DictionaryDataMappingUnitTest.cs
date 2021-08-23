@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace SGL.Analytics.Client.Tests {
+namespace SGL.Analytics.Utilities.Tests {
 	public class DictionaryDataMappingUnitTest {
 		private ITestOutputHelper output;
 
