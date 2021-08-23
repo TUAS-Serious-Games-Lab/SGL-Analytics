@@ -248,19 +248,37 @@ namespace SGL.Analytics.Client {
 		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
 		/// </remarks>
 		public async Task RegisterAsync(BaseUserData userData) {
-			if (IsRegistered()) {
-				throw new InvalidOperationException("User is already registered.");
+			try {
+				if (IsRegistered()) {
+					throw new InvalidOperationException("User is already registered.");
+				}
+				logger.LogInformation("Starting user registration process...");
+				var userDTO = userData.MakeDTO(appName);
+				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
+				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
+				lock (lockObject) {
+					rootDataStore.UserID = regResult.UserId;
+				}
+				await rootDataStore.SaveAsync();
+				logger.LogInformation("Successfully registered user.");
+				startUploadingExistingLogs();
 			}
-			logger.LogInformation("Starting user registration process...");
-			var userDTO = userData.MakeDTO(appName);
-			var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
-			logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
-			lock (lockObject) {
-				rootDataStore.UserID = regResult.UserId;
+			catch (UserRegistrationResponseException ex) {
+				logger.LogError("Registration failed due to error with the registration response.", ex);
+				throw;
 			}
-			await rootDataStore.SaveAsync();
-			logger.LogInformation("Successfully registered user.");
-			startUploadingExistingLogs();
+			catch (HttpRequestException ex) when (ex.StatusCode is not null) {
+				logger.LogError("Registration failed due to error from server.", ex);
+				throw;
+			}
+			catch (HttpRequestException ex) {
+				logger.LogError("Registration failed due to communication problem with the backend server.", ex);
+				throw;
+			}
+			catch (Exception ex) {
+				logger.LogError("Registration failed due to unexpected error.", ex);
+				throw;
+			}
 		}
 
 		/// <summary>
