@@ -80,13 +80,14 @@ namespace SGL.Analytics.Utilities.Tests {
 			orig.ObjectData["String"] = "Hello World!";
 			orig.ObjectData["Array"] = new List<object?> { null, 12345, "Test", true, Guid.NewGuid(), DateTime.Now };
 			orig.ObjectData["Dict"] = new Dictionary<string, object?> { ["A"] = "X", ["B"] = 42, ["C"] = true };
-			MemoryStream stream = new();
-			await JsonSerializer.SerializeAsync(stream, orig, options);
-			stream.Position = 0;
-			output.WriteStreamContents(stream);
-			stream.Position = 0;
-			var deserialized = await JsonSerializer.DeserializeAsync<JsonConversionTestData>(stream, options);
-			Assert.All(orig.ObjectData, origElem => Assert.Equal(origElem.Value, Assert.Contains(origElem.Key, deserialized?.ObjectData as IDictionary<string, object?>)));
+			using (MemoryStream stream = new()) {
+				await JsonSerializer.SerializeAsync(stream, orig, options);
+				stream.Position = 0;
+				output.WriteStreamContents(stream);
+				stream.Position = 0;
+				var deserialized = await JsonSerializer.DeserializeAsync<JsonConversionTestData>(stream, options);
+				Assert.All(orig.ObjectData, origElem => Assert.Equal(origElem.Value, Assert.Contains(origElem.Key, deserialized?.ObjectData as IDictionary<string, object?>)));
+			}
 		}
 	}
 }
