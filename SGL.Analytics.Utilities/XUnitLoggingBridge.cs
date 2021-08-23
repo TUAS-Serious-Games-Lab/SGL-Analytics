@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit.Abstractions;
 
-namespace SGL.Analytics.Client.Tests {
+namespace SGL.Analytics.Utilities {
 
 	public class XUnitLoggingProvider : ILoggerProvider {
 		private ITestOutputHelper output;

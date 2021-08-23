@@ -1,4 +1,5 @@
 using SGL.Analytics.DTO;
+using SGL.Analytics.Utilities;
 
 namespace SGL.Analytics.Client {
 	public class BaseUserData {

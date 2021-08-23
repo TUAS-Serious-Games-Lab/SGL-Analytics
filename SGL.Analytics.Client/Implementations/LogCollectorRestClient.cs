@@ -1,4 +1,5 @@
 using SGL.Analytics.DTO;
+using SGL.Analytics.Utilities;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;

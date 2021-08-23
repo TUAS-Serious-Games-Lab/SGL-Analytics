@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -114,7 +115,7 @@ namespace SGL.Analytics.Client.Tests {
 				using (var stream = new GZipStream(new MemoryStream(req.BodyAsBytes), CompressionMode.Decompress)) {
 					output.WriteLine("");
 					output.WriteLine($"{req.Headers["LogFileId"].Single()}");
-					output.WriteLogContents(stream);
+					output.WriteStreamContents(stream);
 				}
 			}
 			var requestsEnumerator = successfulRequests.GetEnumerator();

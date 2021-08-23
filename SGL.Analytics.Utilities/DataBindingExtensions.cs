@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection;
 
-namespace SGL.Analytics.Client {
+namespace SGL.Analytics.Utilities {
 	public static class DataBindingExtensions {
 		private static Func<object, string?>? getTypeMapping(PropertyInfo prop) {
 			var type = prop.PropertyType;

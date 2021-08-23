@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace SGL.Analytics.Client {
+namespace SGL.Analytics.Utilities {
 	public class DictionaryDataMapping {
 		private readonly static MethodInfo dictToMappingDict =
 			typeof(DictionaryDataMapping).GetMethod(nameof(dictToMappingDictionary), BindingFlags.NonPublic | BindingFlags.Static) ??

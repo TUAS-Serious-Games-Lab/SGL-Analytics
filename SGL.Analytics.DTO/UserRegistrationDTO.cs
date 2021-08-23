@@ -1,6 +1,5 @@
-using System;
+using SGL.Analytics.Utilities;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.Json.Serialization;
 
 namespace SGL.Analytics.DTO {

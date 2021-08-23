@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.DTO {
+namespace SGL.Analytics.Utilities {
 	public class ObjectDictionaryValueJsonConverter : JsonConverter<object?> {
 		private static ObjectDictionaryJsonConverter dictConverter = new ObjectDictionaryJsonConverter();
 		public override object? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {

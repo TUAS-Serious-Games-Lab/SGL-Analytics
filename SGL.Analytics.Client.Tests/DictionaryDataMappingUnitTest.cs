@@ -1,4 +1,4 @@
-using SGL.Analytics.DTO;
+using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -83,7 +83,7 @@ namespace SGL.Analytics.Client.Tests {
 			MemoryStream stream = new();
 			await JsonSerializer.SerializeAsync(stream, orig, options);
 			stream.Position = 0;
-			output.WriteLogContents(stream);
+			output.WriteStreamContents(stream);
 			stream.Position = 0;
 			var deserialized = await JsonSerializer.DeserializeAsync<JsonConversionTestData>(stream, options);
 			Assert.All(orig.ObjectData, origElem => Assert.Equal(origElem.Value, Assert.Contains(origElem.Key, deserialized?.ObjectData as IDictionary<string, object?>)));
