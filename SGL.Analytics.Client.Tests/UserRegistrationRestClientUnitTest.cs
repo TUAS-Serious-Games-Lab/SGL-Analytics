@@ -73,5 +73,20 @@ namespace SGL.Analytics.Client.Tests {
 			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.RegisterUserAsync(registration, appApiToken));
 			Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
 		}
+
+		[Fact]
+		public async Task ConflictInUserRegistrationIsCorrectlyReportedAsUsernameAlreadyTakenException() {
+			Guid userId = Guid.NewGuid();
+			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsUser").UsingPost()
+					.WithHeader("App-API-Token", new WildcardMatcher("*")))
+				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.Conflict)
+					.WithBody("The requested username is already taken."));
+
+			var registration = new UserRegistrationDTO("UserRegistrationRestClientUnitTest", "Testuser",
+				new Dictionary<string, object?>() { ["Number"] = 12345, ["Label"] = "Test" });
+
+			var ex = await Assert.ThrowsAsync<UsernameAlreadyTakenException>(() => client.RegisterUserAsync(registration, appApiToken));
+			Assert.Equal(registration.Username, ex.Username);
+		}
 	}
 }
