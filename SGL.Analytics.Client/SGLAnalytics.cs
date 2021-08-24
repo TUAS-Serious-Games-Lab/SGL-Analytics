@@ -26,7 +26,8 @@ namespace SGL.Analytics.Client {
 		private string appAPIToken;
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
-		private ILogCollectorClient? logCollectorClient;
+		private ILogCollectorClient logCollectorClient;
+		private IUserRegistrationClient userRegistrationClient;
 
 		private LogQueue? currentLogQueue;
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
@@ -119,7 +120,7 @@ namespace SGL.Analytics.Client {
 		}
 
 		private async Task uploadFilesAsync() {
-			if (logCollectorClient is null) return;
+			if (!logCollectorClient.IsActive) return;
 			Guid? userIDOpt;
 			lock (lockObject) {
 				userIDOpt = rootDataStore.UserID;
@@ -165,7 +166,7 @@ namespace SGL.Analytics.Client {
 		}
 
 		private void startFileUploadingIfNotRunning() {
-			if (logCollectorClient is null) return; // logCollectorClient is only set in constructor and otherwise only read -> thread-safe
+			if (!logCollectorClient.IsActive) return;
 			if (!IsRegistered()) return; // IsRegistered does it's own locking
 			lock (lockObject) { // Ensure that only one log uploader is active
 				if (logUploader is null) {
@@ -176,7 +177,7 @@ namespace SGL.Analytics.Client {
 		}
 
 		private void startUploadingExistingLogs() {
-			if (logCollectorClient is null) return;
+			if (!logCollectorClient.IsActive) return;
 			if (!IsRegistered()) return;
 			List<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
@@ -206,7 +207,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
+		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
 			if (diagnosticsLogger is null) diagnosticsLogger = new NoOpLogger();
@@ -215,7 +216,10 @@ namespace SGL.Analytics.Client {
 			this.rootDataStore = rootDataStore;
 			if (logStorage is null) logStorage = new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"));
 			this.logStorage = logStorage;
+			if (logCollectorClient is null) logCollectorClient = new LogCollectorRestClient();
 			this.logCollectorClient = logCollectorClient;
+			if (userRegistrationClient is null) userRegistrationClient = new UserRegistrationRestClient();
+			this.userRegistrationClient = userRegistrationClient;
 			if (IsRegistered()) {
 				startUploadingExistingLogs();
 			}
@@ -243,19 +247,38 @@ namespace SGL.Analytics.Client {
 		/// <remarks>
 		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
 		/// </remarks>
-		public async Task RegisterAsync(UserData userData) {
-			if (IsRegistered()) {
-				throw new InvalidOperationException("User is already registered.");
+		public async Task RegisterAsync(BaseUserData userData) {
+			try {
+				if (IsRegistered()) {
+					throw new InvalidOperationException("User is already registered.");
+				}
+				logger.LogInformation("Starting user registration process...");
+				var userDTO = userData.MakeDTO(appName);
+				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
+				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
+				lock (lockObject) {
+					rootDataStore.UserID = regResult.UserId;
+				}
+				await rootDataStore.SaveAsync();
+				logger.LogInformation("Successfully registered user.");
+				startUploadingExistingLogs();
 			}
-			logger.LogInformation("Starting user registration process...");
-			// TODO: Perform POST to Backend
-			lock (lockObject) {
-				// TODO: Store returned UserID in rootDataStore.UserID
+			catch (UserRegistrationResponseException ex) {
+				logger.LogError("Registration failed due to error with the registration response.", ex);
+				throw;
 			}
-			// TODO: Ensure thread-safety of rootDataStore. If a new RegisterAsync operation is started while another one is still running, they could race on rootDataStore.UserID. => Forbid this in API contract. The public methods are not supposed to be used concurrently anyway.
-			await rootDataStore.SaveAsync();
-			logger.LogInformation("Successfully registered user.");
-			startUploadingExistingLogs();
+			catch (HttpRequestException ex) when (ex.StatusCode is not null) {
+				logger.LogError("Registration failed due to error from server.", ex);
+				throw;
+			}
+			catch (HttpRequestException ex) {
+				logger.LogError("Registration failed due to communication problem with the backend server.", ex);
+				throw;
+			}
+			catch (Exception ex) {
+				logger.LogError("Registration failed due to unexpected error.", ex);
+				throw;
+			}
 		}
 
 		/// <summary>

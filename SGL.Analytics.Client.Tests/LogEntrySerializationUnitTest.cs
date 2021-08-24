@@ -1,3 +1,4 @@
+using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,7 +22,7 @@ namespace SGL.Analytics.Client.Tests {
 				var entryOrig = new LogEntry(LogEntry.EntryMetadata.NewEventEntry("TestChannel", DateTime.Now, "TestEvent"), new Dictionary<string, object?>() { ["TestA"] = 12345, ["TestB"] = "Hello World!" });
 				await JsonSerializer.SerializeAsync(stream, entryOrig, options);
 				stream.Position = 0;
-				output.WriteLogContents(stream);
+				output.WriteStreamContents(stream);
 				stream.Position = 0;
 				var entryDeserialized = await JsonSerializer.DeserializeAsync<LogEntry>(stream, options);
 				Assert.NotNull(entryDeserialized);
@@ -44,7 +45,7 @@ namespace SGL.Analytics.Client.Tests {
 				var entryOrig = new LogEntry(LogEntry.EntryMetadata.NewSnapshotEntry("TestChannel", DateTime.Now, "TestObject"), new Dictionary<string, object?>() { ["TestA"] = 12345, ["TestB"] = "Hello World!" });
 				await JsonSerializer.SerializeAsync(stream, entryOrig, options);
 				stream.Position = 0;
-				output.WriteLogContents(stream);
+				output.WriteStreamContents(stream);
 				stream.Position = 0;
 				var entryDeserialized = await JsonSerializer.DeserializeAsync<LogEntry>(stream, options);
 				Assert.NotNull(entryDeserialized);

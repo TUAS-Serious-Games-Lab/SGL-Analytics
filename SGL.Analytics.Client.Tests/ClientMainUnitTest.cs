@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,13 +16,20 @@ namespace SGL.Analytics.Client.Tests {
 
 		private InMemoryLogStorage storage = new InMemoryLogStorage();
 		private FakeRootDataStore ds = new FakeRootDataStore();
+		private FakeLogCollectorClient logCollectorClient = new FakeLogCollectorClient() { IsActive = false };
+		private FakeUserRegistrationClient userRegClient = new FakeUserRegistrationClient();
 		private SGLAnalytics analytics;
 		private ITestOutputHelper output;
 		private ILoggerFactory loggerFactory;
 
 		public ClientMainUnitTest(ITestOutputHelper output) {
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, logCollectorClient: null, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+				rootDataStore: ds,
+				logStorage: storage,
+				logCollectorClient: logCollectorClient,
+				userRegistrationClient: userRegClient,
+				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
 			this.output = output;
 		}
 
@@ -457,7 +465,7 @@ namespace SGL.Analytics.Client.Tests {
 
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
 			await analytics.FinishAsync();
 
 			Assert.Equal(5, collectorClient.UploadedLogFileIds.Count);
@@ -472,7 +480,7 @@ namespace SGL.Analytics.Client.Tests {
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.StatusCode = HttpStatusCode.InternalServerError;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
 			List<Guid> logIds = new();
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
@@ -481,7 +489,7 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Empty(collectorClient.UploadedLogFileIds);
 
 			collectorClient.StatusCode = HttpStatusCode.NoContent;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
 			await analytics.FinishAsync();
 			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
 		}
@@ -491,7 +499,7 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, loggerFactory.CreateLogger<SGLAnalytics>());
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
 			List<Guid> logIds = new();
 
 			logIds.Add(analytics.StartNewLog());
@@ -534,6 +542,58 @@ namespace SGL.Analytics.Client.Tests {
 				}
 			}
 
+		}
+
+		public class TestUserData : BaseUserData {
+			public TestUserData(string username) : base(username) { }
+			public string Label { get; set; } = "";
+			public DateTime RegistrationTime { get; set; } = DateTime.Now;
+			public int SomeNumber { get; set; } = 0;
+		}
+		[Fact]
+		public async Task UserIsCorrectlyRegistered() {
+			ds.UserID = null;
+			var user = new TestUserData("Testuser") { Label = "This is a test!", SomeNumber = 42 };
+			await analytics.RegisterAsync(user);
+			Assert.True(analytics.IsRegistered());
+			Assert.Single(userRegClient.RegistrationResults);
+			var userId = userRegClient.RegistrationResults.Single().UserId;
+			Assert.Equal(ds.UserID, userId);
+			var userReg = userRegClient.RegistrationData[userId];
+			Assert.Equal(user.Username, userReg.Username);
+			var studyAttr = userReg.StudySpecificAttributes as IDictionary<string, object?>;
+			Assert.Equal(user.Label, Assert.Contains("Label", studyAttr));
+			Assert.Equal(user.RegistrationTime, Assert.Contains("RegistrationTime", studyAttr));
+			Assert.Equal(user.SomeNumber, Assert.Contains("SomeNumber", studyAttr));
+		}
+
+		[Fact]
+		public async Task PendingUploadsAreRetriedOnSuccessfulRegistration() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			ds.UserID = null;
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage,
+				logCollectorClient: logCollectorClient,
+				userRegistrationClient: userRegClient,
+				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			List<Guid> logIds = new();
+			logIds.Add(analytics.StartNewLog());
+			logIds.Add(analytics.StartNewLog());
+			logIds.Add(analytics.StartNewLog());
+			await analytics.FinishAsync();
+			Assert.Empty(logCollectorClient.UploadedLogFileIds);
+
+			output.WriteLine("");
+
+			var collectorClient = new FakeLogCollectorClient();
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage,
+				logCollectorClient: collectorClient,
+				userRegistrationClient: userRegClient,
+				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			var user = new TestUserData("Testuser") { Label = "This is a test!", SomeNumber = 42 };
+			Assert.Empty(collectorClient.UploadedLogFileIds);
+			await analytics.RegisterAsync(user);
+			await analytics.FinishAsync();
+			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
 		}
 	}
 }

@@ -1,4 +1,5 @@
 using SGL.Analytics.DTO;
+using SGL.Analytics.Utilities;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -24,7 +25,6 @@ namespace SGL.Analytics.Client {
 			this.logCollectorApiEndpoint = logCollectorApiEndpoint;
 			this.logCollectorApiFullUri = new Uri(backendServerBaseUri, logCollectorApiEndpoint);
 		}
-
 
 		public async Task UploadLogFileAsync(string appName, string appAPIToken, Guid userID, ILogStorage.ILogFile logFile) {
 			using (var stream = logFile.OpenReadRaw()) {
