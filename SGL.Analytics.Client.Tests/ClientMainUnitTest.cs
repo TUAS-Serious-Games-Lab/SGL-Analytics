@@ -16,13 +16,20 @@ namespace SGL.Analytics.Client.Tests {
 
 		private InMemoryLogStorage storage = new InMemoryLogStorage();
 		private FakeRootDataStore ds = new FakeRootDataStore();
+		private FakeLogCollectorClient logCollectorClient = new FakeLogCollectorClient() { IsActive = false };
+		private FakeUserRegistrationClient userRegClient = new FakeUserRegistrationClient();
 		private SGLAnalytics analytics;
 		private ITestOutputHelper output;
 		private ILoggerFactory loggerFactory;
 
 		public ClientMainUnitTest(ITestOutputHelper output) {
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, logCollectorClient: new FakeLogCollectorClient { IsActive = false }, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+				rootDataStore: ds,
+				logStorage: storage,
+				logCollectorClient: logCollectorClient,
+				userRegistrationClient: userRegClient,
+				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
 			this.output = output;
 		}
 
@@ -535,6 +542,29 @@ namespace SGL.Analytics.Client.Tests {
 				}
 			}
 
+		}
+
+		public class TestUserData : BaseUserData {
+			public TestUserData(string username) : base(username) { }
+			public string Label { get; set; } = "";
+			public DateTime RegistrationTime { get; set; } = DateTime.Now;
+			public int SomeNumber { get; set; } = 0;
+		}
+		[Fact]
+		public async Task UserIsCorrectlyRegistered() {
+			ds.UserID = null;
+			var user = new TestUserData("Testuser") { Label = "This is a test!", SomeNumber = 42 };
+			await analytics.RegisterAsync(user);
+			Assert.True(analytics.IsRegistered());
+			Assert.Single(userRegClient.RegistrationResults);
+			var userId = userRegClient.RegistrationResults.Single().UserId;
+			Assert.Equal(ds.UserID, userId);
+			var userReg = userRegClient.RegistrationData[userId];
+			Assert.Equal(user.Username, userReg.Username);
+			var studyAttr = userReg.StudySpecificAttributes as IDictionary<string, object?>;
+			Assert.Equal(user.Label, Assert.Contains("Label", studyAttr));
+			Assert.Equal(user.RegistrationTime, Assert.Contains("RegistrationTime", studyAttr));
+			Assert.Equal(user.SomeNumber, Assert.Contains("SomeNumber", studyAttr));
 		}
 	}
 }
