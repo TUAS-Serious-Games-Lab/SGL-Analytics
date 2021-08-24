@@ -18,6 +18,7 @@ namespace SGL.Analytics.Client.Tests {
 			var resp = new HttpResponseMessage(StatusCode);
 			resp.EnsureSuccessStatusCode();
 			var result = new UserRegistrationResultDTO(Guid.NewGuid());
+			RegistrationResults.Add(result);
 			RegistrationData[result.UserId] = userDTO;
 			return result;
 		}
