@@ -165,6 +165,7 @@ namespace SGL.Analytics.Client.Tests {
 			foreach (var log in storage.EnumerateLogs()) {
 				log.Remove();
 			}
+			File.Delete(rootDS.StorageFile);
 			serverFixture.Reset();
 		}
 	}
