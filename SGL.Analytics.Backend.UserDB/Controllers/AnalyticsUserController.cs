@@ -20,13 +20,13 @@ namespace SGL.Analytics.Backend.UserDB.Controllers {
 		// GET: api/AnalyticsUser
 		[HttpGet]
 		public async Task<ActionResult<IEnumerable<UserRegistration>>> GetUserRegistration() {
-			return await _context.UserRegistration.ToListAsync();
+			return await _context.UserRegistrations.ToListAsync();
 		}
 
 		// GET: api/AnalyticsUser/5
 		[HttpGet("{id}")]
 		public async Task<ActionResult<UserRegistration>> GetUserRegistration(Guid id) {
-			var userRegistration = await _context.UserRegistration.FindAsync(id);
+			var userRegistration = await _context.UserRegistrations.FindAsync(id);
 
 			if (userRegistration == null) {
 				return NotFound();
@@ -66,7 +66,7 @@ namespace SGL.Analytics.Backend.UserDB.Controllers {
 		// more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
 		[HttpPost]
 		public async Task<ActionResult<UserRegistration>> PostUserRegistration(UserRegistration userRegistration) {
-			_context.UserRegistration.Add(userRegistration);
+			_context.UserRegistrations.Add(userRegistration);
 			await _context.SaveChangesAsync();
 
 			return CreatedAtAction("GetUserRegistration", new { id = userRegistration.Id }, userRegistration);
@@ -75,19 +75,19 @@ namespace SGL.Analytics.Backend.UserDB.Controllers {
 		// DELETE: api/AnalyticsUser/5
 		[HttpDelete("{id}")]
 		public async Task<ActionResult<UserRegistration>> DeleteUserRegistration(Guid id) {
-			var userRegistration = await _context.UserRegistration.FindAsync(id);
+			var userRegistration = await _context.UserRegistrations.FindAsync(id);
 			if (userRegistration == null) {
 				return NotFound();
 			}
 
-			_context.UserRegistration.Remove(userRegistration);
+			_context.UserRegistrations.Remove(userRegistration);
 			await _context.SaveChangesAsync();
 
 			return userRegistration;
 		}
 
 		private bool UserRegistrationExists(Guid id) {
-			return _context.UserRegistration.Any(e => e.Id == id);
+			return _context.UserRegistrations.Any(e => e.Id == id);
 		}
 	}
 }

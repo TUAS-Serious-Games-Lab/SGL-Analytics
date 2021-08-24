@@ -10,6 +10,7 @@ public class UserDBContext : DbContext {
 		: base(options) {
 	}
 
-	public DbSet<UserRegistration> UserRegistration => Set<UserRegistration>();
+	public DbSet<UserRegistration> UserRegistrations => Set<UserRegistration>();
+	public DbSet<ApplicationWithUserProperties> Applications => Set<ApplicationWithUserProperties>();
 
 }
