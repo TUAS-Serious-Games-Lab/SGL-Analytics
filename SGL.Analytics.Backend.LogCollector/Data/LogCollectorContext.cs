@@ -12,5 +12,6 @@ namespace SGL.Analytics.Backend.LogCollector.Data {
 		}
 
 		public DbSet<LogMetadata> LogMetadata => Set<LogMetadata>();
+		public DbSet<Application> Applications => Set<Application>();
 	}
 }
