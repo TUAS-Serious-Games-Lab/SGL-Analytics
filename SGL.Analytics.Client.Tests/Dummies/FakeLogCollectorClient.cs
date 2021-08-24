@@ -9,6 +9,11 @@ namespace SGL.Analytics.Client.Tests {
 		public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.NoContent;
 		public List<Guid> UploadedLogFileIds { get; set; } = new();
 
+		/// <summary>
+		/// Allows diabling the upload process completely instead of faking it or faking errors.
+		/// Logfiles are then preserved locally.
+		/// </summary>
+		/// <remarks>Thread-safety is achieved by only allowing to set the value at the beginning of the object lifetime.</remarks>
 		public bool IsActive { get; init; } = true;
 
 		public async Task UploadLogFileAsync(string appName, string appAPIToken, Guid userID, ILogStorage.ILogFile logFile) {

@@ -120,9 +120,9 @@ namespace SGL.Analytics.Client {
 		}
 
 		private async Task uploadFilesAsync() {
+			if (!logCollectorClient.IsActive) return;
 			Guid? userIDOpt;
 			lock (lockObject) {
-				if (!logCollectorClient.IsActive) return;
 				userIDOpt = rootDataStore.UserID;
 			}
 			if (userIDOpt is null) return;
@@ -166,9 +166,9 @@ namespace SGL.Analytics.Client {
 		}
 
 		private void startFileUploadingIfNotRunning() {
+			if (!logCollectorClient.IsActive) return;
 			if (!IsRegistered()) return; // IsRegistered does it's own locking
 			lock (lockObject) { // Ensure that only one log uploader is active
-				if (!logCollectorClient.IsActive) return;
 				if (logUploader is null) {
 					// Enforce that the uploader runs on some threadpool thread to avoid putting additional load on app thread.
 					logUploader = Task.Run(async () => await uploadFilesAsync().ConfigureAwait(false));
@@ -177,10 +177,10 @@ namespace SGL.Analytics.Client {
 		}
 
 		private void startUploadingExistingLogs() {
+			if (!logCollectorClient.IsActive) return;
 			if (!IsRegistered()) return;
 			List<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
-				if (!logCollectorClient.IsActive) return;
 				existingCompleteLogs = logStorage.EnumerateFinishedLogs().ToList();
 			}
 			if (existingCompleteLogs.Count == 0) return;
