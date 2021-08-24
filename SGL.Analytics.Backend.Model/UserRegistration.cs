@@ -12,18 +12,14 @@ namespace SGL.Analytics.Backend.Model {
 		public ApplicationWithUserProperties App { get; set; }
 		public string Username { get; set; }
 
-		public List<ApplicationUserPropertyInstance> AppSpecificProperties { get; set; } = new();
+		public ICollection<ApplicationUserPropertyInstance> AppSpecificProperties { get; set; }
 
-		public UserRegistration(Guid id, int appId, ApplicationWithUserProperties app, string username) {
+		public UserRegistration(Guid id, int appId, ApplicationWithUserProperties app, string username,
+			ICollection<ApplicationUserPropertyInstance> appSpecificProperties) {
 			Id = id;
 			AppId = appId;
 			App = app;
 			Username = username;
-		}
-
-		public UserRegistration(Guid id, int appId, ApplicationWithUserProperties app, string username,
-			List<ApplicationUserPropertyInstance> appSpecificProperties) :
-			this(id, appId, app, username) {
 			AppSpecificProperties = appSpecificProperties;
 		}
 	}
