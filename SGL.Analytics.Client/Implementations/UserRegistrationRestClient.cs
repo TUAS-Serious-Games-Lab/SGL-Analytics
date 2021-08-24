@@ -2,6 +2,7 @@ using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -14,6 +15,17 @@ namespace SGL.Analytics.Client {
 		public UserRegistrationResponseException(string? message) : base(message) {}
 		public UserRegistrationResponseException(string? message, Exception? innerException) : base(message, innerException) {}
 	}
+
+	public class UsernameAlreadyTakenException : Exception {
+		public string Username { get; }
+		public UsernameAlreadyTakenException(string username) : base($"The username '{username}' is already taken.") {
+			Username = username;
+		}
+		public UsernameAlreadyTakenException(string username, Exception? innerException) : base($"The username '{username}' is already taken.", innerException) {
+			Username = username;
+		}
+	}
+
 
 	public class UserRegistrationRestClient : IUserRegistrationClient {
 		private readonly static HttpClient httpClient = new();
@@ -41,6 +53,7 @@ namespace SGL.Analytics.Client {
 			content.Headers.Add("App-API-Token", appAPIToken);
 			var response = await httpClient.PostAsync(userRegistrationApiFullUri, content);
 			if (response is null) throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
+			if (response.StatusCode == HttpStatusCode.Conflict) throw new UsernameAlreadyTakenException(userDTO.Username);
 			response.EnsureSuccessStatusCode();
 			var result = await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>(options);
 			return result ?? throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
