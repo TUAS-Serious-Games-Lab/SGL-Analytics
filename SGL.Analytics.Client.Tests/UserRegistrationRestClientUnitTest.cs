@@ -59,5 +59,19 @@ namespace SGL.Analytics.Client.Tests {
 			}
 			Assert.Equal(userId, result.UserId);
 		}
+
+		[Fact]
+		public async Task HttpErrorInUserRegistrationIsCorrectlyReportedAsException() {
+			Guid userId = Guid.NewGuid();
+			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsUser").UsingPost()
+					.WithHeader("App-API-Token", new WildcardMatcher("*")))
+				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
+
+			var registration = new UserRegistrationDTO("UserRegistrationRestClientUnitTest", "Testuser",
+				new Dictionary<string, object?>() { ["Number"] = 12345, ["Label"] = "Test" });
+
+			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.RegisterUserAsync(registration, appApiToken));
+			Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
+		}
 	}
 }
