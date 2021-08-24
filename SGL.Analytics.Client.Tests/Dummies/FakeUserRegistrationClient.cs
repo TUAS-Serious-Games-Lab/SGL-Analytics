@@ -11,7 +11,7 @@ namespace SGL.Analytics.Client.Tests {
 	public class FakeUserRegistrationClient : IUserRegistrationClient {
 		public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.NoContent;
 		public Dictionary<Guid,UserRegistrationDTO> RegistrationData { get; } = new();
-		public List<UserRegistrationResultDTO> RegistrationIds { get; } = new();
+		public List<UserRegistrationResultDTO> RegistrationResults { get; } = new();
 
 		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken) {
 			await Task.CompletedTask;
