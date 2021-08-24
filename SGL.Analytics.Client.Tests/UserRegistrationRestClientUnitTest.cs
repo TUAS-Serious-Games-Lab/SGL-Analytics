@@ -4,7 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Net;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WireMock.Matchers;
@@ -38,7 +39,7 @@ namespace SGL.Analytics.Client.Tests {
 					.WithHeader("App-API-Token", new ExactMatcher(appApiToken))
 					.WithHeader("Content-Type", new ExactMatcher("application/json"))
 					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
-				.RespondWith(Response.Create().WithStatusCode(System.Net.HttpStatusCode.Created)
+				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.Created)
 					.WithBodyAsJson(new UserRegistrationResultDTO(userId), true));
 
 			var registration = new UserRegistrationDTO("UserRegistrationRestClientUnitTest", "Testuser",
@@ -52,11 +53,11 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.NotNull(requestBodyObj);
 				Assert.Equal(registration.AppName, requestBodyObj?.AppName);
 				Assert.Equal(registration.Username, requestBodyObj?.Username);
-				Assert.All(registration.StudySpecificAttributes,kvp => Assert.Equal(kvp.Value,Assert.Contains(kvp.Key,requestBodyObj?.StudySpecificAttributes as IDictionary<string, object?>)));
+				Assert.All(registration.StudySpecificAttributes, kvp => Assert.Equal(kvp.Value, Assert.Contains(kvp.Key, requestBodyObj?.StudySpecificAttributes as IDictionary<string, object?>)));
 				bodyStream.Position = 0;
 				output.WriteStreamContents(bodyStream);
 			}
-			Assert.Equal(userId,result.UserId);
+			Assert.Equal(userId, result.UserId);
 		}
 	}
 }
