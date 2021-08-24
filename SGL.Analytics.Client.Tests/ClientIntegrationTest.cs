@@ -1,10 +1,12 @@
 using Microsoft.Extensions.Logging;
+using SGL.Analytics.DTO;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -26,6 +28,7 @@ namespace SGL.Analytics.Client.Tests {
 		private DirectoryLogStorage storage;
 		private FileRootDataStore rootDS;
 		private LogCollectorRestClient logCollectorClient;
+		private UserRegistrationRestClient userRegClient;
 		private SGLAnalytics analytics;
 		private bool finished = false;
 
@@ -35,26 +38,44 @@ namespace SGL.Analytics.Client.Tests {
 			this.serverFixture = serverFixture;
 
 			rootDS = new FileRootDataStore(appName);
-			rootDS.UserID = Guid.NewGuid();
-			rootDS.SaveAsync().Wait();
 			storage = new DirectoryLogStorage(Path.Combine(rootDS.DataDirectory, "DataLogs"));
 			logCollectorClient = new LogCollectorRestClient(new Uri(serverFixture.Server.Urls.First()));
-			analytics = new SGLAnalytics(appName, appAPIToken, rootDS, storage, logCollectorClient, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			userRegClient = new UserRegistrationRestClient(new Uri(serverFixture.Server.Urls.First()));
+			analytics = new SGLAnalytics(appName, appAPIToken,
+				rootDataStore: rootDS,
+				logStorage: storage,
+				logCollectorClient: logCollectorClient,
+				userRegistrationClient: userRegClient,
+				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
 		}
 
 		public class SimpleTestEvent {
 			public string Name { get; set; } = "";
 		}
 
+		public class TestUserData : BaseUserData {
+			public TestUserData(string username) : base(username) { }
+			public string Label { get; set; } = "";
+			public DateTime RegistrationTime { get; set; } = DateTime.Now;
+			public int SomeNumber { get; set; } = 0;
+		}
+
 		[Fact]
-		public async Task LogEventsAreRecordedAndUploadedAsLogFilesWithCorrectContent() {
+		public async Task LogEventsAreRecordedAndUploadedAsLogFilesWithCorrectContentAfterRegistration() {
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
 			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsLog").UsingPost()
 						.WithHeader("AppName", new WildcardMatcher("*"))
-						.WithHeader("App-API-Token", new WildcardMatcher("*"))
+						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
 						.WithHeader("UserId", guidMatcher)
 						.WithHeader("LogFileId", guidMatcher))
-					.RespondWith(Response.Create().WithStatusCode(System.Net.HttpStatusCode.NoContent));
+					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
+			Guid userId = Guid.NewGuid();
+			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsUser").UsingPost()
+					.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
+					.WithHeader("Content-Type", new ExactMatcher("application/json"))
+					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
+				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.Created)
+					.WithBodyAsJson(new UserRegistrationResultDTO(userId), true));
 
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test A" });
@@ -73,6 +94,9 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test H" });
 			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test I" });
 			analytics.RecordSnapshotUnshared("Channel 3", 2, "Snap E");
+
+			var user = new TestUserData("Testuser") { Label = "This is a test!", SomeNumber = 42 };
+			await analytics.RegisterAsync(user);
 
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test J" });
@@ -110,15 +134,34 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.Equal(expPayload, payload.GetString());
 			}
 
-			var successfulRequests = serverFixture.Server.LogEntries.Where(le => (int)(le.ResponseMessage.StatusCode) < 300).Select(le => le.RequestMessage);
-			foreach (var req in successfulRequests) {
+			var successfulRegRequests = serverFixture.Server.LogEntries
+				.Where(le => (int)(le.ResponseMessage.StatusCode) < 300 && le.RequestMessage.Path == "/api/AnalyticsUser")
+				.Select(le => le.RequestMessage);
+			Assert.Single(successfulRegRequests);
+			await using (var stream = new MemoryStream(successfulRegRequests.Single().BodyAsBytes)) {
+				var userReg = await JsonSerializer.DeserializeAsync<UserRegistrationDTO>(stream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+				Assert.Equal(user.Username, userReg?.Username);
+				var studyAttr = userReg?.StudySpecificAttributes as IDictionary<string, object?>;
+				Assert.Equal(user.Label, Assert.Contains("Label", studyAttr));
+				Assert.Equal(user.RegistrationTime, Assert.Contains("RegistrationTime", studyAttr));
+				Assert.Equal(user.SomeNumber, Assert.Contains("SomeNumber", studyAttr));
+				stream.Position = 0;
+				output.WriteLine("");
+				output.WriteLine("Registration:");
+				output.WriteStreamContents(stream);
+			}
+
+			var successfulLogRequests = serverFixture.Server.LogEntries
+				.Where(le => (int)(le.ResponseMessage.StatusCode) < 300 && le.RequestMessage.Path == "/api/AnalyticsLog")
+				.Select(le => le.RequestMessage);
+			foreach (var req in successfulLogRequests) {
 				using (var stream = new GZipStream(new MemoryStream(req.BodyAsBytes), CompressionMode.Decompress)) {
 					output.WriteLine("");
 					output.WriteLine($"{req.Headers["LogFileId"].Single()}");
 					output.WriteStreamContents(stream);
 				}
 			}
-			var requestsEnumerator = successfulRequests.GetEnumerator();
+			var requestsEnumerator = successfulLogRequests.GetEnumerator();
 
 			Assert.True(requestsEnumerator.MoveNext());
 			await using (var stream = new GZipStream(new MemoryStream(requestsEnumerator.Current.BodyAsBytes), CompressionMode.Decompress)) {
