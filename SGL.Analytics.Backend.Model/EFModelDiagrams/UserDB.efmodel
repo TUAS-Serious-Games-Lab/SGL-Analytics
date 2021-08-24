@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<modelRoot xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" dslVersion="3.0.6.1" Id="cba47279-0950-4257-bb2c-e4d5e72a52a4" entityContainerName="UserDB" namespace="SGL.Analytics.Backend.Model" automaticMigrationsEnabled="false" transformOnSave="false" showCascadeDeletes="false" databaseType="None" showWarningsInDesigner="false" exposeForeignKeys="false" generateDbContextFactory="false" showInterfaceIndicators="false" xmlns="http://schemas.microsoft.com/dsltools/EFModel">
+  <classes>
+    <modelRootHasClasses Id="412c4279-5cc0-472e-870c-dac0ded54b59">
+      <modelClass Id="e7e7d98c-022e-4809-977b-b4ee563da316" databaseSchema="dbo" namespace="SGL.Analytics.Backend.Model" isNamespaceTracking="false" name="ApplicationUserPropertyInstance" outputDirectory="" autoPropertyDefault="true" excludeFromMigrations="false">
+        <unidirectionalTargets>
+          <unidirectionalAssociation Id="54b018b7-6ff5-4a9b-9021-477cb33e2007" sourceMultiplicity="ZeroMany" targetMultiplicity="One" targetPropertyName="Definition" collectionClass="HashSet" sourceRole="Dependent" targetRole="Principal" foreignKeyLocation="None" targetImplementNotify="false" targetBackingFieldName="_definition" targetAutoProperty="true" isTargetAbstract="false" targetAutoInclude="false">
+            <modelClassMoniker Id="3fb7d698-ce6f-407c-8550-3efdb6118e38" />
+          </unidirectionalAssociation>
+        </unidirectionalTargets>
+        <attributes>
+          <modelAttribute Id="73d1020d-04cc-4e61-a7c9-c0fa2f4e52c1" type="Int32" isIdentity="true" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="Id" autoProperty="true" minLength="0" columnName="Id" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_id" databaseCollation="default" />
+          <modelAttribute Id="1a20e0c8-14f8-4a3d-9701-479405369a8c" type="Int32" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="DefinitionId" autoProperty="true" minLength="0" columnName="DefinitionId" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_definitionId" databaseCollation="default" />
+          <modelAttribute Id="661827d6-7deb-40be-ac01-d06182fcf9dc" type="Guid" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="UserId" autoProperty="true" minLength="0" columnName="UserId" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_userId" databaseCollation="default" />
+          <modelAttribute Id="6caba76d-3034-4de6-8f6c-30fc70152887" type="int" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="IntegerValue" autoProperty="true" minLength="0" columnName="IntegerValue" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_integerValue" databaseCollation="default" />
+          <modelAttribute Id="fd2ffaa4-e020-4a96-a8bd-496133741d7c" type="double" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="FloatingPointValue" autoProperty="true" minLength="0" columnName="FloatingPointValue" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_floatingPointValue" databaseCollation="default" />
+          <modelAttribute Id="406c5078-166e-44b1-bbac-24bff920aaf9" type="string" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="StringValue" autoProperty="true" minLength="0" columnName="StringValue" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_stringValue" databaseCollation="default" />
+          <modelAttribute Id="d89a3125-a13b-4278-9504-dab70194d3aa" type="DateTime" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="DateTimeValue" autoProperty="true" minLength="0" columnName="DateTimeValue" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_dateTimeValue" databaseCollation="default" />
+          <modelAttribute Id="50103c76-6afc-477f-9f86-04d4c7703550" type="Guid" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="GuidValue" autoProperty="true" minLength="0" columnName="GuidValue" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_guidValue" databaseCollation="default" />
+          <modelAttribute Id="2a8d562c-2e00-47c9-81ba-cf3121cc75f7" type="object" persistent="false" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="Value" autoProperty="false" minLength="0" columnName="Value" columnType="default" implementNotify="false" isAutoPropertyTracking="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_value" databaseCollation="default" />
+        </attributes>
+      </modelClass>
+    </modelRootHasClasses>
+    <modelRootHasClasses Id="7504e603-b643-47d8-bd67-c81969075b9e">
+      <modelClass Id="3fb7d698-ce6f-407c-8550-3efdb6118e38" databaseSchema="dbo" namespace="SGL.Analytics.Backend.Model" name="ApplicationUserPropertyDefinition" outputDirectory="" autoPropertyDefault="true" excludeFromMigrations="false">
+        <unidirectionalTargets>
+          <unidirectionalAssociation Id="61daed06-4f78-4533-97b3-05d1459993dc" targetMultiplicity="ZeroOne" targetPropertyName="Type" collectionClass="HashSet" sourceRole="Principal" targetRole="Dependent" foreignKeyLocation="None" targetImplementNotify="false" targetBackingFieldName="_type" targetAutoProperty="true" isTargetAbstract="false" targetAutoInclude="false">
+            <modelClassMoniker Id="334e94d0-41b4-48a3-a707-8b1a765a89bc" />
+          </unidirectionalAssociation>
+        </unidirectionalTargets>
+        <attributes>
+          <modelAttribute Id="e3301b7e-ba0c-47f1-8236-2243ba4c0a73" type="Int32" isIdentity="true" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="Id" autoProperty="true" minLength="0" columnName="Id" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_id" databaseCollation="default" />
+          <modelAttribute Id="9becdd72-e1ad-4067-9c18-c4ca94407122" type="Int32" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="AppId" autoProperty="true" minLength="0" columnName="AppId" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_appId" databaseCollation="default" />
+          <modelAttribute Id="d703eded-39f5-45be-aa97-e0d67b3147ef" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="Name" autoProperty="true" minLength="0" columnName="Name" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_name" databaseCollation="default" />
+        </attributes>
+      </modelClass>
+    </modelRootHasClasses>
+    <modelRootHasClasses Id="cc58ff04-6164-4cf4-9a36-cca90bf92627">
+      <modelClass Id="9c9743ec-6b08-4ab5-a9dd-a87105142766" databaseSchema="dbo" namespace="SGL.Analytics.Backend.Model" name="UserRegistration" outputDirectory="" autoPropertyDefault="true" excludeFromMigrations="false">
+        <attributes>
+          <modelAttribute Id="6616b7a7-29d4-45df-ba8e-6b80a7f431a1" type="Guid" isIdentity="true" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="Id" autoProperty="true" minLength="0" columnName="Id" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_id" databaseCollation="default" />
+          <modelAttribute Id="3a08a45d-fb8c-43af-a409-d3b8db133123" type="Int32" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="AppId" autoProperty="true" minLength="0" columnName="AppId" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_appId" databaseCollation="default" />
+          <modelAttribute Id="95d1098c-81c5-4895-96b4-b946dc149445" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="Username" autoProperty="true" minLength="0" columnName="Username" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_username" databaseCollation="default" />
+        </attributes>
+        <bidirectionalTargets>
+          <bidirectionalAssociation Id="eb75a55d-3ccd-4ac4-9076-fb6439711129" sourceMultiplicity="ZeroMany" targetMultiplicity="One" targetPropertyName="App" collectionClass="HashSet" sourceRole="Dependent" targetRole="Principal" foreignKeyLocation="None" targetImplementNotify="false" targetBackingFieldName="_app" targetAutoProperty="true" isTargetAbstract="false" targetAutoInclude="false" sourcePropertyName="UserRegistrations" sourceImplementNotify="false" sourceBackingFieldName="_userRegistrations" sourceAutoProperty="true" isSourceAbstract="false" sourceAutoInclude="false">
+            <modelClassMoniker Id="1f81db83-f813-474c-b41e-df7f525794b7" />
+          </bidirectionalAssociation>
+          <bidirectionalAssociation Id="18897722-b4c7-43f8-9ff5-b734697a1f4f" targetPropertyName="AppSpecificProperties" collectionClass="HashSet" sourceRole="Principal" targetRole="Dependent" foreignKeyLocation="None" targetImplementNotify="false" targetBackingFieldName="_appSpecificProperties" targetAutoProperty="true" isTargetAbstract="false" targetAutoInclude="false" sourcePropertyName="User" sourceImplementNotify="false" sourceBackingFieldName="_user" sourceAutoProperty="true" isSourceAbstract="false" sourceAutoInclude="false">
+            <modelClassMoniker Id="e7e7d98c-022e-4809-977b-b4ee563da316" />
+          </bidirectionalAssociation>
+        </bidirectionalTargets>
+      </modelClass>
+    </modelRootHasClasses>
+    <modelRootHasClasses Id="e2f79e3d-3f71-4673-bd92-de3db0ebd687">
+      <modelClass Id="1f81db83-f813-474c-b41e-df7f525794b7" databaseSchema="dbo" namespace="SGL.Analytics.Backend.Model" name="ApplicationWithUserProperties" outputDirectory="" autoPropertyDefault="true" excludeFromMigrations="false">
+        <bidirectionalTargets>
+          <bidirectionalAssociation Id="e64c468d-c8da-439b-a043-b2ee0d174023" targetPropertyName="UserProperties" collectionClass="HashSet" sourceRole="Principal" targetRole="Dependent" foreignKeyLocation="None" targetImplementNotify="false" targetBackingFieldName="_userProperties" targetAutoProperty="true" isTargetAbstract="false" targetAutoInclude="false" sourcePropertyName="App" sourceImplementNotify="false" sourceBackingFieldName="_app" sourceAutoProperty="true" isSourceAbstract="false" sourceAutoInclude="false">
+            <modelClassMoniker Id="3fb7d698-ce6f-407c-8550-3efdb6118e38" />
+          </bidirectionalAssociation>
+        </bidirectionalTargets>
+      </modelClass>
+    </modelRootHasClasses>
+    <modelRootHasClasses Id="b772db8e-3258-4dfd-911c-d300a5ad1480">
+      <modelClass Id="334e94d0-41b4-48a3-a707-8b1a765a89bc" databaseSchema="dbo" namespace="SGL.Analytics.Backend.Model" name="UserPropertyType" outputDirectory="" autoPropertyDefault="true" excludeFromMigrations="false" />
+    </modelRootHasClasses>
+    <modelRootHasClasses Id="fb059c06-3b10-4f7a-8272-c62577b39071">
+      <modelClass Id="2c631d57-f18a-4adb-9734-de5f2a53600e" databaseSchema="dbo" namespace="SGL.Analytics.Backend.Model" name="Application" outputDirectory="" autoPropertyDefault="true" excludeFromMigrations="false">
+        <attributes>
+          <modelAttribute Id="75a9a5e7-b618-42d2-a27b-b173e1249a1d" type="Int32" isIdentity="true" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="Id" autoProperty="true" minLength="0" columnName="Id" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_id" databaseCollation="default" />
+          <modelAttribute Id="36cca969-968a-4369-8689-6637984414d6" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="Name" autoProperty="true" minLength="0" columnName="Name" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_name" databaseCollation="default" />
+          <modelAttribute Id="aff6dbf6-7484-4f08-95ca-9c8dc3c39d5f" required="true" maxLength="" indexed="false" indexedUnique="false" stringType="None" name="ApiToken" autoProperty="true" minLength="0" columnName="ApiToken" columnType="default" implementNotify="false" isForeignKeyFor="00000000-0000-0000-0000-000000000000" backingFieldName="_apiToken" databaseCollation="default" />
+        </attributes>
+        <subclasses>
+          <generalization Id="736acea0-96bb-49f7-a1ce-4e018eea9c16">
+            <modelClassMoniker Id="1f81db83-f813-474c-b41e-df7f525794b7" />
+          </generalization>
+        </subclasses>
+      </modelClass>
+    </modelRootHasClasses>
+  </classes>
+  <diagrams>
+    <modelRootHasModelDiagrams Id="c993739e-3adb-4764-ade8-651677c54df4">
+      <modelDiagramData />
+    </modelRootHasModelDiagrams>
+  </diagrams>
+</modelRoot>
