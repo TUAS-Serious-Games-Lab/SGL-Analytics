@@ -20,7 +20,7 @@
     "SGL.Analytics.Backend.UserDB": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "weatherforecast",
+      "launchUrl": "api/AnalyticsUser",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

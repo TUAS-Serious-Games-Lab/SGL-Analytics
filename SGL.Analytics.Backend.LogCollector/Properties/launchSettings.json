@@ -20,7 +20,7 @@
     "SGL.Analytics.Backend.LogCollector": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "weatherforecast",
+      "launchUrl": "api/AnalyticsLog",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
