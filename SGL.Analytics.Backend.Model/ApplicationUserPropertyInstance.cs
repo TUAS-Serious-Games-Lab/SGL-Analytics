@@ -15,8 +15,8 @@ namespace SGL.Analytics.Backend.Model {
 		public int Id { get; set; }
 		public int DefinitionId { get; set; }
 		public Guid UserId { get; set; }
-		public ApplicationUserPropertyDefinition Definition { get; set; }
-		public UserRegistration User { get; set; }
+		public ApplicationUserPropertyDefinition Definition { get; set; } = null!;
+		public UserRegistration User { get; set; } = null!;
 
 		public int? IntegerValue { get; set; }
 		public double? FloatingPointValue { get; set; }
@@ -58,14 +58,11 @@ namespace SGL.Analytics.Backend.Model {
 		}
 
 		public ApplicationUserPropertyInstance(int id, int definitionId, Guid userId,
-			ApplicationUserPropertyDefinition definition, UserRegistration user,
 			int? integerValue = null, double? floatingPointValue = null,
 			string? stringValue = null, DateTime? dateTimeValue = null, Guid? guidValue = null) {
 			Id = id;
 			DefinitionId = definitionId;
 			UserId = userId;
-			Definition = definition;
-			User = user;
 			IntegerValue = integerValue;
 			FloatingPointValue = floatingPointValue;
 			StringValue = stringValue;
