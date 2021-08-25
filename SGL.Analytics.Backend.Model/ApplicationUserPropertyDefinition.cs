@@ -11,15 +11,13 @@ namespace SGL.Analytics.Backend.Model {
 	public class ApplicationUserPropertyDefinition {
 		public int Id { get; set; }
 		public int AppId { get; set; }
-		public ApplicationWithUserProperties App { get; set; }
+		public ApplicationWithUserProperties App { get; set; } = null!;
 		public string Name { get; set; }
 		public UserPropertyType Type { get; set; }
 
-		public ApplicationUserPropertyDefinition(int id, int appId, ApplicationWithUserProperties app,
-			string name, UserPropertyType type) {
+		public ApplicationUserPropertyDefinition(int id, int appId, string name, UserPropertyType type) {
 			Id = id;
 			AppId = appId;
-			App = app;
 			Name = name;
 			Type = type;
 		}
