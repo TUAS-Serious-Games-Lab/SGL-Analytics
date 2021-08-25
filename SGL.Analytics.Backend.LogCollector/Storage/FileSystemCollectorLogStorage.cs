@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SGL.Analytics.Utilities;
 using System;
@@ -13,6 +14,14 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 		public const string FSCollectorLogStorage = "FSCollectorLogStorage";
 
 		public string StorageDirectory { get; set; } = Path.Combine(Environment.CurrentDirectory, "LogStorage");
+	}
+
+	public static class FileSystemCollectorLogStorageExtensions {
+		public static IServiceCollection UseFileSystemLogStorage(this IServiceCollection services, IConfiguration config) {
+			services.Configure<FSCollectorLogStorageOptions>(config.GetSection(FSCollectorLogStorageOptions.FSCollectorLogStorage));
+			services.AddScoped<ICollectorLogStorage, FileSystemCollectorLogStorage>();
+			return services;
+		}
 	}
 
 	public class FileSystemCollectorLogStorage : ICollectorLogStorage {
