@@ -10,7 +10,7 @@ namespace SGL.Analytics.Utilities {
 		private static char[] characters = Enumerable.Range('A', 26).Concat(Enumerable.Range('a', 26)).Concat(Enumerable.Range('0', 10)).Append(' ').Select(c => (char)c).ToArray();
 
 		public static string GenerateRandomString(int length) {
-			return new string(Enumerable.Range(0, 256).Select(_ => characters[rnd.Next(characters.Length)]).ToArray());
+			return new string(Enumerable.Range(0, length).Select(_ => characters[rnd.Next(characters.Length)]).ToArray());
 		}
 	}
 }
