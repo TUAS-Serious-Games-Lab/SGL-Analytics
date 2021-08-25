@@ -1,4 +1,6 @@
-﻿using SGL.Analytics.Utilities;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,6 +8,13 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.LogCollector.Storage {
+
+	public class FSCollectorLogStorageOptions {
+		public const string FSCollectorLogStorage = "FSCollectorLogStorage";
+
+		public string StorageDirectory { get; set; } = Path.Combine(Environment.CurrentDirectory, "LogStorage");
+	}
+
 	public class FileSystemCollectorLogStorage : ICollectorLogStorage {
 		private static readonly int guidLength = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx".Length;
 		private static readonly string tempSeparator = ".temp-";
@@ -13,6 +22,8 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 		private static readonly int tempSuffixLength = makeTempSuffix().Length;
 		private readonly string storageDirectory;
 
+		public FileSystemCollectorLogStorage(IOptions<FSCollectorLogStorageOptions> configOptions) : this(configOptions.Value) { }
+		public FileSystemCollectorLogStorage(FSCollectorLogStorageOptions options) : this(options.StorageDirectory) { }
 		public FileSystemCollectorLogStorage(string storageDirectory) {
 			this.storageDirectory = storageDirectory;
 		}
