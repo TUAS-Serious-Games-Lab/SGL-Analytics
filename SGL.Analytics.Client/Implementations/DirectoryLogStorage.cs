@@ -132,18 +132,18 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		private string getFilename(string path) {
+		private string? getFilename(string path) {
 			path = Path.GetFileName(path);
 			if (path.EndsWith(FileSuffix, StringComparison.OrdinalIgnoreCase)) {
 				return path.Remove(path.Length - FileSuffix.Length);
 			}
 			else {
-				return path;
+				return null;
 			}
 		}
 		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() => from file in (from filename in Directory.EnumerateFiles(directory, "*" + FileSuffix)
 																				  let idString = getFilename(filename)
-																				  let id = Guid.TryParse(idString, out var guid) ? guid : (Guid?)null
+																				  let id = (idString is not null && Guid.TryParse(idString, out var guid)) ? guid : (Guid?)null
 																				  where id.HasValue
 																				  select new LogFile(id.Value, this))
 																	orderby file.CreationTime
