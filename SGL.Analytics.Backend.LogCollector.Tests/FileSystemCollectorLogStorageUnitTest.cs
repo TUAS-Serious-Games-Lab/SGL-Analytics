@@ -161,5 +161,12 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 			}
 			Assert.All(pathList, p => Assert.Contains(p, storage.EnumerateLogs()));
 		}
+
+		[Fact]
+		public async Task AttemptingToReadNonExistentLogThrowsCorrectException() {
+			var path = new LogPath() { AppName = appName, UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = suffix };
+			var ex = await Assert.ThrowsAsync<LogNotAvailableException>(async () => { await using (var stream = await storage.ReadLogAsync(path)) { } });
+			Assert.Equal(path, ex.LogPath);
+		}
 	}
 }
