@@ -141,5 +141,25 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 			Assert.All(positivePathList, p => Assert.Contains(p, storage.EnumerateLogs(appName)));
 			Assert.All(negativePathList, p => Assert.DoesNotContain(p, storage.EnumerateLogs(appName)));
 		}
+
+		[Fact]
+		public async Task CreatedLogsAreCorrectlyEnumeratedOverall() {
+			Guid userId = Guid.NewGuid();
+			var pathList = new List<LogPath>() {
+				new LogPath() { AppName = appName, UserId = userId, LogId = Guid.NewGuid(), Suffix = suffix },
+				new LogPath() { AppName = appName, UserId = userId, LogId = Guid.NewGuid(), Suffix = suffix },
+				new LogPath() { AppName = appName, UserId = userId, LogId = Guid.NewGuid(), Suffix = suffix },
+				new LogPath() { AppName = appName, UserId = userId, LogId = Guid.NewGuid(), Suffix = suffix },
+				new LogPath() { AppName = appName, UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = suffix },
+				new LogPath() { AppName = appName + "_A", UserId = userId, LogId = Guid.NewGuid(), Suffix = suffix },
+				new LogPath() { AppName = appName + "_B", UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = suffix },
+			};
+			using (var content = new MemoryStream()) {
+				foreach (var p in pathList) {
+					await storage.StoreLogAsync(p, content);
+				}
+			}
+			Assert.All(pathList, p => Assert.Contains(p, storage.EnumerateLogs()));
+		}
 	}
 }
