@@ -47,6 +47,10 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 			return Path.Combine(storageDirectory, appName, userId.ToString());
 		}
 
+		private bool doesDirectoryExist(string appName, Guid userId) {
+			return Directory.Exists(makeDirectoryPath(appName, userId));
+		}
+
 		private void ensureDirectoryExists(string appName, Guid userId) {
 			Directory.CreateDirectory(makeDirectoryPath(appName, userId));
 		}
@@ -70,6 +74,7 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 		}
 
 		private IEnumerable<LogPath> enumerateDirectory(string appName, Guid userId) {
+			if (!doesDirectoryExist(appName, userId)) return Enumerable.Empty<LogPath>();
 			var files = Directory.EnumerateFiles(Path.Combine(storageDirectory, appName, userId.ToString()));
 			return from file in files
 				   let logPath = tryParseFilename(appName, userId, Path.GetFileName(file.AsSpan()))
