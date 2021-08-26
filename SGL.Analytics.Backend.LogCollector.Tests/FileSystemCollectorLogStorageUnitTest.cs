@@ -11,6 +11,8 @@ using Xunit.Abstractions;
 
 namespace SGL.Analytics.Backend.LogCollector.Tests {
 	public class FileSystemCollectorLogStorageUnitTest {
+		private const string appName = "FileSystemCollectorLogStorageUnitTest";
+		private const string suffix = ".log";
 		private FileSystemCollectorLogStorage fsStorage = new FileSystemCollectorLogStorage(new FSCollectorLogStorageOptions { });
 		private ICollectorLogStorage storage;
 		private ITestOutputHelper output;
@@ -33,7 +35,7 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 
 		[Fact]
 		public async Task LogIsStoredAndRetrievedCorrectly() {
-			LogPath logPath = new LogPath { AppName = "FileSystemCollectorLogStorageUnitTest", UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = ".log" };
+			LogPath logPath = new LogPath { AppName = appName, UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = suffix };
 			using (var content = makeRandomTextContent()) {
 				await storage.StoreLogAsync(logPath, content);
 				content.Position = 0;
@@ -76,15 +78,15 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 
 		[Fact]
 		public async Task LogsWithSameIdAreSeparatedByUser() {
-			LogPath logPathA = new LogPath { AppName = "FileSystemCollectorLogStorageUnitTest", UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = ".log" };
-			LogPath logPathB = new LogPath { AppName = logPathA.AppName, UserId = Guid.NewGuid(), LogId = logPathA.LogId, Suffix = ".log" };
+			LogPath logPathA = new LogPath { AppName = appName, UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = suffix };
+			LogPath logPathB = new LogPath { AppName = logPathA.AppName, UserId = Guid.NewGuid(), LogId = logPathA.LogId, Suffix = suffix };
 			await separationTest(logPathA, logPathB);
 		}
 
 		[Fact]
 		public async Task LogsWithSameIdAndUserAreSeparatedByApp() {
-			LogPath logPathA = new LogPath { AppName = "FileSystemCollectorLogStorageUnitTest_A", UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = ".log" };
-			LogPath logPathB = new LogPath { AppName = "FileSystemCollectorLogStorageUnitTest_B", UserId = logPathA.UserId, LogId = logPathA.LogId, Suffix = ".log" };
+			LogPath logPathA = new LogPath { AppName = appName + "_A", UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = suffix };
+			LogPath logPathB = new LogPath { AppName = appName + "_B", UserId = logPathA.UserId, LogId = logPathA.LogId, Suffix = suffix };
 			await separationTest(logPathA, logPathB);
 		}
 	}
