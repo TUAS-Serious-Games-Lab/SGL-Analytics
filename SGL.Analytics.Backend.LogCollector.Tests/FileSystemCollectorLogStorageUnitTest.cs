@@ -168,5 +168,16 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 			var ex = await Assert.ThrowsAsync<LogNotAvailableException>(async () => { await using (var stream = await storage.ReadLogAsync(path)) { } });
 			Assert.Equal(path, ex.LogPath);
 		}
+
+		[Fact]
+		public async Task DeletedLogIsNoLongerEnumerated() {
+			var path = new LogPath() { AppName = appName, UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = suffix };
+			using (var content = new MemoryStream()) {
+				await storage.StoreLogAsync(path, content);
+				Assert.Contains(path, storage.EnumerateLogs());
+				await storage.DeleteLogAsync(path);
+				Assert.DoesNotContain(path, storage.EnumerateLogs());
+			}
+		}
 	}
 }
