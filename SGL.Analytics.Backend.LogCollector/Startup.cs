@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.LogCollector.Data;
+using SGL.Analytics.Backend.LogCollector.Storage;
 
 namespace SGL.Analytics.Backend.LogCollector {
 	public class Startup {
@@ -24,6 +25,8 @@ namespace SGL.Analytics.Backend.LogCollector {
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services) {
 			services.AddControllers();
+
+			services.UseFileSystemCollectorLogStorage(Configuration);
 
 			services.AddDbContext<LogCollectorContext>(options =>
 					options.UseNpgsql(Configuration.GetConnectionString("LogCollectorContext")));
