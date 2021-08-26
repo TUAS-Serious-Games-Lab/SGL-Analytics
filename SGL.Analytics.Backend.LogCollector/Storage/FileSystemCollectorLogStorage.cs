@@ -17,7 +17,7 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 	}
 
 	public static class FileSystemCollectorLogStorageExtensions {
-		public static IServiceCollection UseFileSystemLogStorage(this IServiceCollection services, IConfiguration config) {
+		public static IServiceCollection UseFileSystemCollectorLogStorage(this IServiceCollection services, IConfiguration config) {
 			services.Configure<FSCollectorLogStorageOptions>(config.GetSection(FSCollectorLogStorageOptions.FSCollectorLogStorage));
 			services.AddScoped<ICollectorLogStorage, FileSystemCollectorLogStorage>();
 			return services;

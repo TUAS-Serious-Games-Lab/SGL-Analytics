@@ -26,7 +26,7 @@ namespace SGL.Analytics.Backend.LogCollector {
 		public void ConfigureServices(IServiceCollection services) {
 			services.AddControllers();
 
-			services.UseFileSystemLogStorage(Configuration);
+			services.UseFileSystemCollectorLogStorage(Configuration);
 
 			services.AddDbContext<LogCollectorContext>(options =>
 					options.UseNpgsql(Configuration.GetConnectionString("LogCollectorContext")));
