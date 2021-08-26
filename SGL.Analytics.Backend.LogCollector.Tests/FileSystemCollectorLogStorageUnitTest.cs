@@ -47,5 +47,35 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 				}
 			}
 		}
+
+		[Fact]
+		public async Task LogsWithSameIdAreSeparatedByUser() {
+			LogPath logPathA = new LogPath { AppName = "FileSystemCollectorLogStorageUnitTest", UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = ".log" };
+			LogPath logPathB = new LogPath { AppName = logPathA.AppName, UserId = Guid.NewGuid(), LogId = logPathA.LogId, Suffix = ".log" };
+			using (var contentA = makeRandomTextContent())
+			using (var contentB = makeRandomTextContent()) {
+				var taskA = storage.StoreLogAsync(logPathA, contentA);
+				var taskB = storage.StoreLogAsync(logPathB, contentB);
+				await Task.WhenAll(taskA, taskB);
+				contentA.Position = 0;
+				contentB.Position = 0;
+				using (var readStreamA = await storage.ReadLogAsync(logPathA))
+				using (var readStreamB = await storage.ReadLogAsync(logPathB)) {
+					using (var origAReader = new StreamReader(contentA, leaveOpen: true))
+					using (var readBackAReader = new StreamReader(readStreamA, leaveOpen: true))
+					using (var origBReader = new StreamReader(contentB, leaveOpen: true))
+					using (var readBackBReader = new StreamReader(readStreamB, leaveOpen: true)) {
+						Assert.Equal(origAReader.EnumerateLines(), readBackAReader.EnumerateLines());
+						Assert.Equal(origBReader.EnumerateLines(), readBackBReader.EnumerateLines());
+					}
+					readStreamA.Position = 0;
+					readStreamB.Position = 0;
+					using (var readBackAReader = new StreamReader(readStreamA, leaveOpen: true))
+					using (var readBackBReader = new StreamReader(readStreamB, leaveOpen: true)) {
+						Assert.NotEqual(readBackAReader.EnumerateLines(), readBackBReader.EnumerateLines());
+					}
+				}
+			}
+		}
 	}
 }
