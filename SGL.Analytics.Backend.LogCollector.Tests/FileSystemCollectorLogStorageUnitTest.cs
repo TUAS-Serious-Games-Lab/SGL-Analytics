@@ -194,5 +194,42 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 				Assert.DoesNotContain(path, storage.EnumerateLogs());
 			}
 		}
+
+		[Fact]
+		public async Task LastFinishedStoreWins() {
+			var path = new LogPath() { AppName = appName, UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = suffix };
+
+			using (var contentA = makeRandomTextContent())
+			using (var contentB = makeRandomTextContent()) {
+				using (var trigStreamA = new TriggeredBlockingStream(contentA))
+				using (var trigStreamB = new TriggeredBlockingStream(contentB)) {
+					var taskA = storage.StoreLogAsync(path, trigStreamA);
+					var taskB = storage.StoreLogAsync(path, trigStreamB);
+					trigStreamB.TriggerReadReady();
+					await taskB;
+					contentB.Position = 0;
+					using (var readStream = await storage.ReadLogAsync(path)) {
+						output.WriteStreamContents(readStream);
+						readStream.Position = 0;
+						using (var origReader = new StreamReader(contentB, leaveOpen: true))
+						using (var readBackReader = new StreamReader(readStream, leaveOpen: true)) {
+							Assert.Equal(origReader.EnumerateLines(), readBackReader.EnumerateLines());
+						}
+					}
+					output.WriteLine("");
+					trigStreamA.TriggerReadReady();
+					await taskA;
+					contentA.Position = 0;
+					using (var readStream = await storage.ReadLogAsync(path)) {
+						output.WriteStreamContents(readStream);
+						readStream.Position = 0;
+						using (var origReader = new StreamReader(contentA, leaveOpen: true))
+						using (var readBackReader = new StreamReader(readStream, leaveOpen: true)) {
+							Assert.Equal(origReader.EnumerateLines(), readBackReader.EnumerateLines());
+						}
+					}
+				}
+			}
+		}
 	}
 }
