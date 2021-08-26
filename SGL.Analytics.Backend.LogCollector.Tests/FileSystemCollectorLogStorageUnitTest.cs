@@ -47,11 +47,7 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 				}
 			}
 		}
-
-		[Fact]
-		public async Task LogsWithSameIdAreSeparatedByUser() {
-			LogPath logPathA = new LogPath { AppName = "FileSystemCollectorLogStorageUnitTest", UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = ".log" };
-			LogPath logPathB = new LogPath { AppName = logPathA.AppName, UserId = Guid.NewGuid(), LogId = logPathA.LogId, Suffix = ".log" };
+		private async Task separationTest(LogPath logPathA, LogPath logPathB) {
 			using (var contentA = makeRandomTextContent())
 			using (var contentB = makeRandomTextContent()) {
 				var taskA = storage.StoreLogAsync(logPathA, contentA);
@@ -76,6 +72,13 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 					}
 				}
 			}
+		}
+
+		[Fact]
+		public async Task LogsWithSameIdAreSeparatedByUser() {
+			LogPath logPathA = new LogPath { AppName = "FileSystemCollectorLogStorageUnitTest", UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = ".log" };
+			LogPath logPathB = new LogPath { AppName = logPathA.AppName, UserId = Guid.NewGuid(), LogId = logPathA.LogId, Suffix = ".log" };
+			await separationTest(logPathA, logPathB);
 		}
 	}
 }
