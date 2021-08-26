@@ -20,16 +20,21 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 			storage = fsStorage;
 		}
 
+		private MemoryStream makeRandomTextContent() {
+			var content = new MemoryStream();
+			using (var writer = new StreamWriter(content, leaveOpen: true)) {
+				for (int i = 0; i < 10; ++i) {
+					writer.WriteLine(StringGenerator.GenerateRandomString(100));
+				}
+			}
+			content.Position = 0;
+			return content;
+		}
+
 		[Fact]
 		public async Task LogIsStoredAndRetrievedCorrectly() {
 			LogPath logPath = new LogPath { AppName = "FileSystemCollectorLogStorageUnitTest", UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = ".log" };
-			using (var content = new MemoryStream()) {
-				using (var writer = new StreamWriter(content, leaveOpen: true)) {
-					for (int i = 0; i < 10; ++i) {
-						writer.WriteLine(StringGenerator.GenerateRandomString(100));
-					}
-				}
-				content.Position = 0;
+			using (var content = makeRandomTextContent()) {
 				await storage.StoreLogAsync(logPath, content);
 				content.Position = 0;
 				using (var readStream = await storage.ReadLogAsync(logPath)) {
