@@ -111,8 +111,13 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 
 		public Task<Stream> ReadLogAsync(string appName, Guid userId, Guid logId, string suffix) {
 			return Task.Run(() => {
-				var filePath = makeFilePath(appName, userId, logId, suffix);
-				return (Stream)(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true));
+				try {
+					var filePath = makeFilePath(appName, userId, logId, suffix);
+					return (Stream)(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true));
+				}
+				catch (Exception ex) {
+					throw new LogNotAvailableException(new LogPath { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix }, ex);
+				}
 			});
 		}
 

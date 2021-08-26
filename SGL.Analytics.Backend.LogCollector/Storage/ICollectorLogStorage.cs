@@ -10,6 +10,16 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 		public Guid UserId { get; set; }
 		public Guid LogId { get; set; }
 		public string Suffix { get; set; }
+
+		public override string ToString() => $"[{AppName}/{UserId}/{LogId}{Suffix}]";
+	}
+
+	public class LogNotAvailableException : Exception {
+		public LogNotAvailableException(LogPath logPath, Exception? innerException = null) : base($"The log file {logPath} is not available.", innerException) {
+			LogPath = logPath;
+		}
+
+		public LogPath LogPath { get; set; }
 	}
 
 	public interface ICollectorLogStorage {
