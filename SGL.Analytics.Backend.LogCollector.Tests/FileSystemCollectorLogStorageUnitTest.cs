@@ -10,16 +10,31 @@ using Xunit;
 using Xunit.Abstractions;
 
 namespace SGL.Analytics.Backend.LogCollector.Tests {
-	public class FileSystemCollectorLogStorageUnitTest {
+	public class FileSystemCollectorLogStorageUnitTestFixture : IDisposable {
+		private readonly string storageDirectory = Path.Combine(Environment.CurrentDirectory, "TempTestData", "LogStorage");
+		public FileSystemCollectorLogStorage FSStorage { get; set; }
+		public ICollectorLogStorage Storage => FSStorage;
+
+		public FileSystemCollectorLogStorageUnitTestFixture() {
+			FSStorage = new FileSystemCollectorLogStorage(storageDirectory);
+		}
+
+		public void Dispose() {
+			Directory.Delete(storageDirectory, true);
+		}
+	}
+
+	public class FileSystemCollectorLogStorageUnitTest : IClassFixture<FileSystemCollectorLogStorageUnitTestFixture> {
 		private const string appName = "FileSystemCollectorLogStorageUnitTest";
 		private const string suffix = ".log";
-		private FileSystemCollectorLogStorage fsStorage = new FileSystemCollectorLogStorage(new FSCollectorLogStorageOptions { });
-		private ICollectorLogStorage storage;
+		private FileSystemCollectorLogStorage fsStorage => fixture.FSStorage;
+		private ICollectorLogStorage storage => fixture.Storage;
 		private ITestOutputHelper output;
+		private FileSystemCollectorLogStorageUnitTestFixture fixture;
 
-		public FileSystemCollectorLogStorageUnitTest(ITestOutputHelper output) {
+		public FileSystemCollectorLogStorageUnitTest(ITestOutputHelper output, FileSystemCollectorLogStorageUnitTestFixture fixture) {
 			this.output = output;
-			storage = fsStorage;
+			this.fixture = fixture;
 		}
 
 		private MemoryStream makeRandomTextContent() {
