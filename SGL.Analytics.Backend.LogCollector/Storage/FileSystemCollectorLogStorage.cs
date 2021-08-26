@@ -43,6 +43,13 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 		private string makeFilePath(string appName, Guid userId, Guid logId, string suffix) {
 			return Path.Combine(storageDirectory, appName, userId.ToString(), logId.ToString() + suffix);
 		}
+		private string makeDirectoryPath(string appName, Guid userId) {
+			return Path.Combine(storageDirectory, appName, userId.ToString());
+		}
+
+		private void ensureDirectoryExists(string appName, Guid userId) {
+			Directory.CreateDirectory(makeDirectoryPath(appName, userId));
+		}
 
 		private static LogPath? tryParseFilename(string appName, Guid userId, ReadOnlySpan<char> filename) {
 			var guidSpan = filename.Slice(0, guidLength);
@@ -123,6 +130,7 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 
 		public Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content) {
 			return Task.Run(async () => {
+				ensureDirectoryExists(appName, userId);
 				// Create target file with temporary name to not make it visible to other operations while it is still being written.
 				var filePath = Path.Combine(storageDirectory, appName, userId.ToString(), logId.ToString() + suffix + makeTempSuffix());
 				using (var writeStream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
