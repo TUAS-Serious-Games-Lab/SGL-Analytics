@@ -89,5 +89,31 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 			LogPath logPathB = new LogPath { AppName = appName + "_B", UserId = logPathA.UserId, LogId = logPathA.LogId, Suffix = suffix };
 			await separationTest(logPathA, logPathB);
 		}
+
+		[Fact]
+		public async Task CreatedLogsAreCorrectlyEnumeratedForAppUser() {
+			Guid userId = Guid.NewGuid();
+			var positivePathList = new List<LogPath>() {
+				new LogPath() { AppName = appName, UserId = userId, LogId = Guid.NewGuid(), Suffix = suffix },
+				new LogPath() { AppName = appName, UserId = userId, LogId = Guid.NewGuid(), Suffix = suffix },
+				new LogPath() { AppName = appName, UserId = userId, LogId = Guid.NewGuid(), Suffix = suffix },
+				new LogPath() { AppName = appName, UserId = userId, LogId = Guid.NewGuid(), Suffix = suffix }
+			};
+			var negativePathList = new List<LogPath>() {
+				new LogPath() { AppName = appName + "_A", UserId = userId, LogId = Guid.NewGuid(), Suffix = suffix },
+				new LogPath() { AppName = appName + "_B", UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = suffix },
+				new LogPath() { AppName = appName, UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = suffix }
+			};
+			using (var content = new MemoryStream()) {
+				foreach (var p in positivePathList) {
+					await storage.StoreLogAsync(p, content);
+				}
+				foreach (var p in negativePathList) {
+					await storage.StoreLogAsync(p, content);
+				}
+			}
+			Assert.All(positivePathList, p => Assert.Contains(p, storage.EnumerateLogs(appName, userId)));
+			Assert.All(negativePathList, p => Assert.DoesNotContain(p, storage.EnumerateLogs(appName, userId)));
+		}
 	}
 }
