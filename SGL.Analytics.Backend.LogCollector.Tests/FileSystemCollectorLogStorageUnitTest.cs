@@ -80,5 +80,12 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 			LogPath logPathB = new LogPath { AppName = logPathA.AppName, UserId = Guid.NewGuid(), LogId = logPathA.LogId, Suffix = ".log" };
 			await separationTest(logPathA, logPathB);
 		}
+
+		[Fact]
+		public async Task LogsWithSameIdAndUserAreSeparatedByApp() {
+			LogPath logPathA = new LogPath { AppName = "FileSystemCollectorLogStorageUnitTest_A", UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = ".log" };
+			LogPath logPathB = new LogPath { AppName = "FileSystemCollectorLogStorageUnitTest_B", UserId = logPathA.UserId, LogId = logPathA.LogId, Suffix = ".log" };
+			await separationTest(logPathA, logPathB);
+		}
 	}
 }
