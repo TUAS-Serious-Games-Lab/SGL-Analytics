@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SGL.Analytics.Backend.UserDB\SGL.Analytics.Backend.UserDB.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Backend.UserDB\SGL.Analytics.Backend.Users.Registration.csproj" />
   </ItemGroup>
 
 </Project>

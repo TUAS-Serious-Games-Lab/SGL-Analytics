@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Logs.
 		{78BD51AA-04B5-4EFE-B957-390B2A03CD27} = {78BD51AA-04B5-4EFE-B957-390B2A03CD27}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.UserDB", "SGL.Analytics.Backend.UserDB\SGL.Analytics.Backend.UserDB.csproj", "{A529B0C3-06E2-44C3-B6F4-910D9316FCF3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Users.Registration", "SGL.Analytics.Backend.Users.Registration\SGL.Analytics.Backend.Users.Registration.csproj", "{A529B0C3-06E2-44C3-B6F4-910D9316FCF3}"
 	ProjectSection(ProjectDependencies) = postProject
 		{19745D17-DDC1-471E-81C5-ED282BAC5E74} = {19745D17-DDC1-471E-81C5-ED282BAC5E74}
 		{78BD51AA-04B5-4EFE-B957-390B2A03CD27} = {78BD51AA-04B5-4EFE-B957-390B2A03CD27}
@@ -39,7 +39,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Client.Tests"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Logs.Collector.Tests", "SGL.Analytics.Backend.Logs.Collector.Tests\SGL.Analytics.Backend.Logs.Collector.Tests.csproj", "{7F305487-2E89-4802-8E44-08355F23ACE0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.UserDB.Tests", "SGL.Analytics.Backend.UserDB.Tests\SGL.Analytics.Backend.UserDB.Tests.csproj", "{AC7F1A5F-9E5C-4A99-814A-827307B720D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Users.Registration.Tests", "SGL.Analytics.Backend.Users.Registration.Tests\SGL.Analytics.Backend.Users.Registration.Tests.csproj", "{AC7F1A5F-9E5C-4A99-814A-827307B720D4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Utilities", "SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj", "{3C759913-E31C-4182-882C-716F2520AB9F}"
 EndProject
