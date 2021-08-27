@@ -12,11 +12,11 @@ using Xunit.Abstractions;
 namespace SGL.Analytics.Backend.LogCollector.Tests {
 	public class FileSystemCollectorLogStorageUnitTestFixture : IDisposable {
 		private readonly string storageDirectory = Path.Combine(Environment.CurrentDirectory, "TempTestData", "LogStorage");
-		public FileSystemCollectorLogStorage FSStorage { get; set; }
-		public ICollectorLogStorage Storage => FSStorage;
+		public FileSystemLogRepository FSStorage { get; set; }
+		public ILogFileRepository Storage => FSStorage;
 
 		public FileSystemCollectorLogStorageUnitTestFixture() {
-			FSStorage = new FileSystemCollectorLogStorage(storageDirectory);
+			FSStorage = new FileSystemLogRepository(storageDirectory);
 		}
 
 		public void Dispose() {
@@ -27,8 +27,8 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 	public class FileSystemCollectorLogStorageUnitTest : IClassFixture<FileSystemCollectorLogStorageUnitTestFixture> {
 		private const string appName = "FileSystemCollectorLogStorageUnitTest";
 		private const string suffix = ".log";
-		private FileSystemCollectorLogStorage fsStorage => fixture.FSStorage;
-		private ICollectorLogStorage storage => fixture.Storage;
+		private FileSystemLogRepository fsStorage => fixture.FSStorage;
+		private ILogFileRepository storage => fixture.Storage;
 		private ITestOutputHelper output;
 		private FileSystemCollectorLogStorageUnitTestFixture fixture;
 
@@ -180,7 +180,7 @@ namespace SGL.Analytics.Backend.LogCollector.Tests {
 		[Fact]
 		public async Task AttemptingToReadNonExistentLogThrowsCorrectException() {
 			var path = new LogPath() { AppName = appName, UserId = Guid.NewGuid(), LogId = Guid.NewGuid(), Suffix = suffix };
-			var ex = await Assert.ThrowsAsync<LogNotAvailableException>(async () => { await using (var stream = await storage.ReadLogAsync(path)) { } });
+			var ex = await Assert.ThrowsAsync<LogFileNotAvailableException>(async () => { await using (var stream = await storage.ReadLogAsync(path)) { } });
 			Assert.Equal(path, ex.LogPath);
 		}
 

@@ -10,30 +10,30 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.LogCollector.Storage {
 
-	public class FSCollectorLogStorageOptions {
+	public class FileSystemLogRepositoryOptions {
 		public const string FSCollectorLogStorage = "FSCollectorLogStorage";
 
 		public string StorageDirectory { get; set; } = Path.Combine(Environment.CurrentDirectory, "LogStorage");
 	}
 
-	public static class FileSystemCollectorLogStorageExtensions {
+	public static class FileSystemLogRepositoryExtensions {
 		public static IServiceCollection UseFileSystemCollectorLogStorage(this IServiceCollection services, IConfiguration config) {
-			services.Configure<FSCollectorLogStorageOptions>(config.GetSection(FSCollectorLogStorageOptions.FSCollectorLogStorage));
-			services.AddScoped<ICollectorLogStorage, FileSystemCollectorLogStorage>();
+			services.Configure<FileSystemLogRepositoryOptions>(config.GetSection(FileSystemLogRepositoryOptions.FSCollectorLogStorage));
+			services.AddScoped<ILogFileRepository, FileSystemLogRepository>();
 			return services;
 		}
 	}
 
-	public class FileSystemCollectorLogStorage : ICollectorLogStorage {
+	public class FileSystemLogRepository : ILogFileRepository {
 		private static readonly int guidLength = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx".Length;
 		private static readonly string tempSeparator = ".temp-";
 		private static readonly int tempSeparatorLength = tempSeparator.Length;
 		private static readonly int tempSuffixLength = makeTempSuffix().Length;
 		private readonly string storageDirectory;
 
-		public FileSystemCollectorLogStorage(IOptions<FSCollectorLogStorageOptions> configOptions) : this(configOptions.Value) { }
-		public FileSystemCollectorLogStorage(FSCollectorLogStorageOptions options) : this(options.StorageDirectory) { }
-		public FileSystemCollectorLogStorage(string storageDirectory) {
+		public FileSystemLogRepository(IOptions<FileSystemLogRepositoryOptions> configOptions) : this(configOptions.Value) { }
+		public FileSystemLogRepository(FileSystemLogRepositoryOptions options) : this(options.StorageDirectory) { }
+		public FileSystemLogRepository(string storageDirectory) {
 			this.storageDirectory = storageDirectory;
 		}
 		private static string makeTempSuffix() {
@@ -128,7 +128,7 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 					return (Stream)(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true));
 				}
 				catch (Exception ex) {
-					throw new LogNotAvailableException(new LogPath { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix }, ex);
+					throw new LogFileNotAvailableException(new LogPath { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix }, ex);
 				}
 			});
 		}

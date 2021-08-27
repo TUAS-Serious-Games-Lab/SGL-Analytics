@@ -14,15 +14,15 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 		public override string ToString() => $"[{AppName}/{UserId}/{LogId}{Suffix}]";
 	}
 
-	public class LogNotAvailableException : Exception {
-		public LogNotAvailableException(LogPath logPath, Exception? innerException = null) : base($"The log file {logPath} is not available.", innerException) {
+	public class LogFileNotAvailableException : Exception {
+		public LogFileNotAvailableException(LogPath logPath, Exception? innerException = null) : base($"The log file {logPath} is not available.", innerException) {
 			LogPath = logPath;
 		}
 
 		public LogPath LogPath { get; set; }
 	}
 
-	public interface ICollectorLogStorage {
+	public interface ILogFileRepository {
 		// For maximum of implementation flexibility, allow operations to be performed asynchronously where possible, even if the default implementation can only use synchronous APIs.
 		// E.g. while opening a stream to a local file uses a synchronous API, a possible alternate implementation might be backed by an object store where the opening operation involves a request that can be done asynchronously.
 		// However, EnumerateLogs methods need to provide synchronous versions, because LINQ extension methods don't apply to IAsyncEnumerable<T> but only to IEnumerable<T>.
