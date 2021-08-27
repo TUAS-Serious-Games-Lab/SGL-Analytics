@@ -9,15 +9,7 @@
   },
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "launchBrowser": true,
-      "launchUrl": "weatherforecast",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    "SGL.Analytics.Backend.UserDB": {
+    "SGL.Analytics.Backend.User.Registration": {
       "commandName": "Project",
       "launchBrowser": true,
       "launchUrl": "api/AnalyticsUser",
