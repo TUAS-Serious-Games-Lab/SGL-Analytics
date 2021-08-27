@@ -29,8 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SGL.Analytics.Backend.Domain\SGL.Analytics.Backend.Domain.csproj" />
-    <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Backend.Users.Application\SGL.Analytics.Backend.Users.Application.csproj" />
   </ItemGroup>
 
 
