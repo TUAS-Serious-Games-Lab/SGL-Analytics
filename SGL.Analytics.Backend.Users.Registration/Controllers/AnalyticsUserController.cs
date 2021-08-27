@@ -25,6 +25,9 @@ namespace SGL.Analytics.Backend.UserDB.Controllers {
 		// more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
 		[HttpPost]
 		public async Task<ActionResult<UserRegistrationResultDTO>> PostUserRegistration(UserRegistrationDTO userRegistration) {
+			// TODO: Check API token.
+			return Unauthorized();
+
 			UserRegistrationResultDTO result = await userManager.RegisterUserAsync(userRegistration);
 
 			return StatusCode(((int)HttpStatusCode.Created));
