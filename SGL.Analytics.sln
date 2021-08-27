@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31515.178
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.LogCollector", "SGL.Analytics.Backend.LogCollector\SGL.Analytics.Backend.LogCollector.csproj", "{0511CFF2-24A3-430F-AD47-B74576E737F3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Logs.Collector", "SGL.Analytics.Backend.Logs.Collector\SGL.Analytics.Backend.Logs.Collector.csproj", "{0511CFF2-24A3-430F-AD47-B74576E737F3}"
 	ProjectSection(ProjectDependencies) = postProject
 		{19745D17-DDC1-471E-81C5-ED282BAC5E74} = {19745D17-DDC1-471E-81C5-ED282BAC5E74}
 		{78BD51AA-04B5-4EFE-B957-390B2A03CD27} = {78BD51AA-04B5-4EFE-B957-390B2A03CD27}
@@ -37,7 +37,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Client.Tests", "SGL.Analytics.Client.Tests\SGL.Analytics.Client.Tests.csproj", "{437E71CA-095B-48AA-A527-2FF000AD5D84}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.LogCollector.Tests", "SGL.Analytics.Backend.LogCollector.Tests\SGL.Analytics.Backend.LogCollector.Tests.csproj", "{7F305487-2E89-4802-8E44-08355F23ACE0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Logs.Collector.Tests", "SGL.Analytics.Backend.Logs.Collector.Tests\SGL.Analytics.Backend.Logs.Collector.Tests.csproj", "{7F305487-2E89-4802-8E44-08355F23ACE0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.UserDB.Tests", "SGL.Analytics.Backend.UserDB.Tests\SGL.Analytics.Backend.UserDB.Tests.csproj", "{AC7F1A5F-9E5C-4A99-814A-827307B720D4}"
 EndProject

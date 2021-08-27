@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SGL.Analytics.Backend.LogCollector\SGL.Analytics.Backend.LogCollector.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Backend.Logs.Collector\SGL.Analytics.Backend.Logs.Collector.csproj" />
   </ItemGroup>
 
 </Project>
