@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SGL.Analytics.Backend.Model;
+using SGL.Analytics.Backend.Entity;
 
 namespace SGL.Analytics.Backend.UserDB.Controllers {
 	[Route("api/[controller]")]

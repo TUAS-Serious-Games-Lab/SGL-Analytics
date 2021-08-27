@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace SGL.Analytics.Backend.Model {
+namespace SGL.Analytics.Backend.Entity {
 	[Index(nameof(AppId))]
 	[Index(nameof(AppId), nameof(UserId))]
 	public class LogMetadata {

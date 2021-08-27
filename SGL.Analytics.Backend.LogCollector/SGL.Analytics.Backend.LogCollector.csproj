@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SGL.Analytics.Backend.Model\SGL.Analytics.Backend.Model.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Backend.Entity\SGL.Analytics.Backend.Entity.csproj" />
     <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
   </ItemGroup>
 

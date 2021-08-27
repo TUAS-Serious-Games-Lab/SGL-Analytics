@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using SGL.Analytics.Backend.Model;
+using SGL.Analytics.Backend.Entity;
 
 namespace SGL.Analytics.Backend.LogCollector.Data {
 	public class LogCollectorContext : DbContext {

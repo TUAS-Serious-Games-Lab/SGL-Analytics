@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using SGL.Analytics.Backend.Model;
+using SGL.Analytics.Backend.Entity;
 
 public class UserDBContext : DbContext {
 	public UserDBContext(DbContextOptions<UserDBContext> options)

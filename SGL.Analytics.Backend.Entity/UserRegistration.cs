@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace SGL.Analytics.Backend.Model {
+namespace SGL.Analytics.Backend.Entity {
 	[Index(nameof(AppId), nameof(Username), IsUnique = true)]
 	public class UserRegistration {
 		[Key]

@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.UserD
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.DTO", "SGL.Analytics.DTO\SGL.Analytics.DTO.csproj", "{19745D17-DDC1-471E-81C5-ED282BAC5E74}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Model", "SGL.Analytics.Backend.Model\SGL.Analytics.Backend.Model.csproj", "{78BD51AA-04B5-4EFE-B957-390B2A03CD27}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Entity", "SGL.Analytics.Backend.Entity\SGL.Analytics.Backend.Entity.csproj", "{78BD51AA-04B5-4EFE-B957-390B2A03CD27}"
 	ProjectSection(ProjectDependencies) = postProject
 		{19745D17-DDC1-471E-81C5-ED282BAC5E74} = {19745D17-DDC1-471E-81C5-ED282BAC5E74}
 	EndProjectSection
@@ -41,9 +41,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.LogCo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.UserDB.Tests", "SGL.Analytics.Backend.UserDB.Tests\SGL.Analytics.Backend.UserDB.Tests.csproj", "{AC7F1A5F-9E5C-4A99-814A-827307B720D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Utilities", "SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj", "{3C759913-E31C-4182-882C-716F2520AB9F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Utilities", "SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj", "{3C759913-E31C-4182-882C-716F2520AB9F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Utilities.Tests", "SGL.Analytics.Utilities.Tests\SGL.Analytics.Utilities.Tests.csproj", "{E30C3EE2-85CB-4F8E-9276-2A5D3AAC5FFC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Utilities.Tests", "SGL.Analytics.Utilities.Tests\SGL.Analytics.Utilities.Tests.csproj", "{E30C3EE2-85CB-4F8E-9276-2A5D3AAC5FFC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.Model {
+namespace SGL.Analytics.Backend.Entity {
 	[Owned]
 	[Index(nameof(DefinitionId), nameof(UserId), IsUnique = true)]
 	public class ApplicationUserPropertyInstance {

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.LogCollector.Data;
-using SGL.Analytics.Backend.Model;
+using SGL.Analytics.Backend.Entity;
 
 namespace SGL.Analytics.Backend.LogCollector.Controllers {
 	[Route("api/[controller]")]
