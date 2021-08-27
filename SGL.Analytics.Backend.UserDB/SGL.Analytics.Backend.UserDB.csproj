@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SGL.Analytics.Backend.Users.Application\SGL.Analytics.Backend.Users.Application.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Backend.Users.Infrastructure\SGL.Analytics.Backend.Users.Infrastructure.csproj" />
   </ItemGroup>
 
 

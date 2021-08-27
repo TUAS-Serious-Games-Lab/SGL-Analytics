@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace SGL.Analytics.Backend.UserDB {
 			IHost host = CreateHostBuilder(args).Build();
 			// TODO: Change this to use DB migrations when first real version of database schema is defined.
 			using (var serviceScope = host.Services.CreateScope()) {
-				var context = serviceScope.ServiceProvider.GetRequiredService<UserDBContext>();
+				var context = serviceScope.ServiceProvider.GetRequiredService<UsersContext>();
 				context.Database.EnsureCreated();
 			}
 			host.Run();

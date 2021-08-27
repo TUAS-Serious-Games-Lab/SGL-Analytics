@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using SGL.Analytics.Backend.Users.Infrastructure.Data;
 
 namespace SGL.Analytics.Backend.UserDB {
 	public class Startup {
@@ -24,8 +25,8 @@ namespace SGL.Analytics.Backend.UserDB {
 		public void ConfigureServices(IServiceCollection services) {
 			services.AddControllers();
 
-			services.AddDbContext<UserDBContext>(options =>
-					options.UseNpgsql(Configuration.GetConnectionString("UserDBContext")));
+			services.AddDbContext<UsersContext>(options =>
+					options.UseNpgsql(Configuration.GetConnectionString("UsersContext")));
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -63,6 +63,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Users", "Users", "{ACAEC860
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Backend.Users.Application", "SGL.Analytics.Backend.Users.Application\SGL.Analytics.Backend.Users.Application.csproj", "{431623FE-DAE7-4100-95F5-740C4E89500E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Backend.Users.Infrastructure", "SGL.Analytics.Backend.Users.Infrastructure\SGL.Analytics.Backend.Users.Infrastructure.csproj", "{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -129,6 +131,10 @@ Global
 		{431623FE-DAE7-4100-95F5-740C4E89500E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{431623FE-DAE7-4100-95F5-740C4E89500E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{431623FE-DAE7-4100-95F5-740C4E89500E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -151,6 +157,7 @@ Global
 		{E4EACDD4-B60C-4E58-8B08-AD7FA000F9DB} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{ACAEC860-19A2-4FFA-B958-F16A7532F38C} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{431623FE-DAE7-4100-95F5-740C4E89500E} = {ACAEC860-19A2-4FFA-B958-F16A7532F38C}
+		{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167} = {ACAEC860-19A2-4FFA-B958-F16A7532F38C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9107486E-74EF-450A-956B-BF17C61467C5}
