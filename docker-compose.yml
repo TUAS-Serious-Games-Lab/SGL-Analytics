@@ -7,23 +7,23 @@ services:
     environment:
       POSTGRES_PASSWORD:
   
-  sgl.analytics.backend.logcollector:
-    image: ${DOCKER_REGISTRY-}sglanalytics/logcollector
+  sgl.analytics.backend.logs.collector:
+    image: ${DOCKER_REGISTRY-}sglanalytics/logs-collector
     build:
       context: .
-      dockerfile: SGL.Analytics.Backend.LogCollector/Dockerfile
+      dockerfile: SGL.Analytics.Backend.Logs.Collector/Dockerfile
     environment:
-      ConnectionStrings__LogCollectorContext:
+      ConnectionStrings__LogsContext:
     depends_on:
     - db
 
-  sgl.analytics.backend.userdb:
-    image: ${DOCKER_REGISTRY-}sglanalytics/userdb
+  sgl.analytics.backend.users.registration:
+    image: ${DOCKER_REGISTRY-}sglanalytics/users-registration
     build:
       context: .
-      dockerfile: SGL.Analytics.Backend.UserDB/Dockerfile
+      dockerfile: SGL.Analytics.Backend.Users.Registration/Dockerfile
     environment:
-      ConnectionStrings__UserDBContext:
+      ConnectionStrings__UsersContext:
     depends_on:
     - db
     

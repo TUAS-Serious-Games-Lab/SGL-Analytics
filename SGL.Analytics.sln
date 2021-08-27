@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31515.178
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.LogCollector", "SGL.Analytics.Backend.LogCollector\SGL.Analytics.Backend.LogCollector.csproj", "{0511CFF2-24A3-430F-AD47-B74576E737F3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Logs.Collector", "SGL.Analytics.Backend.Logs.Collector\SGL.Analytics.Backend.Logs.Collector.csproj", "{0511CFF2-24A3-430F-AD47-B74576E737F3}"
 	ProjectSection(ProjectDependencies) = postProject
 		{19745D17-DDC1-471E-81C5-ED282BAC5E74} = {19745D17-DDC1-471E-81C5-ED282BAC5E74}
 		{78BD51AA-04B5-4EFE-B957-390B2A03CD27} = {78BD51AA-04B5-4EFE-B957-390B2A03CD27}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.UserDB", "SGL.Analytics.Backend.UserDB\SGL.Analytics.Backend.UserDB.csproj", "{A529B0C3-06E2-44C3-B6F4-910D9316FCF3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Users.Registration", "SGL.Analytics.Backend.Users.Registration\SGL.Analytics.Backend.Users.Registration.csproj", "{A529B0C3-06E2-44C3-B6F4-910D9316FCF3}"
 	ProjectSection(ProjectDependencies) = postProject
 		{19745D17-DDC1-471E-81C5-ED282BAC5E74} = {19745D17-DDC1-471E-81C5-ED282BAC5E74}
 		{78BD51AA-04B5-4EFE-B957-390B2A03CD27} = {78BD51AA-04B5-4EFE-B957-390B2A03CD27}
@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.UserD
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.DTO", "SGL.Analytics.DTO\SGL.Analytics.DTO.csproj", "{19745D17-DDC1-471E-81C5-ED282BAC5E74}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Entity", "SGL.Analytics.Backend.Entity\SGL.Analytics.Backend.Entity.csproj", "{78BD51AA-04B5-4EFE-B957-390B2A03CD27}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Domain", "SGL.Analytics.Backend.Domain\SGL.Analytics.Backend.Domain.csproj", "{78BD51AA-04B5-4EFE-B957-390B2A03CD27}"
 	ProjectSection(ProjectDependencies) = postProject
 		{19745D17-DDC1-471E-81C5-ED282BAC5E74} = {19745D17-DDC1-471E-81C5-ED282BAC5E74}
 	EndProjectSection
@@ -37,13 +37,33 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Client.Tests", "SGL.Analytics.Client.Tests\SGL.Analytics.Client.Tests.csproj", "{437E71CA-095B-48AA-A527-2FF000AD5D84}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.LogCollector.Tests", "SGL.Analytics.Backend.LogCollector.Tests\SGL.Analytics.Backend.LogCollector.Tests.csproj", "{7F305487-2E89-4802-8E44-08355F23ACE0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Logs.Collector.Tests", "SGL.Analytics.Backend.Logs.Collector.Tests\SGL.Analytics.Backend.Logs.Collector.Tests.csproj", "{7F305487-2E89-4802-8E44-08355F23ACE0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.UserDB.Tests", "SGL.Analytics.Backend.UserDB.Tests\SGL.Analytics.Backend.UserDB.Tests.csproj", "{AC7F1A5F-9E5C-4A99-814A-827307B720D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Users.Registration.Tests", "SGL.Analytics.Backend.Users.Registration.Tests\SGL.Analytics.Backend.Users.Registration.Tests.csproj", "{AC7F1A5F-9E5C-4A99-814A-827307B720D4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Utilities", "SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj", "{3C759913-E31C-4182-882C-716F2520AB9F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Utilities.Tests", "SGL.Analytics.Utilities.Tests\SGL.Analytics.Utilities.Tests.csproj", "{E30C3EE2-85CB-4F8E-9276-2A5D3AAC5FFC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{C3D88173-D9D7-48A6-A053-0A56FC059808}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{5A7213F6-22A9-4259-8A51-F1AD1E0E1083}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backend", "Backend", "{FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Logs.Application", "SGL.Analytics.Backend.Logs.Application\SGL.Analytics.Backend.Logs.Application.csproj", "{7AFE448D-393B-4AD5-B01C-23EE3603A347}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Logs.Infrastructure", "SGL.Analytics.Backend.Logs.Infrastructure\SGL.Analytics.Backend.Logs.Infrastructure.csproj", "{58F5CC60-29A8-478E-A5D7-DECB6D7EB288}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Logs.Infrastructure.Tests", "SGL.Analytics.Backend.Logs.Infrastructure.Tests\SGL.Analytics.Backend.Logs.Infrastructure.Tests.csproj", "{760B5069-12A4-4FE7-AB85-41F862A6ECB5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LogsAPI", "LogsAPI", "{E4EACDD4-B60C-4E58-8B08-AD7FA000F9DB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Users", "Users", "{ACAEC860-19A2-4FFA-B958-F16A7532F38C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Backend.Users.Application", "SGL.Analytics.Backend.Users.Application\SGL.Analytics.Backend.Users.Application.csproj", "{431623FE-DAE7-4100-95F5-740C4E89500E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Backend.Users.Infrastructure", "SGL.Analytics.Backend.Users.Infrastructure\SGL.Analytics.Backend.Users.Infrastructure.csproj", "{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -95,9 +115,49 @@ Global
 		{E30C3EE2-85CB-4F8E-9276-2A5D3AAC5FFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E30C3EE2-85CB-4F8E-9276-2A5D3AAC5FFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E30C3EE2-85CB-4F8E-9276-2A5D3AAC5FFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AFE448D-393B-4AD5-B01C-23EE3603A347}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AFE448D-393B-4AD5-B01C-23EE3603A347}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AFE448D-393B-4AD5-B01C-23EE3603A347}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AFE448D-393B-4AD5-B01C-23EE3603A347}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58F5CC60-29A8-478E-A5D7-DECB6D7EB288}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58F5CC60-29A8-478E-A5D7-DECB6D7EB288}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58F5CC60-29A8-478E-A5D7-DECB6D7EB288}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58F5CC60-29A8-478E-A5D7-DECB6D7EB288}.Release|Any CPU.Build.0 = Release|Any CPU
+		{760B5069-12A4-4FE7-AB85-41F862A6ECB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{760B5069-12A4-4FE7-AB85-41F862A6ECB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{760B5069-12A4-4FE7-AB85-41F862A6ECB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{760B5069-12A4-4FE7-AB85-41F862A6ECB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{431623FE-DAE7-4100-95F5-740C4E89500E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{431623FE-DAE7-4100-95F5-740C4E89500E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{431623FE-DAE7-4100-95F5-740C4E89500E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{431623FE-DAE7-4100-95F5-740C4E89500E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0511CFF2-24A3-430F-AD47-B74576E737F3} = {E4EACDD4-B60C-4E58-8B08-AD7FA000F9DB}
+		{A529B0C3-06E2-44C3-B6F4-910D9316FCF3} = {ACAEC860-19A2-4FFA-B958-F16A7532F38C}
+		{19745D17-DDC1-471E-81C5-ED282BAC5E74} = {5A7213F6-22A9-4259-8A51-F1AD1E0E1083}
+		{78BD51AA-04B5-4EFE-B957-390B2A03CD27} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
+		{790177CC-3663-4660-A90D-65697E08C7F2} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
+		{1FA1A3E7-DA62-4BA7-8FAE-E902A4A2F309} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
+		{437E71CA-095B-48AA-A527-2FF000AD5D84} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
+		{7F305487-2E89-4802-8E44-08355F23ACE0} = {E4EACDD4-B60C-4E58-8B08-AD7FA000F9DB}
+		{AC7F1A5F-9E5C-4A99-814A-827307B720D4} = {ACAEC860-19A2-4FFA-B958-F16A7532F38C}
+		{3C759913-E31C-4182-882C-716F2520AB9F} = {5A7213F6-22A9-4259-8A51-F1AD1E0E1083}
+		{E30C3EE2-85CB-4F8E-9276-2A5D3AAC5FFC} = {5A7213F6-22A9-4259-8A51-F1AD1E0E1083}
+		{7AFE448D-393B-4AD5-B01C-23EE3603A347} = {E4EACDD4-B60C-4E58-8B08-AD7FA000F9DB}
+		{58F5CC60-29A8-478E-A5D7-DECB6D7EB288} = {E4EACDD4-B60C-4E58-8B08-AD7FA000F9DB}
+		{760B5069-12A4-4FE7-AB85-41F862A6ECB5} = {E4EACDD4-B60C-4E58-8B08-AD7FA000F9DB}
+		{E4EACDD4-B60C-4E58-8B08-AD7FA000F9DB} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
+		{ACAEC860-19A2-4FFA-B958-F16A7532F38C} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
+		{431623FE-DAE7-4100-95F5-740C4E89500E} = {ACAEC860-19A2-4FFA-B958-F16A7532F38C}
+		{9177BBF7-2AAB-40EE-A391-5F7AC9F9D167} = {ACAEC860-19A2-4FFA-B958-F16A7532F38C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9107486E-74EF-450A-956B-BF17C61467C5}
