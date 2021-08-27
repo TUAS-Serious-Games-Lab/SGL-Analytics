@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
-	[Index(nameof(AppId), nameof(Name), IsUnique = true)]
 	public class ApplicationUserPropertyDefinition {
 		public int Id { get; set; }
 		public int AppId { get; set; }

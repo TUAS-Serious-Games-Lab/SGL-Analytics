@@ -11,6 +11,16 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 			: base(options) {
 		}
 
+		protected override void OnModelCreating(ModelBuilder modelBuilder) {
+			modelBuilder.Entity<ApplicationWithUserProperties>().HasIndex(a => a.Name).IsUnique();
+			modelBuilder.Entity<UserRegistration>().HasIndex(u => new { u.AppId, u.Username }).IsUnique();
+			modelBuilder.Entity<ApplicationUserPropertyDefinition>().HasIndex(pd => new { pd.AppId, pd.Name }).IsUnique();
+			modelBuilder.Entity<UserRegistration>().OwnsMany(u => u.AppSpecificProperties, p => {
+				p.WithOwner(p => p.User);
+				p.HasIndex(pi => new { pi.DefinitionId, pi.UserId }).IsUnique();
+			});
+		}
+
 		public DbSet<UserRegistration> UserRegistrations => Set<UserRegistration>();
 		public DbSet<ApplicationWithUserProperties> Applications => Set<ApplicationWithUserProperties>();
 		public DbSet<ApplicationUserPropertyDefinition> ApplicationUserPropertyDefinitions => Set<ApplicationUserPropertyDefinition>();

@@ -1,12 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
-	[Index(nameof(AppId))]
-	[Index(nameof(AppId), nameof(UserId))]
 	public class LogMetadata {
-		[Key]
 		public Guid Id { get; set; }
 		public int AppId { get; set; }
 		public Application App { get; set; } = null!;

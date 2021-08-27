@@ -11,6 +11,12 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 			: base(options) {
 		}
 
+		protected override void OnModelCreating(ModelBuilder modelBuilder) {
+			modelBuilder.Entity<LogMetadata>().HasIndex(lm => lm.AppId);
+			modelBuilder.Entity<LogMetadata>().HasIndex(lm => new { lm.AppId, lm.UserId });
+			modelBuilder.Entity<Domain.Entity.Application>().HasIndex(a => a.Name).IsUnique();
+		}
+
 		public DbSet<LogMetadata> LogMetadata => Set<LogMetadata>();
 		public DbSet<Domain.Entity.Application> Applications => Set<Domain.Entity.Application>();
 	}
