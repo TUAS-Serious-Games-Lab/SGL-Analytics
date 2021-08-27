@@ -6,6 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.Entity {
+namespace SGL.Analytics.Backend.Domain.Entity {
 	public enum UserPropertyType { Integer, FloatingPoint, String, DateTime, Guid }
 }

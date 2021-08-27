@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.Entity {
+namespace SGL.Analytics.Backend.Domain.Entity {
 	public class ApplicationWithUserProperties : Application {
 		public ICollection<ApplicationUserPropertyDefinition> UserProperties { get; set; } = null!;
 		public ICollection<UserRegistration> UserRegistrations { get; set; } = null!;

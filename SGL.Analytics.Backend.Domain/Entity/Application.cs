@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.Entity {
+namespace SGL.Analytics.Backend.Domain.Entity {
 	[Index(nameof(Name), IsUnique = true)]
 	public class Application {
 		public int Id { get; set; }
