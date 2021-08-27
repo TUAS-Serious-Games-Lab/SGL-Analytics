@@ -1,4 +1,5 @@
-﻿using SGL.Analytics.Backend.LogCollector.Storage;
+﻿using SGL.Analytics.Backend.Logs.Application.Interfaces;
+using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace SGL.Analytics.Backend.LogCollector.Tests {
+namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 	public class FileSystemCollectorLogStorageUnitTestFixture : IDisposable {
 		private readonly string storageDirectory = Path.Combine(Environment.CurrentDirectory, "TempTestData", "LogStorage");
 		public FileSystemLogRepository FSStorage { get; set; }

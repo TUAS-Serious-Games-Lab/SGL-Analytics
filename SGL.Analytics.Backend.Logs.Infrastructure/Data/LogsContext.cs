@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
 
-namespace SGL.Analytics.Backend.LogCollector.Data {
-	public class LogCollectorContext : DbContext {
-		public LogCollectorContext(DbContextOptions<LogCollectorContext> options)
+namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
+	public class LogsContext : DbContext {
+		public LogsContext(DbContextOptions<LogsContext> options)
 			: base(options) {
 		}
 
 		public DbSet<LogMetadata> LogMetadata => Set<LogMetadata>();
-		public DbSet<Application> Applications => Set<Application>();
+		public DbSet<Domain.Entity.Application> Applications => Set<Domain.Entity.Application>();
 	}
 }

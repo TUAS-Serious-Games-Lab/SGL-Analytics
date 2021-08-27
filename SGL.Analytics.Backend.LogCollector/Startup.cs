@@ -1,18 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using SGL.Analytics.Backend.LogCollector.Data;
-using SGL.Analytics.Backend.LogCollector.Storage;
+using SGL.Analytics.Backend.Logs.Infrastructure.Services;
+using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 
 namespace SGL.Analytics.Backend.LogCollector {
 	public class Startup {
@@ -28,8 +21,8 @@ namespace SGL.Analytics.Backend.LogCollector {
 
 			services.UseFileSystemCollectorLogStorage(Configuration);
 
-			services.AddDbContext<LogCollectorContext>(options =>
-					options.UseNpgsql(Configuration.GetConnectionString("LogCollectorContext")));
+			services.AddDbContext<LogsContext>(options =>
+					options.UseNpgsql(Configuration.GetConnectionString("LogsContext")));
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

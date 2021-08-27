@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
@@ -8,17 +9,17 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.LogCollector.Storage {
+namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 
 	public class FileSystemLogRepositoryOptions {
-		public const string FSCollectorLogStorage = "FSCollectorLogStorage";
+		public const string FileSystemLogRepository = "FileSystemLogRepository";
 
 		public string StorageDirectory { get; set; } = Path.Combine(Environment.CurrentDirectory, "LogStorage");
 	}
 
 	public static class FileSystemLogRepositoryExtensions {
 		public static IServiceCollection UseFileSystemCollectorLogStorage(this IServiceCollection services, IConfiguration config) {
-			services.Configure<FileSystemLogRepositoryOptions>(config.GetSection(FileSystemLogRepositoryOptions.FSCollectorLogStorage));
+			services.Configure<FileSystemLogRepositoryOptions>(config.GetSection(FileSystemLogRepositoryOptions.FileSystemLogRepository));
 			services.AddScoped<ILogFileRepository, FileSystemLogRepository>();
 			return services;
 		}
@@ -125,7 +126,7 @@ namespace SGL.Analytics.Backend.LogCollector.Storage {
 			return Task.Run(() => {
 				try {
 					var filePath = makeFilePath(appName, userId, logId, suffix);
-					return (Stream)(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true));
+					return (Stream)new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
 				}
 				catch (Exception ex) {
 					throw new LogFileNotAvailableException(new LogPath { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix }, ex);

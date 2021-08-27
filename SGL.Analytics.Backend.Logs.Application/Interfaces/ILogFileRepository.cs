@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.LogCollector.Storage {
+namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 	public struct LogPath {
 		public string AppName { get; set; }
 		public Guid UserId { get; set; }
