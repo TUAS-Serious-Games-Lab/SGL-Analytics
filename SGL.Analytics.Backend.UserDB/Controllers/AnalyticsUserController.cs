@@ -17,50 +17,6 @@ namespace SGL.Analytics.Backend.UserDB.Controllers {
             _context = context;
         }
 
-        // GET: api/AnalyticsUser
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserRegistration>>> GetUserRegistration() {
-            return await _context.UserRegistrations.ToListAsync();
-        }
-
-        // GET: api/AnalyticsUser/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<UserRegistration>> GetUserRegistration(Guid id) {
-            var userRegistration = await _context.UserRegistrations.FindAsync(id);
-
-            if (userRegistration == null) {
-                return NotFound();
-            }
-
-            return userRegistration;
-        }
-
-        // PUT: api/AnalyticsUser/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUserRegistration(Guid id, UserRegistration userRegistration) {
-            if (id != userRegistration.Id) {
-                return BadRequest();
-            }
-
-            _context.Entry(userRegistration).State = EntityState.Modified;
-
-            try {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException) {
-                if (!UserRegistrationExists(id)) {
-                    return NotFound();
-                }
-                else {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
         // POST: api/AnalyticsUser
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
@@ -72,22 +28,5 @@ namespace SGL.Analytics.Backend.UserDB.Controllers {
             return CreatedAtAction("GetUserRegistration", new { id = userRegistration.Id }, userRegistration);
         }
 
-        // DELETE: api/AnalyticsUser/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<UserRegistration>> DeleteUserRegistration(Guid id) {
-            var userRegistration = await _context.UserRegistrations.FindAsync(id);
-            if (userRegistration == null) {
-                return NotFound();
-            }
-
-            _context.UserRegistrations.Remove(userRegistration);
-            await _context.SaveChangesAsync();
-
-            return userRegistration;
-        }
-
-        private bool UserRegistrationExists(Guid id) {
-            return _context.UserRegistrations.Any(e => e.Id == id);
-        }
     }
 }
