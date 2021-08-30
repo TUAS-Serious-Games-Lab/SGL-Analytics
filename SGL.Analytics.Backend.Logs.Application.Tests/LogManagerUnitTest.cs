@@ -28,7 +28,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			this.output = output;
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
 			manager = new LogManager(appRepo, logMetadataRepo, logFileRepo, loggerFactory.CreateLogger<LogManager>());
-			appRepo.AddApplicationAsync(new Domain.Entity.Application(0, "LogManagerUnitTest", appApiToken)).Wait();
+			appRepo.AddApplicationAsync(new Domain.Entity.Application(0, appName, appApiToken)).Wait();
 		}
 
 		private static MemoryStream generateRandomMemoryStream() {
