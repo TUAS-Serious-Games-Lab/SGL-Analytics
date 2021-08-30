@@ -38,5 +38,14 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			Assert.Equal(app2.Name, appRead?.Name);
 			Assert.Equal(app2.ApiToken, appRead?.ApiToken);
 		}
+
+		[Fact]
+		public async Task RequestForNonExistentApplicationReturnsNull() {
+			Domain.Entity.Application? appRead;
+			await using (var repo = new DbApplicationRepository(createContext())) {
+				appRead = await repo.GetApplicationByNameAsync("DoesNotExist");
+			}
+			Assert.Null(appRead);
+		}
 	}
 }
