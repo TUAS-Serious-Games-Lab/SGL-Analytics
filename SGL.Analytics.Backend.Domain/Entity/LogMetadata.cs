@@ -12,9 +12,10 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		public DateTime CreationTime { get; set; }
 		public DateTime EndTime { get; set; }
 		public DateTime UploadTime { get; set; }
+		public bool Complete { get; set; }
 
 		public LogMetadata(Guid id, int appId, Guid userId, Guid localLogId,
-			DateTime creationTime, DateTime endTime, DateTime uploadTime) {
+			DateTime creationTime, DateTime endTime, DateTime uploadTime, bool complete = false) {
 			Id = id;
 			AppId = appId;
 			UserId = userId;
@@ -22,6 +23,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			CreationTime = creationTime;
 			EndTime = endTime;
 			UploadTime = uploadTime;
+			Complete = complete;
 		}
 	}
 }
