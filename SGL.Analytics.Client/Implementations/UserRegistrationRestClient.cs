@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
@@ -26,16 +29,32 @@ namespace SGL.Analytics.Client {
 		}
 	}
 
+	public static class UserRegistrationRestClientExtensions {
+		public static IServiceCollection AddUserRegistrationRestClient(this IServiceCollection services, IConfiguration config) {
+			services.Configure<UserRegistrationRestClientOptions>(config.GetSection(UserRegistrationRestClientOptions.UserRegistrationRestClient));
+			services.AddScoped<IUserRegistrationClient, UserRegistrationRestClient>();
+			return services;
+		}
+	}
+
+	public class UserRegistrationRestClientOptions {
+		public const string UserRegistrationRestClient = "UserRegistrationRestClient";
+		public const string BackendServerBaseUriDefault = "http://localhost:5001/";
+		public const string UserRegistrationApiRouteDefault = "api/AnalyticsUser";
+
+		public Uri BackendServerBaseUri { get; set; } = new Uri(BackendServerBaseUriDefault);
+		public Uri UserRegistrationApiRoute { get; set; } = new Uri(UserRegistrationApiRouteDefault, UriKind.Relative);
+	}
 
 	public class UserRegistrationRestClient : IUserRegistrationClient {
 		private readonly HttpClient httpClient = new();
 		private Uri userRegistrationApiRoute;
 
-		// TODO: Support configuration of URIs through general configuration system.
-
 		// TODO: Replace default URL with registered URL of Prod backend when available.
-		public UserRegistrationRestClient() : this(new Uri("http://localhost:5001/")) { }
-		public UserRegistrationRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/AnalyticsUser", UriKind.Relative)) { }
+		public UserRegistrationRestClient() : this(new Uri(UserRegistrationRestClientOptions.BackendServerBaseUriDefault)) { }
+		public UserRegistrationRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri(UserRegistrationRestClientOptions.UserRegistrationApiRouteDefault, UriKind.Relative)) { }
+		public UserRegistrationRestClient(UserRegistrationRestClientOptions options) : this(options.BackendServerBaseUri, options.UserRegistrationApiRoute) { }
+		public UserRegistrationRestClient(IOptions<UserRegistrationRestClientOptions> options) : this(options.Value) { }
 		public UserRegistrationRestClient(Uri backendServerBaseUri, Uri userRegistrationApiRoute) {
 			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SGL.Analytics.Client", null));
 			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
