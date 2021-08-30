@@ -28,7 +28,7 @@ namespace SGL.Analytics.Backend.LogCollector.Controllers {
 			// TODO: Check API token.
 			return Unauthorized();
 
-			await _repository.IngestAsync(logMetaDTO, logContent);
+			await _repository.IngestLogAsync(logMetaDTO, logContent);
 
 			return StatusCode(((int)HttpStatusCode.Created));
 		}
