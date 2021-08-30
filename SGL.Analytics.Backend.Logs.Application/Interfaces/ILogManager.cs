@@ -10,6 +10,6 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 	public interface ILogManager {
-		Task IngestLogAsync(LogMetadataDTO logMetaDTO, Stream logContent);
+		Task<LogFile> IngestLogAsync(LogMetadataDTO logMetaDTO, Stream logContent);
 	}
 }
