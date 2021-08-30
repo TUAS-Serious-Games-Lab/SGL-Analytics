@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Sdk;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 	public class DbLogMetadataRepositoryUnitTest : IDisposable {
@@ -59,6 +60,8 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			LogMetadata? logMd2;
 			await using (var repo = new DbLogMetadataRepository(createContext())) {
 				logMd2 = await repo.GetLogMetadataByIdAsync(logId);
+				Assert.NotNull(logMd2);
+				if (logMd2 is null) throw new NotNullException();
 				logMd2.LocalLogId = Guid.NewGuid();
 				logMd2.UploadTime = DateTime.Now;
 				await repo.UpdateLogMetadataAsync(logMd2);
