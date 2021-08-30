@@ -12,8 +12,8 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
 	public class UserRegistrationResponseException : Exception {
-		public UserRegistrationResponseException(string? message) : base(message) {}
-		public UserRegistrationResponseException(string? message, Exception? innerException) : base(message, innerException) {}
+		public UserRegistrationResponseException(string? message) : base(message) { }
+		public UserRegistrationResponseException(string? message, Exception? innerException) : base(message, innerException) { }
 	}
 
 	public class UsernameAlreadyTakenException : Exception {
@@ -28,30 +28,26 @@ namespace SGL.Analytics.Client {
 
 
 	public class UserRegistrationRestClient : IUserRegistrationClient {
-		private readonly static HttpClient httpClient = new();
-		private Uri backendServerBaseUri;
-		private Uri userRegistrationApiEndpoint;
-		private Uri userRegistrationApiFullUri;
-
-		static UserRegistrationRestClient() {
-			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SGL.Analytics.Client", null));
-			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-		}
+		private readonly HttpClient httpClient = new();
+		private Uri userRegistrationApiRoute;
 
 		// TODO: Support configuration of URIs through general configuration system.
+
+		// TODO: Replace default URL with registered URL of Prod backend when available.
 		public UserRegistrationRestClient() : this(new Uri("http://localhost:5001/")) { }
 		public UserRegistrationRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/AnalyticsUser", UriKind.Relative)) { }
-		public UserRegistrationRestClient(Uri backendServerBaseUri, Uri userRegistrationApiEndpoint) {
-			this.backendServerBaseUri = backendServerBaseUri;
-			this.userRegistrationApiEndpoint = userRegistrationApiEndpoint;
-			this.userRegistrationApiFullUri = new Uri(backendServerBaseUri, userRegistrationApiEndpoint);
+		public UserRegistrationRestClient(Uri backendServerBaseUri, Uri userRegistrationApiRoute) {
+			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SGL.Analytics.Client", null));
+			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+			httpClient.BaseAddress = backendServerBaseUri;
+			this.userRegistrationApiRoute = userRegistrationApiRoute;
 		}
 
 		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken) {
 			var options = new JsonSerializerOptions() { WriteIndented = true };
-			var content = JsonContent.Create(userDTO, new MediaTypeHeaderValue("application/json"),options);
+			var content = JsonContent.Create(userDTO, new MediaTypeHeaderValue("application/json"), options);
 			content.Headers.Add("App-API-Token", appAPIToken);
-			var response = await httpClient.PostAsync(userRegistrationApiFullUri, content);
+			var response = await httpClient.PostAsync(userRegistrationApiRoute, content);
 			if (response is null) throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
 			if (response.StatusCode == HttpStatusCode.Conflict) throw new UsernameAlreadyTakenException(userDTO.Username);
 			response.EnsureSuccessStatusCode();
