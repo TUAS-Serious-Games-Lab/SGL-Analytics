@@ -88,5 +88,31 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 				}
 			}
 		}
+		[Fact]
+		public async Task PreviouslyUnfinishedLogFileUploadIsReattemptedCorrectly() {
+			Guid logFileId = Guid.NewGuid();
+			Guid userId = Guid.NewGuid();
+			LogMetadataDTO dto = new(appName, userId, logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			await using (var origContent = generateRandomMemoryStream()) {
+				var streamWrapper = new TriggeredBlockingStream(origContent);
+				var task = manager.IngestLogAsync(dto, streamWrapper);
+				streamWrapper.TriggerReadError(new IOException("Connection to client lost."));
+				await Assert.ThrowsAsync<IOException>(async () => await task);
+				origContent.Position = 0;
+				var logFile = await manager.IngestLogAsync(dto, origContent);
+				Assert.Equal(logFileId, logFile.LocalLogId);
+				Assert.Equal(logFileId, logFile.Id);
+				await using (var readContent = new MemoryStream()) {
+					await logFile.CopyToAsync(readContent);
+					origContent.Position = 0;
+					readContent.Position = 0;
+					using (var origReader = new StreamReader(origContent, leaveOpen: true))
+					using (var readBackReader = new StreamReader(readContent, leaveOpen: true)) {
+						Assert.Equal(origReader.EnumerateLines(), readBackReader.EnumerateLines());
+					}
+				}
+			}
+
+		}
 	}
 }
