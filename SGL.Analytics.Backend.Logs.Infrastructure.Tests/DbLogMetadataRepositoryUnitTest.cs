@@ -21,7 +21,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 		[Fact]
 		public async Task AddedMetadataEntryCanBeRetrievedThroughDb() {
 			var logId = Guid.NewGuid();
-			var logMd = new LogMetadata(logId, 0, Guid.NewGuid(), logId, DateTime.Now.AddMinutes(-15), DateTime.Now.AddMinutes(-1), DateTime.Now);
+			var logMd = new LogMetadata(logId, 0, Guid.NewGuid(), logId, DateTime.Now.AddMinutes(-15), DateTime.Now.AddMinutes(-1), DateTime.Now, ".log.gz");
 			var app = new Domain.Entity.Application(0, "DbLogMetadataRepositoryUnitTest", "FakeApiToken");
 			await using (var context = createContext()) {
 				context.Applications.Add(app);
@@ -48,7 +48,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 		[Fact]
 		public async Task MetadataEntryIsCorrectlyUpdatedInDb() {
 			var logId = Guid.NewGuid();
-			var logMd = new LogMetadata(logId, 0, Guid.NewGuid(), logId, DateTime.Now.AddMinutes(-15), DateTime.Now.AddMinutes(-1), DateTime.Now.AddSeconds(-30));
+			var logMd = new LogMetadata(logId, 0, Guid.NewGuid(), logId, DateTime.Now.AddMinutes(-15), DateTime.Now.AddMinutes(-1), DateTime.Now.AddSeconds(-30), ".log.gz");
 			var app = new Domain.Entity.Application(0, "DbLogMetadataRepositoryUnitTest", "FakeApiToken");
 			await using (var context = createContext()) {
 				context.Applications.Add(app);
