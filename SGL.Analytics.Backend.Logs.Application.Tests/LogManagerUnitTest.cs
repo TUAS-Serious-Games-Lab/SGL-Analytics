@@ -62,5 +62,31 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 				}
 			}
 		}
+
+		[Fact]
+		public async Task LogFileWithIdCollisionFromAnotherUserIsAssignedANewIdAndCorrectlyUploaded() {
+			Guid logFileId = Guid.NewGuid();
+			Guid user1Id = Guid.NewGuid();
+			Guid user2Id = Guid.NewGuid();
+			LogMetadataDTO dto1 = new(appName, user1Id, logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95));
+			LogMetadataDTO dto2 = new(appName, user2Id, logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			await using (var content = generateRandomMemoryStream()) {
+				await manager.IngestLogAsync(dto1, content);
+			}
+			await using (var origContent = generateRandomMemoryStream()) {
+				var logFile = await manager.IngestLogAsync(dto2, origContent);
+				Assert.Equal(logFileId, logFile.LocalLogId);
+				Assert.NotEqual(logFileId, logFile.Id);
+				await using (var readContent = new MemoryStream()) {
+					await logFile.CopyToAsync(readContent);
+					origContent.Position = 0;
+					readContent.Position = 0;
+					using (var origReader = new StreamReader(origContent, leaveOpen: true))
+					using (var readBackReader = new StreamReader(readContent, leaveOpen: true)) {
+						Assert.Equal(origReader.EnumerateLines(), readBackReader.EnumerateLines());
+					}
+				}
+			}
+		}
 	}
 }
