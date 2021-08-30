@@ -81,6 +81,16 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			Assert.Equal(logMd2.UploadTime, logMdRead?.UploadTime);
 		}
 
+		[Fact]
+		public async Task RequestForNonExistentLogMetadataReturnsNull() {
+			var logId = Guid.NewGuid();
+			LogMetadata? logMdRead;
+			await using (var repo = new DbLogMetadataRepository(createContext())) {
+				logMdRead = await repo.GetLogMetadataByIdAsync(logId);
+			}
+			Assert.Null(logMdRead);
+		}
+
 		public void Dispose() {
 			testDb.Dispose();
 		}
