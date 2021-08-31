@@ -36,6 +36,7 @@ namespace SGL.Analytics.Utilities {
 				builder.Clear();
 				builder.AppendFormat("{0} [{1}] {2}", logLevel.ToString(), categoryName, formatter(state, exception));
 				if (exception != null) {
+					builder.Append(" Exception: ");
 					builder.Append(exception);
 				}
 				builder.Append(" ");
