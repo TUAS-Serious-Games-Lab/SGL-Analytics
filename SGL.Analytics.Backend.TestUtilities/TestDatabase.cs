@@ -9,18 +9,18 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.TestUtilities {
 	public class TestDatabase<TContext> : IDisposable where TContext : DbContext {
-		private readonly DbConnection connection;
-		public DbContextOptions<TContext> ContextOptions { get; set; }
+		public DbConnection Connection { get; init; }
+		public DbContextOptions<TContext> ContextOptions { get; init; }
 
 		public TestDatabase() {
-			connection = new SqliteConnection("Filename=:memory:");
-			connection.Open();
-			ContextOptions = new DbContextOptionsBuilder<TContext>().UseSqlite(connection).Options;
+			Connection = new SqliteConnection("Filename=:memory:");
+			Connection.Open();
+			ContextOptions = new DbContextOptionsBuilder<TContext>().UseSqlite(Connection).Options;
 			using (var context = Activator.CreateInstance(typeof(TContext), ContextOptions) as TContext ?? throw new InvalidOperationException()) {
 				context.Database.EnsureCreated();
 			}
 		}
 
-		public void Dispose() => connection.Dispose();
+		public void Dispose() => Connection.Dispose();
 	}
 }
