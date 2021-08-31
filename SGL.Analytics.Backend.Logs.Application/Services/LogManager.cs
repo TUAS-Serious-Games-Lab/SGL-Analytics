@@ -27,7 +27,10 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 
 		public async Task<LogFile> IngestLogAsync(LogMetadataDTO logMetaDTO, Stream logContent) {
 			var app = await appRepo.GetApplicationByNameAsync(logMetaDTO.AppName);
-			if (app is null) throw new ApplicationDoesNotExistException(logMetaDTO.AppName);
+			if (app is null) {
+				logger.LogError("Attempt to ingest a log file with id {logId} for non-existent application {appName} from user {user}.", logMetaDTO.LogFileId, logMetaDTO.AppName, logMetaDTO.UserId);
+				throw new ApplicationDoesNotExistException(logMetaDTO.AppName);
+			}
 			var logMetadata = await logMetaRepo.GetLogMetadataByIdAsync(logMetaDTO.LogFileId);
 			if (logMetadata is null) {
 				logMetadata = new(logMetaDTO.LogFileId, app.Id, logMetaDTO.UserId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now, LogFileSuffix, false);
