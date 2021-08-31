@@ -31,6 +31,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SGL.Analytics.Backend.Logs.Application\SGL.Analytics.Backend.Logs.Application.csproj" />
     <ProjectReference Include="..\SGL.Analytics.Backend.Logs.Infrastructure\SGL.Analytics.Backend.Logs.Infrastructure.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Backend.WebUtilities\SGL.Analytics.Backend.WebUtilities.csproj" />
     <ProjectReference Include="..\SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj" />
   </ItemGroup>
 
