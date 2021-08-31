@@ -97,5 +97,16 @@ namespace SGL.Analytics.Utilities {
 				writeTCS = new TaskCompletionSource();
 			}
 		}
+		public void TriggerReadError(Exception ex) {
+			lock (lockObject) {
+				readTCS.SetException(ex);
+			}
+		}
+
+		public void TriggerWriteError(Exception ex) {
+			lock (lockObject) {
+				writeTCS.SetException(ex);
+			}
+		}
 	}
 }

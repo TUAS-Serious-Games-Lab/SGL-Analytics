@@ -27,7 +27,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		public ValueTask DisposeAsync() => context.DisposeAsync();
 
 		public async Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId) {
-			return await context.LogMetadata.FindAsync(logId);
+			return await context.LogMetadata.Include(lmd => lmd.App).Where(lmd => lmd.Id == logId).SingleOrDefaultAsync<LogMetadata?>();
 		}
 
 		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata) {
