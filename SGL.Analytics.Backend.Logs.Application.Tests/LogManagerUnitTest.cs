@@ -114,5 +114,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			}
 
 		}
+		[Fact]
+		public async Task AttemptingToIngestLogFileWithNonExistentApplicationThrowsTheCorrectException() {
+			Guid logFileId = Guid.NewGuid();
+			Guid userId = Guid.NewGuid();
+			LogMetadataDTO dto = new("DoesNotExist", userId, logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			await using (var origContent = generateRandomMemoryStream()) {
+				await Assert.ThrowsAsync<ApplicationDoesNotExistException>(async () => await manager.IngestLogAsync(dto, origContent));
+			}
+		}
 	}
 }
