@@ -1,13 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.WebUtilities;
 using SGL.Analytics.DTO;
@@ -27,8 +22,10 @@ namespace SGL.Analytics.Backend.LogCollector.Controllers {
 		}
 
 		// POST: api/AnalyticsLog
-		// To protect from overposting attacks, enable the specific properties you want to bind to, for
-		// more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+		[Consumes("application/octet-stream")]
+		[ProducesResponseType(StatusCodes.Status201Created)]
+		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 		[HttpPost]
 		public async Task<ActionResult> IngestLog([FromHeader(Name = "App-API-Token")] string appApiToken, [DtoFromHeaderModelBinder] LogMetadataDTO logMetadata) {
 			var app = await appRepo.GetApplicationByNameAsync(logMetadata.AppName);
@@ -43,7 +40,7 @@ namespace SGL.Analytics.Backend.LogCollector.Controllers {
 
 			try {
 				await logManager.IngestLogAsync(logMetadata, Request.Body);
-				return StatusCode(((int)HttpStatusCode.Created));
+				return StatusCode(StatusCodes.Status201Created);
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "IngestLog POST request from user {userId} failed due unexpected exception.", logMetadata.UserId);
