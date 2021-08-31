@@ -6,6 +6,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
+using SGL.Analytics.Backend.Logs.Application.Interfaces;
+using SGL.Analytics.Backend.Logs.Application.Services;
 
 namespace SGL.Analytics.Backend.LogCollector {
 	public class Startup {
@@ -19,10 +21,13 @@ namespace SGL.Analytics.Backend.LogCollector {
 		public void ConfigureServices(IServiceCollection services) {
 			services.AddControllers();
 
-			services.UseFileSystemCollectorLogStorage(Configuration);
-
 			services.AddDbContext<LogsContext>(options =>
 					options.UseNpgsql(Configuration.GetConnectionString("LogsContext")));
+
+			services.UseFileSystemCollectorLogStorage(Configuration);
+			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
+			services.AddScoped<ILogMetadataRepository, DbLogMetadataRepository>();
+			services.AddScoped<ILogManager, LogManager>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
