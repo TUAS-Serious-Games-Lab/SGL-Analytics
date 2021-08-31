@@ -47,7 +47,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			Guid logFileId = Guid.NewGuid();
 			Guid userId = Guid.NewGuid();
 			LogMetadataDTO dto = new(appName, userId, logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
-			var key = new LogPath() { AppName = appName, UserId = userId, LogId = logFileId, Suffix = ".log.gz" };
+			var key = new LogPath() { AppName = appName, UserId = userId, LogId = logFileId, Suffix = manager.LogFileSuffix };
 			await using (var origContent = generateRandomMemoryStream()) {
 				await manager.IngestLogAsync(dto, origContent);
 				var logMd = await logMetadataRepo.GetLogMetadataByIdAsync(logFileId);
