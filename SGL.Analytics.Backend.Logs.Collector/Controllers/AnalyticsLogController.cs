@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.DTO;
@@ -14,10 +15,14 @@ namespace SGL.Analytics.Backend.LogCollector.Controllers {
 	[Route("api/[controller]")]
 	[ApiController]
 	public class AnalyticsLogController : ControllerBase {
-		private readonly ILogManager _repository;
+		private readonly ILogManager logManager;
+		private readonly IApplicationRepository appRepo;
+		private readonly ILogger<AnalyticsLogController> logger;
 
-		public AnalyticsLogController(ILogManager context) {
-			_repository = context;
+		public AnalyticsLogController(ILogManager logManager, IApplicationRepository appRepo, ILogger<AnalyticsLogController> logger) {
+			this.logManager = logManager;
+			this.appRepo = appRepo;
+			this.logger = logger;
 		}
 
 		// POST: api/AnalyticsLog
