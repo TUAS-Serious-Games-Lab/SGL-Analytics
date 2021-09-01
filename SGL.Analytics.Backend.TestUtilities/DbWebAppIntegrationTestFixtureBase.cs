@@ -21,6 +21,8 @@ namespace SGL.Analytics.Backend.TestUtilities {
 			builder.ConfigureServices(services => {
 				var dbContextDescriptor = services.SingleOrDefault(sd => sd.ServiceType == typeof(TContext));
 				if (dbContextDescriptor != null) services.Remove(dbContextDescriptor);
+				var dbContextOptionsDescriptor = services.SingleOrDefault(sd => sd.ServiceType == typeof(DbContextOptions<TContext>));
+				if (dbContextOptionsDescriptor != null) services.Remove(dbContextOptionsDescriptor);
 				services.AddDbContext<TContext>(options => options.UseSqlite(db.Connection));
 
 				using (var context = Activator.CreateInstance(typeof(TContext), db.ContextOptions) as TContext ?? throw new InvalidOperationException()) {
