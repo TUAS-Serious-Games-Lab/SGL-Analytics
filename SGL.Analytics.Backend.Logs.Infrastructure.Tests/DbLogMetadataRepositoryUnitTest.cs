@@ -40,9 +40,9 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			Assert.Equal(logMd.AppId, logMdRead?.AppId);
 			Assert.Equal(logMd.UserId, logMdRead?.UserId);
 			Assert.Equal(logMd.LocalLogId, logMdRead?.LocalLogId);
-			Assert.Equal(logMd.CreationTime, logMdRead?.CreationTime);
-			Assert.Equal(logMd.EndTime, logMdRead?.EndTime);
-			Assert.Equal(logMd.UploadTime, logMdRead?.UploadTime);
+			Assert.Equal(logMd.CreationTime.ToUniversalTime(), logMdRead?.CreationTime);
+			Assert.Equal(logMd.EndTime.ToUniversalTime(), logMdRead?.EndTime);
+			Assert.Equal(logMd.UploadTime.ToUniversalTime(), logMdRead?.UploadTime);
 		}
 
 		[Fact]
@@ -76,9 +76,9 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			Assert.Equal(logMd2.AppId, logMdRead?.AppId);
 			Assert.Equal(logMd2.UserId, logMdRead?.UserId);
 			Assert.Equal(logMd2.LocalLogId, logMdRead?.LocalLogId);
-			Assert.Equal(logMd2.CreationTime, logMdRead?.CreationTime);
-			Assert.Equal(logMd2.EndTime, logMdRead?.EndTime);
-			Assert.Equal(logMd2.UploadTime, logMdRead?.UploadTime);
+			Assert.Equal(logMd2.CreationTime.ToUniversalTime(), logMdRead?.CreationTime);
+			Assert.Equal(logMd2.EndTime.ToUniversalTime(), logMdRead?.EndTime);
+			Assert.Equal(logMd2.UploadTime.ToUniversalTime(), logMdRead?.UploadTime);
 		}
 
 		[Fact]
