@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.LogCollector;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
@@ -26,6 +27,9 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 	public class LogCollectorIntegrationTestFixture : DbWebAppIntegrationTestFixtureBase<LogsContext, Startup> {
 		public readonly string AppName = "LogCollectorIntegrationTest";
 		public string AppApiToken { get; } = StringGenerator.GenerateRandomWord(32);
+
+		public ITestOutputHelper? Output { get; set; } = null;
+
 		protected override void SeedDatabase(LogsContext context) {
 			context.Applications.Add(new Domain.Entity.Application(0, AppName, AppApiToken));
 			context.SaveChanges();
@@ -33,6 +37,10 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		protected override void OverrideConfig(IServiceCollection services) {
 			services.Configure<FileSystemLogRepositoryOptions>(options => options.StorageDirectory = Path.Combine(Environment.CurrentDirectory, "LogStorage"));
+		}
+
+		protected override IHostBuilder CreateHostBuilder() {
+			return base.CreateHostBuilder().ConfigureLogging(logging => logging.AddXUnit(() => Output).SetMinimumLevel(LogLevel.Trace));
 		}
 	}
 
@@ -43,6 +51,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		public LogCollectorIntegrationTest(LogCollectorIntegrationTestFixture fixture, ITestOutputHelper output) {
 			this.fixture = fixture;
 			this.output = output;
+			fixture.Output = output;
 		}
 
 		private Stream generateRandomGZippedTestData() {
