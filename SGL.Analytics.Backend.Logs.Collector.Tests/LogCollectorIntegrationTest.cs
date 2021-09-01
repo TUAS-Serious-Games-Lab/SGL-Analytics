@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using SGL.Analytics.Backend.LogCollector;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
+using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Analytics.Backend.TestUtilities;
 using SGL.Analytics.DTO;
 using SGL.Analytics.Utilities;
@@ -30,10 +31,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			context.SaveChanges();
 		}
 
-		protected override IHostBuilder CreateHostBuilder() {
-			return base.CreateHostBuilder().ConfigureHostConfiguration(config => config.AddInMemoryCollection(new Dictionary<string, string> {
-				["FileSystemLogRepository:StorageDirectory"] = "./bin/Debug/LogStorage"
-			}));
+		protected override void OverrideConfig(IServiceCollection services) {
+			services.Configure<FileSystemLogRepositoryOptions>(options => options.StorageDirectory = Path.Combine(Environment.CurrentDirectory, "LogStorage"));
 		}
 	}
 
