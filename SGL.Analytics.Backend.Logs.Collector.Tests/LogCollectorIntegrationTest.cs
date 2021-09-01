@@ -78,5 +78,20 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
 			}
 		}
+
+		[Fact]
+		public async Task LogIngestWithIncorrectApiTokenReturnsUnauthorizedError() {
+			var userId = Guid.NewGuid();
+			var logId = Guid.NewGuid();
+			using (var logContent = generateRandomGZippedTestData())
+			using (var client = fixture.CreateClient()) {
+				var content = new StreamContent(logContent);
+				content.Headers.MapDtoProperties(new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
+				content.Headers.Add("App-API-Token", "IncorrectToken");
+				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+				var response = await client.PostAsync("/api/AnalyticsLog", content);
+				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
+			}
+		}
 	}
 }
