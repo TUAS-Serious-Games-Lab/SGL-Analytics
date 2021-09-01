@@ -54,7 +54,7 @@ namespace SGL.Analytics.Backend.WebUtilities {
 		private Func<string, object?> getConverter(Type type) {
 			switch (type) {
 				case Type _ when type == typeof(DateTime):
-					return source => DateTime.TryParse(source, out var dt) ? dt : null;
+					return source => DateTime.TryParse(source, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt) ? dt : null;
 				case Type _ when type == typeof(string):
 					return source => source;
 				case Type _ when type == typeof(Guid):
