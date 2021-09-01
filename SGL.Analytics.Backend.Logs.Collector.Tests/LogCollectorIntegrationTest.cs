@@ -65,6 +65,38 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		}
 
 		[Fact]
+		public async Task LogIngestWithValidParametersSucceeds() {
+			var userId = Guid.NewGuid();
+			var logId = Guid.NewGuid();
+			var logMDTO = new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			using (var logContent = generateRandomGZippedTestData()) {
+				using (var client = fixture.CreateClient()) {
+					var content = new StreamContent(logContent);
+					content.Headers.MapDtoProperties(logMDTO);
+					content.Headers.Add("App-API-Token", fixture.AppApiToken);
+					content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+					var response = await client.PostAsync("/api/AnalyticsLog", content);
+					response.EnsureSuccessStatusCode();
+				}
+				using (var scope = fixture.Services.CreateScope()) {
+					var fileRepo = scope.ServiceProvider.GetRequiredService<ILogFileRepository>();
+					using (var readStream = await fileRepo.ReadLogAsync(fixture.AppName, userId, logId, ".log.gz")) {
+						logContent.Position = 0;
+						StreamUtils.AssertEqualContent(logContent, readStream);
+					}
+					var logMdRepo = scope.ServiceProvider.GetRequiredService<ILogMetadataRepository>();
+					var logMd = await logMdRepo.GetLogMetadataByIdAsync(logId);
+					Assert.Equal(userId, logMd.UserId);
+					Assert.Equal(fixture.AppName, logMd.App.Name);
+					Assert.Equal(logMDTO.CreationTime.ToUniversalTime(), logMd.CreationTime);
+					Assert.Equal(logMDTO.EndTime.ToUniversalTime(), logMd.EndTime);
+					Assert.InRange(logMd.UploadTime, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
+					Assert.True(logMd.Complete);
+				}
+			}
+		}
+
+		[Fact]
 		public async Task LogIngestWithUnknownApplicationReturnsUnauthorizedError() {
 			var userId = Guid.NewGuid();
 			var logId = Guid.NewGuid();
