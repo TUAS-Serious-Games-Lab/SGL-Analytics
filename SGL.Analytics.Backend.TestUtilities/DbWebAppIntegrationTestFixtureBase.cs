@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -18,12 +19,14 @@ namespace SGL.Analytics.Backend.TestUtilities {
 		}
 
 		protected override void ConfigureWebHost(IWebHostBuilder builder) {
-			builder.ConfigureServices(services => {
+
+			builder.ConfigureTestServices(services => {
 				var dbContextDescriptor = services.SingleOrDefault(sd => sd.ServiceType == typeof(TContext));
 				if (dbContextDescriptor != null) services.Remove(dbContextDescriptor);
 				var dbContextOptionsDescriptor = services.SingleOrDefault(sd => sd.ServiceType == typeof(DbContextOptions<TContext>));
 				if (dbContextOptionsDescriptor != null) services.Remove(dbContextOptionsDescriptor);
 				services.AddDbContext<TContext>(options => options.UseSqlite(db.Connection));
+				OverrideConfig(services);
 
 				using (var context = Activator.CreateInstance(typeof(TContext), db.ContextOptions) as TContext ?? throw new InvalidOperationException()) {
 					SeedDatabase(context);
@@ -31,6 +34,7 @@ namespace SGL.Analytics.Backend.TestUtilities {
 			});
 		}
 
+		protected virtual void OverrideConfig(IServiceCollection services) { }
 		protected virtual void SeedDatabase(TContext context) { }
 	}
 }
