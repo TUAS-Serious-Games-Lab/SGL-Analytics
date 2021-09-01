@@ -10,16 +10,16 @@ using Xunit.Abstractions;
 namespace SGL.Analytics.Utilities {
 
 	public class XUnitLoggingProvider : ILoggerProvider {
-		private ITestOutputHelper output;
+		private Func<ITestOutputHelper?> outputObtainer;
 		private static ThreadLocal<StringBuilder> cachedStringBuilder = new(() => new StringBuilder());
 
 		public class XUnitLogger : ILogger {
-			private ITestOutputHelper output;
+			private Func<ITestOutputHelper?> outputObtainer;
 			private string categoryName;
 			private LoggerExternalScopeProvider scopes = new LoggerExternalScopeProvider();
 
-			public XUnitLogger(ITestOutputHelper output, string categoryName) {
-				this.output = output;
+			public XUnitLogger(Func<ITestOutputHelper?> outputObtainer, string categoryName) {
+				this.outputObtainer = outputObtainer;
 				this.categoryName = categoryName;
 			}
 
@@ -32,6 +32,8 @@ namespace SGL.Analytics.Utilities {
 			}
 
 			public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) {
+				var output = outputObtainer();
+				if (output is null) return;
 				StringBuilder builder = (cachedStringBuilder.Value ??= new StringBuilder());
 				builder.Clear();
 				builder.AppendFormat("{0} [{1}] {2}", logLevel.ToString(), categoryName, formatter(state, exception));
@@ -48,12 +50,12 @@ namespace SGL.Analytics.Utilities {
 			}
 		}
 
-		public XUnitLoggingProvider(ITestOutputHelper output) {
-			this.output = output;
+		public XUnitLoggingProvider(Func<ITestOutputHelper?> outputObtainer) {
+			this.outputObtainer = outputObtainer;
 		}
 
 		public ILogger CreateLogger(string categoryName) {
-			return new XUnitLogger(output, categoryName);
+			return new XUnitLogger(outputObtainer, categoryName);
 		}
 
 		public void Dispose() { }
@@ -61,7 +63,11 @@ namespace SGL.Analytics.Utilities {
 
 	public static class XUnitLoggingExtensions {
 		public static ILoggingBuilder AddXUnit(this ILoggingBuilder builder, ITestOutputHelper output) {
-			builder.AddProvider(new XUnitLoggingProvider(output));
+			builder.AddProvider(new XUnitLoggingProvider(() => output));
+			return builder;
+		}
+		public static ILoggingBuilder AddXUnit(this ILoggingBuilder builder, Func<ITestOutputHelper?> outputObtainer) {
+			builder.AddProvider(new XUnitLoggingProvider(outputObtainer));
 			return builder;
 		}
 	}
