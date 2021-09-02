@@ -139,8 +139,20 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 				ensureDirectoryExists(appName, userId);
 				// Create target file with temporary name to not make it visible to other operations while it is still being written.
 				var filePath = Path.Combine(storageDirectory, appName, userId.ToString(), logId.ToString() + suffix + makeTempSuffix());
-				using (var writeStream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
-					await content.CopyToAsync(writeStream);
+				try {
+					using (var writeStream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
+						await content.CopyToAsync(writeStream);
+					}
+				}
+				catch {
+					// The store operation failed, most likely due to the content stream producing an I/O error (e.g. because it is reading from a network connection that was interrupted).
+					try {
+						// Delete the temporary file before rethrowing.
+						File.Delete(filePath);
+					}
+					// However, if the deletion also fails, e.g. due to some server-side I/O error or permission problem, rethrow the original exception, not the new one.
+					catch { }
+					throw;
 				}
 				// Rename to final file name to make it visible to other operations.
 				File.Move(filePath, makeFilePath(appName, userId, logId, suffix), overwrite: true);
