@@ -28,6 +28,11 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			}
 		}
 
+		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(int userAppId, Guid userId, Guid localLogId) {
+			await Task.CompletedTask;
+			return logs.Values.Where(lm => lm.AppId == userAppId && lm.UserId == userId && lm.LocalLogId == localLogId).SingleOrDefault<LogMetadata?>();
+		}
+
 		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata) {
 			await Task.CompletedTask;
 			Debug.Assert(logs.ContainsKey(logMetadata.Id));
