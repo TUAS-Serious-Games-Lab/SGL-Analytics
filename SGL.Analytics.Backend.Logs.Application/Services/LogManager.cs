@@ -50,7 +50,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					logger.LogWarning("User {user} uploads log {logId} again, although it was already marked as completely uploaded. Allowing them to proceed anyway.", logMetaDTO.UserId, logMetaDTO.LogFileId);
 				}
 				else {
-					logger.LogInformation("Reattempted upload of logfile {logId} from user {userId}, time of original upload attempt: {uploadTime}.", logMetadata.Id, logMetadata.UserId, logMetadata.UploadTime);
+					logger.LogInformation("Reattempted upload of logfile {logId} from user {userId}, time of original upload attempt: {uploadTime:O}.", logMetadata.Id, logMetadata.UserId, logMetadata.UploadTime);
 					logMetadata.UploadTime = DateTime.Now;
 					logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata);
 				}
