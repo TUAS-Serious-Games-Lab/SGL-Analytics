@@ -212,7 +212,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var response = await client.PostAsync("/api/AnalyticsLog", content);
 				response.EnsureSuccessStatusCode();
 			}
-			// Now try to upload one with the same id from a different user:
+			// Now try to upload a log with the same id from a different user:
 			var userId = Guid.NewGuid();
 			var logMDTO = new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
 			using (var logContent = generateRandomGZippedTestData()) {
