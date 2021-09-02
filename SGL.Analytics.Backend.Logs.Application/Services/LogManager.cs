@@ -40,11 +40,35 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata);
 				}
 				else if (logMetadata.UserId != logMetaDTO.UserId) {
-					var oldLogMetadata = logMetadata;
-					logMetadata = new(Guid.NewGuid(), app.Id, logMetaDTO.UserId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now, LogFileSuffix, false);
-					logMetadata.App = app;
-					logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. Resolving this conflict by assigning a new log id {newLogId} for the new log file.", logMetaDTO.UserId, logMetaDTO.LogFileId, oldLogMetadata.UserId, logMetadata.Id);
-					logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata);
+					var otherLogMetadata = logMetadata;
+					var oldLogMetadata = await logMetaRepo.GetLogMetadataByUserLocalIdAsync(app.Id, logMetaDTO.UserId, logMetaDTO.LogFileId);
+					if (oldLogMetadata is null) {
+						logMetadata = new(Guid.NewGuid(), app.Id, logMetaDTO.UserId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now, LogFileSuffix, false);
+						logMetadata.App = app;
+						logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. " +
+							"Resolving this conflict by assigning a new log id {newLogId} for the new log file.",
+							logMetaDTO.UserId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id);
+						logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata);
+					}
+					else {
+						logMetadata = oldLogMetadata;
+						if (logMetadata.Complete) {
+							logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. " +
+								"This conflict was previously resolved by assigning the new log id {newLogId} for the new log file when an upload for it was attempted at {uploadTime:O}. " +
+								"Although that attempt was already marked as complete, the client attempts another upload. Allowing it to proceed anyway. " +
+								"This could happen if the server wrote the log to completion, but the client crashed / disconnected before it could receive the response and " +
+								"remove the file from the upload list.",
+								logMetaDTO.UserId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id, logMetadata.UploadTime);
+						}
+						else {
+							logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. " +
+								"This conflict was previously resolved by assigning the new log id {newLogId} for the new log file when an upload for it was attempted at {uploadTime:O}. " +
+								"That upload however didn't complete and the client is now reattempting the upload.",
+								logMetaDTO.UserId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id, logMetadata.UploadTime);
+							logMetadata.UploadTime = DateTime.Now;
+							logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata);
+						}
+					}
 				}
 				else if (logMetadata.Complete) {
 					logger.LogWarning("User {user} uploads log {logId} again, although it was already marked as completely uploaded. Allowing them to proceed anyway.", logMetaDTO.UserId, logMetaDTO.LogFileId);
