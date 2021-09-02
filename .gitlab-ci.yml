@@ -30,15 +30,19 @@ build:
 test:
   stage: test
   script:
-    - 'dotnet test --no-restore --configuration Debug --test-adapter-path:. --logger:"junit;LogFilePath=../TestResults/{assembly}.xml;MethodFormat=Class;FailureBodyFormat=Verbose" SGL.Analytics.sln'
+    - 'rm -f */TestResults/*/coverage.cobertura.xml'
+    - 'dotnet test --no-restore --configuration Debug --collect:"XPlat Code Coverage" --test-adapter-path:. --logger:"junit;LogFilePath=../TestResults/{assembly}.xml;MethodFormat=Class;FailureBodyFormat=Verbose" SGL.Analytics.sln'
   artifacts:
     expire_in: 14 days
     when: always
     paths:
      - ./TestResults/*.xml
+     - '*/TestResults/*/coverage.cobertura.xml'
     reports:
       junit:
        - ./TestResults/*.xml
+      cobertura:
+       - '*/TestResults/*/coverage.cobertura.xml'
 
 .package-client-lib:
   stage: package
