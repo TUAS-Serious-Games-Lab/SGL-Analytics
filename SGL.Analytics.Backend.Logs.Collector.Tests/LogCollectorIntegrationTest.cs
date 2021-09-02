@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.LogCollector;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
@@ -199,5 +200,49 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			}
 
 		}
+		[Fact]
+		public async Task LogIngestWithCollidingIdSucceedsButGetsNewId() {
+			var logId = Guid.NewGuid();
+			// First, create the conflicting log:
+			using (var client = fixture.CreateClient()) {
+				var content = new StreamContent(Stream.Null);
+				content.Headers.MapDtoProperties(new LogMetadataDTO(fixture.AppName, Guid.NewGuid(), logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45)));
+				content.Headers.Add("App-API-Token", fixture.AppApiToken);
+				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+				var response = await client.PostAsync("/api/AnalyticsLog", content);
+				response.EnsureSuccessStatusCode();
+			}
+			// Now try to upload one with the same id from a different user:
+			var userId = Guid.NewGuid();
+			var logMDTO = new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			using (var logContent = generateRandomGZippedTestData()) {
+				using (var client = fixture.CreateClient()) {
+					var content = new StreamContent(logContent);
+					content.Headers.MapDtoProperties(logMDTO);
+					content.Headers.Add("App-API-Token", fixture.AppApiToken);
+					content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+					var response = await client.PostAsync("/api/AnalyticsLog", content);
+					response.EnsureSuccessStatusCode();
+				}
+				using (var scope = fixture.Services.CreateScope()) {
+					var db = scope.ServiceProvider.GetRequiredService<LogsContext>();
+					var logMd = await db.LogMetadata.Where(lm => lm.LocalLogId == logId && lm.UserId == userId).Include(lm => lm.App).SingleOrDefaultAsync<LogMetadata?>();
+					Assert.NotNull(logMd);
+					Assert.NotEqual(logId, logMd?.Id);
+					Assert.Equal(userId, logMd?.UserId);
+					Assert.Equal(fixture.AppName, logMd?.App.Name);
+					Assert.Equal(logMDTO.CreationTime.ToUniversalTime(), logMd?.CreationTime);
+					Assert.Equal(logMDTO.EndTime.ToUniversalTime(), logMd?.EndTime);
+					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
+					Assert.True(logMd?.Complete);
+					var fileRepo = scope.ServiceProvider.GetRequiredService<ILogFileRepository>();
+					using (var readStream = await fileRepo.ReadLogAsync(fixture.AppName, userId, logMd?.Id ?? Guid.Empty, ".log.gz")) {
+						logContent.Position = 0;
+						StreamUtils.AssertEqualContent(logContent, readStream);
+					}
+				}
+			}
+		}
+
 	}
 }
