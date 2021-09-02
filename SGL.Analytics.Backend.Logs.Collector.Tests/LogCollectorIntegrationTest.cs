@@ -87,12 +87,13 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					}
 					var logMdRepo = scope.ServiceProvider.GetRequiredService<ILogMetadataRepository>();
 					var logMd = await logMdRepo.GetLogMetadataByIdAsync(logId);
-					Assert.Equal(userId, logMd.UserId);
-					Assert.Equal(fixture.AppName, logMd.App.Name);
-					Assert.Equal(logMDTO.CreationTime.ToUniversalTime(), logMd.CreationTime);
-					Assert.Equal(logMDTO.EndTime.ToUniversalTime(), logMd.EndTime);
-					Assert.InRange(logMd.UploadTime, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
-					Assert.True(logMd.Complete);
+					Assert.NotNull(logMd);
+					Assert.Equal(userId, logMd?.UserId);
+					Assert.Equal(fixture.AppName, logMd?.App.Name);
+					Assert.Equal(logMDTO.CreationTime.ToUniversalTime(), logMd?.CreationTime);
+					Assert.Equal(logMDTO.EndTime.ToUniversalTime(), logMd?.EndTime);
+					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
+					Assert.True(logMd?.Complete);
 				}
 			}
 		}
