@@ -71,10 +71,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					}
 				}
 				else if (logMetadata.Complete) {
-					logger.LogWarning("User {user} uploads log {logId} again, although it was already marked as completely uploaded. Allowing them to proceed anyway.", logMetaDTO.UserId, logMetaDTO.LogFileId);
+					logger.LogWarning("User {user} uploads log {logId} again, although it was already marked as completely uploaded. Allowing them to proceed anyway. " +
+						"This could happen if the server wrote the log to completion, but the client crashed / disconnected before it could receive the response and " +
+						"remove the file from the upload list.",
+						logMetaDTO.UserId, logMetaDTO.LogFileId);
 				}
 				else {
-					logger.LogInformation("Reattempted upload of logfile {logId} from user {userId}, time of original upload attempt: {uploadTime:O}.", logMetadata.Id, logMetadata.UserId, logMetadata.UploadTime);
+					logger.LogInformation("Reattempted upload of logfile {logId} from user {userId}, time of original upload attempt: {uploadTime:O}.",
+						logMetadata.Id, logMetadata.UserId, logMetadata.UploadTime);
 					logMetadata.UploadTime = DateTime.Now;
 					logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata);
 				}
