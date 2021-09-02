@@ -11,6 +11,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 	public class DummyLogMetadataRepository : ILogMetadataRepository {
 		private Dictionary<Guid, LogMetadata> logs = new();
 
+		public Dictionary<Guid, LogMetadata> Logs => logs;
+
 		public async Task<LogMetadata> AddLogMetadataAsync(LogMetadata logMetadata) {
 			await Task.CompletedTask;
 			if (logs.ContainsKey(logMetadata.Id)) throw new InvalidOperationException($"An log metadata entry with the given id '{logMetadata.Id}' is already present.");
