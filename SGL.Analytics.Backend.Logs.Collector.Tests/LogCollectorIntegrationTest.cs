@@ -127,5 +127,77 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
 			}
 		}
+
+		[Fact]
+		public async Task FailedLogIngestCanBeSuccessfullyRetried() {
+			var userId = Guid.NewGuid();
+			var logId = Guid.NewGuid();
+			var logMDTO = new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			using (var logContent = generateRandomGZippedTestData()) {
+				using (var client = fixture.CreateClient(new() {
+					// These options are required for the fault simulation,
+					// because the default options attempt to duplicate the request content internally
+					// and thus trigger the fault before the backend is invoked.
+					AllowAutoRedirect = false,
+					HandleCookies = false
+				})) {
+					// We want to simulate a network fault or the client crashing, resulting in a server-side timeout.
+					// -> Use a very strict timeout. With the WebApplicationFactory test server that we are using, the timeout set on the client translates to the server.
+					client.Timeout = TimeSpan.FromMilliseconds(200);
+					var streamWrapper = new TriggeredBlockingStream(logContent);
+					var content = new StreamContent(streamWrapper);
+					content.Headers.MapDtoProperties(logMDTO);
+					content.Headers.Add("App-API-Token", fixture.AppApiToken);
+					content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+					var task = client.PostAsync("/api/AnalyticsLog", content);
+					// Interrupt transfer of the body on the client.
+					// Because the headers were already sent, the server-side request handling should be invoked despite the client error.
+					// But reading from the body stream on the server will timeout.
+					streamWrapper.TriggerReadError(new IOException("Generic I/O error"));
+					// Awaiting the task here does not only wait for the client, but also for the server-side request handling (because of WebApplicationFactory not actually going over network).
+					await Assert.ThrowsAnyAsync<Exception>(async () => await task);
+				}
+				using (var scope = fixture.Services.CreateScope()) {
+					// Now the metadata entry should be present, but with Complete=false because the upload failed.
+					var logMdRepo = scope.ServiceProvider.GetRequiredService<ILogMetadataRepository>();
+					var logMd = await logMdRepo.GetLogMetadataByIdAsync(logId);
+					Assert.NotNull(logMd);
+					Assert.Equal(userId, logMd?.UserId);
+					Assert.Equal(fixture.AppName, logMd?.App.Name);
+					Assert.Equal(logMDTO.CreationTime.ToUniversalTime(), logMd?.CreationTime);
+					Assert.Equal(logMDTO.EndTime.ToUniversalTime(), logMd?.EndTime);
+					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
+					Assert.False(logMd?.Complete);
+				}
+				// Reattempt normally...
+				using (var client = fixture.CreateClient()) {
+					logContent.Position = 0;
+					var content = new StreamContent(logContent);
+					content.Headers.MapDtoProperties(logMDTO);
+					content.Headers.Add("App-API-Token", fixture.AppApiToken);
+					content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+					var response = await client.PostAsync("/api/AnalyticsLog", content);
+					response.EnsureSuccessStatusCode();
+				}
+				using (var scope = fixture.Services.CreateScope()) {
+					// Should be fine now.
+					var fileRepo = scope.ServiceProvider.GetRequiredService<ILogFileRepository>();
+					using (var readStream = await fileRepo.ReadLogAsync(fixture.AppName, userId, logId, ".log.gz")) {
+						logContent.Position = 0;
+						StreamUtils.AssertEqualContent(logContent, readStream);
+					}
+					var logMdRepo = scope.ServiceProvider.GetRequiredService<ILogMetadataRepository>();
+					var logMd = await logMdRepo.GetLogMetadataByIdAsync(logId);
+					Assert.NotNull(logMd);
+					Assert.Equal(userId, logMd?.UserId);
+					Assert.Equal(fixture.AppName, logMd?.App.Name);
+					Assert.Equal(logMDTO.CreationTime.ToUniversalTime(), logMd?.CreationTime);
+					Assert.Equal(logMDTO.EndTime.ToUniversalTime(), logMd?.EndTime);
+					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
+					Assert.True(logMd?.Complete);
+				}
+			}
+
+		}
 	}
 }
