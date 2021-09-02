@@ -5,7 +5,7 @@ using System.Net.Http.Headers;
 using System.Reflection;
 
 namespace SGL.Analytics.Utilities {
-	public static class DataBindingExtensions {
+	public static class DtoHeaderBindingExtensions {
 		private static Func<object, string?>? getTypeMapping(PropertyInfo prop) {
 			var type = prop.PropertyType;
 			switch (type) {
@@ -25,7 +25,7 @@ namespace SGL.Analytics.Utilities {
 			// TODO check for attributes that can override the name
 			return prop.Name;
 		}
-		public static void MapObjectProperties(this HttpHeaders headers, object source) {
+		public static void MapDtoProperties(this HttpHeaders headers, object source) {
 			var props = source.GetType().GetProperties();
 			var mappings = (from prop in props
 							select new { NameMapping = getNameMapping(prop), TypeMapping = getTypeMapping(prop), OriginalProperty = prop }).ToList();

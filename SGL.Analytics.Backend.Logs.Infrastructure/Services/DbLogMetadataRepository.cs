@@ -30,6 +30,10 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			return await context.LogMetadata.Include(lmd => lmd.App).Where(lmd => lmd.Id == logId).SingleOrDefaultAsync<LogMetadata?>();
 		}
 
+		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(int userAppId, Guid userId, Guid localLogId) {
+			return await context.LogMetadata.Include(lmd => lmd.App).Where(lmd => lmd.AppId == userAppId && lmd.UserId == userId && lmd.LocalLogId == localLogId).SingleOrDefaultAsync<LogMetadata?>();
+		}
+
 		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata) {
 			Debug.Assert(context.Entry(logMetadata).State == EntityState.Modified);
 			await context.SaveChangesAsync();

@@ -6,14 +6,14 @@ using System.Net.Http.Headers;
 using Xunit;
 
 namespace SGL.Analytics.Utilities.Tests {
-	public class DataBindingExtensionsUnitTest {
+	public class DtoHeaderBindingExtensionsUnitTest {
 		private class FakeHeaders : HttpHeaders { }
 
 		[Fact]
-		public void MapObjectPropertiesCanMapLogMetadataDTOCorrectly() {
+		public void MapDtoPropertiesCanMapLogMetadataDTOCorrectly() {
 			var headers = new FakeHeaders();
 			LogMetadataDTO dto = new LogMetadataDTO(AppName: "UnitTestDummy", UserId: Guid.NewGuid(), LogFileId: Guid.NewGuid(), CreationTime: DateTime.Now.AddMinutes(-5), EndTime: DateTime.Now);
-			headers.MapObjectProperties(dto);
+			headers.MapDtoProperties(dto);
 			Assert.Equal(dto.AppName, headers.GetValues("AppName").Single());
 			Assert.Equal(dto.UserId, Guid.Parse(headers.GetValues("UserId").Single()));
 			Assert.Equal(dto.LogFileId, Guid.Parse(headers.GetValues("LogFileId").Single()));
@@ -32,10 +32,10 @@ namespace SGL.Analytics.Utilities.Tests {
 		}
 
 		[Fact]
-		public void MapObjectPropertiesCanMapPrimitivesCorrectly() {
+		public void MapDtoPropertiesCanMapPrimitivesCorrectly() {
 			var headers = new FakeHeaders();
 			var testData = new TestData() { MyEnum = TestEnum.EnumValue, MyBool = true, MyShort = 12345, MyInt = -1234567890, MyLong = 123456789012345, MyDouble = 123456.78912 };
-			headers.MapObjectProperties(testData);
+			headers.MapDtoProperties(testData);
 			Assert.Equal("EnumValue", headers.GetValues("MyEnum").Single());
 			Assert.Equal("True", headers.GetValues("MyBool").Single());
 			Assert.Equal("12345", headers.GetValues("MyShort").Single());

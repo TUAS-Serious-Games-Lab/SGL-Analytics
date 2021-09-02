@@ -19,7 +19,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 		private readonly string appApiToken = StringGenerator.GenerateRandomWord(32);
 		private IApplicationRepository appRepo = new DummyApplicationRepository();
 		private ILogFileRepository logFileRepo = new DummyLogFileRepository();
-		private ILogMetadataRepository logMetadataRepo = new DummyLogMetadataRepository();
+		private DummyLogMetadataRepository logMetadataRepo = new DummyLogMetadataRepository();
 		private ITestOutputHelper output;
 		private ILoggerFactory loggerFactory;
 		private LogManager manager;
@@ -121,6 +121,42 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			LogMetadataDTO dto = new("DoesNotExist", userId, logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
 			await using (var origContent = generateRandomMemoryStream()) {
 				await Assert.ThrowsAsync<ApplicationDoesNotExistException>(async () => await manager.IngestLogAsync(dto, origContent));
+			}
+		}
+		[Fact]
+		public async Task ReattemptingIngestOfLogWhereServerAssignedNewIdPicksUpTheExistingEntry() {
+			Guid logFileId = Guid.NewGuid();
+			Guid user1Id = Guid.NewGuid();
+			LogMetadataDTO dto1 = new(appName, user1Id, logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95));
+			await using (var content = generateRandomMemoryStream()) {
+				await manager.IngestLogAsync(dto1, content);
+			}
+
+			Guid user2Id = Guid.NewGuid();
+			LogMetadataDTO dto2 = new(appName, user2Id, logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			await using (var origContent = generateRandomMemoryStream()) {
+				var streamWrapper = new TriggeredBlockingStream(origContent);
+				var task = manager.IngestLogAsync(dto2, streamWrapper);
+				streamWrapper.TriggerReadError(new IOException("Connection to client lost."));
+				await Assert.ThrowsAsync<IOException>(async () => await task);
+				origContent.Position = 0;
+				var logQuery = logMetadataRepo.Logs.Values.Where(lm => lm.LocalLogId == logFileId && lm.UserId == user2Id);
+				Assert.Single(logQuery);
+				var logMd = logQuery.Single();
+
+				var logFile = await manager.IngestLogAsync(dto2, origContent);
+				Assert.Equal(logFileId, logFile.LocalLogId);
+				Assert.NotEqual(logFileId, logFile.Id);
+				Assert.Equal(logMd.Id, logFile.Id);
+				await using (var readContent = new MemoryStream()) {
+					await logFile.CopyToAsync(readContent);
+					origContent.Position = 0;
+					readContent.Position = 0;
+					using (var origReader = new StreamReader(origContent, leaveOpen: true))
+					using (var readBackReader = new StreamReader(readContent, leaveOpen: true)) {
+						Assert.Equal(origReader.EnumerateLines(), readBackReader.EnumerateLines());
+					}
+				}
 			}
 		}
 	}

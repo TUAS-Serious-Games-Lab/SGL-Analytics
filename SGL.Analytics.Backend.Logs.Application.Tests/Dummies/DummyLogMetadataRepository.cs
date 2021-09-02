@@ -11,6 +11,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 	public class DummyLogMetadataRepository : ILogMetadataRepository {
 		private Dictionary<Guid, LogMetadata> logs = new();
 
+		public Dictionary<Guid, LogMetadata> Logs => logs;
+
 		public async Task<LogMetadata> AddLogMetadataAsync(LogMetadata logMetadata) {
 			await Task.CompletedTask;
 			if (logs.ContainsKey(logMetadata.Id)) throw new InvalidOperationException($"An log metadata entry with the given id '{logMetadata.Id}' is already present.");
@@ -26,6 +28,11 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			else {
 				return null;
 			}
+		}
+
+		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(int userAppId, Guid userId, Guid localLogId) {
+			await Task.CompletedTask;
+			return logs.Values.Where(lm => lm.AppId == userAppId && lm.UserId == userId && lm.LocalLogId == localLogId).SingleOrDefault<LogMetadata?>();
 		}
 
 		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata) {
