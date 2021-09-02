@@ -61,6 +61,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					writer.WriteLine(StringGenerator.GenerateRandomString(128));
 				}
 			}
+			stream.Position = 0;
 			return stream;
 		}
 
