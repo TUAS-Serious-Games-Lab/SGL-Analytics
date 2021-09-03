@@ -30,5 +30,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			controller = new AnalyticsLogController(logManager, logManager, loggerFactory.CreateLogger<AnalyticsLogController>());
 		}
 
+		[Fact]
+		public async Task IngestLogWithInvalidAppNameFailsWithUnauthorized() {
+			var res = await controller.IngestLog(apiToken, new LogMetadataDTO("DoesNotExist", Guid.NewGuid(), Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2)));
+			Assert.IsType<UnauthorizedResult>(res);
+			Assert.Empty(logManager.Ingests);
+		}
 	}
 }
