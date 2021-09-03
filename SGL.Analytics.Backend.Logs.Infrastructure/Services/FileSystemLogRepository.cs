@@ -122,6 +122,45 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			}
 		}
 
+		public struct TempFilePath {
+			public string AppName { get; set; }
+			public string UserDir { get; set; }
+			public string FileName { get; set; }
+
+			public override string ToString() {
+				return Path.Combine(AppName, UserDir, FileName);
+			}
+
+			internal TempFilePath(string appName, string userDir, string fileName) {
+				AppName = appName;
+				UserDir = userDir;
+				FileName = fileName;
+			}
+		}
+
+		public IEnumerable<TempFilePath> EnumerateTempFiles() {
+			string searchPattern = $"*{tempSeparator}{new string('?', tempSuffixLength)}";
+			var appDirs = from dir in Directory.EnumerateDirectories(storageDirectory)
+						  select Path.GetFileName(dir);
+			foreach (var appName in appDirs) {
+				if (appName is null) continue;
+				var userDirs = from dir in Directory.EnumerateDirectories(Path.Combine(storageDirectory, appName))
+							   let dirName = Path.GetFileName(dir)
+							   let userId = Guid.TryParse(dirName, out var guid) ? guid : (Guid?)null
+							   where userId.HasValue
+							   select dirName;
+				foreach (var userDir in userDirs) {
+					foreach (var logFile in Directory.EnumerateFiles(Path.Combine(storageDirectory, appName, userDir), searchPattern)) {
+						yield return new TempFilePath(appName, userDir, Path.GetFileName(logFile));
+					}
+				}
+			}
+		}
+
+		public void DeleteTempFile(TempFilePath tempFile) {
+			File.Delete(Path.Combine(storageDirectory, tempFile.AppName, tempFile.UserDir, tempFile.FileName));
+		}
+
 		public Task<Stream> ReadLogAsync(string appName, Guid userId, Guid logId, string suffix) {
 			return Task.Run(() => {
 				try {
