@@ -21,9 +21,9 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 
 		[Fact]
 		public async Task ApplicationsCanBeCreatedAndThenRetrivedByName() {
-			var app1 = new Domain.Entity.Application(0, "DbApplicationRepositoryUnitTest_1", StringGenerator.GenerateRandomWord(32));
-			var app2 = new Domain.Entity.Application(0, "DbApplicationRepositoryUnitTest_2", StringGenerator.GenerateRandomWord(32));
-			var app3 = new Domain.Entity.Application(0, "DbApplicationRepositoryUnitTest_3", StringGenerator.GenerateRandomWord(32));
+			var app1 = new Domain.Entity.Application(Guid.NewGuid(), "DbApplicationRepositoryUnitTest_1", StringGenerator.GenerateRandomWord(32));
+			var app2 = new Domain.Entity.Application(Guid.NewGuid(), "DbApplicationRepositoryUnitTest_2", StringGenerator.GenerateRandomWord(32));
+			var app3 = new Domain.Entity.Application(Guid.NewGuid(), "DbApplicationRepositoryUnitTest_3", StringGenerator.GenerateRandomWord(32));
 			await using (var repo = new DbApplicationRepository(createContext())) {
 				await repo.AddApplicationAsync(app1);
 				app2 = await repo.AddApplicationAsync(app2);

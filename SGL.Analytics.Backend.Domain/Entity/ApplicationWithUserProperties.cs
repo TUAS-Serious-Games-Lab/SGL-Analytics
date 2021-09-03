@@ -9,7 +9,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		public ICollection<ApplicationUserPropertyDefinition> UserProperties { get; set; } = null!;
 		public ICollection<UserRegistration> UserRegistrations { get; set; } = null!;
 
-		public ApplicationWithUserProperties(int id, string name, string apiToken) :
+		public ApplicationWithUserProperties(Guid id, string name, string apiToken) :
 			base(id, name, apiToken) { }
 	}
 }

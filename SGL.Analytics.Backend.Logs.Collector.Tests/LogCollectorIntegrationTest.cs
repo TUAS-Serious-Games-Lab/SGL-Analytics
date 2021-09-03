@@ -32,7 +32,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		public ITestOutputHelper? Output { get; set; } = null;
 
 		protected override void SeedDatabase(LogsContext context) {
-			context.Applications.Add(new Domain.Entity.Application(0, AppName, AppApiToken));
+			context.Applications.Add(new Domain.Entity.Application(Guid.NewGuid(), AppName, AppApiToken));
 			context.SaveChanges();
 		}
 

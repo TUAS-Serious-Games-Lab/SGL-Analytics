@@ -30,7 +30,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			}
 		}
 
-		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(int userAppId, Guid userId, Guid localLogId) {
+		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId) {
 			await Task.CompletedTask;
 			return logs.Values.Where(lm => lm.AppId == userAppId && lm.UserId == userId && lm.LocalLogId == localLogId).SingleOrDefault<LogMetadata?>();
 		}
