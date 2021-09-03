@@ -113,7 +113,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		public IEnumerable<LogPath> EnumerateLogs() {
-			var dirs = from dir in Directory.EnumerateDirectories(Path.Combine(storageDirectory))
+			var dirs = from dir in Directory.EnumerateDirectories(storageDirectory)
 					   select Path.GetFileName(dir);
 			foreach (var appName in dirs) {
 				foreach (var logPath in EnumerateLogs(appName)) {
