@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "SGL.Analytics.Backend.Logs.LogRepositoryGC": {
+      "commandName": "Project"
+    }
+  }
+}
