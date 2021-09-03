@@ -36,5 +36,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			Assert.IsType<UnauthorizedResult>(res);
 			Assert.Empty(logManager.Ingests);
 		}
+		[Fact]
+		public async Task IngestLogWithInvalidApiTokensFailsWithUnauthorized() {
+			var res = await controller.IngestLog(StringGenerator.GenerateRandomWord(32), new LogMetadataDTO(nameof(AnalyticsLogControllerUnitTest), Guid.NewGuid(), Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2)));
+			Assert.IsType<UnauthorizedResult>(res);
+			Assert.Empty(logManager.Ingests);
+		}
 	}
 }
