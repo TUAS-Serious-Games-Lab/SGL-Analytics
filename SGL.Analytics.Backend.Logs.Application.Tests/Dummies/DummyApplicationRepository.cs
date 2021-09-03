@@ -12,7 +12,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 		public async Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app) {
 			await Task.CompletedTask;
 			if (apps.ContainsKey(app.Name)) throw new InvalidOperationException($"An application with the given name '{app.Name}' is already present.");
-			app.Id = Guid.NewGuid();
+			if (app.Id == Guid.Empty) app.Id = Guid.NewGuid();
 			apps.Add(app.Name, app);
 			return app;
 		}
