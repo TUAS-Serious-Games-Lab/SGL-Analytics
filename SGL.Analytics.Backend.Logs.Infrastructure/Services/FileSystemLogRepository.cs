@@ -113,13 +113,52 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		public IEnumerable<LogPath> EnumerateLogs() {
-			var dirs = from dir in Directory.EnumerateDirectories(Path.Combine(storageDirectory))
+			var dirs = from dir in Directory.EnumerateDirectories(storageDirectory)
 					   select Path.GetFileName(dir);
 			foreach (var appName in dirs) {
 				foreach (var logPath in EnumerateLogs(appName)) {
 					yield return logPath;
 				}
 			}
+		}
+
+		public struct TempFilePath {
+			public string AppName { get; set; }
+			public string UserDir { get; set; }
+			public string FileName { get; set; }
+
+			public override string ToString() {
+				return Path.Combine(AppName, UserDir, FileName);
+			}
+
+			internal TempFilePath(string appName, string userDir, string fileName) {
+				AppName = appName;
+				UserDir = userDir;
+				FileName = fileName;
+			}
+		}
+
+		public IEnumerable<TempFilePath> EnumerateTempFiles() {
+			string searchPattern = $"*{tempSeparator}{new string('?', tempSuffixLength)}";
+			var appDirs = from dir in Directory.EnumerateDirectories(storageDirectory)
+						  select Path.GetFileName(dir);
+			foreach (var appName in appDirs) {
+				if (appName is null) continue;
+				var userDirs = from dir in Directory.EnumerateDirectories(Path.Combine(storageDirectory, appName))
+							   let dirName = Path.GetFileName(dir)
+							   let userId = Guid.TryParse(dirName, out var guid) ? guid : (Guid?)null
+							   where userId.HasValue
+							   select dirName;
+				foreach (var userDir in userDirs) {
+					foreach (var logFile in Directory.EnumerateFiles(Path.Combine(storageDirectory, appName, userDir), searchPattern)) {
+						yield return new TempFilePath(appName, userDir, Path.GetFileName(logFile));
+					}
+				}
+			}
+		}
+
+		public void DeleteTempFile(TempFilePath tempFile) {
+			File.Delete(Path.Combine(storageDirectory, tempFile.AppName, tempFile.UserDir, tempFile.FileName));
 		}
 
 		public Task<Stream> ReadLogAsync(string appName, Guid userId, Guid logId, string suffix) {
@@ -139,8 +178,20 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 				ensureDirectoryExists(appName, userId);
 				// Create target file with temporary name to not make it visible to other operations while it is still being written.
 				var filePath = Path.Combine(storageDirectory, appName, userId.ToString(), logId.ToString() + suffix + makeTempSuffix());
-				using (var writeStream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
-					await content.CopyToAsync(writeStream);
+				try {
+					using (var writeStream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
+						await content.CopyToAsync(writeStream);
+					}
+				}
+				catch {
+					// The store operation failed, most likely due to the content stream producing an I/O error (e.g. because it is reading from a network connection that was interrupted).
+					try {
+						// Delete the temporary file before rethrowing.
+						File.Delete(filePath);
+					}
+					// However, if the deletion also fails, e.g. due to some server-side I/O error or permission problem, rethrow the original exception, not the new one.
+					catch { }
+					throw;
 				}
 				// Rename to final file name to make it visible to other operations.
 				File.Move(filePath, makeFilePath(appName, userId, logId, suffix), overwrite: true);
