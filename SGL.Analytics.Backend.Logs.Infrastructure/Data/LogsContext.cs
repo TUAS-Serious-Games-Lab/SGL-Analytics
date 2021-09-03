@@ -13,12 +13,18 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 		}
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder) {
-			modelBuilder.Entity<LogMetadata>().HasIndex(lm => lm.AppId);
-			modelBuilder.Entity<LogMetadata>().HasIndex(lm => new { lm.AppId, lm.UserId });
-			modelBuilder.Entity<LogMetadata>().Property(lm => lm.CreationTime).IsStoredInUtc();
-			modelBuilder.Entity<LogMetadata>().Property(lm => lm.EndTime).IsStoredInUtc();
-			modelBuilder.Entity<LogMetadata>().Property(lm => lm.UploadTime).IsStoredInUtc();
-			modelBuilder.Entity<Domain.Entity.Application>().HasIndex(a => a.Name).IsUnique();
+			var logMetadata = modelBuilder.Entity<LogMetadata>();
+			logMetadata.HasIndex(lm => lm.AppId);
+			logMetadata.HasIndex(lm => new { lm.AppId, lm.UserId });
+			logMetadata.Property(lm => lm.CreationTime).IsStoredInUtc();
+			logMetadata.Property(lm => lm.EndTime).IsStoredInUtc();
+			logMetadata.Property(lm => lm.UploadTime).IsStoredInUtc();
+			logMetadata.Property(lm => lm.FilenameSuffix).HasMaxLength(16);
+
+			var application = modelBuilder.Entity<Domain.Entity.Application>();
+			application.Property(a => a.Name).HasMaxLength(128);
+			application.HasIndex(a => a.Name).IsUnique();
+			application.Property(a => a.ApiToken).HasMaxLength(64);
 		}
 
 		public DbSet<LogMetadata> LogMetadata => Set<LogMetadata>();
