@@ -42,5 +42,37 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			Assert.IsType<UnauthorizedResult>(res);
 			Assert.Empty(logManager.Ingests);
 		}
+
+		private Stream generateRandomGZippedTestData() {
+			var stream = new MemoryStream();
+			using (var writer = new StreamWriter(new GZipStream(stream, CompressionMode.Compress, leaveOpen: true))) {
+				for (int i = 0; i < 20; ++i) {
+					writer.WriteLine(StringGenerator.GenerateRandomString(128));
+				}
+			}
+			stream.Position = 0;
+			return stream;
+		}
+
+		[Fact]
+		public async Task IngestLogWithValidCredentialsSucceedsWithCreated() {
+			using (var content = generateRandomGZippedTestData()) {
+				var httpContext = new DefaultHttpContext();
+				httpContext.Request.Body = content;
+				httpContext.Request.ContentLength = content.Length;
+				controller.ControllerContext = new ControllerContext() { HttpContext = httpContext };
+				var logDto = new LogMetadataDTO(nameof(AnalyticsLogControllerUnitTest), Guid.NewGuid(), Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2));
+				var res = await controller.IngestLog(apiToken, logDto);
+				Assert.Equal(StatusCodes.Status201Created, Assert.IsType<StatusCodeResult>(res).StatusCode);
+				content.Position = 0;
+				var ingest = logManager.Ingests.Single();
+				Assert.Equal(logDto.AppName, ingest.LogMetadata.App.Name);
+				Assert.Equal(logDto.LogFileId, ingest.LogMetadata.Id);
+				Assert.Equal(logDto.UserId, ingest.LogMetadata.UserId);
+				Assert.Equal(logDto.CreationTime.ToUniversalTime(), ingest.LogMetadata.CreationTime);
+				Assert.Equal(logDto.EndTime.ToUniversalTime(), ingest.LogMetadata.EndTime);
+				StreamUtils.AssertEqualContent(content, ingest.LogContent);
+			}
+		}
 	}
 }
