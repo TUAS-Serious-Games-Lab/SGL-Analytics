@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SGL.Analytics.Backend.Domain\SGL.Analytics.Backend.Domain.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Backend.Users.Application\SGL.Analytics.Backend.Users.Application.csproj" />
   </ItemGroup>
 
 </Project>
