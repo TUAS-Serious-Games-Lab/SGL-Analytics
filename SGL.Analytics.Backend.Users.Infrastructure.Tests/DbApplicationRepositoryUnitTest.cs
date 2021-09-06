@@ -96,5 +96,15 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			Assert.Equal(UserPropertyType.Json, jsonProp.Type);
 			Assert.False(jsonProp.Required);
 		}
+
+		[Fact]
+		public async Task RequestForNonExistentApplicationReturnsNull() {
+			ApplicationWithUserProperties? appRead;
+			await using (var context = createContext()) {
+				var repo = new DbApplicationRepository(context);
+				appRead = await repo.GetApplicationByNameAsync("DoesNotExist");
+			}
+			Assert.Null(appRead);
+		}
 	}
 }
