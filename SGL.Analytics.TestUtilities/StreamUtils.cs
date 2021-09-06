@@ -2,7 +2,7 @@ using System.IO;
 using System.Linq;
 using Xunit;
 
-namespace SGL.Analytics.Utilities {
+namespace SGL.Analytics.TestUtilities {
 	public static class StreamUtils {
 		public static void AssertEqualContent(Stream expected, Stream actual) {
 			byte[] expBuff = new byte[32];

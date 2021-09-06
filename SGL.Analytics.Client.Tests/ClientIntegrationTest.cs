@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.DTO;
+using SGL.Analytics.TestUtilities;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
