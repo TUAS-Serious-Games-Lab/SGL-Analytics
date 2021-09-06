@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
-	public class DbLogMetadataRepository : ILogMetadataRepository, IDisposable, IAsyncDisposable {
+	public class DbLogMetadataRepository : ILogMetadataRepository {
 		private LogsContext context;
 
 		public DbLogMetadataRepository(LogsContext context) {
@@ -22,9 +22,6 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			await context.SaveChangesAsync();
 			return logMetadata;
 		}
-
-		public void Dispose() => context.Dispose();
-		public ValueTask DisposeAsync() => context.DisposeAsync();
 
 		public async Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId) {
 			return await context.LogMetadata.Include(lmd => lmd.App).Where(lmd => lmd.Id == logId).SingleOrDefaultAsync<LogMetadata?>();

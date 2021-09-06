@@ -26,12 +26,12 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			await using (var context = createContext()) {
 				context.Applications.Add(app);
 				logMd.App = app;
-				await using (var repo = new DbLogMetadataRepository(context)) {
-					logMd = await repo.AddLogMetadataAsync(logMd);
-				}
+				var repo = new DbLogMetadataRepository(context);
+				logMd = await repo.AddLogMetadataAsync(logMd);
 			}
 			LogMetadata? logMdRead;
-			await using (var repo = new DbLogMetadataRepository(createContext())) {
+			await using (var context = createContext()) {
+				var repo = new DbLogMetadataRepository(context);
 				logMdRead = await repo.GetLogMetadataByIdAsync(logId);
 			}
 			Assert.NotNull(logMdRead);
@@ -53,12 +53,12 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			await using (var context = createContext()) {
 				context.Applications.Add(app);
 				logMd.App = app;
-				await using (var repo = new DbLogMetadataRepository(context)) {
-					logMd = await repo.AddLogMetadataAsync(logMd);
-				}
+				var repo = new DbLogMetadataRepository(context);
+				logMd = await repo.AddLogMetadataAsync(logMd);
 			}
 			LogMetadata? logMd2;
-			await using (var repo = new DbLogMetadataRepository(createContext())) {
+			await using (var context = createContext()) {
+				var repo = new DbLogMetadataRepository(context);
 				logMd2 = await repo.GetLogMetadataByIdAsync(logId);
 				Assert.NotNull(logMd2);
 				if (logMd2 is null) throw new NotNullException();
@@ -67,7 +67,8 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 				await repo.UpdateLogMetadataAsync(logMd2);
 			}
 			LogMetadata? logMdRead;
-			await using (var repo = new DbLogMetadataRepository(createContext())) {
+			await using (var context = createContext()) {
+				var repo = new DbLogMetadataRepository(context);
 				logMdRead = await repo.GetLogMetadataByIdAsync(logId);
 			}
 			Assert.NotNull(logMdRead);
@@ -85,7 +86,8 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 		public async Task RequestForNonExistentLogMetadataReturnsNull() {
 			var logId = Guid.NewGuid();
 			LogMetadata? logMdRead;
-			await using (var repo = new DbLogMetadataRepository(createContext())) {
+			await using (var context = createContext()) {
+				var repo = new DbLogMetadataRepository(context);
 				logMdRead = await repo.GetLogMetadataByIdAsync(logId);
 			}
 			Assert.Null(logMdRead);

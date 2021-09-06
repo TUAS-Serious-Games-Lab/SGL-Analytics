@@ -9,15 +9,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
-	public class DbApplicationRepository : IApplicationRepository, IDisposable, IAsyncDisposable {
+	public class DbApplicationRepository : IApplicationRepository {
 		private LogsContext context;
 
 		public DbApplicationRepository(LogsContext context) {
 			this.context = context;
 		}
-
-		public void Dispose() => context.Dispose();
-		public ValueTask DisposeAsync() => context.DisposeAsync();
 
 		public Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName) {
 			return context.Applications.Where(a => a.Name == appName).SingleOrDefaultAsync<Domain.Entity.Application?>();

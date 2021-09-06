@@ -24,13 +24,15 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			var app1 = new Domain.Entity.Application(Guid.NewGuid(), "DbApplicationRepositoryUnitTest_1", StringGenerator.GenerateRandomWord(32));
 			var app2 = new Domain.Entity.Application(Guid.NewGuid(), "DbApplicationRepositoryUnitTest_2", StringGenerator.GenerateRandomWord(32));
 			var app3 = new Domain.Entity.Application(Guid.NewGuid(), "DbApplicationRepositoryUnitTest_3", StringGenerator.GenerateRandomWord(32));
-			await using (var repo = new DbApplicationRepository(createContext())) {
+			await using (var context = createContext()) {
+				var repo = new DbApplicationRepository(context);
 				await repo.AddApplicationAsync(app1);
 				app2 = await repo.AddApplicationAsync(app2);
 				await repo.AddApplicationAsync(app3);
 			}
 			Domain.Entity.Application? appRead;
-			await using (var repo = new DbApplicationRepository(createContext())) {
+			await using (var context = createContext()) {
+				var repo = new DbApplicationRepository(context);
 				appRead = await repo.GetApplicationByNameAsync("DbApplicationRepositoryUnitTest_2");
 			}
 			Assert.NotNull(appRead);
@@ -42,7 +44,8 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 		[Fact]
 		public async Task RequestForNonExistentApplicationReturnsNull() {
 			Domain.Entity.Application? appRead;
-			await using (var repo = new DbApplicationRepository(createContext())) {
+			await using (var context = createContext()) {
+				var repo = new DbApplicationRepository(context);
 				appRead = await repo.GetApplicationByNameAsync("DoesNotExist");
 			}
 			Assert.Null(appRead);
