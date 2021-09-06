@@ -20,6 +20,17 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			Username = username;
 		}
 
+		public static UserRegistration Create(Guid id, ApplicationWithUserProperties app, string username) {
+			var userReg = new UserRegistration(id, app.Id, username);
+			userReg.App = app;
+			userReg.AppSpecificProperties = new List<ApplicationUserPropertyInstance>();
+			return userReg;
+		}
+
+		public static UserRegistration Create(ApplicationWithUserProperties app, string username) {
+			return Create(Guid.NewGuid(), app, username);
+		}
+
 		public void ValidateProperties() {
 			foreach (var propDef in App.UserProperties.Where(p => p.Required)) {
 				var propInst = AppSpecificProperties.Where(pi => pi.DefinitionId == propDef.Id).ToList();

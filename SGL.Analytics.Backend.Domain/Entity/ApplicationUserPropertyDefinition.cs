@@ -21,5 +21,11 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			Type = type;
 			Required = required;
 		}
+
+		public static ApplicationUserPropertyDefinition Create(ApplicationWithUserProperties app, string name, UserPropertyType type, bool required) {
+			var pd = new ApplicationUserPropertyDefinition(0, app.Id, name, type, required);
+			pd.App = app;
+			return pd;
+		}
 	}
 }

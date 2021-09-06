@@ -22,9 +22,9 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 
 		[Fact]
 		public async Task ApplicationsCanBeCreatedAndThenRetrievedByName() {
-			var app1 = new ApplicationWithUserProperties(Guid.NewGuid(), "DbApplicationRepositoryUnitTest_1", StringGenerator.GenerateRandomWord(32));
-			var app2 = new ApplicationWithUserProperties(Guid.NewGuid(), "DbApplicationRepositoryUnitTest_2", StringGenerator.GenerateRandomWord(32));
-			var app3 = new ApplicationWithUserProperties(Guid.NewGuid(), "DbApplicationRepositoryUnitTest_3", StringGenerator.GenerateRandomWord(32));
+			var app1 = ApplicationWithUserProperties.Create("DbApplicationRepositoryUnitTest_1", StringGenerator.GenerateRandomWord(32));
+			var app2 = ApplicationWithUserProperties.Create("DbApplicationRepositoryUnitTest_2", StringGenerator.GenerateRandomWord(32));
+			var app3 = ApplicationWithUserProperties.Create("DbApplicationRepositoryUnitTest_3", StringGenerator.GenerateRandomWord(32));
 			await using (var context = createContext()) {
 				var repo = new DbApplicationRepository(context);
 				await repo.AddApplicationAsync(app1);
@@ -44,14 +44,13 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 
 		[Fact]
 		public async Task ApplicationWithPropertiesCanBeCreatedAndRetrievedWithPropertiesPreseved() {
-			var appOrig = new ApplicationWithUserProperties(Guid.NewGuid(), "DbApplicationRepositoryUnitTest", StringGenerator.GenerateRandomWord(32));
-			appOrig.UserProperties = new List<ApplicationUserPropertyDefinition>();
-			appOrig.UserProperties.Add(new ApplicationUserPropertyDefinition(0, appOrig.Id, "TestInt", UserPropertyType.Integer, true));
-			appOrig.UserProperties.Add(new ApplicationUserPropertyDefinition(0, appOrig.Id, "TestFP", UserPropertyType.FloatingPoint, false));
-			appOrig.UserProperties.Add(new ApplicationUserPropertyDefinition(0, appOrig.Id, "TestString", UserPropertyType.String, true));
-			appOrig.UserProperties.Add(new ApplicationUserPropertyDefinition(0, appOrig.Id, "TestDateTime", UserPropertyType.DateTime, false));
-			appOrig.UserProperties.Add(new ApplicationUserPropertyDefinition(0, appOrig.Id, "TestGuid", UserPropertyType.Guid, true));
-			appOrig.UserProperties.Add(new ApplicationUserPropertyDefinition(0, appOrig.Id, "TestJson", UserPropertyType.Json, false));
+			var appOrig = ApplicationWithUserProperties.Create("DbApplicationRepositoryUnitTest", StringGenerator.GenerateRandomWord(32));
+			appOrig.UserProperties.Add(ApplicationUserPropertyDefinition.Create(appOrig, "TestInt", UserPropertyType.Integer, true));
+			appOrig.UserProperties.Add(ApplicationUserPropertyDefinition.Create(appOrig, "TestFP", UserPropertyType.FloatingPoint, false));
+			appOrig.UserProperties.Add(ApplicationUserPropertyDefinition.Create(appOrig, "TestString", UserPropertyType.String, true));
+			appOrig.UserProperties.Add(ApplicationUserPropertyDefinition.Create(appOrig, "TestDateTime", UserPropertyType.DateTime, false));
+			appOrig.UserProperties.Add(ApplicationUserPropertyDefinition.Create(appOrig, "TestGuid", UserPropertyType.Guid, true));
+			appOrig.UserProperties.Add(ApplicationUserPropertyDefinition.Create(appOrig, "TestJson", UserPropertyType.Json, false));
 			await using (var context = createContext()) {
 				var repo = new DbApplicationRepository(context);
 				await repo.AddApplicationAsync(appOrig);

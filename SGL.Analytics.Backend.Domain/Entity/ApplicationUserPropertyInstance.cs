@@ -96,5 +96,17 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			DateTimeValue = dateTimeValue;
 			GuidValue = guidValue;
 		}
+
+		public static ApplicationUserPropertyInstance Create(ApplicationUserPropertyDefinition def, UserRegistration user) {
+			var pi = new ApplicationUserPropertyInstance(0, def.Id, user.Id);
+			pi.Definition = def;
+			pi.User = user;
+			return pi;
+		}
+		public static ApplicationUserPropertyInstance Create(ApplicationUserPropertyDefinition def, UserRegistration user, object? value) {
+			var pi = Create(def, user);
+			pi.Value = value;
+			return pi;
+		}
 	}
 }
