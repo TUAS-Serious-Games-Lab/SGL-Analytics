@@ -59,7 +59,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Logs.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LogsAPI", "LogsAPI", "{E4EACDD4-B60C-4E58-8B08-AD7FA000F9DB}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Users", "Users", "{ACAEC860-19A2-4FFA-B958-F16A7532F38C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UsersAPI", "UsersAPI", "{ACAEC860-19A2-4FFA-B958-F16A7532F38C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Users.Application", "SGL.Analytics.Backend.Users.Application\SGL.Analytics.Backend.Users.Application.csproj", "{431623FE-DAE7-4100-95F5-740C4E89500E}"
 EndProject
