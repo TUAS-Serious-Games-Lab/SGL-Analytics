@@ -2,6 +2,7 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Linq;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
@@ -32,6 +33,9 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		}
 
 		public void ValidateProperties() {
+			Debug.Assert(AppSpecificProperties is not null, "AppSpecificProperties navigation property is not present.");
+			Debug.Assert(App is not null, "App navigation property is not present.");
+			Debug.Assert(App.UserProperties is not null, "UserProperties navigation property of associated App is not present.");
 			foreach (var propDef in App.UserProperties.Where(p => p.Required)) {
 				var propInst = AppSpecificProperties.Where(pi => pi.DefinitionId == propDef.Id).ToList();
 				if (propInst.Count == 0) {
