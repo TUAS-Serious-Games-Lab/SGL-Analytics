@@ -1,13 +1,17 @@
+using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
 	public class ApplicationUserPropertyInstance {
+		private static JsonSerializerOptions jsonOptions = new JsonSerializerOptions { Converters = { new ObjectDictionaryValueJsonConverter() } };
+
 		[Key]
 		public int Id { get; set; }
 		public int DefinitionId { get; set; }
@@ -20,6 +24,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		public string? StringValue { get; set; }
 		public DateTime? DateTimeValue { get; set; }
 		public Guid? GuidValue { get; set; }
+		public string? JsonValue { get; set; }
 
 		[NotMapped]
 		public object? Value {
@@ -29,6 +34,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 				UserPropertyType.String => StringValue,
 				UserPropertyType.DateTime => DateTimeValue,
 				UserPropertyType.Guid => GuidValue,
+				UserPropertyType.Json => JsonSerializer.Deserialize<object?>(JsonValue ?? "null", jsonOptions),
 				_ => throw new InvalidOperationException("The user property definition has an unknown type.")
 			};
 			set {
@@ -47,6 +53,9 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 						break;
 					case Guid guidVal when Definition.Type == UserPropertyType.Guid:
 						GuidValue = guidVal;
+						break;
+					case object when Definition.Type == UserPropertyType.Json:
+						JsonValue = JsonSerializer.Serialize<object?>(value, jsonOptions);
 						break;
 					default:
 						throw new ArgumentException("The type of the given value doesn't match the type of the user property definition.");
