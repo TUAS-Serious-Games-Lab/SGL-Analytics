@@ -1,3 +1,4 @@
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,16 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		public Guid? GuidValue { get; set; }
 		public string? JsonValue { get; set; }
 
+		public bool IsNull() => Definition.Type switch {
+			UserPropertyType.Integer => IntegerValue is null,
+			UserPropertyType.FloatingPoint => FloatingPointValue is null,
+			UserPropertyType.String => StringValue is null,
+			UserPropertyType.DateTime => DateTimeValue is null,
+			UserPropertyType.Guid => GuidValue is null,
+			UserPropertyType.Json => string.IsNullOrWhiteSpace(JsonValue) || JsonValue == "null",
+			_ => throw new PropertyWithUnknownTypeException(Definition.Name, Definition.Type.ToString())
+		};
+
 		[NotMapped]
 		public object? Value {
 			get => Definition.Type switch {
@@ -35,12 +46,12 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 				UserPropertyType.DateTime => DateTimeValue,
 				UserPropertyType.Guid => GuidValue,
 				UserPropertyType.Json => JsonSerializer.Deserialize<object?>(JsonValue ?? "null", jsonOptions),
-				_ => throw new InvalidOperationException("The user property definition has an unknown type.")
-			} ?? (Definition.Required ? throw new InvalidOperationException("The required property unexpectedly contains a null value.") : null);
+				_ => throw new PropertyWithUnknownTypeException(Definition.Name, Definition.Type.ToString())
+			} ?? (Definition.Required ? throw new RequiredPropertyNullException(Definition.Name) : null);
 			set {
 				switch (value) {
 					case null when Definition.Required:
-						throw new ArgumentException("A null value is invalid for a required property.");
+						throw new RequiredPropertyNullException(Definition.Name);
 					case null:
 						IntegerValue = null;
 						FloatingPointValue = null;
@@ -68,7 +79,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 						JsonValue = JsonSerializer.Serialize<object?>(value, jsonOptions);
 						break;
 					default:
-						throw new ArgumentException("The type of the given value doesn't match the type of the user property definition.");
+						throw new PropertyTypeDoesntMatchDefinitionException(Definition.Name, value.GetType(), Definition.Type);
 				}
 			}
 		}
