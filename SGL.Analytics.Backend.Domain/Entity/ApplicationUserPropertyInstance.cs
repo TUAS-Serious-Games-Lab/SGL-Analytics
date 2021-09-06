@@ -36,9 +36,19 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 				UserPropertyType.Guid => GuidValue,
 				UserPropertyType.Json => JsonSerializer.Deserialize<object?>(JsonValue ?? "null", jsonOptions),
 				_ => throw new InvalidOperationException("The user property definition has an unknown type.")
-			};
+			} ?? (Definition.Required ? throw new InvalidOperationException("The required property unexpectedly contains a null value.") : null);
 			set {
 				switch (value) {
+					case null when Definition.Required:
+						throw new ArgumentException("A null value is invalid for a required property.");
+					case null:
+						IntegerValue = null;
+						FloatingPointValue = null;
+						StringValue = null;
+						DateTimeValue = null;
+						GuidValue = null;
+						JsonValue = null;
+						break;
 					case int intVal when Definition.Type == UserPropertyType.Integer:
 						IntegerValue = intVal;
 						break;
