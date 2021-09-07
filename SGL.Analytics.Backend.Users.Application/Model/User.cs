@@ -8,14 +8,14 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Model {
-	public interface UserRegistrationWrapper {
+	public interface IUserRegistrationWrapper {
 		public UserRegistration Underlying { get; set; }
 
 		public void LoadAppPropertiesFromUnderlying();
 		public void StoreAppPropertiesToUnderlying();
 	}
 
-	public class User : UserRegistrationWrapper {
+	public class User : IUserRegistrationWrapper {
 		private UserRegistration userReg;
 
 		public Guid Id => userReg.Id;
@@ -23,7 +23,7 @@ namespace SGL.Analytics.Backend.Users.Application.Model {
 		public string Username { get => userReg.Username; set => userReg.Username = value; }
 
 		public Dictionary<string, object?> AppSpecificProperties { get; private set; }
-		UserRegistration UserRegistrationWrapper.Underlying { get => userReg; set => userReg = value; }
+		UserRegistration IUserRegistrationWrapper.Underlying { get => userReg; set => userReg = value; }
 
 		public User(UserRegistration userReg) {
 			this.userReg = userReg;
@@ -36,11 +36,11 @@ namespace SGL.Analytics.Backend.Users.Application.Model {
 
 		public UserRegistrationResultDTO AsRegistrationResult() => new UserRegistrationResultDTO(Id);
 
-		void UserRegistrationWrapper.LoadAppPropertiesFromUnderlying() {
+		void IUserRegistrationWrapper.LoadAppPropertiesFromUnderlying() {
 			AppSpecificProperties = loadAppProperties();
 		}
 
-		void UserRegistrationWrapper.StoreAppPropertiesToUnderlying() {
+		void IUserRegistrationWrapper.StoreAppPropertiesToUnderlying() {
 			foreach (var dictProp in AppSpecificProperties) {
 				userReg.SetAppSpecificProperty(dictProp.Key, dictProp.Value);
 			}
