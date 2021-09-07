@@ -1,4 +1,5 @@
-﻿using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 
 		public async Task<LogMetadata> AddLogMetadataAsync(LogMetadata logMetadata) {
 			await Task.CompletedTask;
-			if (logs.ContainsKey(logMetadata.Id)) throw new InvalidOperationException($"An log metadata entry with the given id '{logMetadata.Id}' is already present.");
+			if (logs.ContainsKey(logMetadata.Id)) throw new EntityUniquenessConflictException("LogMetadata", "Id");
 			logs.Add(logMetadata.Id, logMetadata);
 			return logMetadata;
 		}

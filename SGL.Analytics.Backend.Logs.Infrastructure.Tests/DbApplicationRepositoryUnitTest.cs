@@ -1,4 +1,5 @@
-﻿using SGL.Analytics.Backend.Logs.Infrastructure.Data;
+using SGL.Analytics.Backend.Domain.Exceptions;
+using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Analytics.Backend.TestUtilities;
 using SGL.Analytics.Utilities;
@@ -49,6 +50,31 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 				appRead = await repo.GetApplicationByNameAsync("DoesNotExist");
 			}
 			Assert.Null(appRead);
+		}
+
+		[Fact]
+		public async Task AttemptingToCreateApplicationWithDuplicateNameThrowsCorrectException() {
+			await using (var context = createContext()) {
+				var repo = new DbApplicationRepository(context);
+				await repo.AddApplicationAsync(new Domain.Entity.Application(Guid.NewGuid(), "DbApplicationRepositoryUnitTest", StringGenerator.GenerateRandomWord(32)));
+			}
+			await using (var context = createContext()) {
+				var repo = new DbApplicationRepository(context);
+				await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.AddApplicationAsync(new Domain.Entity.Application(Guid.NewGuid(), "DbApplicationRepositoryUnitTest", StringGenerator.GenerateRandomWord(32))));
+			}
+		}
+
+		[Fact]
+		public async Task AttemptingToCreateApplicationWithDuplicateIdThrowsCorrectException() {
+			var id = Guid.NewGuid();
+			await using (var context = createContext()) {
+				var repo = new DbApplicationRepository(context);
+				await repo.AddApplicationAsync(new Domain.Entity.Application(id, "DbApplicationRepositoryUnitTest_1", StringGenerator.GenerateRandomWord(32)));
+			}
+			await using (var context = createContext()) {
+				var repo = new DbApplicationRepository(context);
+				await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.AddApplicationAsync(new Domain.Entity.Application(id, "DbApplicationRepositoryUnitTest_2", StringGenerator.GenerateRandomWord(32))));
+			}
 		}
 	}
 }
