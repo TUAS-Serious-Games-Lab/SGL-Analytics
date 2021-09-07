@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
@@ -107,6 +108,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 				await repo.AddLogMetadataAsync(logMd);
 			}
 			await using (var context = createContext()) {
+				app = await context.Applications.SingleOrDefaultAsync(a => a.Id == app.Id);
 				var repo = new DbLogMetadataRepository(context);
 				var logMd = new LogMetadata(id, app.Id, Guid.NewGuid(), id, DateTime.Now, DateTime.Now, DateTime.Now, ".log.gz");
 				logMd.App = app;
