@@ -30,7 +30,6 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 				await context.SaveChangesAsync();
 				var user = UserRegistration.Create(appOrig, "TestUser");
 				userId = user.Id;
-				user.App = appOrig;
 				await repo.RegisterUserAsync(user);
 			}
 			UserRegistration? userRead;
