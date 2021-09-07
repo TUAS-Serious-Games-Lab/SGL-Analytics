@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit.Abstractions;
 
-namespace SGL.Analytics.Utilities {
+namespace SGL.Analytics.TestUtilities {
 
 	public class XUnitLoggingProvider : ILoggerProvider {
 		private Func<ITestOutputHelper?> outputObtainer;
@@ -34,7 +34,7 @@ namespace SGL.Analytics.Utilities {
 			public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) {
 				var output = outputObtainer();
 				if (output is null) return;
-				StringBuilder builder = (cachedStringBuilder.Value ??= new StringBuilder());
+				StringBuilder builder = cachedStringBuilder.Value ??= new StringBuilder();
 				builder.Clear();
 				builder.AppendFormat("{0} [{1}] {2}", logLevel.ToString(), categoryName, formatter(state, exception));
 				if (exception != null) {

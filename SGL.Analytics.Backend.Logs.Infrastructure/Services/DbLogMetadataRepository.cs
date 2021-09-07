@@ -18,7 +18,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		public async Task<LogMetadata> AddLogMetadataAsync(LogMetadata logMetadata) {
-			await context.LogMetadata.AddAsync(logMetadata);
+			context.LogMetadata.Add(logMetadata);
 			await context.SaveChangesAsync();
 			return logMetadata;
 		}

@@ -15,5 +15,9 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			Name = name;
 			ApiToken = apiToken;
 		}
+
+		public static Application Create(string name, string apiToken) {
+			return new Application(Guid.NewGuid(), name, apiToken);
+		}
 	}
 }

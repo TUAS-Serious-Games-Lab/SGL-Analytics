@@ -1,13 +1,18 @@
+using SGL.Analytics.Backend.Domain.Exceptions;
+using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
 	public class ApplicationUserPropertyInstance {
+		private static JsonSerializerOptions jsonOptions = new JsonSerializerOptions { Converters = { new ObjectDictionaryValueJsonConverter() } };
+
 		[Key]
 		public int Id { get; set; }
 		public int DefinitionId { get; set; }
@@ -20,6 +25,17 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		public string? StringValue { get; set; }
 		public DateTime? DateTimeValue { get; set; }
 		public Guid? GuidValue { get; set; }
+		public string? JsonValue { get; set; }
+
+		public bool IsNull() => Definition.Type switch {
+			UserPropertyType.Integer => IntegerValue is null,
+			UserPropertyType.FloatingPoint => FloatingPointValue is null,
+			UserPropertyType.String => StringValue is null,
+			UserPropertyType.DateTime => DateTimeValue is null,
+			UserPropertyType.Guid => GuidValue is null,
+			UserPropertyType.Json => string.IsNullOrWhiteSpace(JsonValue) || JsonValue == "null",
+			_ => throw new PropertyWithUnknownTypeException(Definition.Name, Definition.Type.ToString())
+		};
 
 		[NotMapped]
 		public object? Value {
@@ -29,10 +45,21 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 				UserPropertyType.String => StringValue,
 				UserPropertyType.DateTime => DateTimeValue,
 				UserPropertyType.Guid => GuidValue,
-				_ => throw new InvalidOperationException("The user property definition has an unknown type.")
-			};
+				UserPropertyType.Json => JsonSerializer.Deserialize<object?>(JsonValue ?? "null", jsonOptions),
+				_ => throw new PropertyWithUnknownTypeException(Definition.Name, Definition.Type.ToString())
+			} ?? (Definition.Required ? throw new RequiredPropertyNullException(Definition.Name) : null);
 			set {
 				switch (value) {
+					case null when Definition.Required:
+						throw new RequiredPropertyNullException(Definition.Name);
+					case null:
+						IntegerValue = null;
+						FloatingPointValue = null;
+						StringValue = null;
+						DateTimeValue = null;
+						GuidValue = null;
+						JsonValue = null;
+						break;
 					case int intVal when Definition.Type == UserPropertyType.Integer:
 						IntegerValue = intVal;
 						break;
@@ -48,8 +75,11 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 					case Guid guidVal when Definition.Type == UserPropertyType.Guid:
 						GuidValue = guidVal;
 						break;
+					case object when Definition.Type == UserPropertyType.Json:
+						JsonValue = JsonSerializer.Serialize<object?>(value, jsonOptions);
+						break;
 					default:
-						throw new ArgumentException("The type of the given value doesn't match the type of the user property definition.");
+						throw new PropertyTypeDoesntMatchDefinitionException(Definition.Name, value.GetType(), Definition.Type);
 				}
 			}
 		}
@@ -65,6 +95,18 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			StringValue = stringValue;
 			DateTimeValue = dateTimeValue;
 			GuidValue = guidValue;
+		}
+
+		public static ApplicationUserPropertyInstance Create(ApplicationUserPropertyDefinition def, UserRegistration user) {
+			var pi = new ApplicationUserPropertyInstance(0, def.Id, user.Id);
+			pi.Definition = def;
+			pi.User = user;
+			return pi;
+		}
+		public static ApplicationUserPropertyInstance Create(ApplicationUserPropertyDefinition def, UserRegistration user, object? value) {
+			var pi = Create(def, user);
+			pi.Value = value;
+			return pi;
 		}
 	}
 }

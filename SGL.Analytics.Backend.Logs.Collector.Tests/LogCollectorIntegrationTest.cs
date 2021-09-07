@@ -12,6 +12,7 @@ using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Analytics.Backend.TestUtilities;
 using SGL.Analytics.DTO;
+using SGL.Analytics.TestUtilities;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;

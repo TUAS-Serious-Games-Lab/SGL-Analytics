@@ -5,6 +5,7 @@ using SGL.Analytics.Backend.LogCollector.Controllers;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
 using SGL.Analytics.DTO;
+using SGL.Analytics.TestUtilities;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;

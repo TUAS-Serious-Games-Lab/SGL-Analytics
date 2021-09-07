@@ -21,7 +21,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		public async Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app) {
-			await context.Applications.AddAsync(app);
+			context.Applications.Add(app);
 			await context.SaveChangesAsync();
 			return app;
 		}
