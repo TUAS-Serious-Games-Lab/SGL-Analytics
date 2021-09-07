@@ -85,4 +85,16 @@ namespace SGL.Analytics.Backend.Domain.Exceptions {
 			MissingPropertyName = missingPropertyName;
 		}
 	}
+
+	public class ConflictingPropertyInstanceException : UserPropertyValidationException {
+		public string PropertyName { get; }
+
+		public override string InvalidPropertyName => PropertyName;
+
+		public ConflictingPropertyInstanceException(string propertyName, Exception? innerException = null) :
+			base($"There is more than one instance of the property {propertyName} present for the same user registration.", innerException) {
+			PropertyName = propertyName;
+		}
+	}
+
 }
