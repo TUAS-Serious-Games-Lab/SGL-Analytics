@@ -148,14 +148,14 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 				var repo = new DbUserRepository(context);
 				var user = await repo.GetUserByIdAsync(userId);
 				Assert.NotNull(user);
-				user?.SetAppSpecificProperty(propDef1.Name, 1234);
-				user?.SetAppSpecificProperty(propDef2.Name, 987.654);
-				user?.SetAppSpecificProperty(propDef3.Name, "Test, Test, Test");
-				user?.SetAppSpecificProperty(propDef4.Name, dateTime);
-				user?.SetAppSpecificProperty(propDef5.Name, guid2);
-				user?.SetAppSpecificProperty(propDef6.Name, arr);
+				user!.SetAppSpecificProperty(propDef1.Name, 1234);
+				user!.SetAppSpecificProperty(propDef2.Name, 987.654);
+				user!.SetAppSpecificProperty(propDef3.Name, "Test, Test, Test");
+				user!.SetAppSpecificProperty(propDef4.Name, dateTime);
+				user!.SetAppSpecificProperty(propDef5.Name, guid2);
+				user!.SetAppSpecificProperty(propDef6.Name, arr);
 
-				await repo.UpdateUserAsync(user);
+				await repo.UpdateUserAsync(user!);
 			}
 
 			UserRegistration? userRead;
