@@ -100,5 +100,22 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			Assert.Equal(guid, userRead?.AppSpecificProperties?.Where(p => p.Definition.Name == "TestGuid")?.SingleOrDefault()?.Value);
 			Assert.Equal(arr, userRead?.AppSpecificProperties?.Where(p => p.Definition.Name == "TestJson")?.SingleOrDefault()?.Value as IEnumerable<object?>);
 		}
+
+		[Fact]
+		public async Task RequestForNonExistentUserReturnsNull() {
+			var appOrig = ApplicationWithUserProperties.Create("DbUserRepositoryUnitTest", StringGenerator.GenerateRandomWord(32));
+			await using (var context = createContext()) {
+				var repo = new DbUserRepository(context);
+				context.Applications.Add(appOrig);
+				await context.SaveChangesAsync();
+				var user = UserRegistration.Create(appOrig, "TestUser");
+				await repo.RegisterUserAsync(user);
+			}
+			await using (var context = createContext()) {
+				var repo = new DbUserRepository(context);
+				var userRead = await repo.GetUserByIdAsync(Guid.NewGuid());
+				Assert.Null(userRead);
+			}
+		}
 	}
 }
