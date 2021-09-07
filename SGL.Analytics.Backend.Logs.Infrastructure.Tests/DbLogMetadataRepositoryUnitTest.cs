@@ -1,4 +1,5 @@
-﻿using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Analytics.Backend.TestUtilities;
@@ -91,6 +92,26 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 				logMdRead = await repo.GetLogMetadataByIdAsync(logId);
 			}
 			Assert.Null(logMdRead);
+		}
+
+		[Fact]
+		public async Task AttemptingToCreateApplicationWithDuplicateIdThrowsCorrectException() {
+			var id = Guid.NewGuid();
+			var app = new Domain.Entity.Application(Guid.NewGuid(), "DbLogMetadataRepositoryUnitTest", "FakeApiToken");
+			await using (var context = createContext()) {
+				context.Applications.Add(app);
+				await context.SaveChangesAsync();
+				var repo = new DbLogMetadataRepository(context);
+				var logMd = new LogMetadata(id, app.Id, Guid.NewGuid(), id, DateTime.Now, DateTime.Now, DateTime.Now, ".log.gz");
+				logMd.App = app;
+				await repo.AddLogMetadataAsync(logMd);
+			}
+			await using (var context = createContext()) {
+				var repo = new DbLogMetadataRepository(context);
+				var logMd = new LogMetadata(id, app.Id, Guid.NewGuid(), id, DateTime.Now, DateTime.Now, DateTime.Now, ".log.gz");
+				logMd.App = app;
+				await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.AddLogMetadataAsync(logMd));
+			}
 		}
 
 		public void Dispose() {
