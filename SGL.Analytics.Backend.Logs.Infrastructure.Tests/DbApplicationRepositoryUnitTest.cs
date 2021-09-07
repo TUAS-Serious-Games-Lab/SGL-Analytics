@@ -60,7 +60,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			}
 			await using (var context = createContext()) {
 				var repo = new DbApplicationRepository(context);
-				await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.AddApplicationAsync(new Domain.Entity.Application(Guid.NewGuid(), "DbApplicationRepositoryUnitTest", StringGenerator.GenerateRandomWord(32))));
+				Assert.Equal("Name", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.AddApplicationAsync(new Domain.Entity.Application(Guid.NewGuid(), "DbApplicationRepositoryUnitTest", StringGenerator.GenerateRandomWord(32))))).ConflictingPropertyName);
 			}
 		}
 
@@ -73,7 +73,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			}
 			await using (var context = createContext()) {
 				var repo = new DbApplicationRepository(context);
-				await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.AddApplicationAsync(new Domain.Entity.Application(id, "DbApplicationRepositoryUnitTest_2", StringGenerator.GenerateRandomWord(32))));
+				Assert.Equal("Id", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.AddApplicationAsync(new Domain.Entity.Application(id, "DbApplicationRepositoryUnitTest_2", StringGenerator.GenerateRandomWord(32))))).ConflictingPropertyName);
 			}
 		}
 	}
