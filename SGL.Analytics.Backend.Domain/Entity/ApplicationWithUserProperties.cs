@@ -1,3 +1,4 @@
+using SGL.Analytics.Backend.Domain.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,15 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 
 		public static new ApplicationWithUserProperties Create(string name, string apiToken) {
 			return Create(Guid.NewGuid(), name, apiToken);
+		}
+
+		public ApplicationUserPropertyDefinition AddProperty(string name, UserPropertyType type, bool required) {
+			if (UserProperties.Count(p => p.Name == name) > 0) {
+				throw new ConflictingPropertyNameException(name);
+			}
+			var prop = ApplicationUserPropertyDefinition.Create(this, name, type, required);
+			UserProperties.Add(prop);
+			return prop;
 		}
 	}
 }

@@ -64,4 +64,14 @@ namespace SGL.Analytics.Backend.Domain.Exceptions {
 		}
 	}
 
+	public class ConflictingPropertyNameException : UserPropertyValidationException {
+		public string ConflictingPropertyName { get; }
+
+		public override string InvalidPropertyName => ConflictingPropertyName;
+
+		public ConflictingPropertyNameException(string conflictingPropertyName, Exception? innerException = null) :
+			base($"The property name {conflictingPropertyName} is already in use by another property.", innerException) {
+			ConflictingPropertyName = conflictingPropertyName;
+		}
+	}
 }
