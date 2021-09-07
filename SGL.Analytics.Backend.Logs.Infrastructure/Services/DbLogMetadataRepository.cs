@@ -32,7 +32,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata) {
-			Debug.Assert(context.Entry(logMetadata).State == EntityState.Modified);
+			Debug.Assert(context.Entry(logMetadata).State is EntityState.Modified or EntityState.Unchanged);
 			await context.SaveChangesAsync();
 			return logMetadata;
 		}

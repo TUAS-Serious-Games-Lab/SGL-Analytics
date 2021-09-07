@@ -47,19 +47,13 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 		[Fact]
 		public async Task UserWithPropertiesCanBeRegisteredAndThenRetrievedById() {
 			var appOrig = ApplicationWithUserProperties.Create("DbUserRepositoryUnitTest", StringGenerator.GenerateRandomWord(32));
-			var propDef1 = ApplicationUserPropertyDefinition.Create(appOrig, "TestInt", UserPropertyType.Integer, true);
-			var propDef2 = ApplicationUserPropertyDefinition.Create(appOrig, "TestFP", UserPropertyType.FloatingPoint, false);
-			var propDef3 = ApplicationUserPropertyDefinition.Create(appOrig, "TestString", UserPropertyType.String, true);
-			var propDef4 = ApplicationUserPropertyDefinition.Create(appOrig, "TestDateTime", UserPropertyType.DateTime, false);
-			var propDef5 = ApplicationUserPropertyDefinition.Create(appOrig, "TestGuid", UserPropertyType.Guid, true);
-			var propDef6 = ApplicationUserPropertyDefinition.Create(appOrig, "TestJson", UserPropertyType.Json, false);
 
-			appOrig.UserProperties.Add(propDef1);
-			appOrig.UserProperties.Add(propDef2);
-			appOrig.UserProperties.Add(propDef3);
-			appOrig.UserProperties.Add(propDef4);
-			appOrig.UserProperties.Add(propDef5);
-			appOrig.UserProperties.Add(propDef6);
+			var propDef1 = appOrig.AddProperty("TestInt", UserPropertyType.Integer, true);
+			var propDef2 = appOrig.AddProperty("TestFP", UserPropertyType.FloatingPoint, false);
+			var propDef3 = appOrig.AddProperty("TestString", UserPropertyType.String, true);
+			var propDef4 = appOrig.AddProperty("TestDateTime", UserPropertyType.DateTime, false);
+			var propDef5 = appOrig.AddProperty("TestGuid", UserPropertyType.Guid, true);
+			var propDef6 = appOrig.AddProperty("TestJson", UserPropertyType.Json, false);
 
 			Guid userId;
 			DateTime dateTime = DateTime.UtcNow;
@@ -71,12 +65,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 				await context.SaveChangesAsync();
 				var user = UserRegistration.Create(appOrig, "TestUser");
 
-				user.AppSpecificProperties.Add(ApplicationUserPropertyInstance.Create(propDef1, user, 42));
-				user.AppSpecificProperties.Add(ApplicationUserPropertyInstance.Create(propDef2, user, 123.45));
-				user.AppSpecificProperties.Add(ApplicationUserPropertyInstance.Create(propDef3, user, "Hello World"));
-				user.AppSpecificProperties.Add(ApplicationUserPropertyInstance.Create(propDef4, user, dateTime));
-				user.AppSpecificProperties.Add(ApplicationUserPropertyInstance.Create(propDef5, user, guid));
-				user.AppSpecificProperties.Add(ApplicationUserPropertyInstance.Create(propDef6, user, arr));
+				user.SetAppSpecificProperty(propDef1, 42);
+				user.SetAppSpecificProperty(propDef2, 123.45);
+				user.SetAppSpecificProperty(propDef3, "Hello World");
+				user.SetAppSpecificProperty(propDef4, dateTime);
+				user.SetAppSpecificProperty(propDef5, guid);
+				user.SetAppSpecificProperty(propDef6, arr);
 
 				userId = user.Id;
 				await repo.RegisterUserAsync(user);
@@ -93,12 +87,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			Assert.Equal(appOrig.Name, userRead?.App.Name);
 			Assert.Equal(appOrig.ApiToken, userRead?.App.ApiToken);
 
-			Assert.Equal(42, userRead?.AppSpecificProperties?.Where(p => p.Definition.Name == "TestInt")?.SingleOrDefault()?.Value);
-			Assert.Equal(123.45, userRead?.AppSpecificProperties?.Where(p => p.Definition.Name == "TestFP")?.SingleOrDefault()?.Value);
-			Assert.Equal("Hello World", userRead?.AppSpecificProperties?.Where(p => p.Definition.Name == "TestString")?.SingleOrDefault()?.Value);
-			Assert.Equal(dateTime, userRead?.AppSpecificProperties?.Where(p => p.Definition.Name == "TestDateTime")?.SingleOrDefault()?.Value);
-			Assert.Equal(guid, userRead?.AppSpecificProperties?.Where(p => p.Definition.Name == "TestGuid")?.SingleOrDefault()?.Value);
-			Assert.Equal(arr, userRead?.AppSpecificProperties?.Where(p => p.Definition.Name == "TestJson")?.SingleOrDefault()?.Value as IEnumerable<object?>);
+			Assert.Equal(42, userRead?.GetAppSpecificProperty("TestInt"));
+			Assert.Equal(123.45, userRead?.GetAppSpecificProperty("TestFP"));
+			Assert.Equal("Hello World", userRead?.GetAppSpecificProperty("TestString"));
+			Assert.Equal(dateTime, userRead?.GetAppSpecificProperty("TestDateTime"));
+			Assert.Equal(guid, userRead?.GetAppSpecificProperty("TestGuid"));
+			Assert.Equal(arr, userRead?.GetAppSpecificProperty("TestJson") as IEnumerable<object?>);
 		}
 
 		[Fact]
@@ -116,6 +110,70 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 				var userRead = await repo.GetUserByIdAsync(Guid.NewGuid());
 				Assert.Null(userRead);
 			}
+		}
+
+		[Fact]
+		public async Task UserRegistrationPropertiesCanBeUpdated() {
+			var appOrig = ApplicationWithUserProperties.Create("DbUserRepositoryUnitTest", StringGenerator.GenerateRandomWord(32));
+
+			var propDef1 = appOrig.AddProperty("TestInt", UserPropertyType.Integer, true);
+			var propDef2 = appOrig.AddProperty("TestFP", UserPropertyType.FloatingPoint, false);
+			var propDef3 = appOrig.AddProperty("TestString", UserPropertyType.String, true);
+			var propDef4 = appOrig.AddProperty("TestDateTime", UserPropertyType.DateTime, false);
+			var propDef5 = appOrig.AddProperty("TestGuid", UserPropertyType.Guid, true);
+			var propDef6 = appOrig.AddProperty("TestJson", UserPropertyType.Json, false);
+
+			Guid userId;
+			DateTime dateTime = DateTime.UtcNow;
+			Guid guid1 = Guid.NewGuid();
+			var arr = new object[] { 1234, "Test", Guid.NewGuid() };
+			await using (var context = createContext()) {
+				var repo = new DbUserRepository(context);
+				context.Applications.Add(appOrig);
+				await context.SaveChangesAsync();
+				var user = UserRegistration.Create(appOrig, "TestUser");
+
+				user.SetAppSpecificProperty(propDef1, 42);
+				user.SetAppSpecificProperty(propDef3, "Hello World");
+				user.SetAppSpecificProperty(propDef5, guid1);
+
+				userId = user.Id;
+				await repo.RegisterUserAsync(user);
+			}
+
+			Guid guid2 = Guid.NewGuid();
+			await using (var context = createContext()) {
+				var repo = new DbUserRepository(context);
+				var user = await repo.GetUserByIdAsync(userId);
+				Assert.NotNull(user);
+				user?.SetAppSpecificProperty(propDef1.Name, 1234);
+				user?.SetAppSpecificProperty(propDef2.Name, 987.654);
+				user?.SetAppSpecificProperty(propDef3.Name, "Test, Test, Test");
+				user?.SetAppSpecificProperty(propDef4.Name, dateTime);
+				user?.SetAppSpecificProperty(propDef5.Name, guid2);
+				user?.SetAppSpecificProperty(propDef6.Name, arr);
+
+				await repo.UpdateUserAsync(user);
+			}
+
+			UserRegistration? userRead;
+			await using (var context = createContext()) {
+				var repo = new DbUserRepository(context);
+				userRead = await repo.GetUserByIdAsync(userId);
+			}
+			Assert.NotNull(userRead);
+			Assert.Equal(userId, userRead?.Id);
+			Assert.Equal(appOrig.Id, userRead?.AppId);
+			Assert.Equal("TestUser", userRead?.Username);
+			Assert.Equal(appOrig.Name, userRead?.App.Name);
+			Assert.Equal(appOrig.ApiToken, userRead?.App.ApiToken);
+
+			Assert.Equal(1234, userRead?.GetAppSpecificProperty("TestInt"));
+			Assert.Equal(987.654, userRead?.GetAppSpecificProperty("TestFP"));
+			Assert.Equal("Test, Test, Test", userRead?.GetAppSpecificProperty("TestString"));
+			Assert.Equal(dateTime, userRead?.GetAppSpecificProperty("TestDateTime"));
+			Assert.Equal(guid2, userRead?.GetAppSpecificProperty("TestGuid"));
+			Assert.Equal(arr, userRead?.GetAppSpecificProperty("TestJson") as IEnumerable<object?>);
 		}
 	}
 }
