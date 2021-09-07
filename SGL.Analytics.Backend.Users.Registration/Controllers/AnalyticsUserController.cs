@@ -28,9 +28,10 @@ namespace SGL.Analytics.Backend.UserDB.Controllers {
 			// TODO: Check API token.
 			return Unauthorized();
 
-			UserRegistrationResultDTO result = await userManager.RegisterUserAsync(userRegistration);
+			var user = await userManager.RegisterUserAsync(userRegistration);
+			var result = user.AsRegistrationResult();
 
-			return StatusCode(((int)HttpStatusCode.Created));
+			return StatusCode(((int)HttpStatusCode.Created), result);
 		}
 	}
 }
