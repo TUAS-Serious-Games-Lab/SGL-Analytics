@@ -18,7 +18,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			return app;
 		}
 
-		public static ApplicationWithUserProperties Create(string name, string apiToken) {
+		public static new ApplicationWithUserProperties Create(string name, string apiToken) {
 			return Create(Guid.NewGuid(), name, apiToken);
 		}
 	}
