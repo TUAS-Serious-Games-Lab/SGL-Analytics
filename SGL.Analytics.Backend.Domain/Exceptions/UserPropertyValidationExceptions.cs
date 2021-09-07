@@ -74,4 +74,15 @@ namespace SGL.Analytics.Backend.Domain.Exceptions {
 			ConflictingPropertyName = conflictingPropertyName;
 		}
 	}
+
+	public class PropertyNotFoundException : UserPropertyValidationException {
+		public string MissingPropertyName { get; init; }
+
+		public override string InvalidPropertyName => MissingPropertyName;
+
+		public PropertyNotFoundException(string missingPropertyName, Exception? innerException = null) :
+			base($"The requested property {missingPropertyName} is not present.", innerException) {
+			MissingPropertyName = missingPropertyName;
+		}
+	}
 }

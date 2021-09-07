@@ -32,6 +32,41 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			return Create(Guid.NewGuid(), app, username);
 		}
 
+		private ApplicationUserPropertyInstance setAppSpecificPropertyImpl(string name, object? value, Func<string, ApplicationUserPropertyDefinition> getPropDef) {
+			var propInst = AppSpecificProperties.Where(p => p.Definition.Name == name).SingleOrDefault();
+			if (propInst is null) {
+				propInst = ApplicationUserPropertyInstance.Create(getPropDef(name), this);
+			}
+			propInst.Value = value;
+			return propInst;
+		}
+
+		public ApplicationUserPropertyInstance SetAppSpecificProperty(string name, object? value) {
+			return setAppSpecificPropertyImpl(name, value, name => {
+				var propDef = App.UserProperties.Where(p => p.Name == name).SingleOrDefault();
+				if (propDef is null) {
+					throw new UndefinedPropertyException(name);
+				}
+				return propDef;
+			});
+		}
+
+		public object? GetAppSpecificProperty(string name) {
+			var propInst = AppSpecificProperties.Where(p => p.Definition.Name == name).SingleOrDefault();
+			if (propInst is null) {
+				throw new PropertyNotFoundException(name);
+			}
+			return propInst.Value;
+		}
+
+		public ApplicationUserPropertyInstance SetAppSpecificProperty(ApplicationUserPropertyDefinition propDef, object? value) {
+			return setAppSpecificPropertyImpl(propDef.Name, value, name => propDef);
+		}
+
+		public object? GetAppSpecificProperty(ApplicationUserPropertyDefinition propDef) {
+			return GetAppSpecificProperty(propDef.Name);
+		}
+
 		public void ValidateProperties() {
 			Debug.Assert(AppSpecificProperties is not null, "AppSpecificProperties navigation property is not present.");
 			Debug.Assert(App is not null, "App navigation property is not present.");
