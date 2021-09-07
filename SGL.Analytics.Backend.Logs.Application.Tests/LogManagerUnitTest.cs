@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
 using SGL.Analytics.Backend.Logs.Application.Tests.Dummies;

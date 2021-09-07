@@ -1,4 +1,5 @@
 using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
