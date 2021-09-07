@@ -31,6 +31,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO) {
 			var app = await appRepo.GetApplicationByNameAsync(userRegDTO.AppName);
 			if (app is null) {
+				logger.LogError("Attempt to register user {username} for non-existent application {appName}.", userRegDTO.Username, userRegDTO.AppName);
 				throw new ApplicationDoesNotExistException(userRegDTO.AppName);
 			}
 			var userReg = UserRegistration.Create(app, userRegDTO.Username);
@@ -39,17 +40,41 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				user.AppSpecificProperties[prop.Key] = prop.Value;
 			}
 			IUserRegistrationWrapper userWrap = user;
-			userWrap.StoreAppPropertiesToUnderlying();
-			userWrap.Underlying = await userRepo.RegisterUserAsync(userReg);
-			userWrap.LoadAppPropertiesFromUnderlying();
+			try {
+				userWrap.StoreAppPropertiesToUnderlying();
+				userWrap.Underlying = await userRepo.RegisterUserAsync(userReg);
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "User registration for user {username} in application {appName} failed due to an exception.", userRegDTO.Username, userRegDTO.AppName);
+				throw;
+			}
+			try {
+				userWrap.LoadAppPropertiesFromUnderlying();
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "Reloading properties after registration for user {username} in application {appName} failed due to an exception.", userRegDTO.Username, userRegDTO.AppName);
+				throw;
+			}
 			return user;
 		}
 
 		public async Task<User> UpdateUserAsync(User user) {
 			IUserRegistrationWrapper userWrap = user;
-			userWrap.StoreAppPropertiesToUnderlying();
-			userWrap.Underlying = await userRepo.UpdateUserAsync(userWrap.Underlying);
-			userWrap.LoadAppPropertiesFromUnderlying();
+			try {
+				userWrap.StoreAppPropertiesToUnderlying();
+				userWrap.Underlying = await userRepo.UpdateUserAsync(userWrap.Underlying);
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "Updating user data for user {username} in application {appName} failed due to an exception.", user.Username, user.App.Name);
+				throw;
+			}
+			try {
+				userWrap.LoadAppPropertiesFromUnderlying();
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "Reloading properties after user data update for user {username} in application {appName} failed due to an exception.", user.Username, user.App.Name);
+				throw;
+			}
 			return user;
 		}
 	}
