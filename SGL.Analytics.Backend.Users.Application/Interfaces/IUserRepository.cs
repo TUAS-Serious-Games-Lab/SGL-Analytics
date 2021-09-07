@@ -9,6 +9,6 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 	public interface IUserRepository {
 		Task<UserRegistration?> GetUserByIdAsync(Guid id);
 		Task<UserRegistration> RegisterUserAsync(UserRegistration userReg);
-
+		Task<UserRegistration> UpdateUserAsync(UserRegistration userReg);
 	}
 }

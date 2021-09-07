@@ -36,6 +36,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			var propInst = AppSpecificProperties.Where(p => p.Definition.Name == name).SingleOrDefault();
 			if (propInst is null) {
 				propInst = ApplicationUserPropertyInstance.Create(getPropDef(name), this);
+				AppSpecificProperties.Add(propInst);
 			}
 			propInst.Value = value;
 			return propInst;

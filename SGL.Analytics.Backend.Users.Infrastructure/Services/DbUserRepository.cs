@@ -4,6 +4,7 @@ using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,6 +28,13 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		public async Task<UserRegistration> RegisterUserAsync(UserRegistration userReg) {
 			userReg.ValidateProperties(); // Throws on error
 			context.UserRegistrations.Add(userReg);
+			await context.SaveChangesAsync();
+			return userReg;
+		}
+
+		public async Task<UserRegistration> UpdateUserAsync(UserRegistration userReg) {
+			Debug.Assert(context.Entry(userReg).State is EntityState.Modified or EntityState.Unchanged);
+			userReg.ValidateProperties(); // Throws on error
 			await context.SaveChangesAsync();
 			return userReg;
 		}
