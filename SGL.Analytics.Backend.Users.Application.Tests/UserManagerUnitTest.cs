@@ -97,5 +97,34 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			});
 			await Assert.ThrowsAsync<PropertyTypeDoesntMatchDefinitionException>(async () => await userMgr.RegisterUserAsync(userRegDTO));
 		}
+
+		[Fact]
+		public async Task UserPropertiesWithJsonTypeCorrectlyRoundTripForOtherTypes() {
+			var app = ApplicationWithUserProperties.Create(appName, appApiKey);
+			app.AddProperty("Number", UserPropertyType.Json);
+			app.AddProperty("String", UserPropertyType.Json);
+			app.AddProperty("Date", UserPropertyType.Json);
+			app.AddProperty("Guid", UserPropertyType.Json);
+
+			var date = DateTime.Today;
+			app = await appRepo.AddApplicationAsync(app);
+			var guid = Guid.NewGuid();
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() {
+				["Number"] = 1234,
+				["String"] = "Hello World",
+				["Date"] = date,
+				["Guid"] = guid
+			});
+			var user = await userMgr.RegisterUserAsync(userRegDTO);
+			Assert.Equal("Testuser", user.Username);
+			Assert.NotEqual(Guid.Empty, user.Id);
+			Assert.Equal(appName, user.App.Name);
+			IDictionary<string, object?> props = user.AppSpecificProperties;
+			Assert.Equal(1234, Assert.Contains("Number", props));
+			Assert.Equal("Hello World", Assert.Contains("String", props));
+			Assert.Equal(date.ToUniversalTime(), (Assert.Contains("Date", props) as DateTime?)?.ToUniversalTime());
+			Assert.Equal(guid, Assert.Contains("Guid", props) as Guid?);
+		}
+
 	}
 }
