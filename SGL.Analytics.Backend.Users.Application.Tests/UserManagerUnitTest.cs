@@ -85,5 +85,17 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			});
 			await Assert.ThrowsAsync<UndefinedPropertyException>(async () => await userMgr.RegisterUserAsync(userRegDTO));
 		}
+
+		[Fact]
+		public async Task AttemptToRegisterUserWithPropertyOfIncorrectTypeThrowsCorrectException() {
+			var app = ApplicationWithUserProperties.Create(appName, appApiKey);
+			app.AddProperty("Message", UserPropertyType.String);
+			app = await appRepo.AddApplicationAsync(app);
+
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() {
+				["Message"] = 42,
+			});
+			await Assert.ThrowsAsync<PropertyTypeDoesntMatchDefinitionException>(async () => await userMgr.RegisterUserAsync(userRegDTO));
+		}
 	}
 }
