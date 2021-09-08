@@ -126,5 +126,13 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			Assert.Equal(guid, Assert.Contains("Guid", props) as Guid?);
 		}
 
+		[Fact]
+		public async Task AttemptToRegisterUserForNonExistentApplicationThrowsCorrectException() {
+			var app = ApplicationWithUserProperties.Create(appName, appApiKey);
+			app = await appRepo.AddApplicationAsync(app);
+
+			var userRegDTO = new UserRegistrationDTO("DoesNotExist", "Testuser", new());
+			await Assert.ThrowsAsync<ApplicationDoesNotExistException>(async () => await userMgr.RegisterUserAsync(userRegDTO));
+		}
 	}
 }
