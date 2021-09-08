@@ -83,7 +83,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 				["Number"] = 42,
 				["DoesNotExist"] = "Hello World"
 			});
-			await Assert.ThrowsAsync<UndefinedPropertyException>(async () => await userMgr.RegisterUserAsync(userRegDTO));
+			Assert.Equal("DoesNotExist", (await Assert.ThrowsAsync<UndefinedPropertyException>(async () => await userMgr.RegisterUserAsync(userRegDTO))).UndefinedPropertyName);
 		}
 
 		[Fact]
@@ -95,7 +95,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() {
 				["Message"] = 42,
 			});
-			await Assert.ThrowsAsync<PropertyTypeDoesntMatchDefinitionException>(async () => await userMgr.RegisterUserAsync(userRegDTO));
+			Assert.Equal("Message", (await Assert.ThrowsAsync<PropertyTypeDoesntMatchDefinitionException>(async () => await userMgr.RegisterUserAsync(userRegDTO))).InvalidPropertyName);
 		}
 
 		[Fact]
