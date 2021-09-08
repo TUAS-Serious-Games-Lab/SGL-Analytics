@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Analytics.Backend.Users.Application.Tests.Dummies;
@@ -70,6 +71,19 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			Assert.Equal(date.ToUniversalTime(), (Assert.Contains("Date", props) as DateTime?)?.ToUniversalTime());
 			var mappingRead = Assert.IsAssignableFrom<IDictionary<string, object?>>(Assert.Contains("Mapping", props));
 			Assert.All(mapping, kvp => Assert.Equal(kvp.Value, Assert.Contains(kvp.Key, mappingRead)));
+		}
+
+		[Fact]
+		public async Task AttemptToRegisterUserWithNonExistentPropertyThrowsCorrectException() {
+			var app = ApplicationWithUserProperties.Create(appName, appApiKey);
+			app.AddProperty("Number", UserPropertyType.Integer);
+			app = await appRepo.AddApplicationAsync(app);
+
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() {
+				["Number"] = 42,
+				["DoesNotExist"] = "Hello World"
+			});
+			await Assert.ThrowsAsync<UndefinedPropertyException>(async () => await userMgr.RegisterUserAsync(userRegDTO));
 		}
 	}
 }
