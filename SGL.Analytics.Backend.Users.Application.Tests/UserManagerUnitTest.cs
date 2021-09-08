@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
+using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Analytics.Backend.Users.Application.Tests.Dummies;
 using SGL.Analytics.DTO;
@@ -161,6 +162,29 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 
 			var userRegDTO = new UserRegistrationDTO("DoesNotExist", "Testuser", new());
 			await Assert.ThrowsAsync<ApplicationDoesNotExistException>(async () => await userMgr.RegisterUserAsync(userRegDTO));
+		}
+
+		[Fact]
+		public async Task UserRegistrationDataCanBeUpdated() {
+			var app = await appRepo.AddApplicationAsync(ApplicationWithUserProperties.Create(appName, appApiKey));
+			app.AddProperty("Test", UserPropertyType.String);
+			app.AddProperty("XYZ", UserPropertyType.Integer);
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() { ["XYZ"] = 123 });
+			var userOrig = await userMgr.RegisterUserAsync(userRegDTO);
+
+			var userClone = new User(UserRegistration.Create(userOrig.Id, app, userOrig.Username));
+			userClone.Username = "NewName";
+			userClone.AppSpecificProperties["Test"] = "Hello World";
+			userClone.AppSpecificProperties["XYZ"] = 42;
+			await userMgr.UpdateUserAsync(userClone);
+			var userRead = await userMgr.GetUserById(userClone.Id);
+
+			Assert.NotNull(userRead);
+			Assert.Equal("NewName", userRead!.Username);
+			Assert.Equal(userOrig.Id, userRead!.Id);
+			Assert.Equal(appName, userRead!.App.Name);
+			Assert.Equal("Hello World", Assert.Contains("Test", userRead!.AppSpecificProperties as IDictionary<string, object?>));
+			Assert.Equal(42, Assert.Contains("XYZ", userRead!.AppSpecificProperties as IDictionary<string, object?>));
 		}
 	}
 }
