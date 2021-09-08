@@ -1,4 +1,6 @@
-﻿using SGL.Analytics.Backend.Domain.Entity;
+using Microsoft.EntityFrameworkCore;
+using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.TestUtilities;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure.Services;
@@ -146,14 +148,14 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 				var repo = new DbUserRepository(context);
 				var user = await repo.GetUserByIdAsync(userId);
 				Assert.NotNull(user);
-				user?.SetAppSpecificProperty(propDef1.Name, 1234);
-				user?.SetAppSpecificProperty(propDef2.Name, 987.654);
-				user?.SetAppSpecificProperty(propDef3.Name, "Test, Test, Test");
-				user?.SetAppSpecificProperty(propDef4.Name, dateTime);
-				user?.SetAppSpecificProperty(propDef5.Name, guid2);
-				user?.SetAppSpecificProperty(propDef6.Name, arr);
+				user!.SetAppSpecificProperty(propDef1.Name, 1234);
+				user!.SetAppSpecificProperty(propDef2.Name, 987.654);
+				user!.SetAppSpecificProperty(propDef3.Name, "Test, Test, Test");
+				user!.SetAppSpecificProperty(propDef4.Name, dateTime);
+				user!.SetAppSpecificProperty(propDef5.Name, guid2);
+				user!.SetAppSpecificProperty(propDef6.Name, arr);
 
-				await repo.UpdateUserAsync(user);
+				await repo.UpdateUserAsync(user!);
 			}
 
 			UserRegistration? userRead;
@@ -175,5 +177,71 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			Assert.Equal(guid2, userRead?.GetAppSpecificProperty("TestGuid"));
 			Assert.Equal(arr, userRead?.GetAppSpecificProperty("TestJson") as IEnumerable<object?>);
 		}
+
+		[Fact]
+		public async Task AttemptingToCreateUserWithDuplicateNameThrowsCorrectException() {
+			var app = ApplicationWithUserProperties.Create("DbUserRepositoryUnitTest", StringGenerator.GenerateRandomWord(32));
+			await using (var context = createContext()) {
+				context.Applications.Add(app);
+				await context.SaveChangesAsync();
+			}
+			await using (var context = createContext()) {
+				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				var repo = new DbUserRepository(context);
+				await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser"));
+			}
+			await using (var context = createContext()) {
+				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				var repo = new DbUserRepository(context);
+				Assert.Equal("Username", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser")))).ConflictingPropertyName);
+			}
+		}
+
+		[Fact]
+		public async Task AttemptingToCreateUserWithDuplicateIdThrowsCorrectException() {
+			var app = ApplicationWithUserProperties.Create("DbUserRepositoryUnitTest", StringGenerator.GenerateRandomWord(32));
+			await using (var context = createContext()) {
+				context.Applications.Add(app);
+				await context.SaveChangesAsync();
+			}
+			var id = Guid.NewGuid();
+			await using (var context = createContext()) {
+				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				var repo = new DbUserRepository(context);
+				await repo.RegisterUserAsync(UserRegistration.Create(id, app, "TestUser_1"));
+			}
+			await using (var context = createContext()) {
+				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				var repo = new DbUserRepository(context);
+				Assert.Equal("Id", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.RegisterUserAsync(UserRegistration.Create(id, app, "TestUser_2")))).ConflictingPropertyName);
+			}
+		}
+
+		[Fact]
+		public async Task AttemptingToUpdateUsernameToExistingOneThrowsCorrectException() {
+			var app = ApplicationWithUserProperties.Create("DbUserRepositoryUnitTest", StringGenerator.GenerateRandomWord(32));
+			await using (var context = createContext()) {
+				context.Applications.Add(app);
+				await context.SaveChangesAsync();
+			}
+			Guid userId;
+			await using (var context = createContext()) {
+				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				var repo = new DbUserRepository(context);
+				await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser_1"));
+				var userReg = UserRegistration.Create(app, "TestUser_2");
+				userReg = await repo.RegisterUserAsync(userReg);
+				userId = userReg.Id;
+			}
+			await using (var context = createContext()) {
+				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				var repo = new DbUserRepository(context);
+				var userReg = await repo.GetUserByIdAsync(userId);
+				Assert.NotNull(userReg);
+				userReg!.Username = "TestUser_1";
+				Assert.Equal("Username", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.UpdateUserAsync(userReg))).ConflictingPropertyName);
+			}
+		}
+
 	}
 }

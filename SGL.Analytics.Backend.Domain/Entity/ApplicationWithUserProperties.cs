@@ -23,7 +23,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			return Create(Guid.NewGuid(), name, apiToken);
 		}
 
-		public ApplicationUserPropertyDefinition AddProperty(string name, UserPropertyType type, bool required) {
+		public ApplicationUserPropertyDefinition AddProperty(string name, UserPropertyType type, bool required = false) {
 			if (UserProperties.Count(p => p.Name == name) > 0) {
 				throw new ConflictingPropertyNameException(name);
 			}

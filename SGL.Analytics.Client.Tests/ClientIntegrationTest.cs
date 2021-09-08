@@ -142,7 +142,7 @@ namespace SGL.Analytics.Client.Tests {
 			await using (var stream = new MemoryStream(successfulRegRequests.Single().BodyAsBytes)) {
 				var userReg = await JsonSerializer.DeserializeAsync<UserRegistrationDTO>(stream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 				Assert.Equal(user.Username, userReg?.Username);
-				var studyAttr = userReg?.StudySpecificAttributes as IDictionary<string, object?>;
+				var studyAttr = userReg?.StudySpecificProperties as IDictionary<string, object?>;
 				Assert.Equal(user.Label, Assert.Contains("Label", studyAttr));
 				Assert.Equal(user.RegistrationTime, Assert.Contains("RegistrationTime", studyAttr));
 				Assert.Equal(user.SomeNumber, Assert.Contains("SomeNumber", studyAttr));

@@ -562,7 +562,7 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Equal(ds.UserID, userId);
 			var userReg = userRegClient.RegistrationData[userId];
 			Assert.Equal(user.Username, userReg.Username);
-			var studyAttr = userReg.StudySpecificAttributes as IDictionary<string, object?>;
+			var studyAttr = userReg.StudySpecificProperties as IDictionary<string, object?>;
 			Assert.Equal(user.Label, Assert.Contains("Label", studyAttr));
 			Assert.Equal(user.RegistrationTime, Assert.Contains("RegistrationTime", studyAttr));
 			Assert.Equal(user.SomeNumber, Assert.Contains("SomeNumber", studyAttr));

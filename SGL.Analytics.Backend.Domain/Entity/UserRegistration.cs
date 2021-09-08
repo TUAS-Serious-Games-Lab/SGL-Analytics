@@ -72,6 +72,8 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			Debug.Assert(AppSpecificProperties is not null, "AppSpecificProperties navigation property is not present.");
 			Debug.Assert(App is not null, "App navigation property is not present.");
 			Debug.Assert(App.UserProperties is not null, "UserProperties navigation property of associated App is not present.");
+			// TODO: If this method becomes a bottleneck, maybe use temporary Dictionaries / Sets to avoid O(n^2) runtime.
+			// However, the involved 'n's should be quite low and this happens in-memory, just before we access the database, which should dwarf this overhead.
 			foreach (var propDef in App.UserProperties.Where(p => p.Required)) {
 				var propInst = AppSpecificProperties.Where(pi => pi.DefinitionId == propDef.Id).ToList();
 				if (propInst.Count == 0) {
@@ -84,6 +86,9 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			foreach (var propInst in AppSpecificProperties) {
 				if (!App.UserProperties.Any(pd => pd.Id == propInst.DefinitionId)) {
 					throw new UndefinedPropertyException(propInst.Definition.Name);
+				}
+				if (AppSpecificProperties.Count(p => p.Definition.Name == propInst.Definition.Name) > 1) {
+					throw new ConflictingPropertyInstanceException(propInst.Definition.Name);
 				}
 			}
 		}
