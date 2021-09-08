@@ -26,6 +26,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			if (userReg.Id == Guid.Empty) userReg.Id = Guid.NewGuid();
 			if (users.ContainsKey(userReg.Id)) throw new EntityUniquenessConflictException("UserRegistration", "Id");
 			if (users.Values.Any(u => u.Username == userReg.Username)) throw new EntityUniquenessConflictException("UserRegistration", "Username");
+			userReg.ValidateProperties();
 			users.Add(userReg.Id, userReg);
 			return userReg;
 		}
@@ -33,6 +34,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 		public async Task<UserRegistration> UpdateUserAsync(UserRegistration userReg) {
 			await Task.CompletedTask;
 			Debug.Assert(users.ContainsKey(userReg.Id));
+			userReg.ValidateProperties();
 			users[userReg.Id] = userReg;
 			return userReg;
 		}
