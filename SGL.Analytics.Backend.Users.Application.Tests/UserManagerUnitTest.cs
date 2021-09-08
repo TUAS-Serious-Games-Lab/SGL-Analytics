@@ -113,6 +113,20 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 		}
 
 		[Fact]
+		public async Task AttemptToRegisterUserWithRequiredPropertyNullThrowsCorrectException() {
+			var app = ApplicationWithUserProperties.Create(appName, appApiKey);
+			app.AddProperty("Number", UserPropertyType.Integer, true);
+			app.AddProperty("GreetingMessage", UserPropertyType.String, true);
+			app = await appRepo.AddApplicationAsync(app);
+
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() {
+				["Number"] = 42,
+				["GreetingMessage"] = null
+			}); ;
+			Assert.Equal("GreetingMessage", (await Assert.ThrowsAsync<RequiredPropertyNullException>(async () => await userMgr.RegisterUserAsync(userRegDTO))).NullPropertyName);
+		}
+
+		[Fact]
 		public async Task UserPropertiesWithJsonTypeCorrectlyRoundTripForOtherTypes() {
 			var app = ApplicationWithUserProperties.Create(appName, appApiKey);
 			app.AddProperty("Number", UserPropertyType.Json);
