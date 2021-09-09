@@ -43,7 +43,7 @@ namespace SGL.Analytics.Backend.LogCollector.Controllers {
 				return StatusCode(StatusCodes.Status201Created);
 			}
 			catch (Exception ex) {
-				logger.LogError(ex, "IngestLog POST request from user {userId} failed due unexpected exception.", logMetadata.UserId);
+				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to unexpected exception.", logMetadata.UserId);
 				throw;
 			}
 		}
