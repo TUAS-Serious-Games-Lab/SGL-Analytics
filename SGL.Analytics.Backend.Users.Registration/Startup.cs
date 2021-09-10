@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
+using SGL.Analytics.Backend.Security;
 
 namespace SGL.Analytics.Backend.UserDB {
 	public class Startup {
@@ -27,6 +28,8 @@ namespace SGL.Analytics.Backend.UserDB {
 
 			services.AddDbContext<UsersContext>(options =>
 					options.UseNpgsql(Configuration.GetConnectionString("UsersContext")));
+
+			services.UseJwtLoginService(Configuration);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
