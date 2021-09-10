@@ -43,7 +43,7 @@ namespace SGL.Analytics.Client.Tests {
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.Created)
 					.WithBodyAsJson(new UserRegistrationResultDTO(userId), true));
 
-			var registration = new UserRegistrationDTO("UserRegistrationRestClientUnitTest", "Testuser",
+			var registration = new UserRegistrationDTO("UserRegistrationRestClientUnitTest", "Testuser", "Passw0rd",
 				new Dictionary<string, object?>() { ["Number"] = 12345, ["Label"] = "Test" });
 			var result = await client.RegisterUserAsync(registration, appApiToken);
 
@@ -68,7 +68,7 @@ namespace SGL.Analytics.Client.Tests {
 					.WithHeader("App-API-Token", new WildcardMatcher("*")))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
 
-			var registration = new UserRegistrationDTO("UserRegistrationRestClientUnitTest", "Testuser",
+			var registration = new UserRegistrationDTO("UserRegistrationRestClientUnitTest", "Testuser", "Passw0rd",
 				new Dictionary<string, object?>() { ["Number"] = 12345, ["Label"] = "Test" });
 
 			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.RegisterUserAsync(registration, appApiToken));
@@ -83,7 +83,7 @@ namespace SGL.Analytics.Client.Tests {
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.Conflict)
 					.WithBody("The requested username is already taken."));
 
-			var registration = new UserRegistrationDTO("UserRegistrationRestClientUnitTest", "Testuser",
+			var registration = new UserRegistrationDTO("UserRegistrationRestClientUnitTest", "Testuser", "Passw0rd",
 				new Dictionary<string, object?>() { ["Number"] = 12345, ["Label"] = "Test" });
 
 			var ex = await Assert.ThrowsAsync<UsernameAlreadyTakenException>(() => client.RegisterUserAsync(registration, appApiToken));

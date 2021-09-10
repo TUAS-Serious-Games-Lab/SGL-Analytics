@@ -21,6 +21,7 @@ namespace SGL.Analytics.Backend.Users.Application.Model {
 		public Guid Id => userReg.Id;
 		public ApplicationWithUserProperties App { get => userReg.App; set => userReg.App = value; }
 		public string Username { get => userReg.Username; set => userReg.Username = value; }
+		public string HashedSecret { get => userReg.HashedSecret; set => userReg.HashedSecret = value; }
 
 		public Dictionary<string, object?> AppSpecificProperties { get; private set; }
 		UserRegistration IUserRegistrationWrapper.Underlying { get => userReg; set => userReg = value; }

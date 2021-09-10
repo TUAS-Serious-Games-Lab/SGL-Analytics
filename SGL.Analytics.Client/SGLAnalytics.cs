@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -225,6 +226,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		public int UserRegistrationSecretLength { get; set; } = 16;
 		public string AppName { get => appName; }
 
 		/// <summary>
@@ -253,11 +255,13 @@ namespace SGL.Analytics.Client {
 					throw new InvalidOperationException("User is already registered.");
 				}
 				logger.LogInformation("Starting user registration process...");
-				var userDTO = userData.MakeDTO(appName);
+				var secret = SecretGenerator.Instance.GenerateSecret(UserRegistrationSecretLength);
+				var userDTO = userData.MakeDTO(appName, secret);
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
 				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
 				lock (lockObject) {
 					rootDataStore.UserID = regResult.UserId;
+					rootDataStore.UserSecret = secret;
 				}
 				await rootDataStore.SaveAsync();
 				logger.LogInformation("Successfully registered user.");
