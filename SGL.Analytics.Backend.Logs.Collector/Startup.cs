@@ -8,6 +8,7 @@ using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
+using SGL.Analytics.Backend.Security;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	public class Startup {
@@ -23,7 +24,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 
 			services.AddDbContext<LogsContext>(options =>
 					options.UseNpgsql(Configuration.GetConnectionString("LogsContext")));
-
+			services.UseJwtBearerAuthentication(Configuration);
 			services.UseFileSystemCollectorLogStorage(Configuration);
 			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
 			services.AddScoped<ILogMetadataRepository, DbLogMetadataRepository>();
@@ -40,6 +41,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 
 			app.UseRouting();
 
+			app.UseAuthentication();
 			app.UseAuthorization();
 
 			app.UseEndpoints(endpoints => {
