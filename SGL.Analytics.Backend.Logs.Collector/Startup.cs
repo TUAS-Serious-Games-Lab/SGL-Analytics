@@ -25,6 +25,8 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			services.AddDbContext<LogsContext>(options =>
 					options.UseNpgsql(Configuration.GetConnectionString("LogsContext")));
 			services.UseJwtBearerAuthentication(Configuration);
+			services.AddAuthorization(options => options.AddOwnerPolicy());
+			services.AddOwnerAuthorizationHandler(Configuration);
 			services.UseFileSystemCollectorLogStorage(Configuration);
 			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
 			services.AddScoped<ILogMetadataRepository, DbLogMetadataRepository>();
