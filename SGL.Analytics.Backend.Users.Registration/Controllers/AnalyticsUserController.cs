@@ -53,8 +53,7 @@ namespace SGL.Analytics.Backend.UserDB.Controllers {
 				return StatusCode(StatusCodes.Status403Forbidden, "Login failed: The given user id or secret was invalid.");
 			}
 			else {
-				var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-				return new LoginResponseDTO(tokenString);
+				return new LoginResponseDTO(token);
 			}
 		}
 	}

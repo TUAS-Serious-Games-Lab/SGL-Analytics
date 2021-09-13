@@ -52,7 +52,10 @@ namespace SGL.Analytics.Backend.Security {
 			}
 		}
 
-		public async Task<JwtSecurityToken?> LoginAsync<TUserId, TUser>(TUserId userId, string providedPlainSecret, Func<TUserId, Task<TUser?>> lookupUserAsync, Func<TUser, string> getHashedSecret, Func<TUser, string, Task> updateHashedSecretAsync) {
+		public async Task<string?> LoginAsync<TUserId, TUser>(TUserId userId, string providedPlainSecret,
+			Func<TUserId, Task<TUser?>> lookupUserAsync,
+			Func<TUser, string> getHashedSecret,
+			Func<TUser, string, Task> updateHashedSecretAsync) {
 			var fixedDelay = Task.Delay(options.LoginService.FailureDelay); // On failure, always wait for this fixed delay starting here.
 																			// This should mitigate timing attacks for detecting whether the failure is
 																			// due to non-existent user or due to incorrect password.
@@ -91,7 +94,8 @@ namespace SGL.Analytics.Backend.Security {
 				expires: DateTime.UtcNow.Add(options.LoginService.ExpirationTime),
 				signingCredentials: signingCredentials
 			);
-			return token;
+			var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+			return tokenString;
 		}
 	}
 }

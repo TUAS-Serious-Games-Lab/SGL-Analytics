@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Backend.Security {
 	public interface ILoginService {
 
-		Task<JwtSecurityToken?> LoginAsync<TUserId, TUser>(
+		Task<string?> LoginAsync<TUserId, TUser>(
 			TUserId userId, string providedPlainSecret,
 			Func<TUserId, Task<TUser?>> lookupUserAsync,
 			Func<TUser, string> getHashedSecret,
