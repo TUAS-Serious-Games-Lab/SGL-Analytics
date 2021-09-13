@@ -153,7 +153,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				request.Content = content;
 				var response = await client.SendAsync(request);
 				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
-				Assert.Empty(response.Headers.WwwAuthenticate); // Ensure the error is not from JWT challenge but from the missing application.
+				Assert.Empty(response.Headers.WwwAuthenticate); // Ensure the error is not from JWT challenge but from the incorrect app token.
 			}
 		}
 
