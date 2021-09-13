@@ -41,6 +41,10 @@ namespace SGL.Analytics.Client.Tests {
 			File.Delete(new FileRootDataStore(appName).StorageFile);
 			rootDS = new FileRootDataStore(appName);
 			storage = new DirectoryLogStorage(Path.Combine(rootDS.DataDirectory, "DataLogs"));
+			storage.Archiving = false;
+			foreach (var log in storage.EnumerateLogs()) {
+				log.Remove();
+			}
 			logCollectorClient = new LogCollectorRestClient(new Uri(serverFixture.Server.Urls.First()));
 			userRegClient = new UserRegistrationRestClient(new Uri(serverFixture.Server.Urls.First()));
 			analytics = new SGLAnalytics(appName, appAPIToken,
