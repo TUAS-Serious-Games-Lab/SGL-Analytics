@@ -1,6 +1,7 @@
 using SGL.Analytics.DTO;
 using SGL.Analytics.Utilities;
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -27,16 +28,30 @@ namespace SGL.Analytics.Client {
 		}
 
 		public async Task UploadLogFileAsync(string appName, string appAPIToken, Guid userID, LoginResponseDTO loginData, ILogStorage.ILogFile logFile) {
-			using (var stream = logFile.OpenReadRaw()) {
-				var content = new StreamContent(stream);
-				content.Headers.MapDtoProperties(new LogMetadataDTO(appName, userID, logFile.ID, logFile.CreationTime, logFile.EndTime));
-				content.Headers.Add("App-API-Token", appAPIToken);
-				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);
-				request.Content = content;
-				request.Headers.Add("Authorization", "Bearer " + loginData.BearerToken);
-				var response = await httpClient.SendAsync(request);
-				response.EnsureSuccessStatusCode();
+			try {
+				using (var stream = logFile.OpenReadRaw()) {
+					var content = new StreamContent(stream);
+					content.Headers.MapDtoProperties(new LogMetadataDTO(appName, userID, logFile.ID, logFile.CreationTime, logFile.EndTime));
+					content.Headers.Add("App-API-Token", appAPIToken);
+					content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+					var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);
+					request.Content = content;
+					request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", loginData.BearerToken);
+					var response = await httpClient.SendAsync(request);
+					if (response.StatusCode == HttpStatusCode.Unauthorized && response.Headers.WwwAuthenticate.Count > 0) {
+						throw new LoginRequiredException();
+					}
+					response.EnsureSuccessStatusCode();
+				}
+			}
+			catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
+				throw new UnauthorizedException(ex);
+			}
+			catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.RequestEntityTooLarge) {
+				throw new FileTooLargeException(ex);
+			}
+			catch {
+				throw;
 			}
 		}
 	}

@@ -198,7 +198,7 @@ namespace SGL.Analytics.Client {
 				}
 			}
 
-			async Task attemptToUploadFileAsync(LoginResponseDTO? loginData, Guid userID, ILogStorage.ILogFile logFile) {
+			async Task attemptToUploadFileAsync(LoginResponseDTO loginData, Guid userID, ILogStorage.ILogFile logFile) {
 				bool removing = false;
 				try {
 					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
@@ -213,10 +213,13 @@ namespace SGL.Analytics.Client {
 					}
 					logger.LogDebug("Successfully uploaded data log file {logFile}.", logFile.ID);
 				}
-				catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
+				catch (LoginRequiredException) {
 					throw;
 				}
-				catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.RequestEntityTooLarge) {
+				catch (UnauthorizedException ex) {
+					logger.LogError(ex, "The upload failed due to an authorization error.");
+				}
+				catch (FileTooLargeException) {
 					// TODO: Find a better way to handle log files that are too large to upload.
 					// Leaving the file in storage whould imply that it is retried later, which would waste user's bandwidth only to fail again, unless the server-side limit was increased.
 					// Maybe, we could store it locally, in a separate folder (or similar) for potential manual troubleshooting.
