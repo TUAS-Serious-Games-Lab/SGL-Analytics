@@ -177,6 +177,19 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		}
 
 		[Fact]
+		public async Task LogIngestForADifferentUserIdThanInAuthTokenReturnsForbidden() {
+			var userId1 = Guid.NewGuid();
+			var userId2 = Guid.NewGuid();
+			var logId = Guid.NewGuid();
+			using (var logContent = generateRandomGZippedTestData())
+			using (var client = fixture.CreateClient()) {
+				var request = buildUploadRequest(logContent, new LogMetadataDTO(fixture.AppName, userId1, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)), userId2);
+				var response = await client.SendAsync(request);
+				Assert.Equal(HttpStatusCode.Forbidden, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
+			}
+		}
+
+		[Fact]
 		public async Task FailedLogIngestCanBeSuccessfullyRetried() {
 			var userId = Guid.NewGuid();
 			var logId = Guid.NewGuid();
