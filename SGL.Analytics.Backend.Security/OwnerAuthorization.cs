@@ -14,7 +14,7 @@ namespace SGL.Analytics.Backend.Security {
 	public static class OwnerAuthorizationExtensions {
 		public static IServiceCollection AddOwnerAuthorizationHandler(this IServiceCollection services, IConfiguration config) {
 			services.Configure<OwnerAuthorizationHandlerOptions>(config.GetSection(OwnerAuthorizationHandlerOptions.OwnerAuthorizationHandler));
-			services.AddScoped<OwnerAuthorizationHandler>();
+			services.AddScoped<IAuthorizationHandler, OwnerAuthorizationHandler>();
 			return services;
 		}
 
