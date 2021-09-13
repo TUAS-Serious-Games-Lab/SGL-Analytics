@@ -1,13 +1,16 @@
 using Microsoft.Extensions.Logging;
+using SGL.Analytics.DTO;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
@@ -34,6 +37,9 @@ namespace SGL.Analytics.Client {
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
 		private Task? logWriter = null;
 		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
+
+		private LoginResponseDTO? loginData;
+		private SynchronizationContext mainSyncContext;
 
 		private Task? logUploader = null;
 
@@ -120,22 +126,85 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		private async Task uploadFilesAsync() {
-			if (!logCollectorClient.IsActive) return;
+		private async Task<(Guid? userId, LoginResponseDTO? loginData)> ensureLogedInAsync(bool expired = false) {
 			Guid? userIDOpt;
+			string? userSecret;
+			LoginResponseDTO? loginData;
 			lock (lockObject) {
 				userIDOpt = rootDataStore.UserID;
+				userSecret = rootDataStore.UserSecret;
+				loginData = this.loginData;
 			}
-			if (userIDOpt is null) return;
+			// Can't login without credentials, the user needs to be registered first.
+			if (userIDOpt is null || userSecret is null) return (null, null);
+			// We have loginData already and we weren't called because of expired loginData, return the already present ones.
+			if (loginData is not null && !expired) return (userIDOpt, loginData);
+			logger.LogInformation("Logging in user {userId} ...", userIDOpt);
+			var tcs = new TaskCompletionSource<LoginResponseDTO>();
+			mainSyncContext.Post(async s => {
+				try {
+					tcs.SetResult(await userRegistrationClient.LoginUserAsync(new LoginRequestDTO(userIDOpt.Value, userSecret)));
+				}
+				catch (Exception ex) {
+					tcs.SetException(ex);
+				}
+			}, null);
+			try {
+				loginData = await tcs.Task;
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "Login for user {userId} failed with exception.", userIDOpt);
+				throw;
+			}
+			lock (lockObject) {
+				this.loginData = loginData;
+			}
+			logger.LogInformation("Login was successful.");
+			return (userIDOpt, loginData);
+		}
+
+		private async Task uploadFilesAsync() {
+			if (!logCollectorClient.IsActive) return;
+			(Guid? userIDOpt, LoginResponseDTO? loginData) = await ensureLogedInAsync();
+			if (userIDOpt is null || loginData is null) return;
 			logger.LogDebug("Started log uploader to asynchronously upload finished data logs to the backend.");
 			var userID = (Guid)userIDOpt;
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
+				try {
+					await attemptToUploadFileAsync(loginData, userID, logFile);
+				}
+				catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
+					logger.LogWarning("Uploading data log {logId} failed with 'Unauthorized' error. " +
+						"The most likely reason is that the session token expired. Obtaining a new session token by logging in again, retrying the upload afterwards...", logFile.ID);
+					try {
+						(userIDOpt, loginData) = await ensureLogedInAsync();
+					}
+					catch (Exception ex2) {
+						logger.LogError(ex2, "The login attempt failed. Exiting the upload process ...");
+						return;
+					}
+					if (userIDOpt is null || loginData is null) {
+						logger.LogError("The registered login credentails are missing. This is unexpected. Exiting the upload process ...");
+						return;
+					}
+					try {
+						await attemptToUploadFileAsync(loginData, userID, logFile);
+					}
+					catch (HttpRequestException ex3) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
+						logger.LogError(ex3, "The upload for data log {logId} failed again after obtaining a fresh session token. " +
+							"There seems to be a permission problem in the backend. Exiting the upload process ...", logFile.ID);
+						return;
+					}
+				}
+			}
+
+			async Task attemptToUploadFileAsync(LoginResponseDTO? loginData, Guid userID, ILogStorage.ILogFile logFile) {
 				bool removing = false;
 				try {
 					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
 					Task uploadTask;
 					lock (lockObject) { // At the beginning, of the upload task, the stream for the log file needs to be aquired under lock.
-						uploadTask = logCollectorClient.UploadLogFileAsync(appName, appAPIToken, userID, logFile);
+						uploadTask = logCollectorClient.UploadLogFileAsync(appName, appAPIToken, userID, loginData, logFile);
 					}
 					await uploadTask;
 					removing = true;
@@ -144,7 +213,10 @@ namespace SGL.Analytics.Client {
 					}
 					logger.LogDebug("Successfully uploaded data log file {logFile}.", logFile.ID);
 				}
-				catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.RequestEntityTooLarge) {
+				catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
+					throw;
+				}
+				catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.RequestEntityTooLarge) {
 					// TODO: Find a better way to handle log files that are too large to upload.
 					// Leaving the file in storage whould imply that it is retried later, which would waste user's bandwidth only to fail again, unless the server-side limit was increased.
 					// Maybe, we could store it locally, in a separate folder (or similar) for potential manual troubleshooting.
@@ -209,6 +281,8 @@ namespace SGL.Analytics.Client {
 		}
 
 		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
+			// Capture the SynchronizationContext of the 'main' thread, so we can perform tasks that need to run there by Post()ing to the context.
+			mainSyncContext = SynchronizationContext.Current ?? new SynchronizationContext();
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
 			if (diagnosticsLogger is null) diagnosticsLogger = new NoOpLogger();

@@ -8,5 +8,6 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Client {
 	public interface IUserRegistrationClient {
 		Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken);
+		Task<LoginResponseDTO> LoginUserAsync(LoginRequestDTO loginDTO);
 	}
 }

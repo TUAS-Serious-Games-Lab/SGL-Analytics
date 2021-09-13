@@ -73,7 +73,8 @@ namespace SGL.Analytics.Client.Tests {
 						.WithHeader("AppName", new WildcardMatcher("*"))
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
 						.WithHeader("UserId", guidMatcher)
-						.WithHeader("LogFileId", guidMatcher))
+						.WithHeader("LogFileId", guidMatcher)
+						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
 			Guid userId = Guid.NewGuid();
 			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsUser").UsingPost()
@@ -82,6 +83,11 @@ namespace SGL.Analytics.Client.Tests {
 					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.Created)
 					.WithBodyAsJson(new UserRegistrationResultDTO(userId), true));
+			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsUser/login").UsingPost()
+					.WithHeader("Content-Type", new ExactMatcher("application/json"))
+					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
+				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
+					.WithBodyAsJson(new LoginResponseDTO("OK")));
 
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test A" });

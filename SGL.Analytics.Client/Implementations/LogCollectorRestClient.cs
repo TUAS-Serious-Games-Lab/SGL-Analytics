@@ -26,13 +26,16 @@ namespace SGL.Analytics.Client {
 			this.logCollectorApiFullUri = new Uri(backendServerBaseUri, logCollectorApiEndpoint);
 		}
 
-		public async Task UploadLogFileAsync(string appName, string appAPIToken, Guid userID, ILogStorage.ILogFile logFile) {
+		public async Task UploadLogFileAsync(string appName, string appAPIToken, Guid userID, LoginResponseDTO loginData, ILogStorage.ILogFile logFile) {
 			using (var stream = logFile.OpenReadRaw()) {
 				var content = new StreamContent(stream);
 				content.Headers.MapDtoProperties(new LogMetadataDTO(appName, userID, logFile.ID, logFile.CreationTime, logFile.EndTime));
 				content.Headers.Add("App-API-Token", appAPIToken);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var response = await httpClient.PostAsync(logCollectorApiFullUri, content);
+				var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);
+				request.Content = content;
+				request.Headers.Add("Authorization", "Bearer " + loginData.BearerToken);
+				var response = await httpClient.SendAsync(request);
 				response.EnsureSuccessStatusCode();
 			}
 		}

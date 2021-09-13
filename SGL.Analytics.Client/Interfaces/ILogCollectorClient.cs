@@ -1,3 +1,4 @@
+using SGL.Analytics.DTO;
 using System;
 using System.Threading.Tasks;
 
@@ -13,6 +14,6 @@ namespace SGL.Analytics.Client {
 		/// i.e. it must take care of synchronization between the background thread and the thread on which the value is changed, e.g. by lock-blocks in both, the setter and the getter.</remarks>
 		bool IsActive => true;
 
-		Task UploadLogFileAsync(string appName, string appAPIToken, Guid userID, ILogStorage.ILogFile logFile);
+		Task UploadLogFileAsync(string appName, string appAPIToken, Guid userID, LoginResponseDTO loginData, ILogStorage.ILogFile logFile);
 	}
 }
