@@ -165,7 +165,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
 				content.Headers.MapDtoProperties(new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
-				content.Headers.Add("App-API-Token", "IncorrectToken");
+				content.Headers.Add("App-API-Token", fixture.AppApiToken);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
 				request.Content = content;
