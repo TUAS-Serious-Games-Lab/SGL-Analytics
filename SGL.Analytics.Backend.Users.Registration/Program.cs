@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.UserDB {
+namespace SGL.Analytics.Backend.Users.Registration {
 	public class Program {
 		public static void Main(string[] args) {
 			IHost host = CreateHostBuilder(args).Build();

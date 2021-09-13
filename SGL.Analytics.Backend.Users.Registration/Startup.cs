@@ -17,7 +17,7 @@ using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Analytics.Backend.Users.Infrastructure.Services;
 
-namespace SGL.Analytics.Backend.UserDB {
+namespace SGL.Analytics.Backend.Users.Registration {
 	public class Startup {
 		public Startup(IConfiguration configuration) {
 			Configuration = configuration;

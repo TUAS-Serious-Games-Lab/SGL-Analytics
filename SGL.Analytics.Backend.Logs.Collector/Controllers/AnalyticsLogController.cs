@@ -7,7 +7,7 @@ using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.WebUtilities;
 using SGL.Analytics.DTO;
 
-namespace SGL.Analytics.Backend.LogCollector.Controllers {
+namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 	[Route("api/[controller]")]
 	[ApiController]
 	public class AnalyticsLogController : ControllerBase {

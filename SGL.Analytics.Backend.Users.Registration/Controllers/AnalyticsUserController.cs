@@ -12,7 +12,7 @@ using SGL.Analytics.Backend.Security;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.DTO;
 
-namespace SGL.Analytics.Backend.UserDB.Controllers {
+namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	[Route("api/[controller]")]
 	[ApiController]
 	public class AnalyticsUserController : ControllerBase {

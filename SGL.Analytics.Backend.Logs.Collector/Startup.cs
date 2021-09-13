@@ -9,7 +9,7 @@ using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
 
-namespace SGL.Analytics.Backend.LogCollector {
+namespace SGL.Analytics.Backend.Logs.Collector {
 	public class Startup {
 		public Startup(IConfiguration configuration) {
 			Configuration = configuration;
