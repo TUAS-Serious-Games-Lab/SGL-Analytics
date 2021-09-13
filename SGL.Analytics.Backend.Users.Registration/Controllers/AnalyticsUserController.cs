@@ -35,9 +35,11 @@ namespace SGL.Analytics.Backend.UserDB.Controllers {
 			var user = await userManager.RegisterUserAsync(userRegistration);
 			var result = user.AsRegistrationResult();
 
-			return StatusCode(((int)HttpStatusCode.Created), result);
+			return StatusCode(StatusCodes.Status201Created, result);
 		}
 
+		[ProducesResponseType(typeof(LoginResponseDTO), StatusCodes.Status200OK)]
+		[ProducesResponseType(StatusCodes.Status403Forbidden)]
 		[HttpPost("login")]
 		public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginRequestDTO loginRequest) {
 			var token = await loginService.LoginAsync(loginRequest.UserId, loginRequest.UserSecret,
@@ -48,7 +50,7 @@ namespace SGL.Analytics.Backend.UserDB.Controllers {
 					await userManager.UpdateUserAsync(user);
 				});
 			if (token is null) {
-				return StatusCode(((int)HttpStatusCode.Forbidden), "Login failed: The given user id or secret was invalid.");
+				return StatusCode(StatusCodes.Status403Forbidden, "Login failed: The given user id or secret was invalid.");
 			}
 			else {
 				var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
