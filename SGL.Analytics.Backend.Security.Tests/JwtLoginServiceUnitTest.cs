@@ -64,5 +64,22 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
 			Assert.Equal("42", Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value);
 		}
+
+		[Fact]
+		public async Task JwtLoginServiceIssuesNoTokenForNonExistentUserAndTakesAtLeastFailureDelay() {
+			var start = DateTime.Now;
+			var token = await loginService.LoginAsync(42, "UserSecret", async id => {
+				await Task.CompletedTask;
+				Assert.Equal(42, id);
+				return (User?)null;
+			}, u => {
+				throw new XunitException("The login service should not call this because it got no user object.");
+			}, (u, s) => {
+				throw new XunitException("The login service should not need to rehash in this test case.");
+			});
+			var end = DateTime.Now;
+			Assert.Null(token);
+			Assert.InRange(end - start, options.LoginService.FailureDelay, TimeSpan.MaxValue);
+		}
 	}
 }
