@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using SGL.Analytics.TestUtilities;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Reflection;
@@ -67,7 +68,8 @@ namespace SGL.Analytics.Backend.Security.Tests {
 
 		[Fact]
 		public async Task JwtLoginServiceIssuesNoTokenForNonExistentUserAndTakesAtLeastFailureDelay() {
-			var start = DateTime.Now;
+			var stopwatch = new Stopwatch();
+			stopwatch.Start();
 			var token = await loginService.LoginAsync(42, "UserSecret", async id => {
 				await Task.CompletedTask;
 				Assert.Equal(42, id);
@@ -77,19 +79,20 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			}, (u, s) => {
 				throw new XunitException("The login service should not need to rehash in this test case.");
 			});
-			var end = DateTime.Now;
+			stopwatch.Stop();
 			Assert.Null(token);
 			// Ensure that the login operation only fails after the minimum delay for failures.
 			// This increases security by
 			// - preventing timing attacks to differentiate between nonexistent users and incorrect secrets (the delay should be longer than the longest failure path takes)
 			// - slowing down brute force attacks
-			Assert.InRange(end - start, options.LoginService.FailureDelay, TimeSpan.MaxValue);
+			Assert.InRange(stopwatch.Elapsed, options.LoginService.FailureDelay, TimeSpan.MaxValue);
 		}
 
 		[Fact]
 		public async Task JwtLoginServiceIssuesNoTokenForIncorrectUserSecretAndTakesAtLeastFailureDelay() {
 			var user = new User();
-			var start = DateTime.Now;
+			var stopwatch = new Stopwatch();
+			stopwatch.Start();
 			var token = await loginService.LoginAsync(42, "WrongSecret", async id => {
 				await Task.CompletedTask;
 				Assert.Equal(42, id);
@@ -100,13 +103,13 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			}, (u, s) => {
 				throw new XunitException("The login service should not need to rehash in this test case.");
 			});
-			var end = DateTime.Now;
+			stopwatch.Stop();
 			Assert.Null(token);
 			// Ensure that the login operation only fails after the minimum delay for failures.
 			// This increases security by
 			// - preventing timing attacks to differentiate between nonexistent users and incorrect secrets (the delay should be longer than the longest failure path takes)
 			// - slowing down brute force attacks
-			Assert.InRange(end - start, options.LoginService.FailureDelay, TimeSpan.MaxValue);
+			Assert.InRange(stopwatch.Elapsed, options.LoginService.FailureDelay, TimeSpan.MaxValue);
 		}
 
 		[Fact]
