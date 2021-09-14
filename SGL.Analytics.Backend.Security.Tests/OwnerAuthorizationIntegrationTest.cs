@@ -94,5 +94,25 @@ namespace SGL.Analytics.Backend.Security.Tests {
 				}
 			}
 		}
+
+		[Theory]
+		[InlineData("user1")]
+		[InlineData("user2")]
+		[InlineData("user3")]
+		[InlineData("user4")]
+		[InlineData("owner1")]
+		[InlineData("owner2")]
+		[InlineData("owner3")]
+		[InlineData("owner4")]
+		public async Task OwnerAuthorizationDeniesAccessForNonOwnerBasedOnRouteParam(string subRoute) {
+			var ownerId = Guid.NewGuid();
+			var token = fixture.TokenGenerator.GenerateToken(Guid.NewGuid(), TimeSpan.FromMinutes(5));
+			using (var client = fixture.CreateClient()) {
+				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/OwnerAuthorizationTest/{subRoute}/{ownerId}");
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+				var response = await client.SendAsync(request);
+				Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+			}
+		}
 	}
 }
