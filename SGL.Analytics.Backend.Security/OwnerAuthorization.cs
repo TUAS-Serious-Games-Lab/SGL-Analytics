@@ -107,6 +107,7 @@ namespace SGL.Analytics.Backend.Security {
 						}
 					}
 				}
+				logger.LogWarning("Found no valid owner parameter (neither from route nor from header).");
 				return null;
 			}
 			else if (context.Resource is null) return null;
