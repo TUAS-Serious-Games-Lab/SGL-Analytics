@@ -108,5 +108,48 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			// - slowing down brute force attacks
 			Assert.InRange(end - start, options.LoginService.FailureDelay, TimeSpan.MaxValue);
 		}
+
+		[Fact]
+		public async Task JwtLoginServiceCorrectlyHandlesRehashing() {
+			var secret = "UserSecret";
+
+			// Force creation of a hash with outdated parameters:
+			var optionField = typeof(SecretHashing).GetField("options", BindingFlags.Static | BindingFlags.NonPublic);
+			var hasherOptions = optionField!.GetValue(null) as IOptions<PasswordHasherOptions>;
+			hasherOptions!.Value.IterationCount = 100;
+			var hashedSecret = SecretHashing.CreateHashedSecret(secret);
+			hasherOptions!.Value.IterationCount = 10000;
+
+			bool calledHashUpdate = false;
+			var user = new User();
+			var token = await loginService.LoginAsync(42, secret, async id => {
+				await Task.CompletedTask;
+				Assert.Equal(42, id);
+				return user;
+			}, u => {
+				Assert.Same(user, u);
+				return hashedSecret;
+			}, async (u, hs) => {
+				await Task.CompletedTask;
+				Assert.Same(user, u);
+				// check if given hashed secret still matches the secret:
+				var (success, rehashed) = SecretHashing.VerifyHashedSecret(ref hs, secret);
+				Assert.True(success);
+				Assert.False(rehashed);
+				calledHashUpdate = true;
+			});
+			Assert.True(calledHashUpdate);
+			var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters() {
+				ValidateIssuer = true,
+				ValidateAudience = true,
+				ValidateLifetime = true,
+				ValidateIssuerSigningKey = true,
+				ValidAudience = options.Audience,
+				ValidIssuer = options.Issuer,
+				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.SymmetricKey ?? throw new InvalidOperationException("Missing key.")))
+			}, out var validatedToken);
+			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
+			Assert.Equal("42", Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value);
+		}
 	}
 }
