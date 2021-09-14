@@ -59,5 +59,16 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			this.fixture = fixture;
 			fixture.Output = output;
 		}
+
+		[Fact]
+		public async Task OwnerAuthorizationDeniesAccessForUnauthenticatedUserAndChallenges() {
+			var userId = Guid.NewGuid();
+			using (var client = fixture.CreateClient()) {
+				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/OwnerAuthorizationTest/user1/{userId}");
+				var response = await client.SendAsync(request);
+				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+				Assert.Equal("Bearer", Assert.Single(response.Headers.WwwAuthenticate).Scheme);
+			}
+		}
 	}
 }
