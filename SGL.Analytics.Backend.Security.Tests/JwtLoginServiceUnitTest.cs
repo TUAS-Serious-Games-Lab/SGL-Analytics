@@ -22,6 +22,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 		private JwtOptions options;
 		private JwtLoginService loginService;
 		private JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+		private TimeSpan delayTolerance = TimeSpan.FromMilliseconds(1);
 
 		private class User { }
 
@@ -34,7 +35,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 				SymmetricKey = "TestingSecretKeyTestingSecretKeyTestingSecretKey",
 				LoginService = new JwtLoginServiceOptions() {
 					ExpirationTime = TimeSpan.FromMinutes(5),
-					FailureDelay = TimeSpan.FromMilliseconds(400)
+					FailureDelay = TimeSpan.FromMilliseconds(450)
 				}
 			};
 			loginService = new JwtLoginService(loggerFactory.CreateLogger<JwtLoginService>(), Options.Create(options));
@@ -85,7 +86,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			// This increases security by
 			// - preventing timing attacks to differentiate between nonexistent users and incorrect secrets (the delay should be longer than the longest failure path takes)
 			// - slowing down brute force attacks
-			Assert.InRange(stopwatch.Elapsed, options.LoginService.FailureDelay, TimeSpan.MaxValue);
+			Assert.InRange(stopwatch.Elapsed, options.LoginService.FailureDelay - delayTolerance, TimeSpan.MaxValue);
 		}
 
 		[Fact]
@@ -109,7 +110,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			// This increases security by
 			// - preventing timing attacks to differentiate between nonexistent users and incorrect secrets (the delay should be longer than the longest failure path takes)
 			// - slowing down brute force attacks
-			Assert.InRange(stopwatch.Elapsed, options.LoginService.FailureDelay, TimeSpan.MaxValue);
+			Assert.InRange(stopwatch.Elapsed, options.LoginService.FailureDelay - delayTolerance, TimeSpan.MaxValue);
 		}
 
 		[Fact]
