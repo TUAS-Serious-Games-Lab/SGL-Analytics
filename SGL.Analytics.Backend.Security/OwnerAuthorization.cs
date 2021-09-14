@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -38,15 +39,18 @@ namespace SGL.Analytics.Backend.Security {
 
 	public class OwnerAuthorizationHandler : AuthorizationHandler<OwnerAuthorizationRequirement> {
 		private OwnerAuthorizationHandlerOptions options;
+		private ILogger<OwnerAuthorizationHandler> logger;
 
-		public OwnerAuthorizationHandler(IOptions<OwnerAuthorizationHandlerOptions> options) {
+		public OwnerAuthorizationHandler(IOptions<OwnerAuthorizationHandlerOptions> options, ILogger<OwnerAuthorizationHandler> logger) {
 			this.options = options.Value;
+			this.logger = logger;
 		}
 
 		protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, OwnerAuthorizationRequirement requirement) {
 			var currentUser = extractCurrentUserId(context);
 			var targetOwner = extractTargetOwner(context);
 			if (currentUser is not null && targetOwner is not null && targetOwner == currentUser) {
+				logger.LogInformation("Current user id and owner id match, granting access based on ownership.");
 				context.Succeed(requirement);
 			}
 			return Task.CompletedTask;
@@ -54,8 +58,15 @@ namespace SGL.Analytics.Backend.Security {
 
 		private Guid? extractCurrentUserId(AuthorizationHandlerContext context) {
 			var userIdClaim = context.User.FindFirst(c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase));
-			if (userIdClaim is null) return null;
-			if (Guid.TryParse(userIdClaim.Value, out var userId)) return userId;
+			if (userIdClaim is null) {
+				logger.LogDebug("Found no 'userid' claim. As the current user has no id, we can't check it against any owner parameters.");
+				return null;
+			}
+			if (Guid.TryParse(userIdClaim.Value, out var userId)) {
+				logger.LogDebug("Found valid 'userid' claim.");
+				return userId;
+			}
+			logger.LogDebug("The 'userid' claim of the current user could not be parsed as a guid, which is the expected user id type. We thus have no user to check againts any owner parameters.");
 			return null;
 		}
 
@@ -65,21 +76,33 @@ namespace SGL.Analytics.Backend.Security {
 				foreach (var name in options.OwnerRouteValueNames) {
 					if (routeData.Values.TryGetValue(name, out var value)) {
 						if (value is Guid id) {
+							logger.LogDebug("Found owner route parameter '{name}' with guid value.", name);
 							return id;
 						}
 						else if (value is string s) {
 							if (Guid.TryParse(s, out var parsedId)) {
+								logger.LogDebug("Found owner route parameter '{name}' with a valid string value.", name);
 								return parsedId;
 							}
+							else {
+								logger.LogDebug("Found owner route parameter candidate '{name}' of type string but it could not be parsed into a guid, ignoring it.", name);
+							}
 						}
-						// else, ignore the value and try next candidate
+						else {
+							// ignore the value and try next candidate
+							logger.LogDebug("Found owner route parameter candidate '{name}', but it was of unexpected type {type}, ignoring it.", name, value?.GetType()?.FullName ?? "#null#");
+						}
 					}
 				}
 				foreach (var name in options.OwnerHeaderNames) {
 					if (http.Request.Headers.TryGetValue(name, out var values)) {
-						if (values.Count() != 1) continue;
+						if (values.Count() != 1) {
+							logger.LogDebug("Found owner header candidate '{name}', but it was non-unique, ignoring it.", name);
+							continue;
+						}
 						var value = values.Single();
 						if (Guid.TryParse(value, out var parsedId)) {
+							logger.LogDebug("Found valid owner header candidate '{name}'.", name);
 							return parsedId;
 						}
 					}
