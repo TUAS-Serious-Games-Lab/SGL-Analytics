@@ -85,5 +85,28 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			// - slowing down brute force attacks
 			Assert.InRange(end - start, options.LoginService.FailureDelay, TimeSpan.MaxValue);
 		}
+
+		[Fact]
+		public async Task JwtLoginServiceIssuesNoTokenForIncorrectUserSecretAndTakesAtLeastFailureDelay() {
+			var user = new User();
+			var start = DateTime.Now;
+			var token = await loginService.LoginAsync(42, "WrongSecret", async id => {
+				await Task.CompletedTask;
+				Assert.Equal(42, id);
+				return user;
+			}, u => {
+				Assert.Same(user, u);
+				return SecretHashing.CreateHashedSecret("UserSecret");
+			}, (u, s) => {
+				throw new XunitException("The login service should not need to rehash in this test case.");
+			});
+			var end = DateTime.Now;
+			Assert.Null(token);
+			// Ensure that the login operation only fails after the minimum delay for failures.
+			// This increases security by
+			// - preventing timing attacks to differentiate between nonexistent users and incorrect secrets (the delay should be longer than the longest failure path takes)
+			// - slowing down brute force attacks
+			Assert.InRange(end - start, options.LoginService.FailureDelay, TimeSpan.MaxValue);
+		}
 	}
 }
