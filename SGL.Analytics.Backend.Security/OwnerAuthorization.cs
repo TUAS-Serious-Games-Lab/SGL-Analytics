@@ -30,8 +30,8 @@ namespace SGL.Analytics.Backend.Security {
 	public class OwnerAuthorizationHandlerOptions {
 		public const string OwnerAuthorizationHandler = "OwnerAuthorizationHandler";
 		public static readonly IEnumerable<string> DefaultOwnerNames = new List<string> {
-			"userId", "user", "userid", "userID", "UserId", "UserID",
-			"ownerId", "owner", "ownerid", "ownerID", "OwnerId", "OwnerID"
+			"userId", "user","User", "userid", "userID", "UserId", "UserID",
+			"ownerId", "owner","Owner", "ownerid", "ownerID", "OwnerId", "OwnerID"
 		};
 		public IEnumerable<string> OwnerRouteValueNames { get; set; } = DefaultOwnerNames;
 		public IEnumerable<string> OwnerHeaderNames { get; set; } = DefaultOwnerNames;
