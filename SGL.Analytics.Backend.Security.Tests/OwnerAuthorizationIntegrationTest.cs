@@ -114,5 +114,17 @@ namespace SGL.Analytics.Backend.Security.Tests {
 				Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
 			}
 		}
+
+		[Fact]
+		public async Task OwnerAuthorizationDeniesAccessIfNoOwnerParamPresent() {
+			var ownerId = Guid.NewGuid();
+			var token = fixture.TokenGenerator.GenerateToken(ownerId, TimeSpan.FromMinutes(5));
+			using (var client = fixture.CreateClient()) {
+				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/OwnerAuthorizationTest/other/{ownerId}");
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+				var response = await client.SendAsync(request);
+				Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+			}
+		}
 	}
 }
