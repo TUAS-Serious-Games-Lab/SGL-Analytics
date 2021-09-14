@@ -1,0 +1,63 @@
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using SGL.Analytics.Backend.Security.Tests.OwnerAuthorizationScenario;
+using SGL.Analytics.Backend.TestUtilities;
+using SGL.Analytics.TestUtilities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace SGL.Analytics.Backend.Security.Tests {
+
+	public class OwnerAuthorizationIntegrationTestFixture : WebApplicationFactory<Startup> {
+		public JwtOptions JwtOptions { get; } = new JwtOptions() {
+			Audience = "LogCollectorIntegrationTest",
+			Issuer = "LogCollectorIntegrationTest",
+			SymmetricKey = "TestingS3cr3tTestingS3cr3t"
+		};
+		public Dictionary<string, string> JwtConfig { get; }
+
+		public ITestOutputHelper? Output { get; set; } = null;
+		public JwtTokenGenerator TokenGenerator { get; }
+
+		public OwnerAuthorizationIntegrationTestFixture() {
+			JwtConfig = new() {
+				["Jwt:Audience"] = JwtOptions.Audience,
+				["Jwt:Issuer"] = JwtOptions.Issuer,
+				["Jwt:SymmetricKey"] = JwtOptions.SymmetricKey,
+			};
+			TokenGenerator = new JwtTokenGenerator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
+		}
+
+		protected override IHostBuilder CreateHostBuilder() {
+			return Host.CreateDefaultBuilder()
+				.ConfigureWebHostDefaults(webBuilder => {
+					webBuilder.UseStartup<Startup>();
+				}).ConfigureAppConfiguration(config => config
+					.AddInMemoryCollection(JwtConfig))
+					.ConfigureLogging(logging => logging.AddXUnit(() => Output).SetMinimumLevel(LogLevel.Debug));
+		}
+	}
+
+	public class OwnerAuthorizationIntegrationTest : IClassFixture<OwnerAuthorizationIntegrationTestFixture> {
+		private ITestOutputHelper output;
+		private OwnerAuthorizationIntegrationTestFixture fixture;
+
+		public OwnerAuthorizationIntegrationTest(ITestOutputHelper output, OwnerAuthorizationIntegrationTestFixture fixture) {
+			this.output = output;
+			this.fixture = fixture;
+			fixture.Output = output;
+		}
+	}
+}
