@@ -29,6 +29,23 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			Assert.False(rehashed);
 		}
 		[Fact]
+		public void RehashingIsCorrectlyPerformedAndIndicated() {
+			var secret = SecretGenerator.Instance.GenerateSecret(16);
+			var optionField = typeof(SecretHashing).GetField("options", BindingFlags.Static | BindingFlags.NonPublic);
+			var options = optionField!.GetValue(null) as IOptions<PasswordHasherOptions>;
+			options!.Value.IterationCount = 100;
+			var hashedSecret = SecretHashing.CreateHashedSecret(secret);
+			var origHashedSecret = hashedSecret;
+			options!.Value.IterationCount = 10000;
+			var (success, rehashed) = SecretHashing.VerifyHashedSecret(ref hashedSecret, secret);
+			Assert.True(success);
+			Assert.True(rehashed);
+			(success, rehashed) = SecretHashing.VerifyHashedSecret(ref hashedSecret, secret);
+			Assert.True(success);
+			Assert.False(rehashed);
+			Assert.NotEqual(origHashedSecret, hashedSecret);
+		}
+		[Fact]
 		public void HashesAreSalted() {
 			var secret = SecretGenerator.Instance.GenerateSecret(16);
 			// When hashes are properly salted, creating two hashedSecrets from the same secret must produce two different values.
