@@ -22,7 +22,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 		private JwtOptions options;
 		private JwtLoginService loginService;
 		private JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
-		private TimeSpan delayTolerance = TimeSpan.FromMilliseconds(1);
+		private TimeSpan delayTolerance = TimeSpan.FromMilliseconds(16);
 
 		private class User { }
 
