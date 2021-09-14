@@ -28,5 +28,13 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			Assert.False(success);
 			Assert.False(rehashed);
 		}
+		[Fact]
+		public void HashesAreSalted() {
+			var secret = SecretGenerator.Instance.GenerateSecret(16);
+			// When hashes are properly salted, creating two hashedSecrets from the same secret must produce two different values.
+			var hashedSecret1 = SecretHashing.CreateHashedSecret(secret);
+			var hashedSecret2 = SecretHashing.CreateHashedSecret(secret);
+			Assert.NotEqual(hashedSecret1, hashedSecret2);
+		}
 	}
 }
