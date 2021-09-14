@@ -76,10 +76,6 @@ namespace SGL.Analytics.Backend.Security.Tests {
 		[InlineData("user2")]
 		[InlineData("user3")]
 		[InlineData("user4")]
-		[InlineData("owner1")]
-		[InlineData("owner2")]
-		[InlineData("owner3")]
-		[InlineData("owner4")]
 		public async Task OwnerAuthorizationGrantsAccessForOwnerBasedOnRouteParam(string subRoute) {
 			var userId = Guid.NewGuid();
 			var token = fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5));
@@ -100,10 +96,6 @@ namespace SGL.Analytics.Backend.Security.Tests {
 		[InlineData("user2")]
 		[InlineData("user3")]
 		[InlineData("user4")]
-		[InlineData("owner1")]
-		[InlineData("owner2")]
-		[InlineData("owner3")]
-		[InlineData("owner4")]
 		public async Task OwnerAuthorizationDeniesAccessForNonOwnerBasedOnRouteParam(string subRoute) {
 			var ownerId = Guid.NewGuid();
 			var token = fixture.TokenGenerator.GenerateToken(Guid.NewGuid(), TimeSpan.FromMinutes(5));

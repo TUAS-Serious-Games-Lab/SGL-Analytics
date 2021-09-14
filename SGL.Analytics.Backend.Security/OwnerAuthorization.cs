@@ -14,44 +14,50 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Backend.Security {
 	public static class OwnerAuthorizationExtensions {
 		public static IServiceCollection AddOwnerAuthorizationHandler(this IServiceCollection services, IConfiguration config) {
-			services.Configure<OwnerAuthorizationHandlerOptions>(config.GetSection(OwnerAuthorizationHandlerOptions.OwnerAuthorizationHandler));
 			services.AddScoped<IAuthorizationHandler, OwnerAuthorizationHandler>();
 			return services;
 		}
 
 		public static AuthorizationOptions AddOwnerPolicy(this AuthorizationOptions options) {
-			options.AddPolicy("Owner", policy => policy.AddRequirements(new OwnerAuthorizationRequirement()));
+			options.AddPolicy("RouteOwnerUserId", policy => policy.AddRequirements(new OwnerAuthorizationRequirement(OwnerAuthorizationSource.Route, "UserId")));
+			options.AddPolicy("HeaderOwnerUserId", policy => policy.AddRequirements(new OwnerAuthorizationRequirement(OwnerAuthorizationSource.Header, "UserId")));
 			return options;
 		}
 	}
 
-	public class OwnerAuthorizationRequirement : IAuthorizationRequirement { }
+	public enum OwnerAuthorizationSource { Route, Header }
 
-	public class OwnerAuthorizationHandlerOptions {
-		public const string OwnerAuthorizationHandler = "OwnerAuthorizationHandler";
-		public static readonly IEnumerable<string> DefaultOwnerNames = new List<string> {
-			"userId", "user", "User", "userid", "userID", "UserId", "UserID",
-			"ownerId", "owner", "Owner", "ownerid", "ownerID", "OwnerId", "OwnerID"
-		};
-		public IEnumerable<string> OwnerRouteValueNames { get; set; } = DefaultOwnerNames;
-		public IEnumerable<string> OwnerHeaderNames { get; set; } = DefaultOwnerNames;
+	public class OwnerAuthorizationRequirement : IAuthorizationRequirement {
+		public OwnerAuthorizationSource OwnerParamSource { get; set; }
+		public string OwnerParamName { get; set; }
+
+		public OwnerAuthorizationRequirement(OwnerAuthorizationSource ownerParamSource, string ownerParamName) {
+			OwnerParamSource = ownerParamSource;
+			OwnerParamName = ownerParamName;
+		}
 	}
 
 	public class OwnerAuthorizationHandler : AuthorizationHandler<OwnerAuthorizationRequirement> {
-		private OwnerAuthorizationHandlerOptions options;
 		private ILogger<OwnerAuthorizationHandler> logger;
 
-		public OwnerAuthorizationHandler(IOptions<OwnerAuthorizationHandlerOptions> options, ILogger<OwnerAuthorizationHandler> logger) {
-			this.options = options.Value;
+		public OwnerAuthorizationHandler(ILogger<OwnerAuthorizationHandler> logger) {
 			this.logger = logger;
 		}
 
 		protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, OwnerAuthorizationRequirement requirement) {
 			var currentUser = extractCurrentUserId(context);
-			var targetOwner = extractTargetOwner(context);
-			if (currentUser is not null && targetOwner is not null && targetOwner == currentUser) {
+			var targetOwner = requirement.OwnerParamSource switch {
+				OwnerAuthorizationSource.Route => extractRouteOwner(context, requirement.OwnerParamName),
+				OwnerAuthorizationSource.Header => extractHeaderOwner(context, requirement.OwnerParamName),
+				_ => null
+			};
+			if (currentUser is null || targetOwner is null) return Task.CompletedTask;
+			if (targetOwner == currentUser) {
 				logger.LogInformation("Current user id and owner id match, granting access based on ownership.");
 				context.Succeed(requirement);
+			}
+			else {
+				logger.LogInformation("Current user id and owner id do NOT match, NOT granting access based on ownership. Other policies may still allow access.");
 			}
 			return Task.CompletedTask;
 		}
@@ -70,47 +76,63 @@ namespace SGL.Analytics.Backend.Security {
 			return null;
 		}
 
-		private Guid? extractTargetOwner(AuthorizationHandlerContext context) {
+		private Guid? extractRouteOwner(AuthorizationHandlerContext context, string name) {
 			if (context.Resource is HttpContext http) {
 				var routeData = http.GetRouteData();
-				foreach (var name in options.OwnerRouteValueNames) {
-					if (routeData.Values.TryGetValue(name, out var value)) {
-						if (value is Guid id) {
-							logger.LogDebug("Found owner route parameter '{name}' with guid value.", name);
-							return id;
-						}
-						else if (value is string s) {
-							if (Guid.TryParse(s, out var parsedId)) {
-								logger.LogDebug("Found owner route parameter '{name}' with a valid string value.", name);
-								return parsedId;
-							}
-							else {
-								logger.LogDebug("Found owner route parameter candidate '{name}' of type string but it could not be parsed into a guid, ignoring it.", name);
-							}
-						}
-						else {
-							// ignore the value and try next candidate
-							logger.LogDebug("Found owner route parameter candidate '{name}', but it was of unexpected type {type}, ignoring it.", name, value?.GetType()?.FullName ?? "#null#");
-						}
+				if (routeData.Values.TryGetValue(name, out var value)) {
+					if (value is Guid id) {
+						logger.LogDebug("Found owner route parameter '{name}' with guid value.", name);
+						return id;
 					}
-				}
-				foreach (var name in options.OwnerHeaderNames) {
-					if (http.Request.Headers.TryGetValue(name, out var values)) {
-						if (values.Count() != 1) {
-							logger.LogDebug("Found owner header candidate '{name}', but it was non-unique, ignoring it.", name);
-							continue;
-						}
-						var value = values.Single();
-						if (Guid.TryParse(value, out var parsedId)) {
-							logger.LogDebug("Found valid owner header candidate '{name}'.", name);
+					else if (value is string s) {
+						if (Guid.TryParse(s, out var parsedId)) {
+							logger.LogDebug("Found owner route parameter '{name}' with a valid string value.", name);
 							return parsedId;
 						}
+						else {
+							logger.LogWarning("Found owner route parameter '{name}' of type string, but it could not be parsed into a valid guid.", name);
+							return null;
+						}
+					}
+					else {
+						logger.LogWarning("Found owner route parameter '{name}' of unexpected type '{type}'.", name, value?.GetType()?.FullName ?? ">null<");
+						return null;
 					}
 				}
-				logger.LogWarning("Found no valid owner parameter (neither from route nor from header).");
+				else {
+					logger.LogWarning("Found no valid owner parameter from route.");
+					return null;
+				}
+			}
+			else if (context.Resource is null) {
+				logger.LogWarning("Can't extract owner information from null ressource.");
 				return null;
 			}
-			else if (context.Resource is null) return null;
+			else throw new NotImplementedException($"Don't know how to extract target owner user id for ressource type {context.Resource?.GetType().FullName ?? string.Empty}.");
+		}
+		private Guid? extractHeaderOwner(AuthorizationHandlerContext context, string name) {
+			if (context.Resource is HttpContext http) {
+				if (http.Request.Headers.TryGetValue(name, out var values)) {
+					var value = values.First(); // Using First matches the behavior of HeaderDtroModelBinder from SGL.Analytics.Backend.WebUtilities.
+												// This ensures, users can't pass a different id to the model binder than to the OwnerAuthorizationHandler.
+					if (Guid.TryParse(value, out var parsedId)) {
+						logger.LogDebug("Found valid owner header '{name}'.", name);
+						return parsedId;
+					}
+					else {
+						logger.LogWarning("Found owner header '{name}', but it could not be parsed into a valid guid.", name);
+						return null;
+					}
+				}
+				else {
+					logger.LogWarning("Found no valid owner parameter from header.");
+					return null;
+				}
+			}
+			else if (context.Resource is null) {
+				logger.LogWarning("Can't extract owner information from null ressource.");
+				return null;
+			}
 			else throw new NotImplementedException($"Don't know how to extract target owner user id for ressource type {context.Resource?.GetType().FullName ?? string.Empty}.");
 		}
 	}

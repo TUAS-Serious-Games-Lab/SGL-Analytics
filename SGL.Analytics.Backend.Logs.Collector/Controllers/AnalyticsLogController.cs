@@ -28,7 +28,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 		[HttpPost]
-		[Authorize(policy: "Owner")]
+		[Authorize(policy: "HeaderOwnerUserId")]
 		public async Task<ActionResult> IngestLog([FromHeader(Name = "App-API-Token")] string appApiToken, [DtoFromHeaderModelBinder] LogMetadataDTO logMetadata) {
 			var app = await appRepo.GetApplicationByNameAsync(logMetadata.AppName);
 			if (app is null) {
