@@ -70,5 +70,29 @@ namespace SGL.Analytics.Backend.Security.Tests {
 				Assert.Equal("Bearer", Assert.Single(response.Headers.WwwAuthenticate).Scheme);
 			}
 		}
+
+		[Theory]
+		[InlineData("user1")]
+		[InlineData("user2")]
+		[InlineData("user3")]
+		[InlineData("user4")]
+		[InlineData("owner1")]
+		[InlineData("owner2")]
+		[InlineData("owner3")]
+		[InlineData("owner4")]
+		public async Task OwnerAuthorizationGrantsAccessForOwnerBasedOnRouteParam(string subRoute) {
+			var userId = Guid.NewGuid();
+			var token = fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5));
+			using (var client = fixture.CreateClient()) {
+				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/OwnerAuthorizationTest/{subRoute}/{userId}");
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+				var response = await client.SendAsync(request);
+				response.EnsureSuccessStatusCode();
+				await using (var stream = await response.Content.ReadAsStreamAsync()) {
+					var readUserId = await JsonSerializer.DeserializeAsync<Guid>(stream);
+					Assert.Equal(userId, readUserId);
+				}
+			}
+		}
 	}
 }
