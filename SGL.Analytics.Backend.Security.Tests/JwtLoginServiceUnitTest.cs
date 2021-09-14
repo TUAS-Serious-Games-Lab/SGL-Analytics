@@ -79,6 +79,10 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			});
 			var end = DateTime.Now;
 			Assert.Null(token);
+			// Ensure that the login operation only fails after the minimum delay for failures.
+			// This increases security by
+			// - preventing timing attacks to differentiate between nonexistent users and incorrect secrets (the delay should be longer than the longest failure path takes)
+			// - slowing down brute force attacks
 			Assert.InRange(end - start, options.LoginService.FailureDelay, TimeSpan.MaxValue);
 		}
 	}
