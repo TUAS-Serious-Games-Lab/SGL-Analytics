@@ -7,6 +7,7 @@ namespace SGL.Analytics.Client {
 	public class FileRootDataStore : IRootDataStore {
 		private struct StorageStructure {
 			public Guid? UserID { get; set; }
+			public string UserSecret { get; set; }
 		}
 		private StorageStructure storage;
 		string appName;
@@ -15,6 +16,7 @@ namespace SGL.Analytics.Client {
 		};
 
 		public Guid? UserID { get => storage.UserID; set => storage.UserID = value; }
+		public string UserSecret { get => storage.UserSecret; set => storage.UserSecret = value; }
 
 		public FileRootDataStore(string appName) {
 			this.appName = appName;

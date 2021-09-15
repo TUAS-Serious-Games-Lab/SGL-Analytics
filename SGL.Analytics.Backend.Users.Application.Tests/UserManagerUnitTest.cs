@@ -34,7 +34,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 		[Fact]
 		public async Task SimpleUserCanBeRegisteredAndThenRetrieved() {
 			var app = await appRepo.AddApplicationAsync(ApplicationWithUserProperties.Create(appName, appApiKey));
-			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new());
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", "Passw0rd", new());
 			var user = await userMgr.RegisterUserAsync(userRegDTO);
 			Assert.Equal("Testuser", user.Username);
 			Assert.NotEqual(Guid.Empty, user.Id);
@@ -56,7 +56,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 				["A"] = 42,
 				["B"] = "Test"
 			};
-			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() {
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", "Passw0rd", new() {
 				["Number"] = 1234,
 				["String"] = "Hello World",
 				["Date"] = date,
@@ -80,7 +80,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			app.AddProperty("Number", UserPropertyType.Integer);
 			app = await appRepo.AddApplicationAsync(app);
 
-			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() {
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", "Passw0rd", new() {
 				["Number"] = 42,
 				["DoesNotExist"] = "Hello World"
 			});
@@ -93,7 +93,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			app.AddProperty("Message", UserPropertyType.String);
 			app = await appRepo.AddApplicationAsync(app);
 
-			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() {
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", "Passw0rd", new() {
 				["Message"] = 42,
 			});
 			Assert.Equal("Message", (await Assert.ThrowsAsync<PropertyTypeDoesntMatchDefinitionException>(async () => await userMgr.RegisterUserAsync(userRegDTO))).InvalidPropertyName);
@@ -106,7 +106,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			app.AddProperty("GreetingMessage", UserPropertyType.String, true);
 			app = await appRepo.AddApplicationAsync(app);
 
-			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() {
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", "Passw0rd", new() {
 				["Number"] = 42,
 				// Note: No GreetingMessage
 			});
@@ -120,7 +120,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			app.AddProperty("GreetingMessage", UserPropertyType.String, true);
 			app = await appRepo.AddApplicationAsync(app);
 
-			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() {
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", "Passw0rd", new() {
 				["Number"] = 42,
 				["GreetingMessage"] = null
 			}); ;
@@ -138,7 +138,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			var date = DateTime.Today;
 			app = await appRepo.AddApplicationAsync(app);
 			var guid = Guid.NewGuid();
-			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() {
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", "Passw0rd", new() {
 				["Number"] = 1234,
 				["String"] = "Hello World",
 				["Date"] = date,
@@ -160,7 +160,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			var app = ApplicationWithUserProperties.Create(appName, appApiKey);
 			app = await appRepo.AddApplicationAsync(app);
 
-			var userRegDTO = new UserRegistrationDTO("DoesNotExist", "Testuser", new());
+			var userRegDTO = new UserRegistrationDTO("DoesNotExist", "Testuser", "Passw0rd", new());
 			await Assert.ThrowsAsync<ApplicationDoesNotExistException>(async () => await userMgr.RegisterUserAsync(userRegDTO));
 		}
 
@@ -169,10 +169,10 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			var app = await appRepo.AddApplicationAsync(ApplicationWithUserProperties.Create(appName, appApiKey));
 			app.AddProperty("Test", UserPropertyType.String);
 			app.AddProperty("XYZ", UserPropertyType.Integer);
-			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", new() { ["XYZ"] = 123 });
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", "Passw0rd", new() { ["XYZ"] = 123 });
 			var userOrig = await userMgr.RegisterUserAsync(userRegDTO);
 
-			var userClone = new User(UserRegistration.Create(userOrig.Id, app, userOrig.Username));
+			var userClone = new User(UserRegistration.Create(userOrig.Id, app, userOrig.Username, userOrig.HashedSecret));
 			userClone.Username = "NewName";
 			userClone.AppSpecificProperties["Test"] = "Hello World";
 			userClone.AppSpecificProperties["XYZ"] = 42;

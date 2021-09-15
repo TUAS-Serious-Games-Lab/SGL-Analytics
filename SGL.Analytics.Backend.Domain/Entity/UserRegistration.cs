@@ -12,24 +12,26 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		public Guid AppId { get; set; }
 		public ApplicationWithUserProperties App { get; set; } = null!;
 		public string Username { get; set; }
+		public string HashedSecret { get; set; }
 
 		public ICollection<ApplicationUserPropertyInstance> AppSpecificProperties { get; set; } = null!;
 
-		public UserRegistration(Guid id, Guid appId, string username) {
+		public UserRegistration(Guid id, Guid appId, string username, string hashedSecret) {
 			Id = id;
 			AppId = appId;
 			Username = username;
+			HashedSecret = hashedSecret;
 		}
 
-		public static UserRegistration Create(Guid id, ApplicationWithUserProperties app, string username) {
-			var userReg = new UserRegistration(id, app.Id, username);
+		public static UserRegistration Create(Guid id, ApplicationWithUserProperties app, string username, string hashedSecret) {
+			var userReg = new UserRegistration(id, app.Id, username, hashedSecret);
 			userReg.App = app;
 			userReg.AppSpecificProperties = new List<ApplicationUserPropertyInstance>();
 			return userReg;
 		}
 
-		public static UserRegistration Create(ApplicationWithUserProperties app, string username) {
-			return Create(Guid.NewGuid(), app, username);
+		public static UserRegistration Create(ApplicationWithUserProperties app, string username, string hashedSecret) {
+			return Create(Guid.NewGuid(), app, username, hashedSecret);
 		}
 
 		private ApplicationUserPropertyInstance setAppSpecificPropertyImpl(string name, object? value, Func<string, ApplicationUserPropertyDefinition> getPropDef) {
