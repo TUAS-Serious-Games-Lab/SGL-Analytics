@@ -20,7 +20,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 		private ITestOutputHelper output;
 		private ILoggerFactory loggerFactory;
 		private JwtOptions options;
-		private JwtLoginService loginService;
+		private ILoginService loginService;
 		private JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
 		private TimeSpan delayTolerance = TimeSpan.FromMilliseconds(16);
 
