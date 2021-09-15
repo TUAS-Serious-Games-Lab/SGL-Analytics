@@ -55,7 +55,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			if (users.Values.Count(u => u.Username == userRegistrationData.Username) > 0) {
 				throw new EntityUniquenessConflictException("User", "Username", userRegistrationData.Username);
 			}
-			if (Apps.TryGetValue(userRegistrationData.AppName, out var app)) {
+			if (!Apps.TryGetValue(userRegistrationData.AppName, out var app)) {
 				throw new ApplicationDoesNotExistException(userRegistrationData.AppName);
 			}
 			var user = new User(UserRegistration.Create(app!, userRegistrationData.Username, SecretHashing.CreateHashedSecret(userRegistrationData.Secret)));
