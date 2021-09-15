@@ -31,7 +31,7 @@ namespace SGL.Analytics.Backend.Security.Tests.OwnerAuthorizationScenario {
 		[Authorize(policy: "RouteOwnerUserId")]
 		public ActionResult User4([FromRoute] Guid UserID) => Ok(UserID);
 
-		[HttpGet("other/{other:guid}")]
+		[HttpGet("other1/{other:guid}")]
 		[Authorize(policy: "RouteOwnerUserId")]
 		public ActionResult Other1([FromRoute] Guid other) => Ok(other);
 
