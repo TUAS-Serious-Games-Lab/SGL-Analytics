@@ -84,6 +84,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[HttpPost("login")]
 		public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginRequestDTO loginRequest) {
 			var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName);
+			var fixedFailureDelay = loginService.StartFixedFailureDelay();
 			User? user = null;
 			var token = await loginService.LoginAsync(loginRequest.UserId, loginRequest.UserSecret,
 				async userId => (user = await userManager.GetUserById(userId)), // stash a reference to user to check app association later
@@ -91,7 +92,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				async (user, hashedSecret) => {
 					user.HashedSecret = hashedSecret;
 					await userManager.UpdateUserAsync(user);
-				});
+				}, fixedFailureDelay);
 
 			if (token is null) {
 				logger.LogError("Login attempt for user {userId} failed due to incorrect credentials.", loginRequest.UserId);
@@ -112,6 +113,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 
 			if (app is null || token is null) {
+				await fixedFailureDelay.WaitAsync(); // If the LoginAsync failed, this is already completed, but await it in case of a failure from app credentials.
 				return Unauthorized("Login failed due to invalid credentials.\n" +
 					"One of the following was incorrect: AppName, AppApiToken, UserId, UserSecret\n" +
 					"Which of these is / are incorrect is not stated for security reasons.");
