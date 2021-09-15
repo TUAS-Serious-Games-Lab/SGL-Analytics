@@ -12,14 +12,32 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
-	public class DummyUserManager : IUserManager {
+	public class DummyUserManager : IUserManager, IApplicationRepository {
 		private Dictionary<Guid, User> users = new();
-		private Dictionary<string, ApplicationWithUserProperties> apps = new();
+		public Dictionary<string, ApplicationWithUserProperties> Apps { get; } = new();
 
 		public DummyUserManager(IEnumerable<ApplicationWithUserProperties> apps) {
 			foreach (var app in apps) {
-				this.apps[app.Name] = app;
+				this.Apps[app.Name] = app;
 			}
+		}
+
+		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName) {
+			await Task.CompletedTask;
+			if (Apps.TryGetValue(appName, out var app)) {
+				return app;
+			}
+			else {
+				return null;
+			}
+		}
+
+		public async Task<ApplicationWithUserProperties> AddApplicationAsync(ApplicationWithUserProperties app) {
+			if (Apps.ContainsKey(app.Name)) throw new EntityUniquenessConflictException("Application", "Name", app.Name);
+			if (app.Id == Guid.Empty) app.Id = Guid.NewGuid();
+			Apps.Add(app.Name, app);
+			await Task.CompletedTask;
+			return app;
 		}
 
 		public async Task<User?> GetUserById(Guid userId) {
@@ -37,7 +55,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			if (users.Values.Count(u => u.Username == userRegistrationData.Username) > 0) {
 				throw new EntityUniquenessConflictException("User", "Username", userRegistrationData.Username);
 			}
-			if (apps.TryGetValue(userRegistrationData.AppName, out var app)) {
+			if (Apps.TryGetValue(userRegistrationData.AppName, out var app)) {
 				throw new ApplicationDoesNotExistException(userRegistrationData.AppName);
 			}
 			var user = new User(UserRegistration.Create(app!, userRegistrationData.Username, SecretHashing.CreateHashedSecret(userRegistrationData.Secret)));
