@@ -121,5 +121,16 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			Assert.Equal(StatusCodes.Status400BadRequest, res.StatusCode);
 			Assert.IsType<string>(res.Value);
 		}
+		[Fact]
+		public async Task UserRegistrationWithPropertyOfWrongTypeFailsWithExpectedError() {
+			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = 42 };
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser",
+				StringGenerator.GenerateRandomWord(16),// Not cryptographic, but ok for test
+				props);
+			var result = await controller.RegisterUser(appApiToken, userRegDTO);
+			var res = Assert.IsType<BadRequestObjectResult>(result.Result);
+			Assert.Equal(StatusCodes.Status400BadRequest, res.StatusCode);
+			Assert.IsType<string>(res.Value);
+		}
 	}
 }
