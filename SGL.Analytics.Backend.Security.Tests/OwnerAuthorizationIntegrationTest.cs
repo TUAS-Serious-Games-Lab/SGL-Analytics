@@ -119,6 +119,27 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			}
 		}
 
+		[Theory]
+		[InlineData("user5", "userId")]
+		[InlineData("user6", "userid")]
+		[InlineData("user7", "UserId")]
+		[InlineData("user8", "UserID")]
+		public async Task OwnerAuthorizationGrantsAccessForOwnerBasedOnHeader(string subRoute, string headerName) {
+			var userId = Guid.NewGuid();
+			var token = fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5));
+			using (var client = fixture.CreateClient()) {
+				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/OwnerAuthorizationTest/{subRoute}");
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+				request.Headers.Add(headerName, userId.ToString());
+				var response = await client.SendAsync(request);
+				response.EnsureSuccessStatusCode();
+				await using (var stream = await response.Content.ReadAsStreamAsync()) {
+					var readUserId = await JsonSerializer.DeserializeAsync<Guid>(stream);
+					Assert.Equal(userId, readUserId);
+				}
+			}
+		}
+
 		[Fact]
 		public async Task OwnerAuthorizationDeniesAccessIfNoOwnerHeaderPresent() {
 			var ownerId = Guid.NewGuid();

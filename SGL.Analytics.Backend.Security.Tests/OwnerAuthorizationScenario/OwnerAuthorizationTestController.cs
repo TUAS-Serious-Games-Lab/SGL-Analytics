@@ -36,6 +36,22 @@ namespace SGL.Analytics.Backend.Security.Tests.OwnerAuthorizationScenario {
 		public ActionResult Other1([FromRoute] Guid other) => Ok(other);
 
 
+		[HttpGet("user5")]
+		[Authorize(policy: "HeaderOwnerUserId")]
+		public ActionResult User5([FromHeader] Guid userId) => Ok(userId);
+
+		[HttpGet("user6")]
+		[Authorize(policy: "HeaderOwnerUserId")]
+		public ActionResult User6([FromHeader] Guid userid) => Ok(userid);
+
+		[HttpGet("user7")]
+		[Authorize(policy: "HeaderOwnerUserId")]
+		public ActionResult User7([FromHeader] Guid UserId) => Ok(UserId);
+
+		[HttpGet("user8")]
+		[Authorize(policy: "HeaderOwnerUserId")]
+		public ActionResult User8([FromHeader] Guid UserID) => Ok(UserID);
+
 		[HttpGet("other2")]
 		[Authorize(policy: "HeaderOwnerUserId")]
 		public ActionResult Other2([FromHeader] Guid other) => Ok(other);
