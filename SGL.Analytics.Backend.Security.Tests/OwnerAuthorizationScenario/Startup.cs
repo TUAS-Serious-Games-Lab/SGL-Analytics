@@ -18,7 +18,7 @@ namespace SGL.Analytics.Backend.Security.Tests.OwnerAuthorizationScenario {
 			services.AddControllers();
 
 			services.UseJwtBearerAuthentication(Configuration);
-			services.AddAuthorization(options => options.AddOwnerPolicy());
+			services.AddAuthorization(options => options.AddOwnerPolicies());
 			services.AddOwnerAuthorizationHandler(Configuration);
 		}
 

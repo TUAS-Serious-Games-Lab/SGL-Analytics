@@ -18,7 +18,7 @@ namespace SGL.Analytics.Backend.Security {
 			return services;
 		}
 
-		public static AuthorizationOptions AddOwnerPolicy(this AuthorizationOptions options) {
+		public static AuthorizationOptions AddOwnerPolicies(this AuthorizationOptions options) {
 			options.AddPolicy("RouteOwnerUserId", policy => policy.AddRequirements(new OwnerAuthorizationRequirement(OwnerAuthorizationSource.Route, "UserId")));
 			options.AddPolicy("HeaderOwnerUserId", policy => policy.AddRequirements(new OwnerAuthorizationRequirement(OwnerAuthorizationSource.Header, "UserId")));
 			return options;
