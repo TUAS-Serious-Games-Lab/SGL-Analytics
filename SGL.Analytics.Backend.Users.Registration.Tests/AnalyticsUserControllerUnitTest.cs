@@ -65,5 +65,16 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			Assert.Equal(appName, user!.App.Name);
 			Assert.All(props, kvp => Assert.Equal(kvp.Value, (Assert.Contains(kvp.Key, user.AppSpecificProperties as IDictionary<string, object?>))));
 		}
+		[Fact]
+		public async Task UserRegistrationWithNonExistentAppFailsWithExpectedError() {
+			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = "Hello" };
+			var userRegDTO = new UserRegistrationDTO("DoesNotExist", "Testuser",
+				StringGenerator.GenerateRandomWord(16),// Not cryptographic, but ok for test
+				props);
+			var result = await controller.RegisterUser(appApiToken, userRegDTO);
+			var res = Assert.IsType<UnauthorizedObjectResult>(result.Result);
+			Assert.Equal(StatusCodes.Status401Unauthorized, res.StatusCode);
+			Assert.IsType<string>(res.Value);
+		}
 	}
 }
