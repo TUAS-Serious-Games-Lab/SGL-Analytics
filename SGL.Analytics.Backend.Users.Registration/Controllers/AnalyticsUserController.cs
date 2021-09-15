@@ -82,6 +82,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[ProducesResponseType(StatusCodes.Status403Forbidden)]
 		[HttpPost("login")]
 		public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginRequestDTO loginRequest) {
+			var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName);
 			var token = await loginService.LoginAsync(loginRequest.UserId, loginRequest.UserSecret,
 				userId => userManager.GetUserById(userId),
 				user => user.HashedSecret,
@@ -89,8 +90,23 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 					user.HashedSecret = hashedSecret;
 					await userManager.UpdateUserAsync(user);
 				});
+
 			if (token is null) {
-				return StatusCode(StatusCodes.Status403Forbidden, "Login failed: The given user id or secret was invalid.");
+				logger.LogError("Login attempt for user {userId} failed due to incorrect credentials.", loginRequest.UserId);
+			}
+			// Intentionally no else if here, to log both failures if both, the app credentials AND the user credentials are invalid.
+			if (app is null) {
+				logger.LogError("Login attempt for user {userId} failed due to unknown application {appName}.", loginRequest.UserId, loginRequest.AppName);
+			}
+			else if (app.ApiToken != loginRequest.AppApiToken) {
+				app = null; // Clear non-matching app to simplify controll flow below.
+				logger.LogError("Login attempt for user {userId} failed due to incorrect API token for application {appName}.", loginRequest.UserId, loginRequest.AppName);
+			}
+
+			if (app is null || token is null) {
+				return Unauthorized("Login failed due to invalid credentials.\n" +
+					"One of the following was incorrect: AppName, AppApiToken, UserId, UserSecret\n" +
+					"Which of these is / are incorrect is not stated for security reasons.");
 			}
 			else {
 				return new LoginResponseDTO(token);

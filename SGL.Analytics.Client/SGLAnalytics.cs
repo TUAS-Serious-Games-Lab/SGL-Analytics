@@ -143,7 +143,7 @@ namespace SGL.Analytics.Client {
 			var tcs = new TaskCompletionSource<LoginResponseDTO>();
 			mainSyncContext.Post(async s => {
 				try {
-					tcs.SetResult(await userRegistrationClient.LoginUserAsync(new LoginRequestDTO(userIDOpt.Value, userSecret)));
+					tcs.SetResult(await userRegistrationClient.LoginUserAsync(new LoginRequestDTO(appName, appAPIToken, userIDOpt.Value, userSecret)));
 				}
 				catch (Exception ex) {
 					tcs.SetException(ex);
