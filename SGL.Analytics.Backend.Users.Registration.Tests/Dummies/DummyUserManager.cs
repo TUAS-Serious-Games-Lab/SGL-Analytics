@@ -15,10 +15,18 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 	public class DummyUserManager : IUserManager, IApplicationRepository {
 		private Dictionary<Guid, User> users = new();
 		public Dictionary<string, ApplicationWithUserProperties> Apps { get; } = new();
+		private int nextPropDefId = 1;
+
+		private void assignPropDefIds(ApplicationWithUserProperties app) {
+			foreach (var propDef in app.UserProperties) {
+				if (propDef.Id == 0) propDef.Id = nextPropDefId++;
+			}
+		}
 
 		public DummyUserManager(IEnumerable<ApplicationWithUserProperties> apps) {
 			foreach (var app in apps) {
-				this.Apps[app.Name] = app;
+				assignPropDefIds(app);
+				Apps[app.Name] = app;
 			}
 		}
 
@@ -35,6 +43,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 		public async Task<ApplicationWithUserProperties> AddApplicationAsync(ApplicationWithUserProperties app) {
 			if (Apps.ContainsKey(app.Name)) throw new EntityUniquenessConflictException("Application", "Name", app.Name);
 			if (app.Id == Guid.Empty) app.Id = Guid.NewGuid();
+			assignPropDefIds(app);
 			Apps.Add(app.Name, app);
 			await Task.CompletedTask;
 			return app;
