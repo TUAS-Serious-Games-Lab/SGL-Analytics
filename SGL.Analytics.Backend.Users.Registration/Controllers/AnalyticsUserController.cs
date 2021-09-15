@@ -37,13 +37,16 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[HttpPost]
 		public async Task<ActionResult<UserRegistrationResultDTO>> RegisterUser([FromHeader(Name = "App-API-Token")] string appApiToken, [FromBody] UserRegistrationDTO userRegistration) {
 			var app = await appRepo.GetApplicationByNameAsync(userRegistration.AppName);
+			var appCredentialsErrorMessage = "The registration failed due to invalid application credentials.\n" +
+					"One of the following was incorrect: AppName, AppApiToken\n" +
+					"Which of these is / are incorrect is not stated for security reasons.";
 			if (app is null) {
 				logger.LogError("RegisterUser POST request for user {username} failed due to unknown application {appName}.", userRegistration.Username, userRegistration.AppName);
-				return Unauthorized();
+				return Unauthorized(appCredentialsErrorMessage);
 			}
 			else if (app.ApiToken != appApiToken) {
 				logger.LogError("RegisterUser POST request for user {username} failed due to incorrect API token for application {appName}.", userRegistration.Username, userRegistration.AppName);
-				return Unauthorized();
+				return Unauthorized(appCredentialsErrorMessage);
 			}
 
 			try {
