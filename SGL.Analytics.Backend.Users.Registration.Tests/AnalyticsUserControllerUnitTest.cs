@@ -76,5 +76,16 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			Assert.Equal(StatusCodes.Status401Unauthorized, res.StatusCode);
 			Assert.IsType<string>(res.Value);
 		}
+		[Fact]
+		public async Task UserRegistrationWithIncorrectAppApiTokenFailsWithExpectedError() {
+			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = "Hello" };
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser",
+				StringGenerator.GenerateRandomWord(16),// Not cryptographic, but ok for test
+				props);
+			var result = await controller.RegisterUser("Wrong", userRegDTO);
+			var res = Assert.IsType<UnauthorizedObjectResult>(result.Result);
+			Assert.Equal(StatusCodes.Status401Unauthorized, res.StatusCode);
+			Assert.IsType<string>(res.Value);
+		}
 	}
 }
