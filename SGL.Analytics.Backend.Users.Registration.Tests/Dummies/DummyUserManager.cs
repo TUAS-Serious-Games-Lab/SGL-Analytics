@@ -40,7 +40,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			return app;
 		}
 
-		public async Task<User?> GetUserById(Guid userId) {
+		public async Task<User?> GetUserByIdAsync(Guid userId) {
 			await Task.CompletedTask;
 			if (users.TryGetValue(userId, out var user)) {
 				return user;

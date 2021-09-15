@@ -87,7 +87,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			var fixedFailureDelay = loginService.StartFixedFailureDelay();
 			User? user = null;
 			var token = await loginService.LoginAsync(loginRequest.UserId, loginRequest.UserSecret,
-				async userId => (user = await userManager.GetUserById(userId)), // stash a reference to user to check app association later
+				async userId => (user = await userManager.GetUserByIdAsync(userId)), // stash a reference to user to check app association later
 				user => user.HashedSecret,
 				async (user, hashedSecret) => {
 					user.HashedSecret = hashedSecret;
