@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
+using SGL.Analytics.Backend.Security;
 using SGL.Analytics.Backend.TestUtilities;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure.Services;
@@ -29,7 +30,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 				var repo = new DbUserRepository(context);
 				context.Applications.Add(appOrig);
 				await context.SaveChangesAsync();
-				var user = UserRegistration.Create(appOrig, "TestUser");
+				var user = UserRegistration.Create(appOrig, "TestUser", SecretHashing.CreateHashedSecret("Passw0rd"));
 				userId = user.Id;
 				await repo.RegisterUserAsync(user);
 			}
@@ -65,7 +66,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 				var repo = new DbUserRepository(context);
 				context.Applications.Add(appOrig);
 				await context.SaveChangesAsync();
-				var user = UserRegistration.Create(appOrig, "TestUser");
+				var user = UserRegistration.Create(appOrig, "TestUser", SecretHashing.CreateHashedSecret("Passw0rd"));
 
 				user.SetAppSpecificProperty(propDef1, 42);
 				user.SetAppSpecificProperty(propDef2, 123.45);
@@ -104,7 +105,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 				var repo = new DbUserRepository(context);
 				context.Applications.Add(appOrig);
 				await context.SaveChangesAsync();
-				var user = UserRegistration.Create(appOrig, "TestUser");
+				var user = UserRegistration.Create(appOrig, "TestUser", SecretHashing.CreateHashedSecret("Passw0rd"));
 				await repo.RegisterUserAsync(user);
 			}
 			await using (var context = createContext()) {
@@ -133,7 +134,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 				var repo = new DbUserRepository(context);
 				context.Applications.Add(appOrig);
 				await context.SaveChangesAsync();
-				var user = UserRegistration.Create(appOrig, "TestUser");
+				var user = UserRegistration.Create(appOrig, "TestUser", SecretHashing.CreateHashedSecret("Passw0rd"));
 
 				user.SetAppSpecificProperty(propDef1, 42);
 				user.SetAppSpecificProperty(propDef3, "Hello World");
@@ -188,12 +189,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
 				var repo = new DbUserRepository(context);
-				await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser"));
+				await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser", SecretHashing.CreateHashedSecret("Passw0rd")));
 			}
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
 				var repo = new DbUserRepository(context);
-				Assert.Equal("Username", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser")))).ConflictingPropertyName);
+				Assert.Equal("Username", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser", SecretHashing.CreateHashedSecret("Passw0rd"))))).ConflictingPropertyName);
 			}
 		}
 
@@ -208,12 +209,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
 				var repo = new DbUserRepository(context);
-				await repo.RegisterUserAsync(UserRegistration.Create(id, app, "TestUser_1"));
+				await repo.RegisterUserAsync(UserRegistration.Create(id, app, "TestUser_1", SecretHashing.CreateHashedSecret("Passw0rd")));
 			}
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
 				var repo = new DbUserRepository(context);
-				Assert.Equal("Id", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.RegisterUserAsync(UserRegistration.Create(id, app, "TestUser_2")))).ConflictingPropertyName);
+				Assert.Equal("Id", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.RegisterUserAsync(UserRegistration.Create(id, app, "TestUser_2", SecretHashing.CreateHashedSecret("Passw0rd"))))).ConflictingPropertyName);
 			}
 		}
 
@@ -228,8 +229,8 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
 				var repo = new DbUserRepository(context);
-				await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser_1"));
-				var userReg = UserRegistration.Create(app, "TestUser_2");
+				await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser_1", SecretHashing.CreateHashedSecret("Passw0rd")));
+				var userReg = UserRegistration.Create(app, "TestUser_2", SecretHashing.CreateHashedSecret("Passw0rd"));
 				userReg = await repo.RegisterUserAsync(userReg);
 				userId = userReg.Id;
 			}

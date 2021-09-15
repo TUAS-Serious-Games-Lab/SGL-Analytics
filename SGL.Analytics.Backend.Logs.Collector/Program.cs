@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.LogCollector {
+namespace SGL.Analytics.Backend.Logs.Collector {
 	public class Program {
 		public static void Main(string[] args) {
 			IHost host = CreateHostBuilder(args).Build();

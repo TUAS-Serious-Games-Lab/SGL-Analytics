@@ -1,3 +1,4 @@
+using SGL.Analytics.DTO;
 using System;
 using System.IO;
 using System.Linq;
@@ -45,7 +46,7 @@ namespace SGL.Analytics.Client.Tests {
 						.WithHeader("LogFileId", guidMatcher))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
 
-			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, userId, logFile);
+			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, userId, new LoginResponseDTO(""), logFile);
 
 			Assert.Single(serverFixture.Server.LogEntries);
 			var logEntry = serverFixture.Server.LogEntries.Single();
@@ -75,7 +76,7 @@ namespace SGL.Analytics.Client.Tests {
 						.WithHeader("LogFileId", guidMatcher))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
 
-			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, userId, logFile));
+			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, userId, new LoginResponseDTO(""), logFile));
 			Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
 		}
 	}

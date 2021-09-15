@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -7,7 +8,7 @@ using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.WebUtilities;
 using SGL.Analytics.DTO;
 
-namespace SGL.Analytics.Backend.LogCollector.Controllers {
+namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 	[Route("api/[controller]")]
 	[ApiController]
 	public class AnalyticsLogController : ControllerBase {
@@ -27,6 +28,7 @@ namespace SGL.Analytics.Backend.LogCollector.Controllers {
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 		[HttpPost]
+		[Authorize(policy: "HeaderOwnerUserId")]
 		public async Task<ActionResult> IngestLog([FromHeader(Name = "App-API-Token")] string appApiToken, [DtoFromHeaderModelBinder] LogMetadataDTO logMetadata) {
 			var app = await appRepo.GetApplicationByNameAsync(logMetadata.AppName);
 			if (app is null) {

@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SGL.Analytics.Backend.Security\SGL.Analytics.Backend.Security.csproj" />
     <ProjectReference Include="..\SGL.Analytics.Backend.TestUtilities\SGL.Analytics.Backend.TestUtilities.csproj" />
     <ProjectReference Include="..\SGL.Analytics.Backend.Users.Infrastructure\SGL.Analytics.Backend.Users.Infrastructure.csproj" />
   </ItemGroup>

@@ -1,5 +1,6 @@
 ﻿using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
+using SGL.Analytics.Backend.Security;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
@@ -39,7 +40,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			if (apps.TryGetValue(userRegistrationData.AppName, out var app)) {
 				throw new ApplicationDoesNotExistException(userRegistrationData.AppName);
 			}
-			var user = new User(UserRegistration.Create(app!, userRegistrationData.Username));
+			var user = new User(UserRegistration.Create(app!, userRegistrationData.Username, SecretHashing.CreateHashedSecret(userRegistrationData.Secret)));
 			foreach (var prop in userRegistrationData.StudySpecificProperties) {
 				user.AppSpecificProperties[prop.Key] = prop.Value;
 			}

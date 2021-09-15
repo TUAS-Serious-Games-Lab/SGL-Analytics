@@ -18,6 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SGL.Analytics.Backend.Domain\SGL.Analytics.Backend.Domain.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Backend.Security\SGL.Analytics.Backend.Security.csproj" />
     <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
   </ItemGroup>
 

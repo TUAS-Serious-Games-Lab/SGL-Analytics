@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Client {
 	public interface IRootDataStore {
 		Guid? UserID { get; set; }
+		string UserSecret { get; set; }
 
 		string DataDirectory { get; }
 

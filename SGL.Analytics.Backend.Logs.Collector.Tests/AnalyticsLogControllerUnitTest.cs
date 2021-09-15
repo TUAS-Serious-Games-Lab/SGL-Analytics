@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using SGL.Analytics.Backend.LogCollector.Controllers;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
+using SGL.Analytics.Backend.Logs.Collector.Controllers;
 using SGL.Analytics.DTO;
 using SGL.Analytics.TestUtilities;
 using SGL.Analytics.Utilities;

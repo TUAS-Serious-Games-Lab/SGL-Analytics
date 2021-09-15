@@ -1,23 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Analytics.Backend.Security;
-using SGL.Analytics.Backend.Users.Application.Interfaces;
-using SGL.Analytics.Backend.Users.Application.Services;
-using SGL.Analytics.Backend.Users.Infrastructure.Services;
 
-namespace SGL.Analytics.Backend.Users.Registration {
+namespace SGL.Analytics.Backend.Security.Tests.OwnerAuthorizationScenario {
 	public class Startup {
 		public Startup(IConfiguration configuration) {
 			Configuration = configuration;
@@ -29,14 +17,9 @@ namespace SGL.Analytics.Backend.Users.Registration {
 		public void ConfigureServices(IServiceCollection services) {
 			services.AddControllers();
 
-			services.AddDbContext<UsersContext>(options =>
-					options.UseNpgsql(Configuration.GetConnectionString("UsersContext")));
-
-			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
-			services.AddScoped<IUserRepository, DbUserRepository>();
-			services.AddScoped<IUserManager, UserManager>();
-			services.AddScoped<ILoginService, JwtLoginService>();
-			services.UseJwtLoginService(Configuration);
+			services.UseJwtBearerAuthentication(Configuration);
+			services.AddAuthorization(options => options.AddOwnerPolicies());
+			services.AddOwnerAuthorizationHandler(Configuration);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,9 +29,9 @@ namespace SGL.Analytics.Backend.Users.Registration {
 			}
 
 			app.UseHttpsRedirection();
-
 			app.UseRouting();
 
+			app.UseAuthentication();
 			app.UseAuthorization();
 
 			app.UseEndpoints(endpoints => {

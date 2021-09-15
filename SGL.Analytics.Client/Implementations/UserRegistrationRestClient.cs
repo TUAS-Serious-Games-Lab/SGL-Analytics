@@ -14,20 +14,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
-	public class UserRegistrationResponseException : Exception {
-		public UserRegistrationResponseException(string? message) : base(message) { }
-		public UserRegistrationResponseException(string? message, Exception? innerException) : base(message, innerException) { }
-	}
-
-	public class UsernameAlreadyTakenException : Exception {
-		public string Username { get; }
-		public UsernameAlreadyTakenException(string username) : base($"The username '{username}' is already taken.") {
-			Username = username;
-		}
-		public UsernameAlreadyTakenException(string username, Exception? innerException) : base($"The username '{username}' is already taken.", innerException) {
-			Username = username;
-		}
-	}
 
 	public static class UserRegistrationRestClientExtensions {
 		public static IServiceCollection AddUserRegistrationRestClient(this IServiceCollection services, IConfiguration config) {
@@ -41,25 +27,52 @@ namespace SGL.Analytics.Client {
 		public const string UserRegistrationRestClient = "UserRegistrationRestClient";
 		public const string BackendServerBaseUriDefault = "http://localhost:5001/";
 		public const string UserRegistrationApiRouteDefault = "api/AnalyticsUser";
+		public const string LoginApiRouteDefault = "api/AnalyticsUser/login";
 
 		public Uri BackendServerBaseUri { get; set; } = new Uri(BackendServerBaseUriDefault);
 		public Uri UserRegistrationApiRoute { get; set; } = new Uri(UserRegistrationApiRouteDefault, UriKind.Relative);
+		public Uri LoginApiRoute { get; set; } = new Uri(LoginApiRouteDefault, UriKind.Relative);
 	}
 
 	public class UserRegistrationRestClient : IUserRegistrationClient {
 		private readonly HttpClient httpClient = new();
 		private Uri userRegistrationApiRoute;
+		private Uri loginApiRoute;
 
 		// TODO: Replace default URL with registered URL of Prod backend when available.
 		public UserRegistrationRestClient() : this(new Uri(UserRegistrationRestClientOptions.BackendServerBaseUriDefault)) { }
-		public UserRegistrationRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri(UserRegistrationRestClientOptions.UserRegistrationApiRouteDefault, UriKind.Relative)) { }
-		public UserRegistrationRestClient(UserRegistrationRestClientOptions options) : this(options.BackendServerBaseUri, options.UserRegistrationApiRoute) { }
+		public UserRegistrationRestClient(Uri backendServerBaseUri) :
+			this(backendServerBaseUri,
+				new Uri(UserRegistrationRestClientOptions.UserRegistrationApiRouteDefault, UriKind.Relative),
+				new Uri(UserRegistrationRestClientOptions.LoginApiRouteDefault, UriKind.Relative)
+				) { }
+		public UserRegistrationRestClient(UserRegistrationRestClientOptions options) :
+			this(options.BackendServerBaseUri, options.UserRegistrationApiRoute, options.LoginApiRoute) { }
 		public UserRegistrationRestClient(IOptions<UserRegistrationRestClientOptions> options) : this(options.Value) { }
-		public UserRegistrationRestClient(Uri backendServerBaseUri, Uri userRegistrationApiRoute) {
+		public UserRegistrationRestClient(Uri backendServerBaseUri, Uri userRegistrationApiRoute, Uri loginApiRoute) {
 			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SGL.Analytics.Client", null));
 			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			httpClient.BaseAddress = backendServerBaseUri;
 			this.userRegistrationApiRoute = userRegistrationApiRoute;
+			this.loginApiRoute = loginApiRoute;
+		}
+
+		public async Task<LoginResponseDTO> LoginUserAsync(LoginRequestDTO loginDTO) {
+			var options = new JsonSerializerOptions() { WriteIndented = true };
+			var content = JsonContent.Create(loginDTO, new MediaTypeHeaderValue("application/json"), options);
+			var response = await httpClient.PostAsync(loginApiRoute, content);
+			if (response is null) throw new LoginErrorException("Did not receive a valid response for the login request.");
+			try {
+				response.EnsureSuccessStatusCode();
+			}
+			catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden) {
+				throw new LoginFailedException();
+			}
+			catch (Exception ex) {
+				throw new LoginErrorException(ex);
+			}
+			var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(options);
+			return result ?? throw new LoginErrorException("Did not receive a valid response for the login request.");
 		}
 
 		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken) {
