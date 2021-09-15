@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SGL.Analytics.Backend.TestUtilities;
 using SGL.Analytics.TestUtilities;
 using System;
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 		private ILoggerFactory loggerFactory;
 		private JwtOptions options;
 		private ILoginService loginService;
-		private JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+		private JwtTokenValidator tokenValidator;
 		private TimeSpan delayTolerance = TimeSpan.FromMilliseconds(16);
 
 		private class User { }
@@ -38,6 +39,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 					FailureDelay = TimeSpan.FromMilliseconds(450)
 				}
 			};
+			tokenValidator = new JwtTokenValidator(options.Audience, options.Issuer, options.SymmetricKey);
 			loginService = new JwtLoginService(loggerFactory.CreateLogger<JwtLoginService>(), Options.Create(options));
 		}
 
@@ -54,15 +56,8 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			}, (u, s) => {
 				throw new XunitException("The login service should not need to rehash in this test case.");
 			});
-			var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters() {
-				ValidateIssuer = true,
-				ValidateAudience = true,
-				ValidateLifetime = true,
-				ValidateIssuerSigningKey = true,
-				ValidAudience = options.Audience,
-				ValidIssuer = options.Issuer,
-				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.SymmetricKey ?? throw new InvalidOperationException("Missing key.")))
-			}, out var validatedToken);
+			Assert.NotNull(token);
+			var (principal, validatedToken) = tokenValidator.Validate(token!);
 			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
 			Assert.Equal("42", Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value);
 		}
@@ -143,15 +138,8 @@ namespace SGL.Analytics.Backend.Security.Tests {
 				calledHashUpdate = true;
 			});
 			Assert.True(calledHashUpdate);
-			var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters() {
-				ValidateIssuer = true,
-				ValidateAudience = true,
-				ValidateLifetime = true,
-				ValidateIssuerSigningKey = true,
-				ValidAudience = options.Audience,
-				ValidIssuer = options.Issuer,
-				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.SymmetricKey ?? throw new InvalidOperationException("Missing key.")))
-			}, out var validatedToken);
+			Assert.NotNull(token);
+			var (principal, validatedToken) = tokenValidator.Validate(token!);
 			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
 			Assert.Equal("42", Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value);
 		}
