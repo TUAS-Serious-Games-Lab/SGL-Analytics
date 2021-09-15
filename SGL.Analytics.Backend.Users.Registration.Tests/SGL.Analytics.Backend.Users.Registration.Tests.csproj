@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SGL.Analytics.Backend.Users.Registration\SGL.Analytics.Backend.Users.Registration.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.TestUtilities\SGL.Analytics.TestUtilities.csproj" />
   </ItemGroup>
 
 </Project>
