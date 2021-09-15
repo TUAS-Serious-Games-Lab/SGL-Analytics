@@ -65,6 +65,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			IUserRegistrationWrapper userWrap = user;
 			userWrap.StoreAppPropertiesToUnderlying();
 			userWrap.Underlying.Id = Guid.NewGuid();
+			userWrap.Underlying.ValidateProperties();
 			users.Add(user.Id, user);
 			userWrap.LoadAppPropertiesFromUnderlying();
 			return user;
@@ -75,6 +76,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			Debug.Assert(users.ContainsKey(user.Id));
 			IUserRegistrationWrapper userWrap = user;
 			userWrap.StoreAppPropertiesToUnderlying();
+			userWrap.Underlying.ValidateProperties();
 			users[user.Id] = user;
 			userWrap.LoadAppPropertiesFromUnderlying();
 			return user;
