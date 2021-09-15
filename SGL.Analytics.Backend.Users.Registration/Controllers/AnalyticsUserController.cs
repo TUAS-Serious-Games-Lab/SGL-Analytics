@@ -13,6 +13,7 @@ using SGL.Analytics.Backend.Security;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.DTO;
+using SGL.Analytics.Backend.Users.Application.Model;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	[Route("api/[controller]")]
@@ -83,8 +84,9 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[HttpPost("login")]
 		public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginRequestDTO loginRequest) {
 			var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName);
+			User? user = null;
 			var token = await loginService.LoginAsync(loginRequest.UserId, loginRequest.UserSecret,
-				userId => userManager.GetUserById(userId),
+				async userId => (user = await userManager.GetUserById(userId)), // stash a reference to user to check app association later
 				user => user.HashedSecret,
 				async (user, hashedSecret) => {
 					user.HashedSecret = hashedSecret;
@@ -101,6 +103,12 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			else if (app.ApiToken != loginRequest.AppApiToken) {
 				app = null; // Clear non-matching app to simplify controll flow below.
 				logger.LogError("Login attempt for user {userId} failed due to incorrect API token for application {appName}.", loginRequest.UserId, loginRequest.AppName);
+			}
+			if (user is not null && (user.App.Name != loginRequest.AppName)) {
+				logger.LogError("Login attempt for user {userId} failed because the retrieved user is not associated with the given application {reqAppName}, but with {userAppName}.", loginRequest.UserId, loginRequest.AppName, user.App.Name);
+				// Ensure failure, irrespective of what happened with app and user credential checks above.
+				token = null;
+				app = null;
 			}
 
 			if (app is null || token is null) {
