@@ -16,7 +16,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 
 		public async Task<LogMetadata> AddLogMetadataAsync(LogMetadata logMetadata) {
 			await Task.CompletedTask;
-			if (logs.ContainsKey(logMetadata.Id)) throw new EntityUniquenessConflictException("LogMetadata", "Id");
+			if (logs.ContainsKey(logMetadata.Id)) throw new EntityUniquenessConflictException("LogMetadata", "Id", logMetadata.Id);
 			logs.Add(logMetadata.Id, logMetadata);
 			return logMetadata;
 		}

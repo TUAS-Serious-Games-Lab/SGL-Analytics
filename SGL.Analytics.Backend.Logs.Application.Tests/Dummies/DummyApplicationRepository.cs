@@ -12,9 +12,9 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 
 		public async Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app) {
 			await Task.CompletedTask;
-			if (apps.ContainsKey(app.Name)) throw new EntityUniquenessConflictException("Application", "Name");
+			if (apps.ContainsKey(app.Name)) throw new EntityUniquenessConflictException("Application", "Name", app.Name);
 			if (app.Id == Guid.Empty) app.Id = Guid.NewGuid();
-			if (apps.Values.Any(a => a.Id == app.Id)) throw new EntityUniquenessConflictException("Application", "Id");
+			if (apps.Values.Any(a => a.Id == app.Id)) throw new EntityUniquenessConflictException("Application", "Id", app.Id);
 			apps.Add(app.Name, app);
 			return app;
 		}

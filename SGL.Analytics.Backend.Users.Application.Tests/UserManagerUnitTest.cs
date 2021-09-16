@@ -177,7 +177,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			userClone.AppSpecificProperties["Test"] = "Hello World";
 			userClone.AppSpecificProperties["XYZ"] = 42;
 			await userMgr.UpdateUserAsync(userClone);
-			var userRead = await userMgr.GetUserById(userClone.Id);
+			var userRead = await userMgr.GetUserByIdAsync(userClone.Id);
 
 			Assert.NotNull(userRead);
 			Assert.Equal("NewName", userRead!.Username);

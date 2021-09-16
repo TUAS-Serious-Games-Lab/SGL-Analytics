@@ -31,7 +31,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 				// To check if ex is a unique constraint violation, we would need to inspect its inner exception and switch over exception types for all supported providers and their internal error classifications.
 				// To avoid this coupling, rather pay the perf cost of querrying again in this rare case.
 				if (context.LogMetadata.Count(lm => lm.Id == logMetadata.Id) > 0) {
-					throw new EntityUniquenessConflictException("LogMetadata", "Id", ex);
+					throw new EntityUniquenessConflictException("LogMetadata", "Id", logMetadata.Id, ex);
 				}
 				else throw;
 			}

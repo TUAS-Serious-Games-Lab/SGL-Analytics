@@ -55,7 +55,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		}
 
 		public async Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app) {
-			if (Apps.ContainsKey(app.Name)) throw new EntityUniquenessConflictException("Application", "Name");
+			if (Apps.ContainsKey(app.Name)) throw new EntityUniquenessConflictException("Application", "Name", app.Name);
 			if (app.Id == Guid.Empty) app.Id = Guid.NewGuid();
 			Apps.Add(app.Name, app);
 			await Task.CompletedTask;
