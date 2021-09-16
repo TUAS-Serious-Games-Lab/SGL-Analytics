@@ -49,6 +49,10 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			app.AddProperty("Foo", UserPropertyType.String, true);
 			app.AddProperty("Bar", UserPropertyType.String);
 			context.Applications.Add(app);
+			var app2 = ApplicationWithUserProperties.Create(AppName + "_2", AppApiToken + "_2");
+			app2.AddProperty("Foo", UserPropertyType.String, true);
+			app2.AddProperty("Bar", UserPropertyType.String);
+			context.Applications.Add(app2);
 			context.SaveChanges();
 		}
 
@@ -261,6 +265,19 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		public async Task LoginWithIncorrectAppApiTokenFailsWithExpectedError() {
 			var (userId, secret) = await createTestUserAsync("Testuser12");
 			var loginReqDTO = new LoginRequestDTO(fixture.AppName, "Wrong", userId, secret);
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/AnalyticsUser/login", loginReqDTO);
+				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+				Assert.Empty(response.Headers.WwwAuthenticate);
+			}
+		}
+		[Fact]
+		public async Task LoginWithUnmatchingAppAndUserFailsWithExpectedError() {
+			// Create user for UserRegistrationIntegrationTest
+			var (userId, secret) = await createTestUserAsync("Testuser13");
+			// But attempt to login with UserRegistrationIntegrationTest_2
+			var loginReqDTO = new LoginRequestDTO(fixture.AppName + "_2", fixture.AppApiToken + "_2", userId, secret);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
 				var response = await client.PostAsJsonAsync("/api/AnalyticsUser/login", loginReqDTO);
