@@ -235,5 +235,16 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Empty(response.Headers.WwwAuthenticate);
 			}
 		}
+		[Fact]
+		public async Task LoginWithIncorrectSecretFailsWithExpectedError() {
+			var (userId, secret) = await createTestUserAsync("Testuser10");
+			var loginReqDTO = new LoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, "Wrong");
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/AnalyticsUser/login", loginReqDTO);
+				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+				Assert.Empty(response.Headers.WwwAuthenticate);
+			}
+		}
 	}
 }
