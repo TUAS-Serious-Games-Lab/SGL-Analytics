@@ -151,5 +151,12 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			Assert.True(Guid.TryParse(Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value, out var tokenUserId));
 			Assert.Equal(userId, tokenUserId);
 		}
+		[Fact]
+		public async Task LoginWithNonExistentUserFailsWithExpectedError() {
+			var secret = StringGenerator.GenerateRandomWord(16);// Not cryptographic, but ok for test
+			var loginRequest = new LoginRequestDTO(appName, appApiToken, Guid.NewGuid(), secret);
+			var loginResult = await controller.Login(loginRequest);
+			Assert.Equal(StatusCodes.Status401Unauthorized, Assert.IsType<UnauthorizedObjectResult>(loginResult.Result).StatusCode);
+		}
 	}
 }
