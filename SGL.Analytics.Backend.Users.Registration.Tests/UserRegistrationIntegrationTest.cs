@@ -32,7 +32,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		public Dictionary<string, string> JwtConfig { get; }
 
 		public ITestOutputHelper? Output { get; set; } = null;
-		public JwtTokenGenerator TokenGenerator { get; }
+		public JwtTokenValidator TokenValidator { get; }
 
 		public UserRegistrationIntegrationTestFixture() {
 			JwtConfig = new() {
@@ -40,7 +40,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				["Jwt:Issuer"] = JwtOptions.Issuer,
 				["Jwt:SymmetricKey"] = JwtOptions.SymmetricKey,
 			};
-			TokenGenerator = new JwtTokenGenerator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
+			TokenValidator = new JwtTokenValidator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
 		}
 
 		protected override void SeedDatabase(UsersContext context) {
