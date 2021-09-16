@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Security;
+using SGL.Analytics.Backend.TestUtilities;
 using SGL.Analytics.Backend.Users.Registration.Controllers;
 using SGL.Analytics.Backend.Users.Registration.Tests.Dummies;
 using SGL.Analytics.DTO;
@@ -16,6 +17,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace SGL.Analytics.Backend.Users.Registration.Tests {
 	public class AnalyticsUserControllerUnitTest {
@@ -26,6 +28,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		private ILoggerFactory loggerFactory;
 		private JwtOptions jwtOptions;
 		private JwtLoginService loginService;
+		private JwtTokenValidator tokenValidator;
 		private AnalyticsUserController controller;
 
 		public AnalyticsUserControllerUnitTest(ITestOutputHelper output) {
@@ -44,6 +47,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 					FailureDelay = TimeSpan.FromMilliseconds(450)
 				}
 			};
+			tokenValidator = new JwtTokenValidator(jwtOptions.Audience, jwtOptions.Issuer, jwtOptions.SymmetricKey);
 			loginService = new JwtLoginService(loggerFactory.CreateLogger<JwtLoginService>(), Options.Create(jwtOptions));
 			controller = new AnalyticsUserController(userManager, loginService, userManager, loggerFactory.CreateLogger<AnalyticsUserController>());
 		}
@@ -131,6 +135,21 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var res = Assert.IsType<BadRequestObjectResult>(result.Result);
 			Assert.Equal(StatusCodes.Status400BadRequest, res.StatusCode);
 			Assert.IsType<string>(res.Value);
+		}
+		[Fact]
+		public async Task ValidUserCanSuccessfullyLoginWithCorrectCredentials() {
+			var secret = StringGenerator.GenerateRandomWord(16);// Not cryptographic, but ok for test
+			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = "Hello" };
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", secret, props);
+			var regResult = await controller.RegisterUser(appApiToken, userRegDTO);
+			var userId = ((regResult.Result as ObjectResult)?.Value as UserRegistrationResultDTO)?.UserId ?? throw new XunitException("Registration failed.");
+			var loginRequest = new LoginRequestDTO(appName, appApiToken, userId, secret);
+			var loginResult = await controller.Login(loginRequest);
+			Assert.NotNull(loginResult.Value);
+			var (principal, validatedToken) = tokenValidator.Validate(loginResult.Value.BearerToken);
+			Assert.Equal(jwtOptions.Issuer, validatedToken.Issuer);
+			Assert.True(Guid.TryParse(Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value, out var tokenUserId));
+			Assert.Equal(userId, tokenUserId);
 		}
 	}
 }
