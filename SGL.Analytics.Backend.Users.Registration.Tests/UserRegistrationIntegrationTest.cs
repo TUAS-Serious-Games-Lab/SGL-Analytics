@@ -29,16 +29,17 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			Issuer = "UserRegistrationIntegrationTest",
 			SymmetricKey = "TestingS3cr3tTestingS3cr3t"
 		};
-		public Dictionary<string, string> JwtConfig { get; }
+		public Dictionary<string, string> Config { get; }
 
 		public ITestOutputHelper? Output { get; set; } = null;
 		public JwtTokenValidator TokenValidator { get; }
 
 		public UserRegistrationIntegrationTestFixture() {
-			JwtConfig = new() {
+			Config = new() {
 				["Jwt:Audience"] = JwtOptions.Audience,
 				["Jwt:Issuer"] = JwtOptions.Issuer,
 				["Jwt:SymmetricKey"] = JwtOptions.SymmetricKey,
+				["Jwt:LoginService:FailureDelay"] = TimeSpan.FromMilliseconds(400).ToString()
 			};
 			TokenValidator = new JwtTokenValidator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
 		}
@@ -52,7 +53,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		}
 
 		protected override IHostBuilder CreateHostBuilder() {
-			return base.CreateHostBuilder().ConfigureAppConfiguration(config => config.AddInMemoryCollection(JwtConfig))
+			return base.CreateHostBuilder().ConfigureAppConfiguration(config => config.AddInMemoryCollection(Config))
 				.ConfigureLogging(logging => logging.AddXUnit(() => Output).SetMinimumLevel(LogLevel.Trace));
 		}
 	}
