@@ -144,5 +144,20 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
 			}
 		}
+		[Fact]
+		public async Task UserRegistrationWithUnknownPropertyFailsWithExpectedError() {
+			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Baz"] = "Hello" };
+			var userRegDTO = new UserRegistrationDTO(fixture.AppName, "Testuser5",
+				StringGenerator.GenerateRandomWord(16),// Not cryptographic, but ok for test
+				props);
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(userRegDTO);
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsUser");
+				request.Content = content;
+				request.Headers.Add("App-API-Token", fixture.AppApiToken);
+				var response = await client.SendAsync(request);
+				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+			}
+		}
 	}
 }
