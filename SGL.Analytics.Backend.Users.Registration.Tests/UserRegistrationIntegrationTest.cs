@@ -15,6 +15,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using SGL.Analytics.DTO;
+using System.Net.Http.Json;
+using System.Net.Http;
+using System.Net;
 
 namespace SGL.Analytics.Backend.Users.Registration.Tests {
 	public class UserRegistrationIntegrationTestFixture : DbWebAppIntegrationTestFixtureBase<UsersContext, Startup> {
@@ -61,6 +65,26 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			this.fixture = fixture;
 			this.output = output;
 			this.fixture.Output = output;
+		}
+
+		[Fact]
+		public async Task ValidUserRegistrationIsSuccessfullyCompleted() {
+			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = "Hello" };
+			var userRegDTO = new UserRegistrationDTO(fixture.AppName, "Testuser",
+				StringGenerator.GenerateRandomWord(16),// Not cryptographic, but ok for test
+				props);
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(userRegDTO);
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsUser");
+				request.Content = content;
+				request.Headers.Add("App-API-Token", fixture.AppApiToken);
+				var response = await client.SendAsync(request);
+				response.EnsureSuccessStatusCode();
+				Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+				var result = await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>();
+				Assert.NotNull(result);
+				Assert.NotEqual(Guid.Empty, result!.UserId);
+			}
 		}
 	}
 }
