@@ -223,5 +223,17 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Equal(userId, tokenUserId);
 			}
 		}
+		[Fact]
+		public async Task LoginWithNonExistentUserFailsWithExpectedError() {
+			var secret = StringGenerator.GenerateRandomWord(16);// Not cryptographic, but ok for test
+			var userId = Guid.NewGuid();
+			var loginReqDTO = new LoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, secret);
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/AnalyticsUser/login", loginReqDTO);
+				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+				Assert.Empty(response.Headers.WwwAuthenticate);
+			}
+		}
 	}
 }
