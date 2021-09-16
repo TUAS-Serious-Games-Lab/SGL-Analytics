@@ -66,7 +66,8 @@ namespace SGL.Analytics.Backend.Security {
 			Func<TUserId, Task<TUser?>> lookupUserAsync,
 			Func<TUser, string> getHashedSecret,
 			Func<TUser, string, Task> updateHashedSecretAsync,
-			ILoginService.IDelayHandle fixedFailureDelay) {
+			ILoginService.IDelayHandle fixedFailureDelay,
+			params (string ClaimType, Func<TUser, string> GetClaimValue)[] additionalClaims) {
 
 			bool secretCorrect = false;
 			bool rehashed = false;
@@ -96,10 +97,12 @@ namespace SGL.Analytics.Backend.Security {
 			if (rehashed) {
 				await updateHashedSecretAsync(user, hashedSecret);
 			}
+			var claims = additionalClaims.Select(cg => new Claim(cg.ClaimType, cg.GetClaimValue(user)))
+				.Prepend(new Claim("userid", userId.ToString() ?? "")).ToArray();
 			var token = new JwtSecurityToken(
 				issuer: options.Issuer,
 				audience: options.Audience,
-				claims: new[] { new Claim("userid", userId.ToString() ?? "") },
+				claims: claims,
 				expires: DateTime.UtcNow.Add(options.LoginService.ExpirationTime),
 				signingCredentials: signingCredentials
 			);
