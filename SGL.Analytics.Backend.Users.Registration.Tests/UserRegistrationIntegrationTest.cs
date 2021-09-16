@@ -189,5 +189,38 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 			}
 		}
+
+		private async Task<(Guid userId, string secret)> createTestUserAsync(string username) {
+			var secret = StringGenerator.GenerateRandomWord(16);// Not cryptographic, but ok for test
+			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = "Hello" };
+			var userRegDTO = new UserRegistrationDTO(fixture.AppName, username, secret, props);
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(userRegDTO);
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsUser");
+				request.Content = content;
+				request.Headers.Add("App-API-Token", fixture.AppApiToken);
+				var response = await client.SendAsync(request);
+				response.EnsureSuccessStatusCode();
+				var result = await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>();
+				return (result?.UserId ?? throw new Exception("Failed to create test user."), secret);
+			}
+		}
+		[Fact]
+		public async Task ValidUserCanSuccessfullyLoginWithCorrectCredentials() {
+			var (userId, secret) = await createTestUserAsync("Testuser8");
+			var loginReqDTO = new LoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, secret);
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/AnalyticsUser/login", loginReqDTO);
+				response.EnsureSuccessStatusCode();
+				Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+				var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>();
+				Assert.NotNull(result);
+				var token = result!.BearerToken;
+				var (principal, validatedToken) = fixture.TokenValidator.Validate(token);
+				Assert.True(Guid.TryParse(Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value, out var tokenUserId));
+				Assert.Equal(userId, tokenUserId);
+			}
+		}
 	}
 }
