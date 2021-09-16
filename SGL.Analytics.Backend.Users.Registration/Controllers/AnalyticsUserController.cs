@@ -34,6 +34,10 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		// POST: api/AnalyticsUser
 		// To protect from overposting attacks, enable the specific properties you want to bind to, for
 		// more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+		[ProducesResponseType(typeof(UserRegistrationResultDTO), StatusCodes.Status201Created)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
 		[HttpPost]
 		public async Task<ActionResult<UserRegistrationResultDTO>> RegisterUser([FromHeader(Name = "App-API-Token")] string appApiToken, [FromBody] UserRegistrationDTO userRegistration) {
 			var app = await appRepo.GetApplicationByNameAsync(userRegistration.AppName);
@@ -83,7 +87,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		[ProducesResponseType(typeof(LoginResponseDTO), StatusCodes.Status200OK)]
-		[ProducesResponseType(StatusCodes.Status403Forbidden)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[HttpPost("login")]
 		public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginRequestDTO loginRequest) {
 			var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName);
