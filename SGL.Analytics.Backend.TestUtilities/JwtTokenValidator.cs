@@ -12,7 +12,7 @@ namespace SGL.Analytics.Backend.TestUtilities {
 		private JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
 		private TokenValidationParameters tokenValidationParameters;
 
-		public JwtTokenValidator(string audience, string issuer, string symmetricKey) {
+		public JwtTokenValidator(string issuer, string audience, string symmetricKey) {
 			tokenValidationParameters = new TokenValidationParameters() {
 				ValidateIssuer = true,
 				ValidateAudience = true,

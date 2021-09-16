@@ -39,7 +39,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 					FailureDelay = TimeSpan.FromMilliseconds(450)
 				}
 			};
-			tokenValidator = new JwtTokenValidator(options.Audience, options.Issuer, options.SymmetricKey);
+			tokenValidator = new JwtTokenValidator(options.Issuer, options.Audience, options.SymmetricKey);
 			loginService = new JwtLoginService(loggerFactory.CreateLogger<JwtLoginService>(), Options.Create(options));
 		}
 

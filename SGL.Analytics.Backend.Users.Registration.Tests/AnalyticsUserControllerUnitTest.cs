@@ -47,7 +47,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 					FailureDelay = TimeSpan.FromMilliseconds(450)
 				}
 			};
-			tokenValidator = new JwtTokenValidator(jwtOptions.Audience, jwtOptions.Issuer, jwtOptions.SymmetricKey);
+			tokenValidator = new JwtTokenValidator(jwtOptions.Issuer, jwtOptions.Audience, jwtOptions.SymmetricKey);
 			loginService = new JwtLoginService(loggerFactory.CreateLogger<JwtLoginService>(), Options.Create(jwtOptions));
 			controller = new AnalyticsUserController(userManager, loginService, userManager, loggerFactory.CreateLogger<AnalyticsUserController>());
 		}
