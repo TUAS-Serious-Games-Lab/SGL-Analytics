@@ -23,7 +23,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			this.logger = logger;
 		}
 
-		public async Task<User?> GetUserById(Guid userId) {
+		public async Task<User?> GetUserByIdAsync(Guid userId) {
 			var userReg = await userRepo.GetUserByIdAsync(userId);
 			if (userReg is null) return null;
 			return new User(userReg);

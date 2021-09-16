@@ -5,5 +5,5 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.DTO {
-	public record LoginRequestDTO(Guid UserId, string UserSecret);
+	public record LoginRequestDTO(string AppName, string AppApiToken, Guid UserId, string UserSecret);
 }

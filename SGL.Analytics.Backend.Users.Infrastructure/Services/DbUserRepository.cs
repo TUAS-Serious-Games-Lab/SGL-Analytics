@@ -40,10 +40,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 				// To check if ex is a unique constraint violation, we would need to inspect its inner exception and switch over exception types for all supported providers and their internal error classifications.
 				// To avoid this coupling, rather pay the perf cost of querrying again in this rare case.
 				if (context.UserRegistrations.Count(u => u.Username == userReg.Username && u.AppId == userReg.App.Id) > 0) {
-					throw new EntityUniquenessConflictException("UserRegistration", "Username", ex);
+					throw new EntityUniquenessConflictException("UserRegistration", "Username", userReg.Username, ex);
 				}
 				else if (context.UserRegistrations.Count(u => u.Id == userReg.Id) > 0) {
-					throw new EntityUniquenessConflictException("UserRegistration", "Id", ex);
+					throw new EntityUniquenessConflictException("UserRegistration", "Id", userReg.Id, ex);
 				}
 				else throw;
 			}
@@ -64,7 +64,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 				// To check if ex is a unique constraint violation, we would need to inspect its inner exception and switch over exception types for all supported providers and their internal error classifications.
 				// To avoid this coupling, rather pay the perf cost of querrying again in this rare case.
 				if (context.UserRegistrations.Count(u => u.Username == userReg.Username && u.AppId == userReg.App.Id) > 0) {
-					throw new EntityUniquenessConflictException("UserRegistration", "Username", ex);
+					throw new EntityUniquenessConflictException("UserRegistration", "Username", userReg.Username, ex);
 				}
 				else throw;
 			}

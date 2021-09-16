@@ -30,10 +30,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 				// To check if ex is a unique constraint violation, we would need to inspect its inner exception and switch over exception types for all supported providers and their internal error classifications.
 				// To avoid this coupling, rather pay the perf cost of querrying again in this rare case.
 				if (context.Applications.Count(a => a.Name == app.Name) > 0) {
-					throw new EntityUniquenessConflictException("Application", "Name", ex);
+					throw new EntityUniquenessConflictException("Application", "Name", app.Name, ex);
 				}
 				else if (context.Applications.Count(a => a.Id == app.Id) > 0) {
-					throw new EntityUniquenessConflictException("Application", "Id", ex);
+					throw new EntityUniquenessConflictException("Application", "Id", app.Id, ex);
 				}
 				else throw;
 			}

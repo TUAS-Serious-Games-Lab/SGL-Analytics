@@ -52,36 +52,45 @@ namespace SGL.Analytics.Backend.Security {
 			}
 		}
 
+		public ILoginService.IDelayHandle StartFixedFailureDelay() {
+			// On failure, always wait for this fixed delay starting here.
+			// This should mitigate timing attacks for detecting whether the failure is
+			// due to non-existent user or due to incorrect password.
+			// This also slows down brute-force attacks.
+			// The task is created here and passed into LoginAsync to optionally allow callers
+			// to capture it and await it to also delay related failures outside the login service's responsibility.
+			return new ILoginService.DelayHandle(Task.Delay(options.LoginService.FailureDelay));
+		}
+
 		public async Task<string?> LoginAsync<TUserId, TUser>(TUserId userId, string providedPlainSecret,
 			Func<TUserId, Task<TUser?>> lookupUserAsync,
 			Func<TUser, string> getHashedSecret,
-			Func<TUser, string, Task> updateHashedSecretAsync) {
-			var fixedDelay = Task.Delay(options.LoginService.FailureDelay); // On failure, always wait for this fixed delay starting here.
-																			// This should mitigate timing attacks for detecting whether the failure is
-																			// due to non-existent user or due to incorrect password.
+			Func<TUser, string, Task> updateHashedSecretAsync,
+			ILoginService.IDelayHandle fixedFailureDelay) {
+
 			bool secretCorrect = false;
 			bool rehashed = false;
 			TUser? user;
 			string? hashedSecret = null;
 			try {
 				if (userId is null) {
-					await fixedDelay;
+					await fixedFailureDelay.WaitAsync();
 					return null;
 				}
 				user = await lookupUserAsync(userId);
 				if (user is null) {
-					await fixedDelay;
+					await fixedFailureDelay.WaitAsync();
 					return null;
 				}
 				hashedSecret = getHashedSecret(user);
 				(secretCorrect, rehashed) = SecretHashing.VerifyHashedSecret(ref hashedSecret, providedPlainSecret);
 				if (!secretCorrect) {
-					await fixedDelay;
+					await fixedFailureDelay.WaitAsync();
 					return null;
 				}
 			}
 			catch (Exception) {
-				await fixedDelay;
+				await fixedFailureDelay.WaitAsync();
 				return null;
 			}
 			if (rehashed) {
