@@ -158,5 +158,16 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginResult = await controller.Login(loginRequest);
 			Assert.Equal(StatusCodes.Status401Unauthorized, Assert.IsType<UnauthorizedObjectResult>(loginResult.Result).StatusCode);
 		}
+		[Fact]
+		public async Task LoginWithIncorrectSecretFailsWithExpectedError() {
+			var secret = StringGenerator.GenerateRandomWord(16);// Not cryptographic, but ok for test
+			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = "Hello" };
+			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", secret, props);
+			var regResult = await controller.RegisterUser(appApiToken, userRegDTO);
+			var userId = ((regResult.Result as ObjectResult)?.Value as UserRegistrationResultDTO)?.UserId ?? throw new XunitException("Registration failed.");
+			var loginRequest = new LoginRequestDTO(appName, appApiToken, userId, "Wrong");
+			var loginResult = await controller.Login(loginRequest);
+			Assert.Equal(StatusCodes.Status401Unauthorized, Assert.IsType<UnauthorizedObjectResult>(loginResult.Result).StatusCode);
+		}
 	}
 }
