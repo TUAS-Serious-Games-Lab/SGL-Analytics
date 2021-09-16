@@ -75,22 +75,26 @@ namespace SGL.Analytics.Backend.Security {
 			string? hashedSecret = null;
 			try {
 				if (userId is null) {
+					logger.LogError("Login failed because no userId was given.");
 					await fixedFailureDelay.WaitAsync();
 					return null;
 				}
 				user = await lookupUserAsync(userId);
 				if (user is null) {
+					logger.LogError("Login failed because the user with id {userId} was not found.", userId);
 					await fixedFailureDelay.WaitAsync();
 					return null;
 				}
 				hashedSecret = getHashedSecret(user);
 				(secretCorrect, rehashed) = SecretHashing.VerifyHashedSecret(ref hashedSecret, providedPlainSecret);
 				if (!secretCorrect) {
+					logger.LogError("Login failed because the given secret didn't match the hashed secret of the given user with id {userId}.", userId);
 					await fixedFailureDelay.WaitAsync();
 					return null;
 				}
 			}
-			catch (Exception) {
+			catch (Exception ex) {
+				logger.LogError(ex, "Login failed due to unexpected exception.", userId);
 				await fixedFailureDelay.WaitAsync();
 				return null;
 			}
@@ -107,6 +111,7 @@ namespace SGL.Analytics.Backend.Security {
 				signingCredentials: signingCredentials
 			);
 			var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+			logger.LogInformation("Login succeeded for user {userId}.", userId);
 			return tokenString;
 		}
 	}
