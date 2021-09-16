@@ -149,7 +149,9 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var (principal, validatedToken) = tokenValidator.Validate(loginResult.Value.BearerToken);
 			Assert.Equal(jwtOptions.Issuer, validatedToken.Issuer);
 			Assert.True(Guid.TryParse(Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value, out var tokenUserId));
+			var tokenAppName = Assert.Single(principal.Claims, c => c.Type.Equals("appname", StringComparison.OrdinalIgnoreCase)).Value;
 			Assert.Equal(userId, tokenUserId);
+			Assert.Equal(appName, tokenAppName);
 		}
 		[Fact]
 		public async Task LoginWithNonExistentUserFailsWithExpectedError() {
