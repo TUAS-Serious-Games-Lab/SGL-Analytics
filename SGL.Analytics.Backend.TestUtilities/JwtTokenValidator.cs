@@ -1,4 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -26,8 +27,8 @@ namespace SGL.Analytics.Backend.TestUtilities {
 
 		public JwtTokenValidator(string audienceAndIssuer, string symmetricKey) : this(audienceAndIssuer, audienceAndIssuer, symmetricKey) { }
 
-		public (ClaimsPrincipal principal, SecurityToken validatedToken) Validate(string token) {
-			var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
+		public (ClaimsPrincipal principal, SecurityToken validatedToken) Validate(AuthorizationToken token) {
+			var principal = tokenHandler.ValidateToken(token.Value, tokenValidationParameters, out var validatedToken);
 			return (principal, validatedToken);
 		}
 	}

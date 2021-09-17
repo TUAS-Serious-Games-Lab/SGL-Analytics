@@ -41,10 +41,11 @@ namespace SGL.Analytics.Client.Tests {
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
 			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsLog").UsingPost()
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
-						.WithHeader("LogFileId", guidMatcher))
+						.WithHeader("LogFileId", guidMatcher)
+						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
 
-			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, userId, new LoginResponseDTO(""), logFile);
+			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, new AuthorizationToken("OK"), logFile);
 
 			Assert.Single(serverFixture.Server.LogEntries);
 			var logEntry = serverFixture.Server.LogEntries.Single();
@@ -67,10 +68,11 @@ namespace SGL.Analytics.Client.Tests {
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
 			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsLog").UsingPost()
 						.WithHeader("App-API-Token", new WildcardMatcher("*"))
-						.WithHeader("LogFileId", guidMatcher))
+						.WithHeader("LogFileId", guidMatcher)
+						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
 
-			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, userId, new LoginResponseDTO(""), logFile));
+			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, new AuthorizationToken("OK"), logFile));
 			Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
 		}
 	}

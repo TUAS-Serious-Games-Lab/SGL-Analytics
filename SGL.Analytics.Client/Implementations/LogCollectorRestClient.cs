@@ -27,7 +27,7 @@ namespace SGL.Analytics.Client {
 			this.logCollectorApiFullUri = new Uri(backendServerBaseUri, logCollectorApiEndpoint);
 		}
 
-		public async Task UploadLogFileAsync(string appName, string appAPIToken, Guid userID, LoginResponseDTO loginData, ILogStorage.ILogFile logFile) {
+		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile) {
 			try {
 				using (var stream = logFile.OpenReadRaw()) {
 					var content = new StreamContent(stream);
@@ -36,7 +36,7 @@ namespace SGL.Analytics.Client {
 					content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 					var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);
 					request.Content = content;
-					request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", loginData.BearerToken);
+					request.Headers.Authorization = authToken.ToHttpHeaderValue();
 					var response = await httpClient.SendAsync(request);
 					if (response.StatusCode == HttpStatusCode.Unauthorized && response.Headers.WwwAuthenticate.Count > 0) {
 						throw new LoginRequiredException();

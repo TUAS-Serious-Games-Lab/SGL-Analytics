@@ -13,9 +13,9 @@ namespace SGL.Analytics.Client.Tests {
 		public Dictionary<Guid, UserRegistrationDTO> RegistrationData { get; } = new();
 		public List<UserRegistrationResultDTO> RegistrationResults { get; } = new();
 
-		public async Task<LoginResponseDTO> LoginUserAsync(LoginRequestDTO loginDTO) {
+		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO) {
 			await Task.CompletedTask;
-			return new LoginResponseDTO("");
+			return new AuthorizationToken("OK");
 		}
 
 		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken) {

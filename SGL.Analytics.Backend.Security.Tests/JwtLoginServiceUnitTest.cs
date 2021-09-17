@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SGL.Analytics.Backend.TestUtilities;
+using SGL.Analytics.DTO;
 using SGL.Analytics.TestUtilities;
 using System;
 using System.Collections.Generic;
@@ -57,7 +58,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 				throw new XunitException("The login service should not need to rehash in this test case.");
 			});
 			Assert.NotNull(token);
-			var (principal, validatedToken) = tokenValidator.Validate(token!);
+			var (principal, validatedToken) = tokenValidator.Validate((AuthorizationToken)token);
 			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
 			Assert.Equal(42, principal.GetClaim<int>("userid", Int32.TryParse));
 		}
@@ -78,7 +79,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			("message", u => "Hello World"),
 			("number", u => 1234.ToString()));
 			Assert.NotNull(token);
-			var (principal, validatedToken) = tokenValidator.Validate(token!);
+			var (principal, validatedToken) = tokenValidator.Validate((AuthorizationToken)token);
 			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
 			Assert.Equal(42, principal.GetClaim<int>("userid", Int32.TryParse));
 			Assert.Equal("Hello World", principal.GetClaim("message"));
@@ -162,7 +163,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			});
 			Assert.True(calledHashUpdate);
 			Assert.NotNull(token);
-			var (principal, validatedToken) = tokenValidator.Validate(token!);
+			var (principal, validatedToken) = tokenValidator.Validate((AuthorizationToken)token);
 			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
 			Assert.Equal(42, principal.GetClaim<int>("userid", Int32.TryParse));
 		}

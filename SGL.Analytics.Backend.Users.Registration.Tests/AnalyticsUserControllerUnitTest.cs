@@ -146,7 +146,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginRequest = new LoginRequestDTO(appName, appApiToken, userId, secret);
 			var loginResult = await controller.Login(loginRequest);
 			Assert.NotNull(loginResult.Value);
-			var (principal, validatedToken) = tokenValidator.Validate(loginResult.Value.BearerToken);
+			var (principal, validatedToken) = tokenValidator.Validate(loginResult.Value.Token);
 			Assert.Equal(jwtOptions.Issuer, validatedToken.Issuer);
 			Assert.Equal(userId, principal.GetClaim<Guid>("userid", Guid.TryParse));
 			Assert.Equal(appName, principal.GetClaim("appname"));

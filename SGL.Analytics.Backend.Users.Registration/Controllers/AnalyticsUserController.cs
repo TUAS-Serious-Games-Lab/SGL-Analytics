@@ -103,7 +103,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				fixedFailureDelay,
 				("appname", user => user.App.Name));
 
-			if (token is null) {
+			if (token == null) {
 				logger.LogError("Login attempt for user {userId} failed due to incorrect credentials.", loginRequest.UserId);
 			}
 			// Intentionally no else if here, to log both failures if both, the app credentials AND the user credentials are invalid.
@@ -121,14 +121,14 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				app = null;
 			}
 
-			if (app is null || token is null) {
+			if (app is null || token == null) {
 				await fixedFailureDelay.WaitAsync(); // If the LoginAsync failed, this is already completed, but await it in case of a failure from app credentials.
 				return Unauthorized("Login failed due to invalid credentials.\n" +
 					"One of the following was incorrect: AppName, AppApiToken, UserId, UserSecret\n" +
 					"Which of these is / are incorrect is not stated for security reasons.");
 			}
 			else {
-				return new LoginResponseDTO(token);
+				return new LoginResponseDTO((AuthorizationToken)token);
 			}
 		}
 	}
