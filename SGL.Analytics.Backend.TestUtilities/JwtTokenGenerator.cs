@@ -22,11 +22,13 @@ namespace SGL.Analytics.Backend.TestUtilities {
 			signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 		}
 
-		public string GenerateToken(Guid userId, TimeSpan expirationTime) {
+		public string GenerateToken(Guid userId, TimeSpan expirationTime, params (string ClaimType, string ClaimValue)[] additionalClaims) {
+			var claims = additionalClaims.Select(c => new Claim(c.ClaimType, c.ClaimValue))
+				.Prepend(new Claim("userid", userId.ToString() ?? "")).ToArray();
 			var token = new JwtSecurityToken(
 				issuer: issuer,
 				audience: audience,
-				claims: new[] { new Claim("userid", userId.ToString() ?? "") },
+				claims: claims,
 				expires: DateTime.UtcNow.Add(expirationTime),
 				signingCredentials: signingCredentials
 			);
