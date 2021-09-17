@@ -59,7 +59,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			Assert.NotNull(token);
 			var (principal, validatedToken) = tokenValidator.Validate(token!);
 			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
-			Assert.Equal("42", Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value);
+			Assert.Equal(42, principal.GetClaim<int>("userid", Int32.TryParse));
 		}
 
 		[Fact]
@@ -80,9 +80,9 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			Assert.NotNull(token);
 			var (principal, validatedToken) = tokenValidator.Validate(token!);
 			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
-			Assert.Equal("42", Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value);
-			Assert.Equal("Hello World", Assert.Single(principal.Claims, c => c.Type.Equals("message", StringComparison.OrdinalIgnoreCase)).Value);
-			Assert.Equal("1234", Assert.Single(principal.Claims, c => c.Type.Equals("number", StringComparison.OrdinalIgnoreCase)).Value);
+			Assert.Equal(42, principal.GetClaim<int>("userid", Int32.TryParse));
+			Assert.Equal("Hello World", principal.GetClaim("message"));
+			Assert.Equal(1234, principal.GetClaim<int>("number", Int32.TryParse));
 		}
 
 		[Fact]
@@ -164,7 +164,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			Assert.NotNull(token);
 			var (principal, validatedToken) = tokenValidator.Validate(token!);
 			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
-			Assert.Equal("42", Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value);
+			Assert.Equal(42, principal.GetClaim<int>("userid", Int32.TryParse));
 		}
 	}
 }
