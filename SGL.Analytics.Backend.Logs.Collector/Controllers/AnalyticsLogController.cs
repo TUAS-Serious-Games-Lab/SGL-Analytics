@@ -1,10 +1,12 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
+using SGL.Analytics.Backend.Security;
 using SGL.Analytics.Backend.WebUtilities;
 using SGL.Analytics.DTO;
 
@@ -28,24 +30,34 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 		[HttpPost]
-		[Authorize(policy: "HeaderOwnerUserId")]
+		[Authorize]
 		public async Task<ActionResult> IngestLog([FromHeader(Name = "App-API-Token")] string appApiToken, [DtoFromHeaderModelBinder] LogMetadataDTO logMetadata) {
-			var app = await appRepo.GetApplicationByNameAsync(logMetadata.AppName);
+			Guid userId;
+			string appName;
+			try {
+				userId = User.GetClaim<Guid>("userid", Guid.TryParse);
+				appName = User.GetClaim("appname");
+			}
+			catch (ClaimException ex) {
+				logger.LogError(ex, "IngestLog operation failed due to an error with the required security token claims.");
+				return Unauthorized("The operation failed due to a security token error.");
+			}
+			var app = await appRepo.GetApplicationByNameAsync(appName);
 			if (app is null) {
-				logger.LogError("IngestLog POST request from user {userId} failed due to unknown application {appName}.", logMetadata.UserId, logMetadata.AppName);
+				logger.LogError("IngestLog POST request from user {userId} failed due to unknown application {appName}.", userId, appName);
 				return Unauthorized();
 			}
 			else if (app.ApiToken != appApiToken) {
-				logger.LogError("IngestLog POST request from user {userId} failed due to incorrect API token for application {appName}.", logMetadata.UserId, logMetadata.AppName);
+				logger.LogError("IngestLog POST request from user {userId} failed due to incorrect API token for application {appName}.", userId, appName);
 				return Unauthorized();
 			}
 
 			try {
-				await logManager.IngestLogAsync(logMetadata, Request.Body);
+				await logManager.IngestLogAsync(userId, appName, logMetadata, Request.Body);
 				return StatusCode(StatusCodes.Status201Created);
 			}
 			catch (Exception ex) {
-				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to unexpected exception.", logMetadata.UserId);
+				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to unexpected exception.", userId);
 				throw;
 			}
 		}

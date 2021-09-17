@@ -223,8 +223,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.NotNull(result);
 				var token = result!.BearerToken;
 				var (principal, validatedToken) = fixture.TokenValidator.Validate(token);
-				Assert.True(Guid.TryParse(Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value, out var tokenUserId));
-				Assert.Equal(userId, tokenUserId);
+				Assert.Equal(userId, principal.GetClaim<Guid>("userid", Guid.TryParse));
+				Assert.Equal(fixture.AppName, principal.GetClaim("appname"));
 			}
 		}
 		[Fact]

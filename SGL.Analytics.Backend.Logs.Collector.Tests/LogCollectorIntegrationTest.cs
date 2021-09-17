@@ -59,7 +59,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		}
 
 		protected override IHostBuilder CreateHostBuilder() {
-			return base.CreateHostBuilder().ConfigureAppConfiguration(config => config.AddInMemoryCollection(JwtConfig)).ConfigureLogging(logging => logging.AddXUnit(() => Output).SetMinimumLevel(LogLevel.Trace));
+			return base.CreateHostBuilder().ConfigureAppConfiguration(config => config.AddInMemoryCollection(JwtConfig))
+				.ConfigureLogging(logging => logging.AddXUnit(() => Output).SetMinimumLevel(LogLevel.Trace));
 		}
 	}
 
@@ -84,13 +85,14 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			return stream;
 		}
 
-		private HttpRequestMessage buildUploadRequest(Stream logContent, LogMetadataDTO logMDTO, Guid userId) {
+		private HttpRequestMessage buildUploadRequest(Stream logContent, LogMetadataDTO logMDTO, Guid userId, string appName) {
 			var content = new StreamContent(logContent);
 			content.Headers.MapDtoProperties(logMDTO);
 			content.Headers.Add("App-API-Token", fixture.AppApiToken);
 			content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 			var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
-			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5)));
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+				fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", appName)));
 			request.Content = content;
 			return request;
 		}
@@ -99,10 +101,10 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		public async Task LogIngestWithValidParametersSucceeds() {
 			var userId = Guid.NewGuid();
 			var logId = Guid.NewGuid();
-			var logMDTO = new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
 			using (var logContent = generateRandomGZippedTestData()) {
 				using (var client = fixture.CreateClient()) {
-					var request = buildUploadRequest(logContent, logMDTO, userId);
+					var request = buildUploadRequest(logContent, logMDTO, userId, fixture.AppName);
 					var response = await client.SendAsync(request);
 					response.EnsureSuccessStatusCode();
 				}
@@ -131,7 +133,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			var logId = Guid.NewGuid();
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
-				var request = buildUploadRequest(logContent, new LogMetadataDTO("DoesNotExist", userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)), userId);
+				var request = buildUploadRequest(logContent, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)), userId, "DoesNotExist");
 				var response = await client.SendAsync(request);
 				Assert.Equal(HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
 				Assert.Empty(response.Headers.WwwAuthenticate); // Ensure the error is not from JWT challenge but from the missing application.
@@ -145,11 +147,12 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				content.Headers.MapDtoProperties(new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
+				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
 				content.Headers.Add("App-API-Token", "IncorrectToken");
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
-				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5)));
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+					fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
 				request.Content = content;
 				var response = await client.SendAsync(request);
 				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
@@ -164,7 +167,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				content.Headers.MapDtoProperties(new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
+				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
 				content.Headers.Add("App-API-Token", fixture.AppApiToken);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
@@ -177,23 +180,10 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		}
 
 		[Fact]
-		public async Task LogIngestForADifferentUserIdThanInAuthTokenReturnsForbidden() {
-			var userId1 = Guid.NewGuid();
-			var userId2 = Guid.NewGuid();
-			var logId = Guid.NewGuid();
-			using (var logContent = generateRandomGZippedTestData())
-			using (var client = fixture.CreateClient()) {
-				var request = buildUploadRequest(logContent, new LogMetadataDTO(fixture.AppName, userId1, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)), userId2);
-				var response = await client.SendAsync(request);
-				Assert.Equal(HttpStatusCode.Forbidden, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
-			}
-		}
-
-		[Fact]
 		public async Task FailedLogIngestCanBeSuccessfullyRetried() {
 			var userId = Guid.NewGuid();
 			var logId = Guid.NewGuid();
-			var logMDTO = new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
 			using (var logContent = generateRandomGZippedTestData()) {
 				using (var client = fixture.CreateClient(new() {
 					// These options are required for the fault simulation,
@@ -206,7 +196,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					// -> Use a very strict timeout. With the WebApplicationFactory test server that we are using, the timeout set on the client translates to the server.
 					client.Timeout = TimeSpan.FromMilliseconds(200);
 					var streamWrapper = new TriggeredBlockingStream(logContent);
-					var request = buildUploadRequest(streamWrapper, logMDTO, userId);
+					var request = buildUploadRequest(streamWrapper, logMDTO, userId, fixture.AppName);
 					var task = client.SendAsync(request);
 					// Interrupt transfer of the body on the client.
 					// Because the headers were already sent, the server-side request handling should be invoked despite the client error.
@@ -230,7 +220,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				// Reattempt normally...
 				using (var client = fixture.CreateClient()) {
 					logContent.Position = 0;
-					var request = buildUploadRequest(logContent, logMDTO, userId);
+					var request = buildUploadRequest(logContent, logMDTO, userId, fixture.AppName);
 					var response = await client.SendAsync(request);
 					response.EnsureSuccessStatusCode();
 				}
@@ -260,16 +250,16 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			// First, create the conflicting log:
 			using (var client = fixture.CreateClient()) {
 				Guid otherUserId = Guid.NewGuid();
-				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(fixture.AppName, otherUserId, logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45)), otherUserId);
+				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45)), otherUserId, fixture.AppName);
 				var response = await client.SendAsync(request);
 				response.EnsureSuccessStatusCode();
 			}
 			// Now try to upload a log with the same id from a different user:
 			var userId = Guid.NewGuid();
-			var logMDTO = new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
 			using (var logContent = generateRandomGZippedTestData()) {
 				using (var client = fixture.CreateClient()) {
-					var request = buildUploadRequest(logContent, logMDTO, userId);
+					var request = buildUploadRequest(logContent, logMDTO, userId, fixture.AppName);
 					var response = await client.SendAsync(request);
 					response.EnsureSuccessStatusCode();
 				}
@@ -298,13 +288,13 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			// First, create the conflicting log:
 			using (var client = fixture.CreateClient()) {
 				Guid otherUserId = Guid.NewGuid();
-				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(fixture.AppName, otherUserId, logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45)), otherUserId);
+				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45)), otherUserId, fixture.AppName);
 				var response = await client.SendAsync(request);
 				response.EnsureSuccessStatusCode();
 			}
 			// Now try to upload a log with the same id from a different user...
 			var userId = Guid.NewGuid();
-			var logMDTO = new LogMetadataDTO(fixture.AppName, userId, logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
 			using (var logContent = generateRandomGZippedTestData()) {
 				// ... but initially fail to do so due to a simulated connection fault:
 				using (var client = fixture.CreateClient(new() {
@@ -313,7 +303,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				})) {
 					client.Timeout = TimeSpan.FromMilliseconds(200);
 					var streamWrapper = new TriggeredBlockingStream(logContent);
-					var request = buildUploadRequest(streamWrapper, logMDTO, userId);
+					var request = buildUploadRequest(streamWrapper, logMDTO, userId, fixture.AppName);
 					var task = client.SendAsync(request);
 					streamWrapper.TriggerReadError(new IOException("Generic I/O error"));
 					await Assert.ThrowsAnyAsync<Exception>(async () => await task);
@@ -321,7 +311,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				// Now reattempt normally:
 				using (var client = fixture.CreateClient()) {
 					var content = new StreamContent(logContent);
-					var request = buildUploadRequest(logContent, logMDTO, userId);
+					var request = buildUploadRequest(logContent, logMDTO, userId, fixture.AppName);
 					var response = await client.SendAsync(request);
 					response.EnsureSuccessStatusCode();
 				}

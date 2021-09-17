@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Security {
@@ -27,13 +25,16 @@ namespace SGL.Analytics.Backend.Security {
 			TUserId userId, string providedPlainSecret,
 			Func<TUserId, Task<TUser?>> lookupUserAsync,
 			Func<TUser, string> getHashedSecret,
-			Func<TUser, string, Task> updateHashedSecretAsync, IDelayHandle fixedFailureDelay);
+			Func<TUser, string, Task> updateHashedSecretAsync,
+			IDelayHandle fixedFailureDelay,
+			params (string ClaimType, Func<TUser, string> GetClaimValue)[] additionalClaims);
 		Task<string?> LoginAsync<TUserId, TUser>(
 			TUserId userId, string providedPlainSecret,
 			Func<TUserId, Task<TUser?>> lookupUserAsync,
 			Func<TUser, string> getHashedSecret,
-			Func<TUser, string, Task> updateHashedSecretAsync) {
-			return LoginAsync(userId, providedPlainSecret, lookupUserAsync, getHashedSecret, updateHashedSecretAsync, StartFixedFailureDelay());
+			Func<TUser, string, Task> updateHashedSecretAsync,
+			params (string ClaimType, Func<TUser, string> GetClaimValue)[] additionalClaims) {
+			return LoginAsync(userId, providedPlainSecret, lookupUserAsync, getHashedSecret, updateHashedSecretAsync, StartFixedFailureDelay(), additionalClaims);
 		}
 	}
 }

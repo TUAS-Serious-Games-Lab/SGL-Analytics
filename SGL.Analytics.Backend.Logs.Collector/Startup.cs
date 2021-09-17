@@ -9,6 +9,7 @@ using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
 using SGL.Analytics.Backend.Security;
+using System;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	public class Startup {
@@ -25,8 +26,10 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			services.AddDbContext<LogsContext>(options =>
 					options.UseNpgsql(Configuration.GetConnectionString("LogsContext")));
 			services.UseJwtBearerAuthentication(Configuration);
-			services.AddAuthorization(options => options.AddOwnerPolicies());
-			services.AddOwnerAuthorizationHandler(Configuration);
+			services.AddAuthorization(options => {
+				options.AddPolicy("AuthenticatedAppUser", p => p.RequireClaim("userid").RequireClaim("appname"));
+				options.DefaultPolicy = options.GetPolicy("AuthenticatedAppUser") ?? throw new InvalidOperationException("Couldn't find AuthenticatedAppUser policy.");
+			});
 			services.UseFileSystemCollectorLogStorage(Configuration);
 			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
 			services.AddScoped<ILogMetadataRepository, DbLogMetadataRepository>();

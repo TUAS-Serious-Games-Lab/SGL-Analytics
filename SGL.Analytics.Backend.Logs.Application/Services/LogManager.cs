@@ -26,29 +26,29 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 			this.logger = logger;
 		}
 
-		public async Task<LogFile> IngestLogAsync(LogMetadataDTO logMetaDTO, Stream logContent) {
-			var app = await appRepo.GetApplicationByNameAsync(logMetaDTO.AppName);
+		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent) {
+			var app = await appRepo.GetApplicationByNameAsync(appName);
 			if (app is null) {
-				logger.LogError("Attempt to ingest a log file with id {logId} for non-existent application {appName} from user {user}.", logMetaDTO.LogFileId, logMetaDTO.AppName, logMetaDTO.UserId);
-				throw new ApplicationDoesNotExistException(logMetaDTO.AppName);
+				logger.LogError("Attempt to ingest a log file with id {logId} for non-existent application {appName} from user {user}.", logMetaDTO.LogFileId, appName, userId);
+				throw new ApplicationDoesNotExistException(appName);
 			}
 			try {
 				var logMetadata = await logMetaRepo.GetLogMetadataByIdAsync(logMetaDTO.LogFileId);
 				if (logMetadata is null) {
-					logMetadata = new(logMetaDTO.LogFileId, app.Id, logMetaDTO.UserId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now, LogFileSuffix, false);
+					logMetadata = new(logMetaDTO.LogFileId, app.Id, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now, LogFileSuffix, false);
 					logMetadata.App = app;
-					logger.LogInformation("Ingesting new log file {logId} from user {userId}.", logMetaDTO.LogFileId, logMetaDTO.UserId);
+					logger.LogInformation("Ingesting new log file {logId} from user {userId}.", logMetaDTO.LogFileId, userId);
 					logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata);
 				}
-				else if (logMetadata.UserId != logMetaDTO.UserId) {
+				else if (logMetadata.UserId != userId) {
 					var otherLogMetadata = logMetadata;
-					var oldLogMetadata = await logMetaRepo.GetLogMetadataByUserLocalIdAsync(app.Id, logMetaDTO.UserId, logMetaDTO.LogFileId);
+					var oldLogMetadata = await logMetaRepo.GetLogMetadataByUserLocalIdAsync(app.Id, userId, logMetaDTO.LogFileId);
 					if (oldLogMetadata is null) {
-						logMetadata = new(Guid.NewGuid(), app.Id, logMetaDTO.UserId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now, LogFileSuffix, false);
+						logMetadata = new(Guid.NewGuid(), app.Id, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now, LogFileSuffix, false);
 						logMetadata.App = app;
 						logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. " +
 							"Resolving this conflict by assigning a new log id {newLogId} for the new log file.",
-							logMetaDTO.UserId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id);
+							userId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id);
 						logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata);
 					}
 					else {
@@ -59,13 +59,13 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 								"Although that attempt was already marked as complete, the client attempts another upload. Allowing it to proceed anyway. " +
 								"This could happen if the server wrote the log to completion, but the client crashed / disconnected before it could receive the response and " +
 								"remove the file from the upload list.",
-								logMetaDTO.UserId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id, logMetadata.UploadTime);
+								userId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id, logMetadata.UploadTime);
 						}
 						else {
 							logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. " +
 								"This conflict was previously resolved by assigning the new log id {newLogId} for the new log file when an upload for it was attempted at {uploadTime:O}. " +
 								"That upload however didn't complete and the client is now reattempting the upload.",
-								logMetaDTO.UserId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id, logMetadata.UploadTime);
+								userId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id, logMetadata.UploadTime);
 							logMetadata.UploadTime = DateTime.Now;
 							logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata);
 						}
@@ -75,7 +75,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					logger.LogWarning("User {user} uploads log {logId} again, although it was already marked as completely uploaded. Allowing them to proceed anyway. " +
 						"This could happen if the server wrote the log to completion, but the client crashed / disconnected before it could receive the response and " +
 						"remove the file from the upload list.",
-						logMetaDTO.UserId, logMetaDTO.LogFileId);
+						userId, logMetaDTO.LogFileId);
 				}
 				else {
 					logger.LogInformation("Reattempted upload of logfile {logId} from user {userId}, time of original upload attempt: {uploadTime:O}.",
@@ -83,14 +83,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					logMetadata.UploadTime = DateTime.Now;
 					logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata);
 				}
-				await logFileRepo.StoreLogAsync(logMetaDTO.AppName, logMetadata.UserId, logMetadata.Id, logMetadata.FilenameSuffix, logContent);
+				await logFileRepo.StoreLogAsync(appName, logMetadata.UserId, logMetadata.Id, logMetadata.FilenameSuffix, logContent);
 				logMetadata.Complete = true;
 				logMetadata.UploadTime = DateTime.Now;
 				logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata);
 				return new LogFile(logMetadata, logFileRepo);
 			}
 			catch (Exception ex) {
-				logger.LogError(ex, "Log file ingest of file {logId} from user {userId} failed due to exception.", logMetaDTO.LogFileId, logMetaDTO.UserId);
+				logger.LogError(ex, "Log file ingest of file {logId} from user {userId} failed due to exception.", logMetaDTO.LogFileId, userId);
 				throw;
 			}
 		}

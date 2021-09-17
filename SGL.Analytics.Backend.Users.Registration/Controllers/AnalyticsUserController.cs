@@ -99,7 +99,9 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				async (user, hashedSecret) => {
 					user.HashedSecret = hashedSecret;
 					await userManager.UpdateUserAsync(user);
-				}, fixedFailureDelay);
+				},
+				fixedFailureDelay,
+				("appname", user => user.App.Name));
 
 			if (token is null) {
 				logger.LogError("Login attempt for user {userId} failed due to incorrect credentials.", loginRequest.UserId);

@@ -59,7 +59,30 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			Assert.NotNull(token);
 			var (principal, validatedToken) = tokenValidator.Validate(token!);
 			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
-			Assert.Equal("42", Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value);
+			Assert.Equal(42, principal.GetClaim<int>("userid", Int32.TryParse));
+		}
+
+		[Fact]
+		public async Task JwtLoginServiceSupportsIssuingAdditionalClaimsForUser() {
+			var user = new User();
+			var token = await loginService.LoginAsync(42, "UserSecret", async id => {
+				await Task.CompletedTask;
+				Assert.Equal(42, id);
+				return user;
+			}, u => {
+				Assert.Same(user, u);
+				return SecretHashing.CreateHashedSecret("UserSecret");
+			}, (u, s) => {
+				throw new XunitException("The login service should not need to rehash in this test case.");
+			},
+			("message", u => "Hello World"),
+			("number", u => 1234.ToString()));
+			Assert.NotNull(token);
+			var (principal, validatedToken) = tokenValidator.Validate(token!);
+			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
+			Assert.Equal(42, principal.GetClaim<int>("userid", Int32.TryParse));
+			Assert.Equal("Hello World", principal.GetClaim("message"));
+			Assert.Equal(1234, principal.GetClaim<int>("number", Int32.TryParse));
 		}
 
 		[Fact]
@@ -141,7 +164,7 @@ namespace SGL.Analytics.Backend.Security.Tests {
 			Assert.NotNull(token);
 			var (principal, validatedToken) = tokenValidator.Validate(token!);
 			Assert.Equal("JwtLoginServiceUnitTest", validatedToken.Issuer);
-			Assert.Equal("42", Assert.Single(principal.Claims, c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase)).Value);
+			Assert.Equal(42, principal.GetClaim<int>("userid", Int32.TryParse));
 		}
 	}
 }
