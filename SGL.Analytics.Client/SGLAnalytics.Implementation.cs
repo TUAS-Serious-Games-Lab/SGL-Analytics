@@ -256,22 +256,5 @@ namespace SGL.Analytics.Client {
 			}
 			startFileUploadingIfNotRunning();
 		}
-
-		private class NoOpLogger : ILogger<SGLAnalytics> {
-			private class DummyScope : IDisposable {
-				public void Dispose() { }
-			}
-			public IDisposable BeginScope<TState>(TState state) {
-				return new DummyScope();
-			}
-
-			public bool IsEnabled(LogLevel logLevel) {
-				return false;
-			}
-
-			public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter) {
-			}
-		}
-
 	}
 }

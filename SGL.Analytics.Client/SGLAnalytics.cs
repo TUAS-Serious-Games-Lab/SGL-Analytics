@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Analytics.Utilities;
 using System;
 using System.IO;
@@ -23,7 +24,7 @@ namespace SGL.Analytics.Client {
 			mainSyncContext = SynchronizationContext.Current ?? new SynchronizationContext();
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
-			if (diagnosticsLogger is null) diagnosticsLogger = new NoOpLogger();
+			if (diagnosticsLogger is null) diagnosticsLogger = NullLogger<SGLAnalytics>.Instance;
 			logger = diagnosticsLogger;
 			if (rootDataStore is null) rootDataStore = new FileRootDataStore(appName);
 			this.rootDataStore = rootDataStore;
