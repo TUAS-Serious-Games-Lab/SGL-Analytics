@@ -153,14 +153,14 @@ namespace SGL.Analytics.Client {
 				try {
 					await attemptToUploadFileAsync(loginData, userID, logFile);
 				}
-				catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
+				catch (LoginRequiredException) {
 					logger.LogWarning("Uploading data log {logId} failed with 'Unauthorized' error. " +
 						"The most likely reason is that the session token expired. Obtaining a new session token by logging in again, retrying the upload afterwards...", logFile.ID);
 					try {
 						(userIDOpt, loginData) = await ensureLogedInAsync();
 					}
-					catch (Exception ex2) {
-						logger.LogError(ex2, "The login attempt failed. Exiting the upload process ...");
+					catch (Exception ex) {
+						logger.LogError(ex, "The login attempt failed. Exiting the upload process ...");
 						return;
 					}
 					if (userIDOpt is null || loginData is null) {
@@ -170,8 +170,8 @@ namespace SGL.Analytics.Client {
 					try {
 						await attemptToUploadFileAsync(loginData, userID, logFile);
 					}
-					catch (HttpRequestException ex3) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
-						logger.LogError(ex3, "The upload for data log {logId} failed again after obtaining a fresh session token. " +
+					catch (LoginRequiredException ex) {
+						logger.LogError(ex, "The upload for data log {logId} failed again after obtaining a fresh session token. " +
 							"There seems to be a permission problem in the backend. Exiting the upload process ...", logFile.ID);
 						return;
 					}
