@@ -55,7 +55,7 @@ namespace SGL.Analytics.Client.Tests {
 			}
 			var fileTime = metadata.CreationTime;
 			// There is a small tolerance window where fileTime can be few milliseconds earlier than before, probably due to too low precission of the filesystem timestamps.
-			Assert.InRange(fileTime, before.AddMilliseconds(-10), after.AddMilliseconds(10));
+			Assert.InRange(fileTime, before.AddMilliseconds(-20), after.AddMilliseconds(20));
 		}
 		[Fact]
 		public void EndTimeIsCorrect() {
@@ -67,7 +67,7 @@ namespace SGL.Analytics.Client.Tests {
 			DateTime after = DateTime.Now;
 			var fileTime = metadata.EndTime;
 			// There is a small tolerance window where fileTime can be few milliseconds earlier than before, probably due to too low precission of the filesystem timestamps.
-			Assert.InRange(fileTime, before.AddMilliseconds(-10), after.AddMilliseconds(10));
+			Assert.InRange(fileTime, before.AddMilliseconds(-20), after.AddMilliseconds(20));
 		}
 		[Fact]
 		public void RemovedFilesAreNotEnumerated() {
