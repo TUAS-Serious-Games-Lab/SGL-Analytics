@@ -143,34 +143,40 @@ namespace SGL.Analytics.Client {
 			(Guid? userIDOpt, LoginResponseDTO? loginData) = await ensureLogedInAsync();
 			if (userIDOpt is null || loginData is null) return;
 			logger.LogDebug("Started log uploader to asynchronously upload finished data logs to the backend.");
+			var completedLogFiles = new HashSet<Guid>();
 			var userID = (Guid)userIDOpt;
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
+				// If we already completed this file, it has been added to the queue twice,
+				// e.g. once by the writer worker and once by startUploadingExistingLogs.
+				// Since we removed the file after successfully uploading it, lets not try again, only to fail with a missing file exception.
+				if (completedLogFiles.Contains(logFile.ID)) continue;
 				try {
 					await attemptToUploadFileAsync(loginData, userID, logFile);
 				}
-				catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
-					logger.LogWarning("Uploading data log {logId} failed with 'Unauthorized' error. " +
-						"The most likely reason is that the session token expired. Obtaining a new session token by logging in again, retrying the upload afterwards...", logFile.ID);
+				catch (LoginRequiredException) {
+					logger.LogInformation("Uploading data log {logId} failed because the backend told us that we need to login first. " +
+						"The most likely reason is that our session token expired. Obtaining a new session token by logging in again, after which we will retry the upload ...", logFile.ID);
 					try {
 						(userIDOpt, loginData) = await ensureLogedInAsync();
 					}
-					catch (Exception ex2) {
-						logger.LogError(ex2, "The login attempt failed. Exiting the upload process ...");
+					catch (Exception ex) {
+						logger.LogError(ex, "The login attempt failed. Exiting the upload process ...");
 						return;
 					}
 					if (userIDOpt is null || loginData is null) {
-						logger.LogError("The registered login credentails are missing. This is unexpected. Exiting the upload process ...");
+						logger.LogError("The registered login credentails are missing. This is unexpected at this point. Exiting the upload process ...");
 						return;
 					}
 					try {
 						await attemptToUploadFileAsync(loginData, userID, logFile);
 					}
-					catch (HttpRequestException ex3) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
-						logger.LogError(ex3, "The upload for data log {logId} failed again after obtaining a fresh session token. " +
+					catch (LoginRequiredException ex) {
+						logger.LogError(ex, "The upload for data log {logId} failed again after obtaining a fresh session token. " +
 							"There seems to be a permission problem in the backend. Exiting the upload process ...", logFile.ID);
 						return;
 					}
 				}
+				completedLogFiles.Add(logFile.ID);
 			}
 
 			async Task attemptToUploadFileAsync(LoginResponseDTO loginData, Guid userID, ILogStorage.ILogFile logFile) {
@@ -208,10 +214,10 @@ namespace SGL.Analytics.Client {
 					logger.LogError("Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup.", logFile.ID, ex.Message);
 				}
 				catch (Exception ex) when (!removing) {
-					logger.LogError("Uploading data log {logId} failed with an unexpected exception with message \"{message}\". It will be retried at next startup.", logFile.ID, ex.Message);
+					logger.LogError(ex, "Uploading data log {logId} failed with an unexpected exception. It will be retried at next startup.", logFile.ID);
 				}
 				catch (Exception ex) {
-					logger.LogError("Removing data log {logId} failed with an unexpected exception with message \"{message}\".", logFile.ID, ex.Message);
+					logger.LogError(ex, "Removing data log {logId} failed with an unexpected exception.", logFile.ID, ex.Message);
 				}
 			}
 		}
