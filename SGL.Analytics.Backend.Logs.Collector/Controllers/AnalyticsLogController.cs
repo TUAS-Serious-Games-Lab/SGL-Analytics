@@ -41,7 +41,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 
 			try {
-				await logManager.IngestLogAsync(logMetadata, Request.Body);
+				await logManager.IngestLogAsync(logMetadata.UserId, logMetadata.AppName, logMetadata, Request.Body);
 				return StatusCode(StatusCodes.Status201Created);
 			}
 			catch (Exception ex) {

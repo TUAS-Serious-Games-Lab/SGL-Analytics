@@ -26,18 +26,18 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		public List<IngestOperation> Ingests { get; } = new();
 
-		public async Task<LogFile> IngestLogAsync(LogMetadataDTO logMetaDTO, Stream logContent) {
-			if (!Apps.TryGetValue(logMetaDTO.AppName, out var app)) {
-				throw new ApplicationDoesNotExistException(logMetaDTO.AppName);
+		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent) {
+			if (!Apps.TryGetValue(appName, out var app)) {
+				throw new ApplicationDoesNotExistException(appName);
 			}
 			var content = new MemoryStream();
 			await logContent.CopyToAsync(content);
 			content.Position = 0;
-			var logMd = new Domain.Entity.LogMetadata(logMetaDTO.LogFileId, app.Id, logMetaDTO.UserId, logMetaDTO.LogFileId,
+			var logMd = new Domain.Entity.LogMetadata(logMetaDTO.LogFileId, app.Id, userId, logMetaDTO.LogFileId,
 				logMetaDTO.CreationTime.ToUniversalTime(), logMetaDTO.EndTime.ToUniversalTime(), DateTime.Now.ToUniversalTime(), ".log.gz", true);
 			logMd.App = app;
 			Ingests.Add(new IngestOperation(logMetaDTO, logMd, content));
-			return new LogFile(logMd, new SingleLogFileRepository(app.Name, logMetaDTO.UserId, logMd.Id, ".log.gz", content));
+			return new LogFile(logMd, new SingleLogFileRepository(app.Name, userId, logMd.Id, ".log.gz", content));
 		}
 
 		public void Dispose() {
