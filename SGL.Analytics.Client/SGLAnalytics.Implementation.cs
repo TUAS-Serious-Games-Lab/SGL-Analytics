@@ -154,8 +154,8 @@ namespace SGL.Analytics.Client {
 					await attemptToUploadFileAsync(loginData, userID, logFile);
 				}
 				catch (LoginRequiredException) {
-					logger.LogWarning("Uploading data log {logId} failed with 'Unauthorized' error. " +
-						"The most likely reason is that the session token expired. Obtaining a new session token by logging in again, retrying the upload afterwards...", logFile.ID);
+					logger.LogInformation("Uploading data log {logId} failed because the backend told us that we need to login first. " +
+						"The most likely reason is that our session token expired. Obtaining a new session token by logging in again, after which we will retry the upload ...", logFile.ID);
 					try {
 						(userIDOpt, loginData) = await ensureLogedInAsync();
 					}
@@ -164,7 +164,7 @@ namespace SGL.Analytics.Client {
 						return;
 					}
 					if (userIDOpt is null || loginData is null) {
-						logger.LogError("The registered login credentails are missing. This is unexpected. Exiting the upload process ...");
+						logger.LogError("The registered login credentails are missing. This is unexpected at this point. Exiting the upload process ...");
 						return;
 					}
 					try {
@@ -214,10 +214,10 @@ namespace SGL.Analytics.Client {
 					logger.LogError("Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup.", logFile.ID, ex.Message);
 				}
 				catch (Exception ex) when (!removing) {
-					logger.LogError("Uploading data log {logId} failed with an unexpected exception with message \"{message}\". It will be retried at next startup.", logFile.ID, ex.Message);
+					logger.LogError(ex, "Uploading data log {logId} failed with an unexpected exception. It will be retried at next startup.", logFile.ID);
 				}
 				catch (Exception ex) {
-					logger.LogError("Removing data log {logId} failed with an unexpected exception with message \"{message}\".", logFile.ID, ex.Message);
+					logger.LogError(ex, "Removing data log {logId} failed with an unexpected exception.", logFile.ID, ex.Message);
 				}
 			}
 		}
