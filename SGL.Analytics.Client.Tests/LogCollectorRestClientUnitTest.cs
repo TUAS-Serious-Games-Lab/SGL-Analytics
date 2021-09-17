@@ -45,7 +45,7 @@ namespace SGL.Analytics.Client.Tests {
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
 
-			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, new LoginResponseDTO("OK"), logFile);
+			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, new AuthorizationToken("OK"), logFile);
 
 			Assert.Single(serverFixture.Server.LogEntries);
 			var logEntry = serverFixture.Server.LogEntries.Single();
@@ -72,7 +72,7 @@ namespace SGL.Analytics.Client.Tests {
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
 
-			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, new LoginResponseDTO("OK"), logFile));
+			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, new AuthorizationToken("OK"), logFile));
 			Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
 		}
 	}

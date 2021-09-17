@@ -85,7 +85,7 @@ namespace SGL.Analytics.Client.Tests {
 					.WithHeader("Content-Type", new ExactMatcher("application/json"))
 					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
-					.WithBodyAsJson(new LoginResponseDTO("OK")));
+					.WithBodyAsJson(new LoginResponseDTO(new AuthorizationToken("OK"))));
 
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test A" });

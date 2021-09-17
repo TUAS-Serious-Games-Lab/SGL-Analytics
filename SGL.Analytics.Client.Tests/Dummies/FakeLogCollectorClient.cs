@@ -17,7 +17,7 @@ namespace SGL.Analytics.Client.Tests {
 		/// <remarks>Thread-safety is achieved by only allowing to set the value at the beginning of the object lifetime.</remarks>
 		public bool IsActive { get; init; } = true;
 
-		public async Task UploadLogFileAsync(string appName, string appAPIToken, LoginResponseDTO loginData, ILogStorage.ILogFile logFile) {
+		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile) {
 			await Task.CompletedTask;
 			var resp = new HttpResponseMessage(StatusCode);
 			resp.EnsureSuccessStatusCode();

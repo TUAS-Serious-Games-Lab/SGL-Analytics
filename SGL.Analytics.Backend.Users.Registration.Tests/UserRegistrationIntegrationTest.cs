@@ -19,6 +19,7 @@ using SGL.Analytics.DTO;
 using System.Net.Http.Json;
 using System.Net.Http;
 using System.Net;
+using System.Text.Json;
 
 namespace SGL.Analytics.Backend.Users.Registration.Tests {
 	public class UserRegistrationIntegrationTestFixture : DbWebAppIntegrationTestFixtureBase<UsersContext, Startup> {
@@ -65,6 +66,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 	public class UserRegistrationIntegrationTest : IClassFixture<UserRegistrationIntegrationTestFixture> {
 		private UserRegistrationIntegrationTestFixture fixture;
 		private ITestOutputHelper output;
+		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
 		public UserRegistrationIntegrationTest(UserRegistrationIntegrationTestFixture fixture, ITestOutputHelper output) {
 			this.fixture = fixture;
@@ -219,9 +221,9 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				var response = await client.PostAsJsonAsync("/api/AnalyticsUser/login", loginReqDTO);
 				response.EnsureSuccessStatusCode();
 				Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-				var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>();
+				var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(jsonOptions);
 				Assert.NotNull(result);
-				var token = result!.BearerToken;
+				var token = result!.Token;
 				var (principal, validatedToken) = fixture.TokenValidator.Validate(token);
 				Assert.Equal(userId, principal.GetClaim<Guid>("userid", Guid.TryParse));
 				Assert.Equal(fixture.AppName, principal.GetClaim("appname"));

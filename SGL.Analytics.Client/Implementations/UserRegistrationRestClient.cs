@@ -57,7 +57,7 @@ namespace SGL.Analytics.Client {
 			this.loginApiRoute = loginApiRoute;
 		}
 
-		public async Task<LoginResponseDTO> LoginUserAsync(LoginRequestDTO loginDTO) {
+		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO) {
 			var options = new JsonSerializerOptions() { WriteIndented = true };
 			var content = JsonContent.Create(loginDTO, new MediaTypeHeaderValue("application/json"), options);
 			var response = await httpClient.PostAsync(loginApiRoute, content);
@@ -72,7 +72,7 @@ namespace SGL.Analytics.Client {
 				throw new LoginErrorException(ex);
 			}
 			var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(options);
-			return result ?? throw new LoginErrorException("Did not receive a valid response for the login request.");
+			return result?.Token ?? throw new LoginErrorException("Did not receive a valid response for the login request.");
 		}
 
 		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken) {

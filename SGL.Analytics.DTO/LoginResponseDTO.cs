@@ -5,5 +5,5 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.DTO {
-	public record LoginResponseDTO(string BearerToken);
+	public record LoginResponseDTO(AuthorizationToken Token);
 }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -62,7 +63,7 @@ namespace SGL.Analytics.Backend.Security {
 			return new ILoginService.DelayHandle(Task.Delay(options.LoginService.FailureDelay));
 		}
 
-		public async Task<string?> LoginAsync<TUserId, TUser>(TUserId userId, string providedPlainSecret,
+		public async Task<AuthorizationToken?> LoginAsync<TUserId, TUser>(TUserId userId, string providedPlainSecret,
 			Func<TUserId, Task<TUser?>> lookupUserAsync,
 			Func<TUser, string> getHashedSecret,
 			Func<TUser, string, Task> updateHashedSecretAsync,
@@ -112,7 +113,7 @@ namespace SGL.Analytics.Backend.Security {
 			);
 			var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 			logger.LogInformation("Login succeeded for user {userId}.", userId);
-			return tokenString;
+			return new AuthorizationToken(tokenString);
 		}
 	}
 }
