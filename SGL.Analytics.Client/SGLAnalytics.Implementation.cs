@@ -101,7 +101,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		private async Task<(Guid? userId, LoginResponseDTO? loginData)> ensureLogedInAsync(bool expired = false) {
+		private async Task<(Guid? userId, LoginResponseDTO? loginData)> loginAsync(bool expired = false) {
 			Guid? userIDOpt;
 			string? userSecret;
 			LoginResponseDTO? loginData;
@@ -140,7 +140,7 @@ namespace SGL.Analytics.Client {
 
 		private async Task uploadFilesAsync() {
 			if (!logCollectorClient.IsActive) return;
-			(Guid? userIDOpt, LoginResponseDTO? loginData) = await ensureLogedInAsync();
+			(Guid? userIDOpt, LoginResponseDTO? loginData) = await loginAsync();
 			if (userIDOpt is null || loginData is null) return;
 			logger.LogDebug("Started log uploader to asynchronously upload finished data logs to the backend.");
 			var completedLogFiles = new HashSet<Guid>();
@@ -157,7 +157,7 @@ namespace SGL.Analytics.Client {
 					logger.LogInformation("Uploading data log {logId} failed because the backend told us that we need to login first. " +
 						"The most likely reason is that our session token expired. Obtaining a new session token by logging in again, after which we will retry the upload ...", logFile.ID);
 					try {
-						(userIDOpt, loginData) = await ensureLogedInAsync();
+						(userIDOpt, loginData) = await loginAsync();
 					}
 					catch (Exception ex) {
 						logger.LogError(ex, "The login attempt failed. Exiting the upload process ...");
