@@ -27,7 +27,7 @@ namespace SGL.Analytics.Client {
 			this.logCollectorApiFullUri = new Uri(backendServerBaseUri, logCollectorApiEndpoint);
 		}
 
-		public async Task UploadLogFileAsync(string appName, string appAPIToken, Guid userID, LoginResponseDTO loginData, ILogStorage.ILogFile logFile) {
+		public async Task UploadLogFileAsync(string appName, string appAPIToken, LoginResponseDTO loginData, ILogStorage.ILogFile logFile) {
 			try {
 				using (var stream = logFile.OpenReadRaw()) {
 					var content = new StreamContent(stream);

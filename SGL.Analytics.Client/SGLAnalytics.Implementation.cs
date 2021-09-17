@@ -101,7 +101,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		private async Task<(Guid? userId, LoginResponseDTO? loginData)> loginAsync(bool expired = false) {
+		private async Task<LoginResponseDTO?> loginAsync(bool expired = false) {
 			Guid? userIDOpt;
 			string? userSecret;
 			LoginResponseDTO? loginData;
@@ -111,9 +111,9 @@ namespace SGL.Analytics.Client {
 				loginData = this.loginData;
 			}
 			// Can't login without credentials, the user needs to be registered first.
-			if (userIDOpt is null || userSecret is null) return (null, null);
+			if (userIDOpt is null || userSecret is null) return null;
 			// We have loginData already and we weren't called because of expired loginData, return the already present ones.
-			if (loginData is not null && !expired) return (userIDOpt, loginData);
+			if (loginData is not null && !expired) return loginData;
 			logger.LogInformation("Logging in user {userId} ...", userIDOpt);
 			var tcs = new TaskCompletionSource<LoginResponseDTO>();
 			mainSyncContext.Post(async s => {
@@ -135,40 +135,39 @@ namespace SGL.Analytics.Client {
 				this.loginData = loginData;
 			}
 			logger.LogInformation("Login was successful.");
-			return (userIDOpt, loginData);
+			return loginData;
 		}
 
 		private async Task uploadFilesAsync() {
 			if (!logCollectorClient.IsActive) return;
-			(Guid? userIDOpt, LoginResponseDTO? loginData) = await loginAsync();
-			if (userIDOpt is null || loginData is null) return;
+			LoginResponseDTO? loginData = await loginAsync();
+			if (loginData is null) return;
 			logger.LogDebug("Started log uploader to asynchronously upload finished data logs to the backend.");
 			var completedLogFiles = new HashSet<Guid>();
-			var userID = (Guid)userIDOpt;
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
 				// If we already completed this file, it has been added to the queue twice,
 				// e.g. once by the writer worker and once by startUploadingExistingLogs.
 				// Since we removed the file after successfully uploading it, lets not try again, only to fail with a missing file exception.
 				if (completedLogFiles.Contains(logFile.ID)) continue;
 				try {
-					await attemptToUploadFileAsync(loginData, userID, logFile);
+					await attemptToUploadFileAsync(loginData, logFile);
 				}
 				catch (LoginRequiredException) {
 					logger.LogInformation("Uploading data log {logId} failed because the backend told us that we need to login first. " +
 						"The most likely reason is that our session token expired. Obtaining a new session token by logging in again, after which we will retry the upload ...", logFile.ID);
 					try {
-						(userIDOpt, loginData) = await loginAsync();
+						loginData = await loginAsync();
 					}
 					catch (Exception ex) {
 						logger.LogError(ex, "The login attempt failed. Exiting the upload process ...");
 						return;
 					}
-					if (userIDOpt is null || loginData is null) {
+					if (loginData is null) {
 						logger.LogError("The registered login credentails are missing. This is unexpected at this point. Exiting the upload process ...");
 						return;
 					}
 					try {
-						await attemptToUploadFileAsync(loginData, userID, logFile);
+						await attemptToUploadFileAsync(loginData, logFile);
 					}
 					catch (LoginRequiredException ex) {
 						logger.LogError(ex, "The upload for data log {logId} failed again after obtaining a fresh session token. " +
@@ -179,13 +178,13 @@ namespace SGL.Analytics.Client {
 				completedLogFiles.Add(logFile.ID);
 			}
 
-			async Task attemptToUploadFileAsync(LoginResponseDTO loginData, Guid userID, ILogStorage.ILogFile logFile) {
+			async Task attemptToUploadFileAsync(LoginResponseDTO loginData, ILogStorage.ILogFile logFile) {
 				bool removing = false;
 				try {
 					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
 					Task uploadTask;
 					lock (lockObject) { // At the beginning, of the upload task, the stream for the log file needs to be aquired under lock.
-						uploadTask = logCollectorClient.UploadLogFileAsync(appName, appAPIToken, userID, loginData, logFile);
+						uploadTask = logCollectorClient.UploadLogFileAsync(appName, appAPIToken, loginData, logFile);
 					}
 					await uploadTask;
 					removing = true;
