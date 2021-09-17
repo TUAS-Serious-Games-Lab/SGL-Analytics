@@ -55,6 +55,7 @@ test:
 package-client-lib-main:
   extends: .package-client-lib
   variables:
+    GIT_DEPTH: 0
     VERSION_SUFFIX: "-dev"
   only:
     - main
@@ -62,6 +63,7 @@ package-client-lib-main:
 package-client-lib-tags:
   extends: .package-client-lib
   variables:
+    GIT_DEPTH: 0
     VERSION_SUFFIX: ""
   only:
     - tags
