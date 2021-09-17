@@ -65,7 +65,7 @@ namespace SGL.Analytics.Client {
 			try {
 				response.EnsureSuccessStatusCode();
 			}
-			catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden) {
+			catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
 				throw new LoginFailedException();
 			}
 			catch (Exception ex) {
