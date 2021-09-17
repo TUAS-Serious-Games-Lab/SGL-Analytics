@@ -143,8 +143,13 @@ namespace SGL.Analytics.Client {
 			(Guid? userIDOpt, LoginResponseDTO? loginData) = await ensureLogedInAsync();
 			if (userIDOpt is null || loginData is null) return;
 			logger.LogDebug("Started log uploader to asynchronously upload finished data logs to the backend.");
+			var completedLogFiles = new HashSet<Guid>();
 			var userID = (Guid)userIDOpt;
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
+				// If we already completed this file, it has been added to the queue twice,
+				// e.g. once by the writer worker and once by startUploadingExistingLogs.
+				// Since we removed the file after successfully uploading it, lets not try again, only to fail with a missing file exception.
+				if (completedLogFiles.Contains(logFile.ID)) continue;
 				try {
 					await attemptToUploadFileAsync(loginData, userID, logFile);
 				}
@@ -171,6 +176,7 @@ namespace SGL.Analytics.Client {
 						return;
 					}
 				}
+				completedLogFiles.Add(logFile.ID);
 			}
 
 			async Task attemptToUploadFileAsync(LoginResponseDTO loginData, Guid userID, ILogStorage.ILogFile logFile) {
