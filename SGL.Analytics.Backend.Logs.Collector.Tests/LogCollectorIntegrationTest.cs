@@ -59,7 +59,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		}
 
 		protected override IHostBuilder CreateHostBuilder() {
-			return base.CreateHostBuilder().ConfigureAppConfiguration(config => config.AddInMemoryCollection(JwtConfig)).ConfigureLogging(logging => logging.AddXUnit(() => Output).SetMinimumLevel(LogLevel.Trace));
+			return base.CreateHostBuilder().ConfigureAppConfiguration(config => config.AddInMemoryCollection(JwtConfig))
+				.ConfigureLogging(logging => logging.AddXUnit(() => Output).SetMinimumLevel(LogLevel.Trace));
 		}
 	}
 
