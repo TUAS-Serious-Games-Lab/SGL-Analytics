@@ -70,9 +70,7 @@ namespace SGL.Analytics.Client.Tests {
 		public async Task LogEventsAreRecordedAndUploadedAsLogFilesWithCorrectContentAfterRegistration() {
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
 			serverFixture.Server.Given(Request.Create().WithPath("/api/AnalyticsLog").UsingPost()
-						.WithHeader("AppName", new WildcardMatcher("*"))
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
-						.WithHeader("UserId", guidMatcher)
 						.WithHeader("LogFileId", guidMatcher)
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));

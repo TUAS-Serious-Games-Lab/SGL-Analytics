@@ -48,14 +48,14 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		[Fact]
 		public async Task IngestLogWithInvalidAppNameFailsWithUnauthorized() {
 			controller.ControllerContext = createControllerContext("DoesNotExist", Guid.NewGuid());
-			var res = await controller.IngestLog(apiToken, new LogMetadataDTO("DoesNotExist", Guid.NewGuid(), Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2)));
+			var res = await controller.IngestLog(apiToken, new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2)));
 			Assert.IsType<UnauthorizedResult>(res);
 			Assert.Empty(logManager.Ingests);
 		}
 		[Fact]
 		public async Task IngestLogWithInvalidApiTokensFailsWithUnauthorized() {
 			controller.ControllerContext = createControllerContext(nameof(AnalyticsLogControllerUnitTest), Guid.NewGuid());
-			var res = await controller.IngestLog(StringGenerator.GenerateRandomWord(32), new LogMetadataDTO(nameof(AnalyticsLogControllerUnitTest), Guid.NewGuid(), Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2)));
+			var res = await controller.IngestLog(StringGenerator.GenerateRandomWord(32), new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2)));
 			Assert.IsType<UnauthorizedResult>(res);
 			Assert.Empty(logManager.Ingests);
 		}
@@ -77,7 +77,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var appName = nameof(AnalyticsLogControllerUnitTest);
 				var userId = Guid.NewGuid();
 				controller.ControllerContext = createControllerContext(appName, userId, content);
-				var logDto = new LogMetadataDTO(nameof(AnalyticsLogControllerUnitTest), Guid.NewGuid(), Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2));
+				var logDto = new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2));
 				var res = await controller.IngestLog(apiToken, logDto);
 				Assert.Equal(StatusCodes.Status201Created, Assert.IsType<StatusCodeResult>(res).StatusCode);
 				content.Position = 0;

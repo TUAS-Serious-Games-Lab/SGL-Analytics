@@ -12,10 +12,8 @@ namespace SGL.Analytics.Utilities.Tests {
 		[Fact]
 		public void MapDtoPropertiesCanMapLogMetadataDTOCorrectly() {
 			var headers = new FakeHeaders();
-			LogMetadataDTO dto = new LogMetadataDTO(AppName: "UnitTestDummy", UserId: Guid.NewGuid(), LogFileId: Guid.NewGuid(), CreationTime: DateTime.Now.AddMinutes(-5), EndTime: DateTime.Now);
+			LogMetadataDTO dto = new LogMetadataDTO(LogFileId: Guid.NewGuid(), CreationTime: DateTime.Now.AddMinutes(-5), EndTime: DateTime.Now);
 			headers.MapDtoProperties(dto);
-			Assert.Equal(dto.AppName, headers.GetValues("AppName").Single());
-			Assert.Equal(dto.UserId, Guid.Parse(headers.GetValues("UserId").Single()));
 			Assert.Equal(dto.LogFileId, Guid.Parse(headers.GetValues("LogFileId").Single()));
 			Assert.Equal(dto.CreationTime, DateTime.Parse(headers.GetValues("CreationTime").Single()));
 			Assert.Equal(dto.EndTime, DateTime.Parse(headers.GetValues("EndTime").Single()));
