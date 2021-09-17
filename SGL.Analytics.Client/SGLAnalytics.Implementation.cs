@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using SGL.Analytics.DTO;
+using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,7 +11,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
@@ -43,21 +43,6 @@ namespace SGL.Analytics.Client {
 			WriteIndented = true,
 			Converters = { new JsonStringEnumConverter(new EnumNamingPolicy()) }
 		};
-
-		private class AsyncConsumerQueue<T> {
-			private Channel<T> channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions() { AllowSynchronousContinuations = false, SingleReader = true, SingleWriter = false });
-			public void Enqueue(T item) {
-				if (!channel.Writer.TryWrite(item)) {
-					throw new InvalidOperationException("Can't enqueue to this queue object because it is already finished.");
-				}
-			}
-			public IAsyncEnumerable<T> DequeueAllAsync() {
-				return channel.Reader.ReadAllAsync();
-			}
-			public void Finish() {
-				channel.Writer.Complete();
-			}
-		}
 
 		private class LogQueue {
 			internal AsyncConsumerQueue<LogEntry> entryQueue = new AsyncConsumerQueue<LogEntry>();
