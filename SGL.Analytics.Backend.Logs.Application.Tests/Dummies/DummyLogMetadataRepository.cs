@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
@@ -14,15 +15,17 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 
 		public Dictionary<Guid, LogMetadata> Logs => logs;
 
-		public async Task<LogMetadata> AddLogMetadataAsync(LogMetadata logMetadata) {
+		public async Task<LogMetadata> AddLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default) {
 			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
 			if (logs.ContainsKey(logMetadata.Id)) throw new EntityUniquenessConflictException("LogMetadata", "Id", logMetadata.Id);
 			logs.Add(logMetadata.Id, logMetadata);
 			return logMetadata;
 		}
 
-		public async Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId) {
+		public async Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId, CancellationToken ct = default) {
 			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
 			if (logs.TryGetValue(logId, out var logMd)) {
 				return logMd;
 			}
@@ -31,13 +34,15 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			}
 		}
 
-		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId) {
+		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId, CancellationToken ct = default) {
 			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
 			return logs.Values.Where(lm => lm.AppId == userAppId && lm.UserId == userId && lm.LocalLogId == localLogId).SingleOrDefault<LogMetadata?>();
 		}
 
-		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata) {
+		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default) {
 			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
 			Debug.Assert(logs.ContainsKey(logMetadata.Id));
 			logs[logMetadata.Id] = logMetadata;
 			return logMetadata;

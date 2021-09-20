@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
@@ -83,13 +84,13 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 				   select logPath.Value;
 		}
 
-		public async Task CopyLogIntoAsync(string appName, Guid userId, Guid logId, string suffix, Stream contentDestination) {
-			await using (var stream = await ReadLogAsync(appName, userId, logId, suffix)) {
-				await stream.CopyToAsync(contentDestination);
+		public async Task CopyLogIntoAsync(string appName, Guid userId, Guid logId, string suffix, Stream contentDestination, CancellationToken ct = default) {
+			await using (var stream = await ReadLogAsync(appName, userId, logId, suffix, ct)) {
+				await stream.CopyToAsync(contentDestination, ct);
 			}
 		}
 
-		public Task DeleteLogAsync(string appName, Guid userId, Guid logId, string suffix) {
+		public Task DeleteLogAsync(string appName, Guid userId, Guid logId, string suffix, CancellationToken ct = default) {
 			return Task.Run(() => {
 				File.Delete(makeFilePath(appName, userId, logId, suffix));
 			});
@@ -161,27 +162,35 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			File.Delete(Path.Combine(storageDirectory, tempFile.AppName, tempFile.UserDir, tempFile.FileName));
 		}
 
-		public Task<Stream> ReadLogAsync(string appName, Guid userId, Guid logId, string suffix) {
+		public Task<Stream> ReadLogAsync(string appName, Guid userId, Guid logId, string suffix, CancellationToken ct = default) {
 			return Task.Run(() => {
 				try {
 					var filePath = makeFilePath(appName, userId, logId, suffix);
+					ct.ThrowIfCancellationRequested();
 					return (Stream)new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
+				}
+				catch (OperationCanceledException) {
+					throw;
 				}
 				catch (Exception ex) {
 					throw new LogFileNotAvailableException(new LogPath { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix }, ex);
 				}
-			});
+			}, ct);
 		}
 
-		public Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content) {
+		public Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
 			return Task.Run(async () => {
+				ct.ThrowIfCancellationRequested();
 				ensureDirectoryExists(appName, userId);
 				// Create target file with temporary name to not make it visible to other operations while it is still being written.
 				var filePath = Path.Combine(storageDirectory, appName, userId.ToString(), logId.ToString() + suffix + makeTempSuffix());
 				try {
+					ct.ThrowIfCancellationRequested();
 					using (var writeStream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
-						await content.CopyToAsync(writeStream);
+						ct.ThrowIfCancellationRequested();
+						await content.CopyToAsync(writeStream, ct);
 					}
+					ct.ThrowIfCancellationRequested();
 				}
 				catch {
 					// The store operation failed, most likely due to the content stream producing an I/O error (e.g. because it is reading from a network connection that was interrupted).
@@ -195,7 +204,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 				}
 				// Rename to final file name to make it visible to other operations.
 				File.Move(filePath, makeFilePath(appName, userId, logId, suffix), overwrite: true);
-			});
+			}, ct);
 		}
 	}
 }

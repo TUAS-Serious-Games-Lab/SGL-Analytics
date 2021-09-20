@@ -22,6 +22,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -192,16 +193,23 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					AllowAutoRedirect = false,
 					HandleCookies = false
 				})) {
-					// We want to simulate a network fault or the client crashing, resulting in a server-side timeout.
-					// -> Use a very strict timeout. With the WebApplicationFactory test server that we are using, the timeout set on the client translates to the server.
-					client.Timeout = TimeSpan.FromMilliseconds(200);
+					// We want to simulate a network fault or the client crashing. For this, we halt the body transfer after the first byte.
+					// After the metadata record was written, we inject an error and cancel the request from the client side,
+					// so the server-side code fails while transferring the body.
+					// For this, we give an ample timeout to ensure the write can occur before the request times out.
+					client.Timeout = TimeSpan.FromMilliseconds(100000);
+					var cts = new CancellationTokenSource();
 					var streamWrapper = new TriggeredBlockingStream(logContent);
 					var request = buildUploadRequest(streamWrapper, logMDTO, userId, fixture.AppName);
-					var task = client.SendAsync(request);
-					// Interrupt transfer of the body on the client.
-					// Because the headers were already sent, the server-side request handling should be invoked despite the client error.
-					// But reading from the body stream on the server will timeout.
+					var task = client.SendAsync(request, cts.Token);
+
+					streamWrapper.TriggerReadReady(1);
+					// Because the headers were already sent, the server-side request handling should be invoked despite the body transfer being stalled after the first byte.
+					// Poll the database to wait for the LogMetadata entry to appear:
+					await PollWaitForLogMetadata(logId);
+					// After it has appeared, inject the error into the body transfer and cancel the request:
 					streamWrapper.TriggerReadError(new IOException("Generic I/O error"));
+					cts.Cancel();
 					// Awaiting the task here does not only wait for the client, but also for the server-side request handling (because of WebApplicationFactory not actually going over network).
 					await Assert.ThrowsAnyAsync<Exception>(async () => await task);
 				}
@@ -244,6 +252,18 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			}
 
 		}
+
+		private async Task PollWaitForLogMetadata(Guid logId) {
+			LogMetadata? pollLogMd = null;
+			while (pollLogMd == null) {
+				await Task.Delay(100);
+				using (var scope = fixture.Services.CreateScope()) {
+					var logMdRepo = scope.ServiceProvider.GetRequiredService<ILogMetadataRepository>();
+					pollLogMd = await logMdRepo.GetLogMetadataByIdAsync(logId);
+				}
+			}
+		}
+
 		[Fact]
 		public async Task LogIngestWithCollidingIdSucceedsButGetsNewId() {
 			var logId = Guid.NewGuid();
@@ -301,11 +321,15 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					AllowAutoRedirect = false,
 					HandleCookies = false
 				})) {
-					client.Timeout = TimeSpan.FromMilliseconds(200);
+					client.Timeout = TimeSpan.FromMilliseconds(100000);
+					var cts = new CancellationTokenSource();
 					var streamWrapper = new TriggeredBlockingStream(logContent);
 					var request = buildUploadRequest(streamWrapper, logMDTO, userId, fixture.AppName);
-					var task = client.SendAsync(request);
+					var task = client.SendAsync(request, cts.Token);
+					streamWrapper.TriggerReadReady(1);
+					await PollWaitForLogMetadata(logId);
 					streamWrapper.TriggerReadError(new IOException("Generic I/O error"));
+					cts.Cancel();
 					await Assert.ThrowsAnyAsync<Exception>(async () => await task);
 				}
 				// Now reattempt normally:

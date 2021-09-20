@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Application.Services {
@@ -26,19 +27,19 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 			this.logger = logger;
 		}
 
-		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent) {
-			var app = await appRepo.GetApplicationByNameAsync(appName);
+		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct);
 			if (app is null) {
 				logger.LogError("Attempt to ingest a log file with id {logId} for non-existent application {appName} from user {user}.", logMetaDTO.LogFileId, appName, userId);
 				throw new ApplicationDoesNotExistException(appName);
 			}
 			try {
-				var logMetadata = await logMetaRepo.GetLogMetadataByIdAsync(logMetaDTO.LogFileId);
+				var logMetadata = await logMetaRepo.GetLogMetadataByIdAsync(logMetaDTO.LogFileId, ct);
 				if (logMetadata is null) {
 					logMetadata = new(logMetaDTO.LogFileId, app.Id, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now, LogFileSuffix, false);
 					logMetadata.App = app;
 					logger.LogInformation("Ingesting new log file {logId} from user {userId}.", logMetaDTO.LogFileId, userId);
-					logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata);
+					logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata, ct);
 				}
 				else if (logMetadata.UserId != userId) {
 					var otherLogMetadata = logMetadata;
@@ -49,7 +50,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 						logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. " +
 							"Resolving this conflict by assigning a new log id {newLogId} for the new log file.",
 							userId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id);
-						logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata);
+						logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata, ct);
 					}
 					else {
 						logMetadata = oldLogMetadata;
@@ -67,7 +68,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 								"That upload however didn't complete and the client is now reattempting the upload.",
 								userId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id, logMetadata.UploadTime);
 							logMetadata.UploadTime = DateTime.Now;
-							logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata);
+							logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 						}
 					}
 				}
@@ -81,13 +82,17 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					logger.LogInformation("Reattempted upload of logfile {logId} from user {userId}, time of original upload attempt: {uploadTime:O}.",
 						logMetadata.Id, logMetadata.UserId, logMetadata.UploadTime);
 					logMetadata.UploadTime = DateTime.Now;
-					logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata);
+					logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 				}
-				await logFileRepo.StoreLogAsync(appName, logMetadata.UserId, logMetadata.Id, logMetadata.FilenameSuffix, logContent);
+				await logFileRepo.StoreLogAsync(appName, logMetadata.UserId, logMetadata.Id, logMetadata.FilenameSuffix, logContent, ct);
 				logMetadata.Complete = true;
 				logMetadata.UploadTime = DateTime.Now;
-				logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata);
+				logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 				return new LogFile(logMetadata, logFileRepo);
+			}
+			catch (OperationCanceledException) {
+				logger.LogDebug("IngestLogAsync from user {userId} was cancelled.", userId);
+				throw;
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "Log file ingest of file {logId} from user {userId} failed due to exception.", logMetaDTO.LogFileId, userId);

@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Security {
@@ -53,21 +54,21 @@ namespace SGL.Analytics.Backend.Security {
 			}
 		}
 
-		public ILoginService.IDelayHandle StartFixedFailureDelay() {
+		public ILoginService.IDelayHandle StartFixedFailureDelay(CancellationToken ct = default) {
 			// On failure, always wait for this fixed delay starting here.
 			// This should mitigate timing attacks for detecting whether the failure is
 			// due to non-existent user or due to incorrect password.
 			// This also slows down brute-force attacks.
 			// The task is created here and passed into LoginAsync to optionally allow callers
 			// to capture it and await it to also delay related failures outside the login service's responsibility.
-			return new ILoginService.DelayHandle(Task.Delay(options.LoginService.FailureDelay));
+			return new ILoginService.DelayHandle(Task.Delay(options.LoginService.FailureDelay, ct));
 		}
 
 		public async Task<AuthorizationToken?> LoginAsync<TUserId, TUser>(TUserId userId, string providedPlainSecret,
 			Func<TUserId, Task<TUser?>> lookupUserAsync,
 			Func<TUser, string> getHashedSecret,
 			Func<TUser, string, Task> updateHashedSecretAsync,
-			ILoginService.IDelayHandle fixedFailureDelay,
+			ILoginService.IDelayHandle fixedFailureDelay, CancellationToken ct = default,
 			params (string ClaimType, Func<TUser, string> GetClaimValue)[] additionalClaims) {
 
 			bool secretCorrect = false;

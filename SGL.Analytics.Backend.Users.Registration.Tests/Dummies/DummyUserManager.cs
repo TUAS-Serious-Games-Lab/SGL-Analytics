@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
@@ -30,8 +31,9 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			}
 		}
 
-		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName) {
+		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, CancellationToken ct = default) {
 			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
 			if (Apps.TryGetValue(appName, out var app)) {
 				return app;
 			}
@@ -40,17 +42,19 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			}
 		}
 
-		public async Task<ApplicationWithUserProperties> AddApplicationAsync(ApplicationWithUserProperties app) {
+		public async Task<ApplicationWithUserProperties> AddApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default) {
 			if (Apps.ContainsKey(app.Name)) throw new EntityUniquenessConflictException("Application", "Name", app.Name);
 			if (app.Id == Guid.Empty) app.Id = Guid.NewGuid();
 			assignPropDefIds(app);
+			ct.ThrowIfCancellationRequested();
 			Apps.Add(app.Name, app);
 			await Task.CompletedTask;
 			return app;
 		}
 
-		public async Task<User?> GetUserByIdAsync(Guid userId) {
+		public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default) {
 			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
 			if (users.TryGetValue(userId, out var user)) {
 				return user;
 			}
@@ -59,7 +63,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			}
 		}
 
-		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegistrationData) {
+		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegistrationData, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			if (users.Values.Count(u => u.Username == userRegistrationData.Username) > 0) {
 				throw new EntityUniquenessConflictException("User", "Username", userRegistrationData.Username);
@@ -75,17 +79,19 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			userWrap.StoreAppPropertiesToUnderlying();
 			userWrap.Underlying.Id = Guid.NewGuid();
 			userWrap.Underlying.ValidateProperties();
+			ct.ThrowIfCancellationRequested();
 			users.Add(user.Id, user);
 			userWrap.LoadAppPropertiesFromUnderlying();
 			return user;
 		}
 
-		public async Task<User> UpdateUserAsync(User user) {
+		public async Task<User> UpdateUserAsync(User user, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			Debug.Assert(users.ContainsKey(user.Id));
 			IUserRegistrationWrapper userWrap = user;
 			userWrap.StoreAppPropertiesToUnderlying();
 			userWrap.Underlying.ValidateProperties();
+			ct.ThrowIfCancellationRequested();
 			users[user.Id] = user;
 			userWrap.LoadAppPropertiesFromUnderlying();
 			return user;

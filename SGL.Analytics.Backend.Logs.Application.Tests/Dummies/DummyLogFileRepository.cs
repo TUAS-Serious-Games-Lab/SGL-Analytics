@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
@@ -31,14 +32,15 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 
 		private Dictionary<LogPath, MemoryStream> files = new();
 
-		public async Task CopyLogIntoAsync(string appName, Guid userId, Guid logId, string suffix, Stream contentDestination) {
-			await using (var stream = await ReadLogAsync(appName, userId, logId, suffix)) {
-				await stream.CopyToAsync(contentDestination);
+		public async Task CopyLogIntoAsync(string appName, Guid userId, Guid logId, string suffix, Stream contentDestination, CancellationToken ct = default) {
+			await using (var stream = await ReadLogAsync(appName, userId, logId, suffix, ct)) {
+				await stream.CopyToAsync(contentDestination, ct);
 			}
 		}
 
-		public async Task DeleteLogAsync(string appName, Guid userId, Guid logId, string suffix) {
+		public async Task DeleteLogAsync(string appName, Guid userId, Guid logId, string suffix, CancellationToken ct = default) {
 			var key = new LogPath() { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix };
+			ct.ThrowIfCancellationRequested();
 			files.Remove(key);
 			await Task.CompletedTask;
 		}
@@ -61,9 +63,10 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			return files.Keys;
 		}
 
-		public async Task<Stream> ReadLogAsync(string appName, Guid userId, Guid logId, string suffix) {
+		public async Task<Stream> ReadLogAsync(string appName, Guid userId, Guid logId, string suffix, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			var key = new LogPath() { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix };
+			ct.ThrowIfCancellationRequested();
 			if (files.TryGetValue(key, out var content)) {
 				return new StreamWrapper(content);
 			}
@@ -72,10 +75,10 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			}
 		}
 
-		public async Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content) {
+		public async Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
 			var stream = new MemoryStream();
 			files[new LogPath() { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix }] = stream;
-			await content.CopyToAsync(stream);
+			await content.CopyToAsync(stream, ct);
 		}
 	}
 }
