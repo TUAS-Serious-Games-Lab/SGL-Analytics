@@ -6,6 +6,7 @@ using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Collector.Tests {
@@ -26,16 +27,17 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		public List<IngestOperation> Ingests { get; } = new();
 
-		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent) {
+		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent, CancellationToken ct = default) {
 			if (!Apps.TryGetValue(appName, out var app)) {
 				throw new ApplicationDoesNotExistException(appName);
 			}
 			var content = new MemoryStream();
-			await logContent.CopyToAsync(content);
+			await logContent.CopyToAsync(content, ct);
 			content.Position = 0;
 			var logMd = new Domain.Entity.LogMetadata(logMetaDTO.LogFileId, app.Id, userId, logMetaDTO.LogFileId,
 				logMetaDTO.CreationTime.ToUniversalTime(), logMetaDTO.EndTime.ToUniversalTime(), DateTime.Now.ToUniversalTime(), ".log.gz", true);
 			logMd.App = app;
+			ct.ThrowIfCancellationRequested();
 			Ingests.Add(new IngestOperation(logMetaDTO, logMd, content));
 			return new LogFile(logMd, new SingleLogFileRepository(app.Name, userId, logMd.Id, ".log.gz", content));
 		}
@@ -44,8 +46,9 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			Ingests.ForEach(i => i.LogContent.Dispose());
 		}
 
-		public async Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName) {
+		public async Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName, CancellationToken ct = default) {
 			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
 			if (Apps.TryGetValue(appName, out var app)) {
 				return app;
 			}
@@ -54,9 +57,10 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			}
 		}
 
-		public async Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app) {
+		public async Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {
 			if (Apps.ContainsKey(app.Name)) throw new EntityUniquenessConflictException("Application", "Name", app.Name);
 			if (app.Id == Guid.Empty) app.Id = Guid.NewGuid();
+			ct.ThrowIfCancellationRequested();
 			Apps.Add(app.Name, app);
 			await Task.CompletedTask;
 			return app;
@@ -77,15 +81,15 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				this.content = content;
 			}
 
-			public async Task CopyLogIntoAsync(string appName, Guid userId, Guid logId, string suffix, Stream contentDestination) {
+			public async Task CopyLogIntoAsync(string appName, Guid userId, Guid logId, string suffix, Stream contentDestination, CancellationToken ct = default) {
 				if ((appName, userId, logId, suffix) != (this.appName, this.userId, this.logId, this.suffix)) {
 					throw new LogFileNotAvailableException(new LogPath { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix });
 				}
 				content.Position = 0;
-				await content.CopyToAsync(contentDestination);
+				await content.CopyToAsync(contentDestination, ct);
 			}
 
-			public Task DeleteLogAsync(string appName, Guid userId, Guid logId, string suffix) {
+			public Task DeleteLogAsync(string appName, Guid userId, Guid logId, string suffix, CancellationToken ct = default) {
 				throw new NotImplementedException();
 			}
 
@@ -103,15 +107,16 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				throw new NotImplementedException();
 			}
 
-			public async Task<Stream> ReadLogAsync(string appName, Guid userId, Guid logId, string suffix) {
+			public async Task<Stream> ReadLogAsync(string appName, Guid userId, Guid logId, string suffix, CancellationToken ct = default) {
 				if ((appName, userId, logId, suffix) != (this.appName, this.userId, this.logId, this.suffix)) {
 					throw new LogFileNotAvailableException(new LogPath { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix });
 				}
 				await Task.CompletedTask;
+				ct.ThrowIfCancellationRequested();
 				return new StreamWrapper(content);
 			}
 
-			public Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content) {
+			public Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
 				throw new NotImplementedException();
 			}
 

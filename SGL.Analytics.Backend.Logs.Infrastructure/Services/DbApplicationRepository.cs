@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
@@ -17,14 +18,14 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			this.context = context;
 		}
 
-		public Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName) {
-			return context.Applications.Where(a => a.Name == appName).SingleOrDefaultAsync<Domain.Entity.Application?>();
+		public Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName, CancellationToken ct = default) {
+			return context.Applications.Where(a => a.Name == appName).SingleOrDefaultAsync<Domain.Entity.Application?>(ct);
 		}
 
-		public async Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app) {
+		public async Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {
 			context.Applications.Add(app);
 			try {
-				await context.SaveChangesAsync();
+				await context.SaveChangesAsync(ct);
 			}
 			catch (DbUpdateConcurrencyException ex) {
 				throw new ConcurrencyConflictException(ex);
@@ -33,10 +34,10 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 				// Should happen rarely and unfortunately, at the time of writing, there is no portable way (between databases) of further classifying the error.
 				// To check if ex is a unique constraint violation, we would need to inspect its inner exception and switch over exception types for all supported providers and their internal error classifications.
 				// To avoid this coupling, rather pay the perf cost of querrying again in this rare case.
-				if (await context.Applications.CountAsync(a => a.Name == app.Name) > 0) {
+				if (await context.Applications.CountAsync(a => a.Name == app.Name, ct) > 0) {
 					throw new EntityUniquenessConflictException("Application", "Name", app.Name, ex);
 				}
-				else if (await context.Applications.CountAsync(a => a.Id == app.Id) > 0) {
+				else if (await context.Applications.CountAsync(a => a.Id == app.Id, ct) > 0) {
 					throw new EntityUniquenessConflictException("Application", "Id", app.Id, ex);
 				}
 				else throw;
