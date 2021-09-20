@@ -10,8 +10,8 @@ namespace SGL.Analytics.Utilities {
 	public class TriggeredBlockingStream : Stream {
 		private Stream innerStream;
 		private object lockObject = new object();
-		private TaskCompletionSource readTCS = new TaskCompletionSource();
-		private TaskCompletionSource writeTCS = new TaskCompletionSource();
+		private List<TaskCompletionSource<int>> readTCSs = new List<TaskCompletionSource<int>> { new TaskCompletionSource<int>() };
+		private List<TaskCompletionSource<bool>> writeTCSs = new List<TaskCompletionSource<bool>> { new TaskCompletionSource<bool>() };
 
 		public TriggeredBlockingStream(Stream innerStream) {
 			this.innerStream = innerStream;
@@ -32,21 +32,31 @@ namespace SGL.Analytics.Utilities {
 		}
 
 		public override int Read(byte[] buffer, int offset, int count) {
-			Task trigger;
+			Task<int> trigger;
 			lock (lockObject) {
-				trigger = readTCS.Task;
+				trigger = readTCSs[0].Task;
 			}
-			trigger.Wait();
-			return innerStream.Read(buffer, offset, count);
+			int triggerCount = trigger.Result;
+			if (triggerCount >= 0) {
+				lock (lockObject) {
+					readTCSs.RemoveAt(0);
+				}
+			}
+			return innerStream.Read(buffer, offset, triggerCount > 0 ? triggerCount : count);
 		}
 
 		public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) {
-			Task trigger;
+			Task<int> trigger;
 			lock (lockObject) {
-				trigger = readTCS.Task;
+				trigger = readTCSs[0].Task;
 			}
-			await trigger;
-			return await base.ReadAsync(buffer, offset, count, cancellationToken);
+			int triggerCount = await trigger;
+			if (triggerCount >= 0) {
+				lock (lockObject) {
+					readTCSs.RemoveAt(0);
+				}
+			}
+			return await base.ReadAsync(buffer, offset, triggerCount > 0 ? triggerCount : count, cancellationToken);
 		}
 
 		public override long Seek(long offset, SeekOrigin origin) {
@@ -58,54 +68,62 @@ namespace SGL.Analytics.Utilities {
 		}
 
 		public override void Write(byte[] buffer, int offset, int count) {
-			Task trigger;
+			Task<bool> trigger;
 			lock (lockObject) {
-				trigger = writeTCS.Task;
+				trigger = writeTCSs[0].Task;
 			}
-			trigger.Wait();
+			bool once = trigger.Result;
+			if (once) {
+				lock (lockObject) {
+					writeTCSs.RemoveAt(0);
+				}
+			}
 			innerStream.Write(buffer, offset, count);
 		}
 
 		public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) {
-			Task trigger;
+			Task<bool> trigger;
 			lock (lockObject) {
-				trigger = writeTCS.Task;
+				trigger = writeTCSs[0].Task;
 			}
-			await trigger;
+			bool once = await trigger;
+			if (once) {
+				lock (lockObject) {
+					writeTCSs.RemoveAt(0);
+				}
+			}
 			await base.WriteAsync(buffer, offset, count, cancellationToken);
 		}
 
-		public void TriggerReadReady() {
+		public void TriggerReadReady(int count = -1) {
 			lock (lockObject) {
-				readTCS.SetResult();
+				var tcs = readTCSs.Last();
+				readTCSs.Add(new TaskCompletionSource<int>());
+				tcs.SetResult(count);
 			}
 		}
 
-		public void TriggerWriteReady() {
+		public void TriggerWriteReady(bool once = false) {
 			lock (lockObject) {
-				writeTCS.SetResult();
+				var tcs = writeTCSs.Last();
+				writeTCSs.Add(new TaskCompletionSource<bool>());
+				tcs.SetResult(once);
 			}
 		}
 
-		public void RearmRead() {
-			lock (lockObject) {
-				readTCS = new TaskCompletionSource();
-			}
-		}
-		public void RearmWrite() {
-			lock (lockObject) {
-				writeTCS = new TaskCompletionSource();
-			}
-		}
 		public void TriggerReadError(Exception ex) {
 			lock (lockObject) {
-				readTCS.SetException(ex);
+				var tcs = readTCSs.Last();
+				readTCSs.Add(new TaskCompletionSource<int>());
+				tcs.SetException(ex);
 			}
 		}
 
 		public void TriggerWriteError(Exception ex) {
 			lock (lockObject) {
-				writeTCS.SetException(ex);
+				var tcs = writeTCSs.Last();
+				writeTCSs.Add(new TaskCompletionSource<bool>());
+				tcs.SetException(ex);
 			}
 		}
 	}
