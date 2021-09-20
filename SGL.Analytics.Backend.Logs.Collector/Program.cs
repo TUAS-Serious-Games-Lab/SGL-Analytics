@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,14 +12,15 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	public class Program {
-		public static void Main(string[] args) {
+		public static async Task Main(string[] args) {
 			IHost host = CreateHostBuilder(args).Build();
-			// TODO: Change this to use DB migrations when first real version of database schema is defined.
 			using (var serviceScope = host.Services.CreateScope()) {
 				var context = serviceScope.ServiceProvider.GetRequiredService<LogsContext>();
-				context.Database.EnsureCreated();
+				if ((await context.Database.GetPendingMigrationsAsync()).Any()) {
+					throw new InvalidOperationException("The database schema is not up-to-date. Please apply database migrations before starting the service.");
+				}
 			}
-			host.Run();
+			await host.RunAsync();
 		}
 
 		public static IHostBuilder CreateHostBuilder(string[] args) =>
