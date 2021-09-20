@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
@@ -17,10 +18,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			this.context = context;
 		}
 
-		public async Task<ApplicationWithUserProperties> AddApplicationAsync(ApplicationWithUserProperties app) {
+		public async Task<ApplicationWithUserProperties> AddApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default) {
 			context.Applications.Add(app);
 			try {
-				await context.SaveChangesAsync();
+				await context.SaveChangesAsync(ct);
 			}
 			catch (DbUpdateConcurrencyException ex) {
 				throw new ConcurrencyConflictException(ex);
@@ -40,8 +41,8 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			return app;
 		}
 
-		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName) {
-			return await context.Applications.Include(a => a.UserProperties).Where(a => a.Name == appName).SingleOrDefaultAsync();
+		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, CancellationToken ct = default) {
+			return await context.Applications.Include(a => a.UserProperties).Where(a => a.Name == appName).SingleOrDefaultAsync(ct);
 		}
 	}
 }

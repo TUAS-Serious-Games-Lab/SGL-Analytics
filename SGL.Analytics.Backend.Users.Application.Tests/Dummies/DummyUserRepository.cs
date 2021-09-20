@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
@@ -12,8 +13,9 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 		private readonly Dictionary<Guid, UserRegistration> users = new Dictionary<Guid, UserRegistration>();
 		private int nextPropertyInstanceId = 1;
 
-		public async Task<UserRegistration?> GetUserByIdAsync(Guid id) {
+		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, CancellationToken ct = default) {
 			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
 			if (users.TryGetValue(id, out var user)) {
 				return user;
 			}
@@ -22,22 +24,24 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			}
 		}
 
-		public async Task<UserRegistration> RegisterUserAsync(UserRegistration userReg) {
+		public async Task<UserRegistration> RegisterUserAsync(UserRegistration userReg, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			if (userReg.Id == Guid.Empty) userReg.Id = Guid.NewGuid();
 			if (users.ContainsKey(userReg.Id)) throw new EntityUniquenessConflictException("UserRegistration", "Id", userReg.Id);
 			if (users.Values.Any(u => u.Username == userReg.Username)) throw new EntityUniquenessConflictException("UserRegistration", "Username", userReg.Username);
 			assignPropertyInstanceIds(userReg);
 			userReg.ValidateProperties();
+			ct.ThrowIfCancellationRequested();
 			users.Add(userReg.Id, userReg);
 			return userReg;
 		}
 
-		public async Task<UserRegistration> UpdateUserAsync(UserRegistration userReg) {
+		public async Task<UserRegistration> UpdateUserAsync(UserRegistration userReg, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			Debug.Assert(users.ContainsKey(userReg.Id));
 			assignPropertyInstanceIds(userReg);
 			userReg.ValidateProperties();
+			ct.ThrowIfCancellationRequested();
 			users[userReg.Id] = userReg;
 			return userReg;
 		}

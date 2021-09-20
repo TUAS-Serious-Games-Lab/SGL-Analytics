@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Services {
@@ -23,14 +24,14 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			this.logger = logger;
 		}
 
-		public async Task<User?> GetUserByIdAsync(Guid userId) {
-			var userReg = await userRepo.GetUserByIdAsync(userId);
+		public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default) {
+			var userReg = await userRepo.GetUserByIdAsync(userId, ct);
 			if (userReg is null) return null;
 			return new User(userReg);
 		}
 
-		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO) {
-			var app = await appRepo.GetApplicationByNameAsync(userRegDTO.AppName);
+		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(userRegDTO.AppName, ct);
 			if (app is null) {
 				logger.LogError("Attempt to register user {username} for non-existent application {appName}.", userRegDTO.Username, userRegDTO.AppName);
 				throw new ApplicationDoesNotExistException(userRegDTO.AppName);
@@ -43,7 +44,11 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			IUserRegistrationWrapper userWrap = user;
 			try {
 				userWrap.StoreAppPropertiesToUnderlying();
-				userWrap.Underlying = await userRepo.RegisterUserAsync(userReg);
+				userWrap.Underlying = await userRepo.RegisterUserAsync(userReg, ct);
+			}
+			catch (OperationCanceledException) {
+				logger.LogDebug("User registration for user {username} in application {appName} was cancelled.", userRegDTO.Username, userRegDTO.AppName);
+				throw;
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "User registration for user {username} in application {appName} failed due to an exception.", userRegDTO.Username, userRegDTO.AppName);
@@ -59,11 +64,15 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			return user;
 		}
 
-		public async Task<User> UpdateUserAsync(User user) {
+		public async Task<User> UpdateUserAsync(User user, CancellationToken ct = default) {
 			IUserRegistrationWrapper userWrap = user;
 			try {
 				userWrap.StoreAppPropertiesToUnderlying();
-				userWrap.Underlying = await userRepo.UpdateUserAsync(userWrap.Underlying);
+				userWrap.Underlying = await userRepo.UpdateUserAsync(userWrap.Underlying, ct);
+			}
+			catch (OperationCanceledException) {
+				logger.LogDebug("Updating user data for user {username} in application {appName} was cancelled.", user.Username, user.App.Name);
+				throw;
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "Updating user data for user {username} in application {appName} failed due to an exception.", user.Username, user.App.Name);

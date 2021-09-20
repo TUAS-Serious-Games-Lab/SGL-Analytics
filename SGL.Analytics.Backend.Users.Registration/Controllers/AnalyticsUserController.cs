@@ -14,6 +14,7 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.DTO;
 using SGL.Analytics.Backend.Users.Application.Model;
+using System.Threading;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	[Route("api/[controller]")]
@@ -39,8 +40,20 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
 		[HttpPost]
-		public async Task<ActionResult<UserRegistrationResultDTO>> RegisterUser([FromHeader(Name = "App-API-Token")] string appApiToken, [FromBody] UserRegistrationDTO userRegistration) {
-			var app = await appRepo.GetApplicationByNameAsync(userRegistration.AppName);
+		public async Task<ActionResult<UserRegistrationResultDTO>> RegisterUser([FromHeader(Name = "App-API-Token")] string appApiToken,
+			[FromBody] UserRegistrationDTO userRegistration, CancellationToken ct = default) {
+			ApplicationWithUserProperties? app = null;
+			try {
+				app = await appRepo.GetApplicationByNameAsync(userRegistration.AppName, ct);
+			}
+			catch (OperationCanceledException) {
+				logger.LogDebug("RegisterUser POST request for user {username} was cancelled while fetching application metadata.", userRegistration.Username);
+				throw;
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "RegisterUser POST request for user {username} failed due to an unexpected exception.", userRegistration.Username);
+				throw;
+			}
 			var appCredentialsErrorMessage = "The registration failed due to invalid application credentials.\n" +
 					"One of the following was incorrect: AppName, AppApiToken\n" +
 					"Which of these is / are incorrect is not stated for security reasons.";
@@ -54,9 +67,13 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 
 			try {
-				var user = await userManager.RegisterUserAsync(userRegistration);
+				var user = await userManager.RegisterUserAsync(userRegistration, ct);
 				var result = user.AsRegistrationResult();
 				return StatusCode(StatusCodes.Status201Created, result);
+			}
+			catch (OperationCanceledException) {
+				logger.LogDebug("RegisterUser POST request for user {username} was cancelled while registering the user.", userRegistration.Username);
+				throw;
 			}
 			catch (ConcurrencyConflictException ex) {
 				logger.LogError(ex, "RegisterUser POST request failed due to DB concurrency conflict.");
@@ -89,46 +106,52 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[ProducesResponseType(typeof(LoginResponseDTO), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[HttpPost("login")]
-		public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginRequestDTO loginRequest) {
-			var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName);
-			var fixedFailureDelay = loginService.StartFixedFailureDelay();
-			User? user = null;
-			var token = await loginService.LoginAsync(loginRequest.UserId, loginRequest.UserSecret,
-				async userId => (user = await userManager.GetUserByIdAsync(userId)), // stash a reference to user to check app association later
-				user => user.HashedSecret,
-				async (user, hashedSecret) => {
-					user.HashedSecret = hashedSecret;
-					await userManager.UpdateUserAsync(user);
-				},
-				fixedFailureDelay,
-				("appname", user => user.App.Name));
+		public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginRequestDTO loginRequest, CancellationToken ct = default) {
+			try {
+				var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName, ct);
+				var fixedFailureDelay = loginService.StartFixedFailureDelay(ct);
+				User? user = null;
+				var token = await loginService.LoginAsync(loginRequest.UserId, loginRequest.UserSecret,
+					async userId => (user = await userManager.GetUserByIdAsync(userId, ct)), // stash a reference to user to check app association later
+					user => user.HashedSecret,
+					async (user, hashedSecret) => {
+						user.HashedSecret = hashedSecret;
+						await userManager.UpdateUserAsync(user, ct);
+					},
+					fixedFailureDelay, ct,
+					("appname", user => user.App.Name));
 
-			if (token == null) {
-				logger.LogError("Login attempt for user {userId} failed due to incorrect credentials.", loginRequest.UserId);
-			}
-			// Intentionally no else if here, to log both failures if both, the app credentials AND the user credentials are invalid.
-			if (app is null) {
-				logger.LogError("Login attempt for user {userId} failed due to unknown application {appName}.", loginRequest.UserId, loginRequest.AppName);
-			}
-			else if (app.ApiToken != loginRequest.AppApiToken) {
-				app = null; // Clear non-matching app to simplify controll flow below.
-				logger.LogError("Login attempt for user {userId} failed due to incorrect API token for application {appName}.", loginRequest.UserId, loginRequest.AppName);
-			}
-			if (user is not null && (user.App.Name != loginRequest.AppName)) {
-				logger.LogError("Login attempt for user {userId} failed because the retrieved user is not associated with the given application {reqAppName}, but with {userAppName}.", loginRequest.UserId, loginRequest.AppName, user.App.Name);
-				// Ensure failure, irrespective of what happened with app and user credential checks above.
-				token = null;
-				app = null;
-			}
+				if (token == null) {
+					logger.LogError("Login attempt for user {userId} failed due to incorrect credentials.", loginRequest.UserId);
+				}
+				// Intentionally no else if here, to log both failures if both, the app credentials AND the user credentials are invalid.
+				if (app is null) {
+					logger.LogError("Login attempt for user {userId} failed due to unknown application {appName}.", loginRequest.UserId, loginRequest.AppName);
+				}
+				else if (app.ApiToken != loginRequest.AppApiToken) {
+					app = null; // Clear non-matching app to simplify controll flow below.
+					logger.LogError("Login attempt for user {userId} failed due to incorrect API token for application {appName}.", loginRequest.UserId, loginRequest.AppName);
+				}
+				if (user is not null && (user.App.Name != loginRequest.AppName)) {
+					logger.LogError("Login attempt for user {userId} failed because the retrieved user is not associated with the given application {reqAppName}, but with {userAppName}.", loginRequest.UserId, loginRequest.AppName, user.App.Name);
+					// Ensure failure, irrespective of what happened with app and user credential checks above.
+					token = null;
+					app = null;
+				}
 
-			if (app is null || token == null) {
-				await fixedFailureDelay.WaitAsync(); // If the LoginAsync failed, this is already completed, but await it in case of a failure from app credentials.
-				return Unauthorized("Login failed due to invalid credentials.\n" +
-					"One of the following was incorrect: AppName, AppApiToken, UserId, UserSecret\n" +
-					"Which of these is / are incorrect is not stated for security reasons.");
+				if (app is null || token == null) {
+					await fixedFailureDelay.WaitAsync(); // If the LoginAsync failed, this is already completed, but await it in case of a failure from app credentials.
+					return Unauthorized("Login failed due to invalid credentials.\n" +
+						"One of the following was incorrect: AppName, AppApiToken, UserId, UserSecret\n" +
+						"Which of these is / are incorrect is not stated for security reasons.");
+				}
+				else {
+					return new LoginResponseDTO((AuthorizationToken)token);
+				}
 			}
-			else {
-				return new LoginResponseDTO((AuthorizationToken)token);
+			catch (OperationCanceledException) {
+				logger.LogDebug("Login attempt for user {userId} was cancelled.", loginRequest.UserId);
+				throw;
 			}
 		}
 	}
