@@ -207,13 +207,13 @@ namespace SGL.Analytics.Client {
 					logFile.Remove();
 				}
 				catch (HttpRequestException ex) when (ex.StatusCode is not null) {
-					logger.LogError("Uploading data log {logId} failed with status code {statusCode}. It will be retried at next startup.", logFile.ID, ex.StatusCode);
+					logger.LogError("Uploading data log {logId} failed with status code {statusCode}. It will be retried at next startup or on explicit retry.", logFile.ID, ex.StatusCode);
 				}
 				catch (HttpRequestException ex) {
-					logger.LogError("Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup.", logFile.ID, ex.Message);
+					logger.LogError("Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup on explicit retry.", logFile.ID, ex.Message);
 				}
 				catch (Exception ex) when (!removing) {
-					logger.LogError(ex, "Uploading data log {logId} failed with an unexpected exception. It will be retried at next startup.", logFile.ID);
+					logger.LogError(ex, "Uploading data log {logId} failed with an unexpected exception. It will be retried at next startup on explicit retry.", logFile.ID);
 				}
 				catch (Exception ex) {
 					logger.LogError(ex, "Removing data log {logId} failed with an unexpected exception.", logFile.ID, ex.Message);

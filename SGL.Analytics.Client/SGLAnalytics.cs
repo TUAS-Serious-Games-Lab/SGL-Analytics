@@ -177,6 +177,18 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <summary>
+		/// Retries the upload of analytics log files that are stored locally because their upload previously failed, e.g. because no internet connectivity was available or a server error prevented the upload.
+		/// </summary>
+		/// <remarks>
+		/// This operation only enqueues the existing files for upload in the background and starts the asynchronous upload worker process if the requirements are met, i.e. if the user is registered and there are files to upload.
+		/// As the previously failed files are enqueued in the same queue as the freshly written ones from <see cref="StartNewLog"/>, there is no separate mechanism to wait for the completion of the upload of only the retried files.
+		/// Instead, waiting for <see cref="FinishAsync"/> finishes the current log, eneuques it and then waits for all enqueued uploads to finish (or fail).
+		/// </remarks>
+		public void StartRetryUploads() {
+			startUploadingExistingLogs();
+		}
+
+		/// <summary>
 		/// Record the given event object to the current analytics log file, tagged with the given channel for categorization and with the current time according to the client's local clock.
 		/// </summary>
 		/// <param name="channel">A channel name that is used to categorize analytics log entries into multiple logical data streams.</param>
