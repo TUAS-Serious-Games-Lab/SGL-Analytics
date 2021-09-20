@@ -596,5 +596,24 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync();
 			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
 		}
+
+		[Fact]
+		public async Task FailedUploadsAreRetriedOnStartRetryUploads() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			ds.UserID = Guid.NewGuid();
+			var collectorClient = new FakeLogCollectorClient();
+			collectorClient.StatusCode = HttpStatusCode.InternalServerError;
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", ds, storage, collectorClient, userRegClient, diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			List<Guid> logIds = new();
+			logIds.Add(analytics.StartNewLog());
+			logIds.Add(analytics.StartNewLog());
+			logIds.Add(analytics.StartNewLog());
+			await analytics.FinishAsync();
+			Assert.Empty(collectorClient.UploadedLogFileIds);
+			collectorClient.StatusCode = HttpStatusCode.NoContent;
+			analytics.StartRetryUploads();
+			await analytics.FinishAsync();
+			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
+		}
 	}
 }
