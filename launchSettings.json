@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "serviceActions": {
+        "db": "StartWithoutDebugging",
+        "logs-collector-app": "StartDebugging",
+        "logs-collector-migrations": "DoNotStart",
+        "users-registration-app": "StartDebugging",
+        "users-registration-migrations": "DoNotStart"
+      },
+      "commandVersion": "1.0"
+    }
+  }
+}

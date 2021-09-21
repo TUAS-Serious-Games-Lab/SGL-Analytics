@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,15 +12,26 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Registration {
 	public class Program {
-		public static void Main(string[] args) {
+		public static async Task Main(string[] args) {
 			IHost host = CreateHostBuilder(args).Build();
-			// TODO: Change this to use DB migrations when first real version of database schema is defined.
 			using (var serviceScope = host.Services.CreateScope()) {
-				var context = serviceScope.ServiceProvider.GetRequiredService<UsersContext>();
-				context.Database.EnsureCreated();
+				using (var context = serviceScope.ServiceProvider.GetRequiredService<UsersContext>()) {
+					if (!await context.Database.CanConnectAsync()) {
+						Console.WriteLine("The database to be available for connection.");
+						while (!await context.Database.CanConnectAsync()) {
+							await Task.Delay(500);
+						}
+					}
+					if ((await context.Database.GetPendingMigrationsAsync()).Any()) {
+						Console.WriteLine("The database schema is not up-to-date. Please apply database migrations before starting the service.");
+						Console.Write("Waiting for migrations to be applied.");
+						while ((await context.Database.GetPendingMigrationsAsync()).Any()) {
+							await Task.Delay(500);
+						}
+					}
+				}
 			}
-			host.Run();
-
+			await host.RunAsync();
 		}
 
 		public static IHostBuilder CreateHostBuilder(string[] args) =>

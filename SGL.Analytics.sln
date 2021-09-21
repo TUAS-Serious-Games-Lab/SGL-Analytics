@@ -83,6 +83,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Backend.Secur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Backend.Security.Tests", "SGL.Analytics.Backend.Security.Tests\SGL.Analytics.Backend.Security.Tests.csproj", "{8E30F374-3551-4EEA-B352-AE7E118B311D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DB", "DB", "{75F7559C-30A1-4835-BFA9-3E9BFC91B476}"
+	ProjectSection(SolutionItems) = preProject
+		SGL.Analytics.Backend.DB\Dockerfile = SGL.Analytics.Backend.DB\Dockerfile
+		SGL.Analytics.Backend.DB\init-db.sh = SGL.Analytics.Backend.DB\init-db.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -221,6 +227,7 @@ Global
 		{5BA354C7-E087-4ABC-9A07-7BA7F3154644} = {ACAEC860-19A2-4FFA-B958-F16A7532F38C}
 		{19626956-637C-4F39-A9BE-5B7495FC8CEF} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{8E30F374-3551-4EEA-B352-AE7E118B311D} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
+		{75F7559C-30A1-4835-BFA9-3E9BFC91B476} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9107486E-74EF-450A-956B-BF17C61467C5}
