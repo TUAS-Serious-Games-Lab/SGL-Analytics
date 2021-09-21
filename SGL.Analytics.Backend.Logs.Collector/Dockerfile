@@ -8,10 +8,12 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 COPY ["SGL.Analytics.Backend.Logs.Collector/SGL.Analytics.Backend.Logs.Collector.csproj", "SGL.Analytics.Backend.Logs.Collector/"]
+COPY ["SGL.Analytics.Backend.Security/SGL.Analytics.Backend.Security.csproj", "SGL.Analytics.Backend.Security/"]
+COPY ["SGL.Analytics.DTO/SGL.Analytics.DTO.csproj", "SGL.Analytics.DTO/"]
 COPY ["SGL.Analytics.Utilities/SGL.Analytics.Utilities.csproj", "SGL.Analytics.Utilities/"]
+COPY ["SGL.Analytics.Backend.WebUtilities/SGL.Analytics.Backend.WebUtilities.csproj", "SGL.Analytics.Backend.WebUtilities/"]
 COPY ["SGL.Analytics.Backend.Logs.Application/SGL.Analytics.Backend.Logs.Application.csproj", "SGL.Analytics.Backend.Logs.Application/"]
 COPY ["SGL.Analytics.Backend.Domain/SGL.Analytics.Backend.Domain.csproj", "SGL.Analytics.Backend.Domain/"]
-COPY ["SGL.Analytics.DTO/SGL.Analytics.DTO.csproj", "SGL.Analytics.DTO/"]
 COPY ["SGL.Analytics.Backend.Logs.Infrastructure/SGL.Analytics.Backend.Logs.Infrastructure.csproj", "SGL.Analytics.Backend.Logs.Infrastructure/"]
 RUN dotnet restore "SGL.Analytics.Backend.Logs.Collector/SGL.Analytics.Backend.Logs.Collector.csproj"
 COPY . .
