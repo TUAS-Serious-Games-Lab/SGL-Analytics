@@ -23,6 +23,10 @@ RUN dotnet build "SGL.Analytics.Backend.Logs.Collector.csproj" -c Release -o /ap
 
 FROM build AS publish
 RUN dotnet publish "SGL.Analytics.Backend.Logs.Collector.csproj" -c Release -o /app/publish
+RUN dotnet tool install --global dotnet-ef &&\
+	export PATH="$PATH:/root/.dotnet/tools" && \
+	cd ../SGL.Analytics.Backend.Logs.Infrastructure && \
+	dotnet ef migrations script --startup-project ../SGL.Analytics.Backend.Logs.Collector --idempotent --output /app/publish/DbMigrations.sql
 
 FROM base AS final
 WORKDIR /app

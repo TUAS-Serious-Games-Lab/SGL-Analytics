@@ -22,6 +22,10 @@ RUN dotnet build "SGL.Analytics.Backend.Users.Registration.csproj" -c Release -o
 
 FROM build AS publish
 RUN dotnet publish "SGL.Analytics.Backend.Users.Registration.csproj" -c Release -o /app/publish
+RUN dotnet tool install --global dotnet-ef &&\
+	export PATH="$PATH:/root/.dotnet/tools" && \
+	cd ../SGL.Analytics.Backend.Users.Infrastructure && \
+	dotnet ef migrations script --startup-project ../SGL.Analytics.Backend.Users.Registration --idempotent --output /app/publish/DbMigrations.sql
 
 FROM base AS final
 WORKDIR /app
