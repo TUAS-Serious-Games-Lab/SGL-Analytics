@@ -46,7 +46,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				["Jwt:Audience"] = JwtOptions.Audience,
 				["Jwt:Issuer"] = JwtOptions.Issuer,
 				["Jwt:SymmetricKey"] = JwtOptions.SymmetricKey,
-				["Logging:File:Sinks:0:FilenameComponents:0"] = "$Category",
+				["Logging:File:Sinks:0:FilenameFormat"] = "{Time:yyyy-MM}/{Time:yyyy-MM-dd}_{ServiceName}.log",
+				["Logging:File:Sinks:1:FilenameFormat"] = "{Time:yyyy-MM}/Categories/{Category}.log",
+				["Logging:File:Sinks:2:FilenameFormat"] = "{Time:yyyy-MM}/Requests/{RequestId}.log",
+				["Logging:File:Sinks:2:MessageFormat"] = "[{RequestPath}] [{Time:O}] [{Level}] [{Category}] {Text}\n=> {Exception}",
+				["Logging:File:Sinks:2:MessageFormatException"] = "[{RequestPath}] [{Time:O}] [{Level}] [{Category}] {Text}\n=> {Exception}",
 			};
 			TokenGenerator = new JwtTokenGenerator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
 		}
