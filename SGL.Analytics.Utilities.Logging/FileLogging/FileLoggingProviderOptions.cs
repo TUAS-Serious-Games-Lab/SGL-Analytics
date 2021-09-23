@@ -9,9 +9,9 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 
 	public class FileLoggingSinkOptions {
 		public string BaseDirectory { get; set; } = Path.Combine(Environment.CurrentDirectory, "logs");
-		public List<string> SubdirectoryComponents { get; set; } = new();
-		public List<string> FilenameComponents { get; set; } = new();
-		public string FilenameSuffix { get; set; } = ".log";
+		public string FilenameFormat { get; set; } = "{Time:yyyy}/{Time:yyyyMMdd}_{AppDomainName}.log";
+		public string MessageFormat { get; set; } = "[{Time:O}] [{Level}] [{Category}] {Text}";
+		public string MessageFormatException { get; set; } = "[{Time:O}] [{Level}] [{Category}] {Text}\n=> {Exception}";
 	}
 
 	public class FileLoggingProviderOptions {
