@@ -8,6 +8,10 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Utilities.Logging.FileLogging {
+	public interface IFileLoggingProviderBuilder {
+		void AddPlaceholder(string name, PlaceholderValueGetter<LogMessage> valueGetter);
+	}
+
 	[ProviderAlias("File")]
 	public class FileLoggingProvider : ILoggerProvider, IAsyncDisposable {
 		private FileLoggingProviderOptions options;
@@ -20,6 +24,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		private Action<INamedPlaceholderFormatterFactoryBuilder<LogMessage>> formaterFactoryBuilder;
 		private NamedPlaceholderFormatterFactory<LogMessage> formatterFactory;
 		private NamedPlaceholderFormatterFactory<LogMessage> formatterFactoryFixedTime;
+
 		private Task startWriterWorker() {
 			return Task.Run(async () => {
 				await foreach (var msg in WriterQueue.DequeueAllAsync()) {
@@ -30,9 +35,22 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			});
 		}
 
-		public FileLoggingProvider(IOptions<FileLoggingProviderOptions> options) : this(options.Value) { }
+		private class Builder : IFileLoggingProviderBuilder {
+			INamedPlaceholderFormatterFactoryBuilder<LogMessage> formatterFactoryBuilder;
 
-		public FileLoggingProvider(FileLoggingProviderOptions options) {
+			public Builder(INamedPlaceholderFormatterFactoryBuilder<LogMessage> formatterFactoryBuilder) {
+				this.formatterFactoryBuilder = formatterFactoryBuilder;
+			}
+
+			public void AddPlaceholder(string name, PlaceholderValueGetter<LogMessage> valueGetter) {
+				formatterFactoryBuilder.AddPlaceholder(name, valueGetter);
+			}
+		}
+
+		public FileLoggingProvider(IOptions<FileLoggingProviderOptions> options, Action<IFileLoggingProviderBuilder> logProvBuilder) :
+			this(options.Value, logProvBuilder) { }
+
+		public FileLoggingProvider(FileLoggingProviderOptions options, Action<IFileLoggingProviderBuilder> logProvBuilder) {
 			this.options = options;
 			formaterFactoryBuilder = builder => {
 				builder.AddPlaceholder("AppDomainName", m => AppDomain.CurrentDomain.FriendlyName);
@@ -52,6 +70,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 				builder.AddPlaceholder("Text", m => m.Text);
 				builder.AddPlaceholder("Exception", m => m.Exception?.ToString() ?? "");
 				builder.SetFallbackValueGetter((name, msg) => this.options.Constants.TryGetValue(name, out var val) ? val : "");
+				logProvBuilder(new Builder(builder));
 			};
 			formatterFactory = new NamedPlaceholderFormatterFactory<LogMessage>(formaterFactoryBuilder);
 			formatterFactoryFixedTime = new NamedPlaceholderFormatterFactory<LogMessage>(builder => {
