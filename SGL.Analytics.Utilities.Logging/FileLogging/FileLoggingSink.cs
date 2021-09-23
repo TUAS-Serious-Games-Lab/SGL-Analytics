@@ -8,32 +8,8 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Utilities.Logging.FileLogging {
 	public class FileLoggingSink : IDisposable, IAsyncDisposable {
-		private static Action<INamedPlaceholderFormatterFactoryBuilder<LogMessage>> formaterFactoryBuilder = builder => {
-			builder.AddPlaceholder("AppDomainName", m => AppDomain.CurrentDomain.FriendlyName);
-			builder.AddPlaceholder("Category", m => m.Category);
-			builder.AddPlaceholder("ScopesJoined", m => string.Join(";", m.Scopes));
-			builder.AddPlaceholder("Scope0", m => m.Scopes.FirstOrDefault() ?? "");
-			builder.AddPlaceholder("Scope1", m => m.Scopes.Skip(1).FirstOrDefault() ?? "");
-			builder.AddPlaceholder("Scope2", m => m.Scopes.Skip(2).FirstOrDefault() ?? "");
-			builder.AddPlaceholder("Scope3", m => m.Scopes.Skip(3).FirstOrDefault() ?? "");
-			builder.AddPlaceholder("Scope4", m => m.Scopes.Skip(4).FirstOrDefault() ?? "");
-			builder.AddPlaceholder("Scope5", m => m.Scopes.Skip(5).FirstOrDefault() ?? "");
-			builder.AddPlaceholder("Scope6", m => m.Scopes.Skip(6).FirstOrDefault() ?? "");
-			builder.AddPlaceholder("Scope7", m => m.Scopes.Skip(7).FirstOrDefault() ?? "");
-			builder.AddPlaceholder("Level", m => m.Level);
-			builder.AddPlaceholder("EventId", m => m.EventId);
-			builder.AddPlaceholder("Time", m => m.Time);
-			builder.AddPlaceholder("Text", m => m.Text);
-			builder.AddPlaceholder("Exception", m => m.Exception?.ToString() ?? "");
-		};
-		private static NamedPlaceholderFormatterFactory<LogMessage> formatterFactory = new NamedPlaceholderFormatterFactory<LogMessage>(formaterFactoryBuilder);
-		private static NamedPlaceholderFormatterFactory<LogMessage> formatterFactoryFixedTime = new NamedPlaceholderFormatterFactory<LogMessage>(builder => {
-			formaterFactoryBuilder(builder);
-			// For writers with time-based filenames we need to replace out-dated writers instead of just opening new ones.
-			// Therefore, we need a version of the formatted name that is time-independent as a key to compare if an existing writer is otherwise for the same file, i.e. for the predecessor.
-			// For this, we use this factory to always format the strings with epoch for the time-based placeholders.
-			builder.AddPlaceholder("Time", m => DateTime.UnixEpoch);
-		});
+		private NamedPlaceholderFormatterFactory<LogMessage> formatterFactory;
+		private NamedPlaceholderFormatterFactory<LogMessage> formatterFactoryFixedTime;
 
 		private string baseDirectory = Path.Combine(Environment.CurrentDirectory, "log");
 		private NamedPlaceholderFormatter<LogMessage> normalMessageFormatter;
@@ -42,9 +18,13 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		private NamedPlaceholderFormatter<LogMessage>? fileNameFormatterFixedTime;
 		private bool timeBased;
 
-		public FileLoggingSink(FileLoggingSinkOptions options) {
-			baseDirectory = options.BaseDirectory;
+		public FileLoggingSink(FileLoggingSinkOptions options,
+			NamedPlaceholderFormatterFactory<LogMessage> formatterFactory,
+			NamedPlaceholderFormatterFactory<LogMessage> formatterFactoryFixedTime) {
+			this.formatterFactory = formatterFactory;
+			this.formatterFactoryFixedTime = formatterFactoryFixedTime;
 
+			baseDirectory = options.BaseDirectory;
 			normalMessageFormatter = formatterFactory.Create(options.MessageFormat);
 			exceptionMessageFormatter = formatterFactory.Create(options.MessageFormatException);
 			fileNameFormatter = formatterFactory.Create(options.FilenameFormat);
