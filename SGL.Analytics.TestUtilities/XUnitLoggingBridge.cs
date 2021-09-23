@@ -38,7 +38,7 @@ namespace SGL.Analytics.TestUtilities {
 				if (output is null) return;
 				StringBuilder builder = cachedStringBuilder.Value ??= new StringBuilder();
 				builder.Clear();
-				builder.AppendFormat("{0} [{1}] {2}", logLevel.ToString(), categoryName, formatter(state, exception));
+				builder.AppendFormat("{0:G} [{1}] {2}", logLevel, categoryName, formatter(state, exception));
 				if (exception != null) {
 					builder.Append(" Exception: ");
 					builder.Append(exception);
