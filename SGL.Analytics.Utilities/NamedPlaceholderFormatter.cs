@@ -7,9 +7,11 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Utilities {
 
 	public delegate object PlaceholderValueGetter<T>(T obj);
+	public delegate object FallbackValueGetter<T>(string placeholderName, T obj);
 
 	public interface INamedPlaceholderFormatterFactoryBuilder<T> {
 		void AddPlaceholder(string name, PlaceholderValueGetter<T> getter);
+		void SetFallbackValueGetter(FallbackValueGetter<T> getter);
 	}
 
 	public class NamedPlaceholderFormatException : Exception {
@@ -18,6 +20,7 @@ namespace SGL.Analytics.Utilities {
 
 	public class NamedPlaceholderFormatterFactory<T> {
 		private Dictionary<string, PlaceholderValueGetter<T>> definedPlaceholders = new();
+		private FallbackValueGetter<T>? fallbackValueGetter = null;
 
 		private static void pushLiteral(List<IFormattingComponent<T>> comps, string literal) {
 			if (comps.LastOrDefault() is LiteralComponent<T> comp) {
@@ -31,6 +34,9 @@ namespace SGL.Analytics.Utilities {
 		private void pushPlaceholder(List<IFormattingComponent<T>> comps, string name, string formatting = "") {
 			if (definedPlaceholders.TryGetValue(name, out var valueGetter)) {
 				comps.Add(new PlaceholderComponent<T>("{0" + formatting + "}", name, valueGetter));
+			}
+			else if (fallbackValueGetter != null) {
+				comps.Add(new PlaceholderComponent<T>("{0" + formatting + "}", name, o => fallbackValueGetter(name, o)));
 			}
 			else {
 				throw new NamedPlaceholderFormatException($"Undefined placeholder '{name}'.");
@@ -90,6 +96,10 @@ namespace SGL.Analytics.Utilities {
 
 			public void AddPlaceholder(string name, PlaceholderValueGetter<T> getter) {
 				buildee.definedPlaceholders[name] = getter;
+			}
+
+			public void SetFallbackValueGetter(FallbackValueGetter<T> getter) {
+				buildee.fallbackValueGetter = getter;
 			}
 		}
 
