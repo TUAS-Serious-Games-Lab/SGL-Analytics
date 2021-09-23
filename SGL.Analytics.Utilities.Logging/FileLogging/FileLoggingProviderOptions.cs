@@ -16,5 +16,6 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 
 	public class FileLoggingProviderOptions {
 		public List<FileLoggingSinkOptions> Sinks { get; set; } = new();
+		public Dictionary<string, string> Constants { get; set; } = new();
 	}
 }

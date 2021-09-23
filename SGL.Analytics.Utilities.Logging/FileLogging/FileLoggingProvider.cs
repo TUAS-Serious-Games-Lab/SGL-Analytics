@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Utilities.Logging.FileLogging {
 	[ProviderAlias("File")]
 	public class FileLoggingProvider : ILoggerProvider, IAsyncDisposable {
+		private FileLoggingProviderOptions options;
 		internal AsyncConsumerQueue<LogMessage> WriterQueue = new();
 		internal LoggerExternalScopeProvider Scopes = new LoggerExternalScopeProvider();
 		private List<FileLoggingSink> sinks;
@@ -32,6 +33,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		public FileLoggingProvider(IOptions<FileLoggingProviderOptions> options) : this(options.Value) { }
 
 		public FileLoggingProvider(FileLoggingProviderOptions options) {
+			this.options = options;
 			formaterFactoryBuilder = builder => {
 				builder.AddPlaceholder("AppDomainName", m => AppDomain.CurrentDomain.FriendlyName);
 				builder.AddPlaceholder("Category", m => m.Category);
@@ -49,6 +51,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 				builder.AddPlaceholder("Time", m => m.Time);
 				builder.AddPlaceholder("Text", m => m.Text);
 				builder.AddPlaceholder("Exception", m => m.Exception?.ToString() ?? "");
+				builder.SetFallbackValueGetter((name, msg) => this.options.Constants.TryGetValue(name, out var val) ? val : "");
 			};
 			formatterFactory = new NamedPlaceholderFormatterFactory<LogMessage>(formaterFactoryBuilder);
 			formatterFactoryFixedTime = new NamedPlaceholderFormatterFactory<LogMessage>(builder => {
