@@ -62,7 +62,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			var dir = Path.GetDirectoryName(path);
 			if (timeBased) {
 				stringBuilder.Clear();
-				var timeIndependentFilenameSlug = sanitizeFilename(fileNameFormatterFixedTime.AppendFormattedTo(stringBuilder, msg).ToString());
+				var timeIndependentFilenameSlug = sanitizeFilename(fileNameFormatterFixedTime!.AppendFormattedTo(stringBuilder, msg).ToString());
 				if (timeBasedWriters!.TryGetValue(timeIndependentFilenameSlug, out var writerEntry)) {
 					if (path == writerEntry.Path) {
 						return writerEntry.Writer;
