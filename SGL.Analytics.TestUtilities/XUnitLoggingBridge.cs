@@ -12,15 +12,17 @@ namespace SGL.Analytics.TestUtilities {
 	public class XUnitLoggingProvider : ILoggerProvider {
 		private Func<ITestOutputHelper?> outputObtainer;
 		private static ThreadLocal<StringBuilder> cachedStringBuilder = new(() => new StringBuilder());
+		private LoggerExternalScopeProvider scopes = new LoggerExternalScopeProvider();
 
 		public class XUnitLogger : ILogger {
 			private Func<ITestOutputHelper?> outputObtainer;
 			private string categoryName;
-			private LoggerExternalScopeProvider scopes = new LoggerExternalScopeProvider();
+			private LoggerExternalScopeProvider scopes;
 
-			public XUnitLogger(Func<ITestOutputHelper?> outputObtainer, string categoryName) {
+			public XUnitLogger(Func<ITestOutputHelper?> outputObtainer, string categoryName, LoggerExternalScopeProvider scopes) {
 				this.outputObtainer = outputObtainer;
 				this.categoryName = categoryName;
+				this.scopes = scopes;
 			}
 
 			public IDisposable BeginScope<TState>(TState state) {
@@ -55,7 +57,7 @@ namespace SGL.Analytics.TestUtilities {
 		}
 
 		public ILogger CreateLogger(string categoryName) {
-			return new XUnitLogger(outputObtainer, categoryName);
+			return new XUnitLogger(outputObtainer, categoryName, scopes);
 		}
 
 		public void Dispose() { }
