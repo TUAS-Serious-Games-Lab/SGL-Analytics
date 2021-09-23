@@ -38,8 +38,8 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		private string baseDirectory = Path.Combine(Environment.CurrentDirectory, "log");
 		private NamedPlaceholderFormatter<LogMessage> normalMessageFormatter;
 		private NamedPlaceholderFormatter<LogMessage> exceptionMessageFormatter;
-		private NamedPlaceholderFormatter<LogMessage> fileNameFormatter;
-		private NamedPlaceholderFormatter<LogMessage> fileNameFormatterFixedTime;
+		private NamedPlaceholderFormatter<LogMessage>? fileNameFormatter;
+		private NamedPlaceholderFormatter<LogMessage>? fileNameFormatterFixedTime;
 		private bool timeBased;
 
 		public FileLoggingSink(FileLoggingSinkOptions options) {
