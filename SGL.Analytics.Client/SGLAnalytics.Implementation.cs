@@ -94,7 +94,7 @@ namespace SGL.Analytics.Client {
 
 		private void ensureLogWritingActive() {
 			lock (lockObject) { // Ensure that only one log writer is active
-				if (logWriter is null) {
+				if (logWriter is null || logWriter.IsCompleted) {
 					// Enforce that the log writer runs on some threadpool thread to avoid putting additional load on app thread.
 					logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
 				}
@@ -225,7 +225,7 @@ namespace SGL.Analytics.Client {
 			if (!logCollectorClient.IsActive) return;
 			if (!IsRegistered()) return; // IsRegistered does it's own locking
 			lock (lockObject) { // Ensure that only one log uploader is active
-				if (logUploader is null) {
+				if (logUploader is null || logUploader.IsCompleted) {
 					// Enforce that the uploader runs on some threadpool thread to avoid putting additional load on app thread.
 					logUploader = Task.Run(async () => await uploadFilesAsync().ConfigureAwait(false));
 				}
