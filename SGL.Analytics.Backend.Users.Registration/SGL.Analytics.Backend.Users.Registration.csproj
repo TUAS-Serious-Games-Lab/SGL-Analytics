@@ -32,6 +32,7 @@
     <ProjectReference Include="..\SGL.Analytics.Backend.Security\SGL.Analytics.Backend.Security.csproj" />
     <ProjectReference Include="..\SGL.Analytics.Backend.Users.Application\SGL.Analytics.Backend.Users.Application.csproj" />
     <ProjectReference Include="..\SGL.Analytics.Backend.Users.Infrastructure\SGL.Analytics.Backend.Users.Infrastructure.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Utilities.Logging\SGL.Analytics.Utilities.Logging.csproj" />
   </ItemGroup>
 
 

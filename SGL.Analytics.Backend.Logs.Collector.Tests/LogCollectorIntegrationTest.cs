@@ -46,6 +46,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				["Jwt:Audience"] = JwtOptions.Audience,
 				["Jwt:Issuer"] = JwtOptions.Issuer,
 				["Jwt:SymmetricKey"] = JwtOptions.SymmetricKey,
+				["Logging:File:Sinks:0:FilenameComponents:0"] = "$Category",
 			};
 			TokenGenerator = new JwtTokenGenerator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
 		}

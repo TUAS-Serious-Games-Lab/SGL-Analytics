@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SGL.Analytics.Utilities.Logging.FileLogging;
 
 namespace SGL.Analytics.Backend.Users.Registration {
 	public class Program {
@@ -38,6 +39,6 @@ namespace SGL.Analytics.Backend.Users.Registration {
 			Host.CreateDefaultBuilder(args)
 				.ConfigureWebHostDefaults(webBuilder => {
 					webBuilder.UseStartup<Startup>();
-				});
+				}).ConfigureLogging(logging => logging.AddFile());
 	}
 }

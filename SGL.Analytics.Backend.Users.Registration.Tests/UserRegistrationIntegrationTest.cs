@@ -40,7 +40,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				["Jwt:Audience"] = JwtOptions.Audience,
 				["Jwt:Issuer"] = JwtOptions.Issuer,
 				["Jwt:SymmetricKey"] = JwtOptions.SymmetricKey,
-				["Jwt:LoginService:FailureDelay"] = TimeSpan.FromMilliseconds(400).ToString()
+				["Jwt:LoginService:FailureDelay"] = TimeSpan.FromMilliseconds(400).ToString(),
+				["Logging:File:Sinks:0:FilenameComponents:0"] = "$Category"
 			};
 			TokenValidator = new JwtTokenValidator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
 		}
