@@ -10,6 +10,7 @@ using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
 using SGL.Analytics.Backend.Security;
 using System;
+using SGL.Analytics.Utilities.Logging.FileLogging;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	public class Startup {
@@ -21,6 +22,10 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services) {
+			services.Configure<FileLoggingProviderOptions>(config => {
+				config.Constants.TryAdd("ServiceName", "SGL.Analytics.LogCollector");
+			});
+
 			services.AddControllers();
 
 			services.AddDbContext<LogsContext>(options =>

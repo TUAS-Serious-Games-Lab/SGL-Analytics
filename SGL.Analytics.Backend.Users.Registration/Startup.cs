@@ -16,6 +16,7 @@ using SGL.Analytics.Backend.Security;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Analytics.Backend.Users.Infrastructure.Services;
+using SGL.Analytics.Utilities.Logging.FileLogging;
 
 namespace SGL.Analytics.Backend.Users.Registration {
 	public class Startup {
@@ -27,6 +28,10 @@ namespace SGL.Analytics.Backend.Users.Registration {
 
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services) {
+			services.Configure<FileLoggingProviderOptions>(config => {
+				config.Constants.TryAdd("ServiceName", "SGL.Analytics.UserRegistration");
+			});
+
 			services.AddControllers();
 
 			services.AddDbContext<UsersContext>(options =>
