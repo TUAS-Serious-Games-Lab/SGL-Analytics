@@ -53,7 +53,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 
 		public FileLoggingProvider(FileLoggingProviderOptions options, Action<IFileLoggingProviderBuilder> logProvBuilder) {
 			this.options = options;
-			MinLevel = options.Sinks.Select(s => s.MinLevel).Min();
+			MinLevel = options.Sinks.Any() ? options.Sinks.Select(s => s.MinLevel).Min() : LogLevel.None;
 			formaterFactoryBuilder = builder => {
 				builder.AddPlaceholder("AppDomainName", m => AppDomain.CurrentDomain.FriendlyName);
 				builder.AddPlaceholder("Category", m => m.Category);
