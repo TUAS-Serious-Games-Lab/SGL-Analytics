@@ -60,7 +60,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			_ => '_'
 		}).ToArray());
 
-		private async Task<StreamWriter> getWriterAsync(LogMessage msg) {
+		private async ValueTask<StreamWriter> getWriterAsync(LogMessage msg) {
 			stringBuilder.Clear();
 			var filename = sanitizeFilename(fileNameFormatter.AppendFormattedTo(stringBuilder, msg).ToString());
 			var path = Path.Combine(baseDirectory, filename);
