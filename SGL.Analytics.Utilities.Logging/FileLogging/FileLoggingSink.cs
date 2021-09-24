@@ -108,8 +108,15 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			closeList.Clear();
 		}
 
+		private bool filter(LogMessage msg) {
+			if (msg.Level < options.MinLevel) return false;
+			return (options.Categories.Count == 0 && options.CategoryContains.Count == 0) ||
+				options.Categories.Contains(msg.Category) ||
+				options.CategoryContains.Any(c => msg.Category.Contains(c));
+		}
+
 		public async Task WriteAsync(LogMessage msg) {
-			if (msg.Level < options.MinLevel) return;
+			if (!filter(msg)) return;
 			var writer = await getWriterAsync(msg);
 			await processPendingClosesAsync();
 			stringBuilder.Clear();

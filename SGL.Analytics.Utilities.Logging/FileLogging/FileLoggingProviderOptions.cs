@@ -15,6 +15,8 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		public string MessageFormatException { get; set; } = "[{Time:O}] [{Level}] [{Category}] {Text}\n=> {Exception}";
 		public int MaxOpenStreams { get; set; } = 16;
 		public LogLevel MinLevel { get; set; } = LogLevel.Trace;
+		public List<string> Categories { get; set; } = new();
+		public List<string> CategoryContains { get; set; } = new();
 	}
 
 	public class FileLoggingProviderOptions {
