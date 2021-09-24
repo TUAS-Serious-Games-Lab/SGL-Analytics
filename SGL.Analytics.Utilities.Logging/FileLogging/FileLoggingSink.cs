@@ -32,18 +32,19 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			if (timeBased) {
 				fileNameFormatterFixedTime = formatterFactoryFixedTime.Create(options.FilenameFormat);
 				timeBasedWriters = options.MaxOpenStreams > 0 ?
-					new LRUCache<string, (string Path, StreamWriter Writer)>(options.MaxOpenStreams) :
+					new LRUCache<string, (string Path, StreamWriter Writer)>(options.MaxOpenStreams, w => closeList.Add(w.Writer)) :
 					new Dictionary<string, (string Path, StreamWriter Writer)>();
 			}
 			else {
 				normalWriters = options.MaxOpenStreams > 0 ?
-					new LRUCache<string, StreamWriter>(options.MaxOpenStreams) :
+					new LRUCache<string, StreamWriter>(options.MaxOpenStreams, w => closeList.Add(w)) :
 					new Dictionary<string, StreamWriter>();
 			}
 		}
 
 		private IDictionary<string, (string Path, StreamWriter Writer)>? timeBasedWriters;
 		private IDictionary<string, StreamWriter>? normalWriters;
+		private List<StreamWriter> closeList = new();
 		private StringBuilder stringBuilder = new();
 
 		private string sanitizeFilename(string filename) => new string(filename.Select(c => c switch {
@@ -98,8 +99,16 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			}
 		}
 
+		private async ValueTask processPendingClosesAsync() {
+			foreach (var writer in closeList) {
+				await writer.DisposeAsync();
+			}
+			closeList.Clear();
+		}
+
 		public async Task WriteAsync(LogMessage msg) {
 			var writer = await getWriterAsync(msg);
+			await processPendingClosesAsync();
 			stringBuilder.Clear();
 			if (msg.Exception != null) {
 				exceptionMessageFormatter.AppendFormattedTo(stringBuilder, msg);
@@ -111,11 +120,12 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		}
 
 		public void Dispose() {
-			foreach (var writer in timeBased ? timeBasedWriters!.Values.Select(w => w.Writer) : normalWriters!.Values) {
+			foreach (var writer in (timeBased ? timeBasedWriters!.Values.Select(w => w.Writer) : normalWriters!.Values).Concat(closeList)) {
 				writer.Dispose();
 			}
 			timeBasedWriters?.Clear();
 			normalWriters?.Clear();
+			closeList.Clear();
 		}
 
 		public async ValueTask DisposeAsync() {
@@ -124,6 +134,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			}
 			timeBasedWriters?.Clear();
 			normalWriters?.Clear();
+			await processPendingClosesAsync();
 		}
 	}
 }
