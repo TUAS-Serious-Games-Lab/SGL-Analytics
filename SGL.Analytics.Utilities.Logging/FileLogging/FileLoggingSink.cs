@@ -31,15 +31,15 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			timeBased = fileNameFormatter.UsesPlaceholder("Time");
 			if (timeBased) {
 				fileNameFormatterFixedTime = formatterFactoryFixedTime.Create(options.FilenameFormat);
-				timeBasedWriters = new();
+				timeBasedWriters = new LRUCache<string, (string Path, StreamWriter Writer)>(options.MaxOpenStreams);
 			}
 			else {
-				normalWriters = new();
+				normalWriters = new LRUCache<string, StreamWriter>(options.MaxOpenStreams);
 			}
 		}
 
-		private Dictionary<string, (string Path, StreamWriter Writer)>? timeBasedWriters;
-		private Dictionary<string, StreamWriter>? normalWriters;
+		private LRUCache<string, (string Path, StreamWriter Writer)>? timeBasedWriters;
+		private LRUCache<string, StreamWriter>? normalWriters;
 		private StringBuilder stringBuilder = new();
 
 		private string sanitizeFilename(string filename) => new string(filename.Select(c => c switch {

@@ -12,6 +12,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		public string FilenameFormat { get; set; } = "{Time:yyyy}/{Time:yyyyMMdd}_{AppDomainName}.log";
 		public string MessageFormat { get; set; } = "[{Time:O}] [{Level}] [{Category}] {Text}";
 		public string MessageFormatException { get; set; } = "[{Time:O}] [{Level}] [{Category}] {Text}\n=> {Exception}";
+		public int MaxOpenStreams { get; set; } = 16;
 	}
 
 	public class FileLoggingProviderOptions {
