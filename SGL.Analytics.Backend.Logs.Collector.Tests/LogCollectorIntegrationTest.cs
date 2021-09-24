@@ -186,6 +186,27 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		}
 
 		[Fact]
+		public async Task LogIngestWithInvalidJwtKeyReturnsUnauthorizedWithAuthChallenge() {
+			var userId = Guid.NewGuid();
+			var logId = Guid.NewGuid();
+			using (var logContent = generateRandomGZippedTestData())
+			using (var client = fixture.CreateClient()) {
+				var content = new StreamContent(logContent);
+				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
+				content.Headers.Add("App-API-Token", fixture.AppApiToken);
+				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+									new JwtTokenGenerator(fixture.JwtOptions.Issuer, fixture.JwtOptions.Audience, "InvalidKeyInvalidKeyInvalidKeyInvalidKeyInvalidKey")
+									.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
+				request.Content = content;
+				var response = await client.SendAsync(request);
+				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
+				// Ensure the error is from JWT challenge, not from incorrect app credentials.
+				Assert.Equal("Bearer", Assert.Single(response.Headers.WwwAuthenticate).Scheme);
+			}
+		}
+		[Fact]
 		public async Task FailedLogIngestCanBeSuccessfullyRetried() {
 			var userId = Guid.NewGuid();
 			var logId = Guid.NewGuid();
