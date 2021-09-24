@@ -18,14 +18,14 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		private NamedPlaceholderFormatter<LogMessage>? fileNameFormatterFixedTime;
 		private bool timeBased;
 
-		public FileLoggingSink(FileLoggingSinkOptions options,
+		public FileLoggingSink(FileLoggingSinkOptions options, string baseDirectory,
 			NamedPlaceholderFormatterFactory<LogMessage> formatterFactory,
 			NamedPlaceholderFormatterFactory<LogMessage> formatterFactoryFixedTime) {
 			this.options = options;
 			this.formatterFactory = formatterFactory;
 			this.formatterFactoryFixedTime = formatterFactoryFixedTime;
 
-			baseDirectory = options.BaseDirectory;
+			this.baseDirectory = baseDirectory;
 			normalMessageFormatter = formatterFactory.Create(options.MessageFormat);
 			exceptionMessageFormatter = formatterFactory.Create(options.MessageFormatException);
 			fileNameFormatter = formatterFactory.Create(options.FilenameFormat);
