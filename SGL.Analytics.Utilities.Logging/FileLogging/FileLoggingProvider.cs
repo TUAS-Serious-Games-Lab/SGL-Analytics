@@ -20,6 +20,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		private List<FileLoggingSink> sinks;
 		private Task writerWorkerHandle;
 		private bool disposed = false;
+		internal LogLevel MinLevel;
 
 		private Action<INamedPlaceholderFormatterFactoryBuilder<LogMessage>> formaterFactoryBuilder;
 		private NamedPlaceholderFormatterFactory<LogMessage> formatterFactory;
@@ -52,6 +53,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 
 		public FileLoggingProvider(FileLoggingProviderOptions options, Action<IFileLoggingProviderBuilder> logProvBuilder) {
 			this.options = options;
+			MinLevel = options.Sinks.Select(s => s.MinLevel).Min();
 			formaterFactoryBuilder = builder => {
 				builder.AddPlaceholder("AppDomainName", m => AppDomain.CurrentDomain.FriendlyName);
 				builder.AddPlaceholder("Category", m => m.Category);

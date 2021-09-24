@@ -23,6 +23,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		}
 
 		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter) {
+			if (logLevel < provider.MinLevel) return;
 			var time = DateTime.Now;
 			var formattedSopes = new List<string>();
 			provider.Scopes.ForEachScope((scope, formatted) => formatted.Add(scope.ToString() ?? ""), formattedSopes);
