@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		public string MessageFormat { get; set; } = "[{Time:O}] [{Level}] [{Category}] {Text}";
 		public string MessageFormatException { get; set; } = "[{Time:O}] [{Level}] [{Category}] {Text}\n=> {Exception}";
 		public int MaxOpenStreams { get; set; } = 16;
+		public LogLevel MinLevel { get; set; } = LogLevel.Information;
 	}
 
 	public class FileLoggingProviderOptions {

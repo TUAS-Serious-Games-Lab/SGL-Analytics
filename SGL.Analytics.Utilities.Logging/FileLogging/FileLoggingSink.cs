@@ -21,6 +21,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		public FileLoggingSink(FileLoggingSinkOptions options,
 			NamedPlaceholderFormatterFactory<LogMessage> formatterFactory,
 			NamedPlaceholderFormatterFactory<LogMessage> formatterFactoryFixedTime) {
+			this.options = options;
 			this.formatterFactory = formatterFactory;
 			this.formatterFactoryFixedTime = formatterFactoryFixedTime;
 
@@ -42,6 +43,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			}
 		}
 
+		FileLoggingSinkOptions options;
 		private IDictionary<string, (string Path, StreamWriter Writer)>? timeBasedWriters;
 		private IDictionary<string, StreamWriter>? normalWriters;
 		private List<StreamWriter> closeList = new();
@@ -107,6 +109,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		}
 
 		public async Task WriteAsync(LogMessage msg) {
+			if (msg.Level < options.MinLevel) return;
 			var writer = await getWriterAsync(msg);
 			await processPendingClosesAsync();
 			stringBuilder.Clear();
