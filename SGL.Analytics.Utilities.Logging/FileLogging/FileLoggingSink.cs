@@ -11,25 +11,26 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		private NamedPlaceholderFormatterFactory<LogMessage> formatterFactory;
 		private NamedPlaceholderFormatterFactory<LogMessage> formatterFactoryFixedTime;
 
-		private string baseDirectory = Path.Combine(Environment.CurrentDirectory, "log");
+		private NamedPlaceholderFormatter<LogMessage> baseDirectoryFormatter;
 		private NamedPlaceholderFormatter<LogMessage> normalMessageFormatter;
 		private NamedPlaceholderFormatter<LogMessage> exceptionMessageFormatter;
 		private NamedPlaceholderFormatter<LogMessage> fileNameFormatter;
 		private NamedPlaceholderFormatter<LogMessage>? fileNameFormatterFixedTime;
 		private bool timeBased;
 
-		public FileLoggingSink(FileLoggingSinkOptions options, string baseDirectory,
+		public FileLoggingSink(FileLoggingSinkOptions options,
+			NamedPlaceholderFormatter<LogMessage> baseDirectoryFormatter,
 			NamedPlaceholderFormatterFactory<LogMessage> formatterFactory,
 			NamedPlaceholderFormatterFactory<LogMessage> formatterFactoryFixedTime) {
 			this.options = options;
 			this.formatterFactory = formatterFactory;
 			this.formatterFactoryFixedTime = formatterFactoryFixedTime;
 
-			this.baseDirectory = baseDirectory;
+			this.baseDirectoryFormatter = baseDirectoryFormatter;
 			normalMessageFormatter = formatterFactory.Create(options.MessageFormat);
 			exceptionMessageFormatter = formatterFactory.Create(options.MessageFormatException);
 			fileNameFormatter = formatterFactory.Create(options.FilenameFormat);
-			timeBased = fileNameFormatter.UsesPlaceholder("Time");
+			timeBased = fileNameFormatter.UsesPlaceholder("Time") || baseDirectoryFormatter.UsesPlaceholder("Time");
 			if (timeBased) {
 				fileNameFormatterFixedTime = formatterFactoryFixedTime.Create(options.FilenameFormat);
 				timeBasedWriters = options.MaxOpenStreams > 0 ?
@@ -49,7 +50,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		private List<StreamWriter> closeList = new();
 		private StringBuilder stringBuilder = new();
 
-		private string sanitizeFilename(string filename) => new string(filename.Select(c => c switch {
+		private string sanitizePath(string filename) => new string(filename.Select(c => c switch {
 			'.' => c,
 			'-' => c,
 			'(' => c,
@@ -64,12 +65,14 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 
 		private async ValueTask<StreamWriter> getWriterAsync(LogMessage msg) {
 			stringBuilder.Clear();
-			var filename = sanitizeFilename(fileNameFormatter.AppendFormattedTo(stringBuilder, msg).ToString());
+			var baseDirectory = sanitizePath(baseDirectoryFormatter.AppendFormattedTo(stringBuilder, msg).ToString());
+			stringBuilder.Clear();
+			var filename = sanitizePath(fileNameFormatter.AppendFormattedTo(stringBuilder, msg).ToString());
 			var path = Path.Combine(baseDirectory, filename);
 			var dir = Path.GetDirectoryName(path);
 			if (timeBased) {
 				stringBuilder.Clear();
-				var timeIndependentFilenameSlug = sanitizeFilename(fileNameFormatterFixedTime!.AppendFormattedTo(stringBuilder, msg).ToString());
+				var timeIndependentFilenameSlug = sanitizePath(fileNameFormatterFixedTime!.AppendFormattedTo(stringBuilder, msg).ToString());
 				if (timeBasedWriters!.TryGetValue(timeIndependentFilenameSlug, out var writerEntry)) {
 					if (path == writerEntry.Path) {
 						return writerEntry.Writer;
