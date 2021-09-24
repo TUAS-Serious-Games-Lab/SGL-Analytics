@@ -26,8 +26,8 @@ namespace SGL.Analytics.Backend.Security {
 
 	public static class ClaimsExtensions {
 		public delegate bool TryParser<T>(string claimValue, out T parsedValue);
-		public static string GetClaim(this ClaimsPrincipal principal, string claimType) {
-			var claim = principal.Claims.FirstOrDefault(c => c.Type.Equals(claimType, StringComparison.OrdinalIgnoreCase));
+		public static string GetClaim(this IEnumerable<Claim> claims, string claimType) {
+			var claim = claims.FirstOrDefault(c => c.Type.Equals(claimType, StringComparison.OrdinalIgnoreCase));
 			if (claim is null) {
 				throw new ClaimNotFoundException(claimType);
 			}
@@ -35,14 +35,20 @@ namespace SGL.Analytics.Backend.Security {
 				return claim.Value;
 			}
 		}
-		public static T GetClaim<T>(this ClaimsPrincipal principal, string claimType, TryParser<T> tryParser) {
-			var value = principal.GetClaim(claimType);
+		public static T GetClaim<T>(this IEnumerable<Claim> claims, string claimType, TryParser<T> tryParser) {
+			var value = claims.GetClaim(claimType);
 			if (tryParser(value, out var parsedValue)) {
 				return parsedValue;
 			}
 			else {
 				throw new InvalidClaimFormatException(claimType, typeof(T));
 			}
+		}
+		public static string GetClaim(this ClaimsPrincipal principal, string claimType) {
+			return principal.Claims.GetClaim(claimType);
+		}
+		public static T GetClaim<T>(this ClaimsPrincipal principal, string claimType, TryParser<T> tryParser) {
+			return principal.Claims.GetClaim<T>(claimType, tryParser);
 		}
 	}
 }
