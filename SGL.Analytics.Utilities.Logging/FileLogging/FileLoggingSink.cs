@@ -114,12 +114,16 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			foreach (var writer in timeBased ? timeBasedWriters!.Values.Select(w => w.Writer) : normalWriters!.Values) {
 				writer.Dispose();
 			}
+			timeBasedWriters?.Clear();
+			normalWriters?.Clear();
 		}
 
 		public async ValueTask DisposeAsync() {
 			foreach (var writer in timeBased ? timeBasedWriters!.Values.Select(w => w.Writer) : normalWriters!.Values) {
 				await writer.DisposeAsync();
 			}
+			timeBasedWriters?.Clear();
+			normalWriters?.Clear();
 		}
 	}
 }
