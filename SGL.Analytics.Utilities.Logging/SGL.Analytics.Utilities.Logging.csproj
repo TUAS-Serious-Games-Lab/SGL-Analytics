@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <AnalysisLevel>Preview</AnalysisLevel>
   </PropertyGroup>
+
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugType>Portable</DebugType>
   </PropertyGroup>
@@ -13,9 +14,11 @@
     <DebugType>None</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SGL.Analytics.Utilities.Logging\SGL.Analytics.Utilities.Logging.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj" />
   </ItemGroup>
+
 </Project>

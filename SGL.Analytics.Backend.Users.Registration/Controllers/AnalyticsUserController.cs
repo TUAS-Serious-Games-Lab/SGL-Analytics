@@ -15,6 +15,7 @@ using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.DTO;
 using SGL.Analytics.Backend.Users.Application.Model;
 using System.Threading;
+using SGL.Analytics.Backend.WebUtilities;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	[Route("api/[controller]")]
@@ -69,6 +70,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			try {
 				var user = await userManager.RegisterUserAsync(userRegistration, ct);
 				var result = user.AsRegistrationResult();
+				using var userScope = logger.BeginUserScope(user.Id);
+				logger.LogInformation("Successfully registered user {username} with id {userid} for application {appName}", user.Username, user.Id, user.App.Name);
 				return StatusCode(StatusCodes.Status201Created, result);
 			}
 			catch (OperationCanceledException) {
@@ -108,6 +111,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[HttpPost("login")]
 		public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginRequestDTO loginRequest, CancellationToken ct = default) {
 			try {
+				using var userScope = logger.BeginUserScope(loginRequest.UserId);
 				var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName, ct);
 				var fixedFailureDelay = loginService.StartFixedFailureDelay(ct);
 				User? user = null;

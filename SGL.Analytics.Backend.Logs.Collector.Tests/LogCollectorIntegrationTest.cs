@@ -46,6 +46,13 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				["Jwt:Audience"] = JwtOptions.Audience,
 				["Jwt:Issuer"] = JwtOptions.Issuer,
 				["Jwt:SymmetricKey"] = JwtOptions.SymmetricKey,
+				["Logging:File:BaseDirectory"] = "logs/{ServiceName}",
+				["Logging:File:Sinks:0:FilenameFormat"] = "{Time:yyyy-MM}/{Time:yyyy-MM-dd}_{ServiceName}.log",
+				["Logging:File:Sinks:1:FilenameFormat"] = "{Time:yyyy-MM}/Categories/{Category}.log",
+				["Logging:File:Sinks:2:FilenameFormat"] = "{Time:yyyy-MM}/Requests/{RequestId}.log",
+				["Logging:File:Sinks:2:MessageFormat"] = "[{RequestPath}] [{Time:O}] [{Level}] [{Category}] {Text}\n=> {Exception}",
+				["Logging:File:Sinks:2:MessageFormatException"] = "[{RequestPath}] [{Time:O}] [{Level}] [{Category}] {Text}\n=> {Exception}",
+				["Logging:File:Sinks:3:FilenameFormat"] = "{Time:yyyy-MM}/users/{UserId}/{Time:yyyy-MM-dd}_{ServiceName}_{UserId}.log",
 			};
 			TokenGenerator = new JwtTokenGenerator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
 		}
@@ -172,6 +179,72 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				content.Headers.Add("App-API-Token", fixture.AppApiToken);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
+				request.Content = content;
+				var response = await client.SendAsync(request);
+				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
+				// Ensure the error is from JWT challenge, not from incorrect app credentials.
+				Assert.Equal("Bearer", Assert.Single(response.Headers.WwwAuthenticate).Scheme);
+			}
+		}
+
+		[Fact]
+		public async Task LogIngestWithInvalidJwtKeyReturnsUnauthorizedWithAuthChallenge() {
+			var userId = Guid.NewGuid();
+			var logId = Guid.NewGuid();
+			using (var logContent = generateRandomGZippedTestData())
+			using (var client = fixture.CreateClient()) {
+				var content = new StreamContent(logContent);
+				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
+				content.Headers.Add("App-API-Token", fixture.AppApiToken);
+				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+									new JwtTokenGenerator(fixture.JwtOptions.Issuer, fixture.JwtOptions.Audience, "InvalidKeyInvalidKeyInvalidKeyInvalidKeyInvalidKey")
+									.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
+				request.Content = content;
+				var response = await client.SendAsync(request);
+				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
+				// Ensure the error is from JWT challenge, not from incorrect app credentials.
+				Assert.Equal("Bearer", Assert.Single(response.Headers.WwwAuthenticate).Scheme);
+			}
+		}
+
+		[Fact]
+		public async Task LogIngestWithInvalidJwtIssuerReturnsUnauthorizedWithAuthChallenge() {
+			var userId = Guid.NewGuid();
+			var logId = Guid.NewGuid();
+			using (var logContent = generateRandomGZippedTestData())
+			using (var client = fixture.CreateClient()) {
+				var content = new StreamContent(logContent);
+				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
+				content.Headers.Add("App-API-Token", fixture.AppApiToken);
+				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+									new JwtTokenGenerator("InvalidIssuer", fixture.JwtOptions.Audience, fixture.JwtOptions.SymmetricKey!)
+									.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
+				request.Content = content;
+				var response = await client.SendAsync(request);
+				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
+				// Ensure the error is from JWT challenge, not from incorrect app credentials.
+				Assert.Equal("Bearer", Assert.Single(response.Headers.WwwAuthenticate).Scheme);
+			}
+		}
+
+		[Fact]
+		public async Task LogIngestWithInvalidJwtAudienceReturnsUnauthorizedWithAuthChallenge() {
+			var userId = Guid.NewGuid();
+			var logId = Guid.NewGuid();
+			using (var logContent = generateRandomGZippedTestData())
+			using (var client = fixture.CreateClient()) {
+				var content = new StreamContent(logContent);
+				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
+				content.Headers.Add("App-API-Token", fixture.AppApiToken);
+				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+									new JwtTokenGenerator(fixture.JwtOptions.Issuer, "InvalidAudience", fixture.JwtOptions.SymmetricKey!)
+									.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
 				request.Content = content;
 				var response = await client.SendAsync(request);
 				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);

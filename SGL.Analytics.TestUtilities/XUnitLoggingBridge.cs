@@ -12,15 +12,17 @@ namespace SGL.Analytics.TestUtilities {
 	public class XUnitLoggingProvider : ILoggerProvider {
 		private Func<ITestOutputHelper?> outputObtainer;
 		private static ThreadLocal<StringBuilder> cachedStringBuilder = new(() => new StringBuilder());
+		private LoggerExternalScopeProvider scopes = new LoggerExternalScopeProvider();
 
 		public class XUnitLogger : ILogger {
 			private Func<ITestOutputHelper?> outputObtainer;
 			private string categoryName;
-			private LoggerExternalScopeProvider scopes = new LoggerExternalScopeProvider();
+			private LoggerExternalScopeProvider scopes;
 
-			public XUnitLogger(Func<ITestOutputHelper?> outputObtainer, string categoryName) {
+			public XUnitLogger(Func<ITestOutputHelper?> outputObtainer, string categoryName, LoggerExternalScopeProvider scopes) {
 				this.outputObtainer = outputObtainer;
 				this.categoryName = categoryName;
+				this.scopes = scopes;
 			}
 
 			public IDisposable BeginScope<TState>(TState state) {
@@ -36,13 +38,13 @@ namespace SGL.Analytics.TestUtilities {
 				if (output is null) return;
 				StringBuilder builder = cachedStringBuilder.Value ??= new StringBuilder();
 				builder.Clear();
-				builder.AppendFormat("{0} [{1}] {2}", logLevel.ToString(), categoryName, formatter(state, exception));
+				builder.AppendFormat("{0:G} [{1}] {2}", logLevel, categoryName, formatter(state, exception));
 				if (exception != null) {
 					builder.Append(" Exception: ");
 					builder.Append(exception);
 				}
 				builder.Append(" ");
-				scopes.ForEachScope((scope, sb) => sb.AppendFormat("<{0}>", scopes), builder);
+				scopes.ForEachScope((scope, sb) => sb.AppendFormat("<{0}>", scope), builder);
 				var str = builder.ToString();
 				lock (output) {
 					output.WriteLine(str);
@@ -55,7 +57,7 @@ namespace SGL.Analytics.TestUtilities {
 		}
 
 		public ILogger CreateLogger(string categoryName) {
-			return new XUnitLogger(outputObtainer, categoryName);
+			return new XUnitLogger(outputObtainer, categoryName, scopes);
 		}
 
 		public void Dispose() { }

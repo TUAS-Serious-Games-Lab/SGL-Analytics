@@ -40,7 +40,14 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				["Jwt:Audience"] = JwtOptions.Audience,
 				["Jwt:Issuer"] = JwtOptions.Issuer,
 				["Jwt:SymmetricKey"] = JwtOptions.SymmetricKey,
-				["Jwt:LoginService:FailureDelay"] = TimeSpan.FromMilliseconds(400).ToString()
+				["Jwt:LoginService:FailureDelay"] = TimeSpan.FromMilliseconds(400).ToString(),
+				["Logging:File:BaseDirectory"] = "logs/{ServiceName}",
+				["Logging:File:Sinks:0:FilenameFormat"] = "{Time:yyyy-MM}/{Time:yyyy-MM-dd}_{ServiceName}.log",
+				["Logging:File:Sinks:1:FilenameFormat"] = "{Time:yyyy-MM}/Categories/{Category}.log",
+				["Logging:File:Sinks:2:FilenameFormat"] = "{Time:yyyy-MM}/Requests/{RequestId}.log",
+				["Logging:File:Sinks:2:MessageFormat"] = "[{RequestPath}] [{Time:O}] [{Level}] [{Category}] {Text}\n=> {Exception}",
+				["Logging:File:Sinks:2:MessageFormatException"] = "[{RequestPath}] [{Time:O}] [{Level}] [{Category}] {Text}\n=> {Exception}",
+				["Logging:File:Sinks:3:FilenameFormat"] = "{Time:yyyy-MM}/users/{UserId}/{Time:yyyy-MM-dd}_{ServiceName}_{UserId}.log",
 			};
 			TokenValidator = new JwtTokenValidator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
 		}
