@@ -4,8 +4,8 @@ services:
   db:
     image: ${DOCKER_REGISTRY-}sglanalytics/db
     build:
-      context: .
-      dockerfile: SGL.Analytics.Backend.DB/Dockerfile
+      context: SGL.Analytics.Backend.DB
+      dockerfile: Dockerfile
     environment:
       USERREG_PW:
       LOGS_PW:
