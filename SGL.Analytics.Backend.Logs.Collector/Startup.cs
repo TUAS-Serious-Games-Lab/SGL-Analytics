@@ -11,6 +11,7 @@ using SGL.Analytics.Backend.Logs.Application.Services;
 using SGL.Analytics.Backend.Security;
 using System;
 using SGL.Analytics.Utilities.Logging.FileLogging;
+using SGL.Analytics.Backend.WebUtilities;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	public class Startup {
@@ -45,6 +46,9 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
 			if (env.IsDevelopment()) {
 				app.UseDeveloperExceptionPage();
+			}
+			else {
+				app.UseLoggingExceptionHandler<Startup>();
 			}
 
 			app.UseHttpsRedirection();

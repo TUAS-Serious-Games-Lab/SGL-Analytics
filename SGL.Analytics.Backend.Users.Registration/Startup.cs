@@ -17,6 +17,7 @@ using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Analytics.Backend.Users.Infrastructure.Services;
 using SGL.Analytics.Utilities.Logging.FileLogging;
+using SGL.Analytics.Backend.WebUtilities;
 
 namespace SGL.Analytics.Backend.Users.Registration {
 	public class Startup {
@@ -48,6 +49,9 @@ namespace SGL.Analytics.Backend.Users.Registration {
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
 			if (env.IsDevelopment()) {
 				app.UseDeveloperExceptionPage();
+			}
+			else {
+				app.UseLoggingExceptionHandler<Startup>();
 			}
 
 			app.UseHttpsRedirection();
