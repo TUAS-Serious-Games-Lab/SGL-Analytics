@@ -54,3 +54,12 @@ services:
     depends_on:
     - db
     - users-registration-migrations
+
+  api-gateway:
+    image: ${DOCKER_REGISTRY-}sglanalytics/api-gateway
+    build:
+      context: SGL.Analytics.Backend.APIGW
+      dockerfile: Dockerfile
+    depends_on:
+    - logs-collector-app
+    - users-registration-app
