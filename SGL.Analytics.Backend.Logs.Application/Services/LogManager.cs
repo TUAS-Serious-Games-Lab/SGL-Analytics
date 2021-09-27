@@ -88,6 +88,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				logMetadata.Complete = true;
 				logMetadata.UploadTime = DateTime.Now;
 				logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
+				logger.LogInformation("Successfully finished ingest of logfile {logId} from user {userId}.", logMetadata.Id, logMetadata.UserId);
 				return new LogFile(logMetadata, logFileRepo);
 			}
 			catch (OperationCanceledException) {
