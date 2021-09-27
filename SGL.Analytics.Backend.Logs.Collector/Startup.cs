@@ -57,6 +57,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 
 			app.UseAuthentication();
 			app.UseAuthorization();
+			app.UseUserLogScoping();
 
 			app.UseEndpoints(endpoints => {
 				endpoints.MapControllers();
