@@ -69,6 +69,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			try {
 				var user = await userManager.RegisterUserAsync(userRegistration, ct);
 				var result = user.AsRegistrationResult();
+				logger.LogInformation("Successfully registered user {username} with id {userid} for application {appName}", user.Username, user.Id, user.App.Name);
 				return StatusCode(StatusCodes.Status201Created, result);
 			}
 			catch (OperationCanceledException) {
