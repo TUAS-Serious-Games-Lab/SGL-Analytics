@@ -20,5 +20,14 @@ namespace SGL.Analytics.Backend.WebUtilities {
 			});
 			return builder;
 		}
+
+		public static IFileLoggingProviderBuilder AddUserIdScopePlaceholder(this IFileLoggingProviderBuilder builder) {
+			builder.AddPlaceholder("UserId", m => {
+				var scope = m.Scopes.FirstOrDefault(s => s.Contains("UserId")) ?? "";
+				var parts = scope.Split(':');
+				return parts.ElementAtOrDefault(1) ?? "No_User_Id";
+			});
+			return builder;
+		}
 	}
 }

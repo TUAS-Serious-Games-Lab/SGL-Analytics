@@ -43,6 +43,7 @@ namespace SGL.Analytics.Backend.Users.Registration {
 				})
 				.ConfigureLogging(logging => logging.AddFile(builder => {
 					builder.AddRequestScopePlaceholders();
+					builder.AddUserIdScopePlaceholder();
 				}));
 	}
 }
