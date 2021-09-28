@@ -6,7 +6,7 @@
     <ProjectGuid>790177cc-3663-4660-a90d-65697e08c7f2</ProjectGuid>
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/api/AnalyticsLog</DockerServiceUrl>
-    <DockerServiceName>sgl.analytics.backend.logs.collector</DockerServiceName>
+    <DockerServiceName>api-gateway</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
     <None Include=".env" />
