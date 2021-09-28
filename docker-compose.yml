@@ -83,6 +83,9 @@ services:
     - logs-collector-app
     - users-registration-app
     restart: "on-failure"
+    ports:
+      - "80:80"
+      - "443:443"
     networks:
     - proxy
     - frontend
