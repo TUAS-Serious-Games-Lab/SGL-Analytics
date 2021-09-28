@@ -82,6 +82,7 @@ services:
     depends_on:
     - logs-collector-app
     - users-registration-app
+    restart: "on-failure"
     networks:
     - proxy
     - frontend
