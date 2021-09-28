@@ -97,6 +97,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "APIGW", "APIGW", "{E100863E
 		SGL.Analytics.Backend.APIGW\etc\api_json_errors.conf = SGL.Analytics.Backend.APIGW\etc\api_json_errors.conf
 		SGL.Analytics.Backend.APIGW\Dockerfile = SGL.Analytics.Backend.APIGW\Dockerfile
 		SGL.Analytics.Backend.APIGW\etc\nginx.conf = SGL.Analytics.Backend.APIGW\etc\nginx.conf
+		SGL.Analytics.Backend.APIGW\etc\server_name.conf = SGL.Analytics.Backend.APIGW\etc\server_name.conf
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api_conf.d", "api_conf.d", "{13A0FB28-A928-47AD-BF5E-3D83EE59B337}"
