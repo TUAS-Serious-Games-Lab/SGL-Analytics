@@ -96,7 +96,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "APIGW", "APIGW", "{E100863E
 		SGL.Analytics.Backend.APIGW\etc\api_gateway.conf = SGL.Analytics.Backend.APIGW\etc\api_gateway.conf
 		SGL.Analytics.Backend.APIGW\etc\api_json_errors.conf = SGL.Analytics.Backend.APIGW\etc\api_json_errors.conf
 		SGL.Analytics.Backend.APIGW\Dockerfile = SGL.Analytics.Backend.APIGW\Dockerfile
+		SGL.Analytics.Backend.APIGW\generate_dhparams.sh = SGL.Analytics.Backend.APIGW\generate_dhparams.sh
+		SGL.Analytics.Backend.APIGW\etc\https.conf = SGL.Analytics.Backend.APIGW\etc\https.conf
 		SGL.Analytics.Backend.APIGW\etc\nginx.conf = SGL.Analytics.Backend.APIGW\etc\nginx.conf
+		SGL.Analytics.Backend.APIGW\etc\redirect_to_https.conf = SGL.Analytics.Backend.APIGW\etc\redirect_to_https.conf
 		SGL.Analytics.Backend.APIGW\etc\server_name.conf = SGL.Analytics.Backend.APIGW\etc\server_name.conf
 		SGL.Analytics.Backend.APIGW\use_vs_cert.sh = SGL.Analytics.Backend.APIGW\use_vs_cert.sh
 	EndProjectSection
