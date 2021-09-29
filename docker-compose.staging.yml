@@ -1,0 +1,40 @@
+version: '3.4'
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  db-data:
+   driver_opts:
+         type: none
+         device: /var/sgl/analytics/database
+         o: bind
+  game-logs:
+   driver_opts:
+         type: none
+         device: /var/sgl/analytics/gamelogs
+         o: bind
+  log-collector-log-files:
+   driver_opts:
+         type: none
+         device: /var/log/SGL.Analytics.LogCollector
+         o: bind
+  user-registration-log-files:
+   driver_opts:
+         type: none
+         device: /var/log/SGL.Analytics.UserRegistration
+         o: bind
+
+services:
+  logs-collector-app:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+  users-registration-app:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Staging
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+  api-gateway:
+    profiles:
+    - DontLaunchOnStaging
