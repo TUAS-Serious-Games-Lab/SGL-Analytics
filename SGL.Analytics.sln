@@ -91,6 +91,31 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DB", "DB", "{75F7559C-30A1-
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Utilities.Logging", "SGL.Analytics.Utilities.Logging\SGL.Analytics.Utilities.Logging.csproj", "{A6854915-3ACA-4D22-BE83-6034A645041C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "APIGW", "APIGW", "{E100863E-A894-418F-8E68-07E520D8AD96}"
+	ProjectSection(SolutionItems) = preProject
+		SGL.Analytics.Backend.APIGW\etc\api_gateway.conf = SGL.Analytics.Backend.APIGW\etc\api_gateway.conf
+		SGL.Analytics.Backend.APIGW\etc\api_json_errors.conf = SGL.Analytics.Backend.APIGW\etc\api_json_errors.conf
+		SGL.Analytics.Backend.APIGW\Dockerfile = SGL.Analytics.Backend.APIGW\Dockerfile
+		SGL.Analytics.Backend.APIGW\generate_dhparams.sh = SGL.Analytics.Backend.APIGW\generate_dhparams.sh
+		SGL.Analytics.Backend.APIGW\etc\https.conf = SGL.Analytics.Backend.APIGW\etc\https.conf
+		SGL.Analytics.Backend.APIGW\etc\nginx.conf = SGL.Analytics.Backend.APIGW\etc\nginx.conf
+		SGL.Analytics.Backend.APIGW\etc\redirect_to_https.conf = SGL.Analytics.Backend.APIGW\etc\redirect_to_https.conf
+		SGL.Analytics.Backend.APIGW\etc\server_name.conf = SGL.Analytics.Backend.APIGW\etc\server_name.conf
+		SGL.Analytics.Backend.APIGW\use_vs_cert.sh = SGL.Analytics.Backend.APIGW\use_vs_cert.sh
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api_conf.d", "api_conf.d", "{13A0FB28-A928-47AD-BF5E-3D83EE59B337}"
+	ProjectSection(SolutionItems) = preProject
+		SGL.Analytics.Backend.APIGW\etc\api_conf.d\Analytics.LogCollector.conf = SGL.Analytics.Backend.APIGW\etc\api_conf.d\Analytics.LogCollector.conf
+		SGL.Analytics.Backend.APIGW\etc\api_conf.d\Analytics.UserRegistration.conf = SGL.Analytics.Backend.APIGW\etc\api_conf.d\Analytics.UserRegistration.conf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend_conf.d", "backend_conf.d", "{C7DAA7BA-2CB3-47FE-99F4-7D786A5091CA}"
+	ProjectSection(SolutionItems) = preProject
+		SGL.Analytics.Backend.APIGW\etc\backend_conf.d\Analytics.LogCollector.conf = SGL.Analytics.Backend.APIGW\etc\backend_conf.d\Analytics.LogCollector.conf
+		SGL.Analytics.Backend.APIGW\etc\backend_conf.d\Analytics.UserRegistration.conf = SGL.Analytics.Backend.APIGW\etc\backend_conf.d\Analytics.UserRegistration.conf
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -235,6 +260,9 @@ Global
 		{8E30F374-3551-4EEA-B352-AE7E118B311D} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{75F7559C-30A1-4835-BFA9-3E9BFC91B476} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{A6854915-3ACA-4D22-BE83-6034A645041C} = {5A7213F6-22A9-4259-8A51-F1AD1E0E1083}
+		{E100863E-A894-418F-8E68-07E520D8AD96} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
+		{13A0FB28-A928-47AD-BF5E-3D83EE59B337} = {E100863E-A894-418F-8E68-07E520D8AD96}
+		{C7DAA7BA-2CB3-47FE-99F4-7D786A5091CA} = {E100863E-A894-418F-8E68-07E520D8AD96}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9107486E-74EF-450A-956B-BF17C61467C5}

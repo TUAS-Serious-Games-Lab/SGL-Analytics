@@ -1,15 +1,24 @@
 version: '3.4'
 
+networks:
+  frontend:
+  proxy:
+    internal: true
+  backend:
+    internal: true
+
 services:
   db:
     image: ${DOCKER_REGISTRY-}sglanalytics/db
     build:
-      context: .
-      dockerfile: SGL.Analytics.Backend.DB/Dockerfile
+      context: SGL.Analytics.Backend.DB
+      dockerfile: Dockerfile
     environment:
       USERREG_PW:
       LOGS_PW:
       POSTGRES_PASSWORD:
+    networks:
+    - backend
 
   logs-collector-migrations:
     image: ${DOCKER_REGISTRY-}sglanalytics/logs-collector
@@ -21,6 +30,8 @@ services:
       PGPASSWORD: $LOGS_PW
     depends_on:
     - db
+    networks:
+    - backend
 
   users-registration-migrations:
     image: ${DOCKER_REGISTRY-}sglanalytics/users-registration
@@ -32,6 +43,8 @@ services:
       PGPASSWORD: $USERREG_PW
     depends_on:
     - db
+    networks:
+    - backend
   
   logs-collector-app:
     image: ${DOCKER_REGISTRY-}sglanalytics/logs-collector
@@ -43,6 +56,9 @@ services:
     depends_on:
     - db
     - logs-collector-migrations
+    networks:
+    - proxy
+    - backend
 
   users-registration-app:
     image: ${DOCKER_REGISTRY-}sglanalytics/users-registration
@@ -54,3 +70,22 @@ services:
     depends_on:
     - db
     - users-registration-migrations
+    networks:
+    - proxy
+    - backend
+
+  api-gateway:
+    image: ${DOCKER_REGISTRY-}sglanalytics/api-gateway
+    build:
+      context: SGL.Analytics.Backend.APIGW
+      dockerfile: Dockerfile
+    depends_on:
+    - logs-collector-app
+    - users-registration-app
+    restart: "on-failure"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+    - proxy
+    - frontend
