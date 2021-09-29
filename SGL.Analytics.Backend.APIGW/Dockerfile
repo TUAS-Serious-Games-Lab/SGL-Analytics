@@ -8,5 +8,6 @@ ADD etc/*.conf /etc/nginx/
 ADD etc/api_conf.d/*.conf /etc/nginx/api_conf.d/
 ADD etc/backend_conf.d/*.conf /etc/nginx/backend_conf.d/
 ADD use_vs_cert.sh /use_vs_cert.sh
+ADD dhparams.pem /etc/ssl/dhparams.pem
 RUN rm /etc/nginx/conf.d/default.conf &&\
 	chmod +x /use_vs_cert.sh
