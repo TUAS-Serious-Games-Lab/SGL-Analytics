@@ -7,6 +7,12 @@ networks:
   backend:
     internal: true
 
+volumes:
+  db-data:
+  game-logs:
+  log-collector-log-files:
+  user-registration-log-files:
+
 services:
   db:
     image: ${DOCKER_REGISTRY-}sglanalytics/db
@@ -19,6 +25,8 @@ services:
       POSTGRES_PASSWORD:
     networks:
     - backend
+    volumes:
+    - "db-data:/var/lib/postgresql/data"
 
   logs-collector-migrations:
     image: ${DOCKER_REGISTRY-}sglanalytics/logs-collector
@@ -59,6 +67,9 @@ services:
     networks:
     - proxy
     - backend
+    volumes:
+    - "game-logs:/var/game-logs"
+    - "log-collector-log-files:/var/log/SGL.Analytics.LogCollector"
 
   users-registration-app:
     image: ${DOCKER_REGISTRY-}sglanalytics/users-registration
@@ -73,6 +84,8 @@ services:
     networks:
     - proxy
     - backend
+    volumes:
+    - "user-registration-log-files:/var/log/SGL.Analytics.UserRegistration"
 
   api-gateway:
     image: ${DOCKER_REGISTRY-}sglanalytics/api-gateway
