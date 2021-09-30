@@ -91,4 +91,63 @@ namespace SGL.Analytics.Client.Example {
 			}
 		}
 	}
+
+	public enum Winner {
+		X, O, Tie
+	}
+
+	public class TicTacToeController {
+		private TicTacToe board = new TicTacToe();
+		private SGLAnalytics analytics;
+		private bool verbose;
+		private TextWriter output;
+
+		public TicTacToeController(SGLAnalytics analytics, bool verbose, TextWriter output) {
+			this.analytics = analytics;
+			this.verbose = verbose;
+			this.output = output;
+		}
+
+		public async Task ProcessMove(int columnOneBased, int rowOneBased) {
+			await output.WriteLineAsync($"{board.NextTurn} to {columnOneBased},{rowOneBased}");
+			var state = board.MakeMove(columnOneBased, rowOneBased);
+			Winner winner = Winner.Tie;
+			switch (state) {
+				case GameState.XWon:
+					await output.WriteLineAsync("X won the game!");
+					winner = Winner.X;
+					break;
+				case GameState.OWon:
+					await output.WriteLineAsync("O won the game!");
+					winner = Winner.O;
+					break;
+				case GameState.Tie:
+					await output.WriteLineAsync("The game ended in a tie!");
+					break;
+				default:
+					return; // No game over yet, next turn
+			}
+			board.Reset();
+		}
+
+		public async Task ReadAndProcessMoves(TextReader reader) {
+			try {
+				string? line = "";
+				if (verbose) await board.PrintBoardAsync(output);
+				await output.WriteAsync($"{board.NextTurn}'s move: ");
+				while ((line = await reader.ReadLineAsync()) != null) {
+					if (line.Trim().Equals("exit", StringComparison.OrdinalIgnoreCase)) return;
+					var numbers = line.Split(',').Select(part => int.Parse(part)).ToList();
+					var column = numbers.Take(1).Single();
+					var row = numbers.Skip(1).Single();
+					await ProcessMove(column, row);
+					if (verbose) await board.PrintBoardAsync(output);
+					await output.WriteAsync($"{board.NextTurn}'s move: ");
+				}
+			}
+			catch (Exception ex) {
+				await Console.Error.WriteLineAsync($"\nError: {ex.Message}");
+			}
+		}
+	}
 }

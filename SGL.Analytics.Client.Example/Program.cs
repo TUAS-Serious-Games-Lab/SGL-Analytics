@@ -51,6 +51,18 @@ namespace SGL.Analytics.Client.Example {
 		}
 
 		async static Task RealMain(Options opts) {
+			SGLAnalytics analytics = new SGLAnalytics(opts.AppName, opts.AppApiToken);
+			TicTacToeController gameController = new TicTacToeController(analytics, opts.Verbose, Console.Out);
+			if (opts.MovesFiles.Any()) {
+				foreach (var movesFile in opts.MovesFiles) {
+					using (var fileReader = new StreamReader(new FileStream(movesFile, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true))) {
+						await gameController.ReadAndProcessMoves(fileReader);
+					}
+				}
+			}
+			else {
+				await gameController.ReadAndProcessMoves(Console.In);
+			}
 		}
 	}
 }
