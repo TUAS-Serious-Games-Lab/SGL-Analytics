@@ -19,20 +19,24 @@ namespace SGL.Analytics.Client {
 	}
 
 	public partial class SGLAnalytics {
-		public SGLAnalytics(string appName, string appAPIToken, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
+		// TODO: Replace default URL with registered URL of Prod backend when available.
+		public static Uri DefaultBackendBaseUri { get; set; } = new Uri("https://localhost/");
+
+		public SGLAnalytics(string appName, string appAPIToken, Uri? backendBaseUri = null, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
 			// Capture the SynchronizationContext of the 'main' thread, so we can perform tasks that need to run there by Post()ing to the context.
 			mainSyncContext = SynchronizationContext.Current ?? new SynchronizationContext();
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
+			if (backendBaseUri is null) backendBaseUri = DefaultBackendBaseUri;
 			if (diagnosticsLogger is null) diagnosticsLogger = NullLogger<SGLAnalytics>.Instance;
 			logger = diagnosticsLogger;
 			if (rootDataStore is null) rootDataStore = new FileRootDataStore(appName);
 			this.rootDataStore = rootDataStore;
 			if (logStorage is null) logStorage = new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"));
 			this.logStorage = logStorage;
-			if (logCollectorClient is null) logCollectorClient = new LogCollectorRestClient();
+			if (logCollectorClient is null) logCollectorClient = new LogCollectorRestClient(backendBaseUri);
 			this.logCollectorClient = logCollectorClient;
-			if (userRegistrationClient is null) userRegistrationClient = new UserRegistrationRestClient();
+			if (userRegistrationClient is null) userRegistrationClient = new UserRegistrationRestClient(backendBaseUri);
 			this.userRegistrationClient = userRegistrationClient;
 			if (IsRegistered()) {
 				startUploadingExistingLogs();

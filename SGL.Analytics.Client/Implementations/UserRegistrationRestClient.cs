@@ -25,11 +25,10 @@ namespace SGL.Analytics.Client {
 
 	public class UserRegistrationRestClientOptions {
 		public const string UserRegistrationRestClient = "UserRegistrationRestClient";
-		public const string BackendServerBaseUriDefault = "http://localhost:5001/";
 		public const string UserRegistrationApiRouteDefault = "api/AnalyticsUser";
 		public const string LoginApiRouteDefault = "api/AnalyticsUser/login";
 
-		public Uri BackendServerBaseUri { get; set; } = new Uri(BackendServerBaseUriDefault);
+		public Uri BackendServerBaseUri { get; set; } = SGLAnalytics.DefaultBackendBaseUri;
 		public Uri UserRegistrationApiRoute { get; set; } = new Uri(UserRegistrationApiRouteDefault, UriKind.Relative);
 		public Uri LoginApiRoute { get; set; } = new Uri(LoginApiRouteDefault, UriKind.Relative);
 	}
@@ -39,8 +38,7 @@ namespace SGL.Analytics.Client {
 		private Uri userRegistrationApiRoute;
 		private Uri loginApiRoute;
 
-		// TODO: Replace default URL with registered URL of Prod backend when available.
-		public UserRegistrationRestClient() : this(new Uri(UserRegistrationRestClientOptions.BackendServerBaseUriDefault)) { }
+		public UserRegistrationRestClient() : this(SGLAnalytics.DefaultBackendBaseUri) { }
 		public UserRegistrationRestClient(Uri backendServerBaseUri) :
 			this(backendServerBaseUri,
 				new Uri(UserRegistrationRestClientOptions.UserRegistrationApiRouteDefault, UriKind.Relative),
