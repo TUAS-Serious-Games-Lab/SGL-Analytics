@@ -90,10 +90,58 @@ namespace SGL.Analytics.Client.Example {
 				await writer.WriteLineAsync(separator);
 			}
 		}
+
+		public BoardSnapshot TakeSnapshot() {
+			return new BoardSnapshot(nextTurn,
+				// Deep-copy cells
+				cells.Select(c => c).ToArray());
+		}
+	}
+
+	public class BoardSnapshot {
+		public Side NextTurn { get; set; }
+		public Side[] Cells { get; set; }
+
+		public BoardSnapshot(Side nextTurn, Side[] cells) {
+			NextTurn = nextTurn;
+			Cells = cells;
+		}
+	}
+
+	public class MoveEvent {
+		public Side Side { get; set; }
+		public int Column { get; set; }
+		public int Row { get; set; }
+
+		public MoveEvent(Side side, int column, int row) {
+			Side = side;
+			Column = column;
+			Row = row;
+		}
 	}
 
 	public enum Winner {
 		X, O, Tie
+	}
+
+	public class GameOverEvent {
+		public Winner Winner { get; set; }
+
+		public GameOverEvent(Winner winner) {
+			Winner = winner;
+		}
+	}
+
+	public class ErrorEvent {
+		public string Message { get; set; }
+		public string ExceptionType { get; set; }
+		public string? StackTrace { get; set; }
+
+		public ErrorEvent(string message, string exceptionType, string? stackTrace) {
+			Message = message;
+			ExceptionType = exceptionType;
+			StackTrace = stackTrace;
+		}
 	}
 
 	public class TicTacToeController {
@@ -101,6 +149,7 @@ namespace SGL.Analytics.Client.Example {
 		private SGLAnalytics analytics;
 		private bool verbose;
 		private TextWriter output;
+		public List<Guid> LogIds { get; } = new List<Guid>();
 
 		public TicTacToeController(SGLAnalytics analytics, bool verbose, TextWriter output) {
 			this.analytics = analytics;
@@ -109,6 +158,8 @@ namespace SGL.Analytics.Client.Example {
 		}
 
 		public async Task ProcessMove(int columnOneBased, int rowOneBased) {
+			analytics.RecordSnapshotUnshared("Board_Snapshots", 1, board.TakeSnapshot());
+			analytics.RecordEventUnshared($"{board.NextTurn}_Moves", new MoveEvent(board.NextTurn, columnOneBased, rowOneBased));
 			await output.WriteLineAsync($"{board.NextTurn} to {columnOneBased},{rowOneBased}");
 			var state = board.MakeMove(columnOneBased, rowOneBased);
 			Winner winner = Winner.Tie;
@@ -127,11 +178,15 @@ namespace SGL.Analytics.Client.Example {
 				default:
 					return; // No game over yet, next turn
 			}
+			// The game is over, record game over event, reset board, start a new game log
+			analytics.RecordEventUnshared("Game_Over", new GameOverEvent(winner));
 			board.Reset();
+			LogIds.Add(analytics.StartNewLog());
 		}
 
 		public async Task ReadAndProcessMoves(TextReader reader) {
 			try {
+				LogIds.Add(analytics.StartNewLog());
 				string? line = "";
 				if (verbose) await board.PrintBoardAsync(output);
 				await output.WriteAsync($"{board.NextTurn}'s move: ");
@@ -146,6 +201,7 @@ namespace SGL.Analytics.Client.Example {
 				}
 			}
 			catch (Exception ex) {
+				analytics.RecordEventUnshared("Errors", new ErrorEvent(ex.Message, ex.GetType().Name, ex.StackTrace));
 				await Console.Error.WriteLineAsync($"\nError: {ex.Message}");
 			}
 		}

@@ -51,7 +51,17 @@ namespace SGL.Analytics.Client.Example {
 		}
 
 		async static Task RealMain(Options opts) {
-			SGLAnalytics analytics = new SGLAnalytics(opts.AppName, opts.AppApiToken);
+			SGLAnalytics analytics = new SGLAnalytics(opts.AppName, opts.AppApiToken,
+				logCollectorClient: new LogCollectorRestClient(opts.Backend),
+				userRegistrationClient: new UserRegistrationRestClient(opts.Backend));
+			if (!analytics.IsRegistered()) {
+				try {
+					await analytics.RegisterAsync(new BaseUserData(opts.Username));
+				}
+				catch (Exception ex) {
+					await Console.Error.WriteLineAsync($"Registration Error: {ex.Message}");
+				}
+			}
 			TicTacToeController gameController = new TicTacToeController(analytics, opts.Verbose, Console.Out);
 			if (opts.MovesFiles.Any()) {
 				foreach (var movesFile in opts.MovesFiles) {
@@ -63,6 +73,8 @@ namespace SGL.Analytics.Client.Example {
 			else {
 				await gameController.ReadAndProcessMoves(Console.In);
 			}
+			await analytics.FinishAsync();
+			await Console.Out.WriteLineAsync($"\n The following logs were recorded: {string.Join(", ", gameController.LogIds.Select(id => id.ToString()))}");
 		}
 	}
 }
