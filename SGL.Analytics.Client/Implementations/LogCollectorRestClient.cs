@@ -19,7 +19,7 @@ namespace SGL.Analytics.Client {
 		}
 
 		// TODO: Support configuration of URIs through general configuration system.
-		public LogCollectorRestClient() : this(new Uri("http://localhost:5001/")) { }
+		public LogCollectorRestClient() : this(SGLAnalytics.DefaultBackendBaseUri) { }
 		public LogCollectorRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/AnalyticsLog", UriKind.Relative)) { }
 		public LogCollectorRestClient(Uri backendServerBaseUri, Uri logCollectorApiEndpoint) {
 			this.backendServerBaseUri = backendServerBaseUri;
