@@ -89,7 +89,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DB", "DB", "{75F7559C-30A1-
 		SGL.Analytics.Backend.DB\init-db.sh = SGL.Analytics.Backend.DB\init-db.sh
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Utilities.Logging", "SGL.Analytics.Utilities.Logging\SGL.Analytics.Utilities.Logging.csproj", "{A6854915-3ACA-4D22-BE83-6034A645041C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Utilities.Logging", "SGL.Analytics.Utilities.Logging\SGL.Analytics.Utilities.Logging.csproj", "{A6854915-3ACA-4D22-BE83-6034A645041C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "APIGW", "APIGW", "{E100863E-A894-418F-8E68-07E520D8AD96}"
 	ProjectSection(SolutionItems) = preProject
@@ -115,6 +115,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend_conf.d", "backend_c
 		SGL.Analytics.Backend.APIGW\etc\backend_conf.d\Analytics.LogCollector.conf = SGL.Analytics.Backend.APIGW\etc\backend_conf.d\Analytics.LogCollector.conf
 		SGL.Analytics.Backend.APIGW\etc\backend_conf.d\Analytics.UserRegistration.conf = SGL.Analytics.Backend.APIGW\etc\backend_conf.d\Analytics.UserRegistration.conf
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Client.Example", "SGL.Analytics.Client.Example\SGL.Analytics.Client.Example.csproj", "{010C19BB-216E-4725-A655-9572EB023DE1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -226,6 +228,10 @@ Global
 		{A6854915-3ACA-4D22-BE83-6034A645041C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A6854915-3ACA-4D22-BE83-6034A645041C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A6854915-3ACA-4D22-BE83-6034A645041C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{010C19BB-216E-4725-A655-9572EB023DE1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{010C19BB-216E-4725-A655-9572EB023DE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{010C19BB-216E-4725-A655-9572EB023DE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{010C19BB-216E-4725-A655-9572EB023DE1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -263,6 +269,7 @@ Global
 		{E100863E-A894-418F-8E68-07E520D8AD96} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{13A0FB28-A928-47AD-BF5E-3D83EE59B337} = {E100863E-A894-418F-8E68-07E520D8AD96}
 		{C7DAA7BA-2CB3-47FE-99F4-7D786A5091CA} = {E100863E-A894-418F-8E68-07E520D8AD96}
+		{010C19BB-216E-4725-A655-9572EB023DE1} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9107486E-74EF-450A-956B-BF17C61467C5}
