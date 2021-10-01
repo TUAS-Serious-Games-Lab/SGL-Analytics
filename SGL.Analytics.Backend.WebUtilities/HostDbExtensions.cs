@@ -22,10 +22,10 @@ namespace SGL.Analytics.Backend.WebUtilities {
 						}
 						await Console.Out.WriteLineAsync();
 					}
-					if (!(await Task.WhenAll(contexts.Select(async context => (await context.Database.GetPendingMigrationsAsync()).Any()))).All(b => b)) {
+					if ((await Task.WhenAll(contexts.Select(async context => (await context.Database.GetPendingMigrationsAsync()).Any()))).Any(b => b)) {
 						Console.WriteLine("The database schema is not up-to-date. Please apply database migrations before starting the program.");
 						Console.Write("Waiting for migrations to be applied.");
-						while (!(await Task.WhenAll(contexts.Select(async context => (await context.Database.GetPendingMigrationsAsync()).Any()))).All(b => b)) {
+						while ((await Task.WhenAll(contexts.Select(async context => (await context.Database.GetPendingMigrationsAsync()).Any()))).Any(b => b)) {
 							await Task.Delay(pollingInterval);
 							await Console.Out.WriteAsync(".");
 						}
