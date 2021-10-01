@@ -25,5 +25,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SGL.Analytics.Utilities.Logging\SGL.Analytics.Utilities.Logging.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj" />
   </ItemGroup>
 </Project>

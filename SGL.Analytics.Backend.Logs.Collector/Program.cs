@@ -16,23 +16,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 	public class Program {
 		public static async Task Main(string[] args) {
 			IHost host = CreateHostBuilder(args).Build();
-			using (var serviceScope = host.Services.CreateScope()) {
-				using (var context = serviceScope.ServiceProvider.GetRequiredService<LogsContext>()) {
-					if (!await context.Database.CanConnectAsync()) {
-						Console.WriteLine("The database to be available for connection.");
-						while (!await context.Database.CanConnectAsync()) {
-							await Task.Delay(500);
-						}
-					}
-					if ((await context.Database.GetPendingMigrationsAsync()).Any()) {
-						Console.WriteLine("The database schema is not up-to-date. Please apply database migrations before starting the service.");
-						Console.Write("Waiting for migrations to be applied.");
-						while ((await context.Database.GetPendingMigrationsAsync()).Any()) {
-							await Task.Delay(500);
-						}
-					}
-				}
-			}
+			await host.WaitForDbReadyAsync<LogsContext>(pollingInterval: TimeSpan.FromMilliseconds(500));
 			await host.RunAsync();
 		}
 
