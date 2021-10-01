@@ -65,6 +65,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 					.ConfigureServices((context, services) => {
 						services.UseUsersBackendInfrastructure(context.Configuration);
 						services.UseLogsBackendInfrastructure(context.Configuration);
+						services.AddScoped<AppRegistrationManager>();
 					});
 
 		async static Task<int> PushMain(PushOptions opts) {
