@@ -1,8 +1,12 @@
 ﻿using CommandLine;
 using CommandLine.Text;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Infrastructure;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure;
@@ -11,6 +15,7 @@ using SGL.Analytics.Backend.WebUtilities;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -71,11 +76,47 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		async static Task<int> PushMain(PushOptions opts) {
 			using var host = CreateHostBuilder(opts).Build();
 
+			var contextTypes = new[] { typeof(LogsContext), typeof(UsersContext) };
 			await host.WaitForDbsReadyAsync<LogsContext, UsersContext>(pollingInterval: TimeSpan.FromMilliseconds(100));
 			using (var scope = host.Services.CreateScope()) {
+				var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+				try {
+					using var transactions = (await Task.WhenAll(
+						contextTypes.Select(ctxT => scope.ServiceProvider.GetRequiredService(ctxT))
+							.OfType<DbContext>()
+							.Select(ctx => ctx.Database.BeginTransactionAsync())
+					)).ToDisposableEnumerable<IDbContextTransaction>();
 
+					var appRegMgr = scope.ServiceProvider.GetRequiredService<AppRegistrationManager>();
+
+					var definitions = new List<ApplicationWithUserProperties>();
+					var results = Enumerable.Empty<AppRegistrationManager.PushResult>();
+					foreach (var appDef in definitions) {
+						// Can't use Select(), because definitions need to be processed in sequence, Select() would map to task and run all
+						// push operations concurrently, which is not supported by DbContext. Therefore, we need to await each push operation separately.
+						results.Concat(await appRegMgr.PushApplicationAsync(appDef));
+					}
+
+					if (results.Any(res => res == AppRegistrationManager.PushResult.Error)) {
+						logger.LogInformation("Due to the above errors, the transactions for the updates are being rolled back now...");
+						foreach (var t in transactions) {
+							await t.RollbackAsync();
+						}
+						return 2;
+					}
+					else {
+						foreach (var t in transactions) {
+							await t.CommitAsync();
+						}
+						logger.LogInformation("The transactions were successfully committed.");
+						return 0;
+					}
+				}
+				catch (Exception ex) {
+					logger.LogError(ex, "Encountered and unexpected error.");
+					return 3;
+				}
 			}
-			return 0;
 		}
 
 		async static Task<int> GenerateApiTokenMain(GenerateApiTokenOptions opts) {
