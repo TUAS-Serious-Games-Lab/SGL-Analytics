@@ -1,6 +1,9 @@
 {
   "profiles": {
     "SGL.Analytics.Backend.AppRegistrationTool": {
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
       "commandName": "Project",
       "commandLineArgs": "--help"
     }
