@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.AppRegistrationTool {
 	class Program {
-		[Verb("push", isDefault: true, HelpText = "Push application registration data into backend. Registers new application, adds new user registration properties.")]
+		[Verb("push", HelpText = "Push application registration data into backend. Registers new application, adds new user registration properties.")]
 		class PushOptions {
 
 		}
