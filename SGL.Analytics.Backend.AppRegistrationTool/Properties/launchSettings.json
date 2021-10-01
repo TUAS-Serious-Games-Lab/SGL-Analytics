@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SGL.Analytics.Backend.AppRegistrationTool": {
+      "commandName": "Project",
+      "commandLineArgs": "--help"
+    }
+  }
+}
