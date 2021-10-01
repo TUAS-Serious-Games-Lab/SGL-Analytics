@@ -22,10 +22,18 @@ namespace SGL.Analytics.Backend.WebUtilities {
 						}
 						await Console.Out.WriteLineAsync();
 					}
-					if ((await Task.WhenAll(contexts.Select(async context => (await context.Database.GetPendingMigrationsAsync()).Any()))).Any(b => b)) {
+					var pendingMigrations = await GetPendingMigrations(contexts);
+					if (pendingMigrations.Any()) {
 						Console.WriteLine("The database schema is not up-to-date. Please apply database migrations before starting the program.");
+						await Console.Out.WriteLineAsync("The following migrations are pending:");
+						foreach (var (context, migrations) in pendingMigrations) {
+							await Console.Out.WriteLineAsync($"  For context {context}:");
+							foreach (var migration in migrations) {
+								await Console.Out.WriteLineAsync($"    {migration}");
+							}
+						}
 						Console.Write("Waiting for migrations to be applied.");
-						while ((await Task.WhenAll(contexts.Select(async context => (await context.Database.GetPendingMigrationsAsync()).Any()))).Any(b => b)) {
+						while ((await GetPendingMigrations(contexts)).Any()) {
 							await Task.Delay(pollingInterval);
 							await Console.Out.WriteAsync(".");
 						}
@@ -34,6 +42,11 @@ namespace SGL.Analytics.Backend.WebUtilities {
 				}
 			}
 		}
+
+		private static async Task<IEnumerable<(string Name, IEnumerable<string>)>> GetPendingMigrations(DisposableEnumerable<DbContext> contexts) {
+			return (await Task.WhenAll(contexts.Select(async context => (context.GetType().Name, await context.Database.GetPendingMigrationsAsync())))).Where(cm => cm.Item2.Any());
+		}
+
 		public static async Task WaitForDbReadyAsync<TContext>(this IHost host, TimeSpan pollingInterval) where TContext : DbContext {
 			await host.WaitForDbsReadyAsync(pollingInterval, typeof(TContext));
 		}
