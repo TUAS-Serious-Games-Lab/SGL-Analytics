@@ -44,5 +44,11 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			}
 			return app;
 		}
+
+		public async Task<Domain.Entity.Application> UpdateApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {
+			Debug.Assert(context.Entry(app).State is EntityState.Modified or EntityState.Unchanged);
+			await context.SaveChangesAsync(ct);
+			return app;
+		}
 	}
 }

@@ -10,5 +10,6 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 	public interface IApplicationRepository {
 		Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, CancellationToken ct = default);
 		Task<ApplicationWithUserProperties> AddApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default);
+		Task<ApplicationWithUserProperties> UpdateApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default);
 	}
 }

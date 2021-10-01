@@ -5,6 +5,7 @@ using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -63,6 +64,14 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			ct.ThrowIfCancellationRequested();
 			Apps.Add(app.Name, app);
 			await Task.CompletedTask;
+			return app;
+		}
+
+		public async Task<Domain.Entity.Application> UpdateApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {
+			await Task.CompletedTask;
+			Debug.Assert(Apps.ContainsKey(app.Name));
+			ct.ThrowIfCancellationRequested();
+			Apps[app.Name] = app;
 			return app;
 		}
 
