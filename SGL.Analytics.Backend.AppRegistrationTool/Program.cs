@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using CommandLine.Text;
+using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -20,9 +21,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			// Not implemented
 		}
 		[Verb("generate-api-token", HelpText = "Generates an API token for an application registration.")]
-		class GenerateApiTokenOptions {
-
-		}
+		class GenerateApiTokenOptions { }
 		async static Task<int> Main(string[] args) => await ((Func<ParserResult<object>, Task<int>>)(res => res.MapResult(
 			async (PushOptions opts) => await PushMain(opts),
 			async (GenerateApiTokenOptions opts) => await GenerateApiTokenMain(opts),
@@ -45,6 +44,8 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			return 0;
 		}
 		async static Task<int> GenerateApiTokenMain(GenerateApiTokenOptions opts) {
+			var token = SecretGenerator.Instance.GenerateSecret(32);
+			await Console.Out.WriteLineAsync(token);
 			return 0;
 		}
 		async static Task<int> RemovePropertyMain(RemovePropertyOptions opts) {

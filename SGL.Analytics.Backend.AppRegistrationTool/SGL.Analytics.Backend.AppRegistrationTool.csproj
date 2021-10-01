@@ -11,4 +11,8 @@
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj" />
+  </ItemGroup>
+
 </Project>
