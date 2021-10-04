@@ -29,7 +29,7 @@ volumes:
 services:
   logs-collector-app:
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Staging
       - ASPNETCORE_URLS=https://+:443;http://+:80
   users-registration-app:
     environment:
