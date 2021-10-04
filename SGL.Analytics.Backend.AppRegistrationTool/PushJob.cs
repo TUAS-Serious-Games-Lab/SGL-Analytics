@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
-using SGL.Analytics.Backend.WebUtilities;
+using SGL.Analytics.Backend.Utilities;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;

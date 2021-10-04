@@ -3,7 +3,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.WebUtilities {
+namespace SGL.Analytics.Backend.Utilities {
 	public abstract class CommandService : IScopedBackgroundService {
 		protected IHost host;
 		protected ServiceResultWrapper<int> exitCodeWrapper;

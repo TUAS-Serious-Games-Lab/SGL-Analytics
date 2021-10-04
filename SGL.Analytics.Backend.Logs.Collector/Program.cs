@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using SGL.Analytics.Utilities.Logging.FileLogging;
 using SGL.Analytics.Backend.WebUtilities;
+using SGL.Analytics.Backend.Utilities;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	public class Program {

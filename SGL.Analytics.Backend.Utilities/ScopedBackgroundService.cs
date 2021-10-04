@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.WebUtilities {
+namespace SGL.Analytics.Backend.Utilities {
 	public interface IScopedBackgroundService {
 		Task ExecuteAsync(CancellationToken stoppingToken);
 	}

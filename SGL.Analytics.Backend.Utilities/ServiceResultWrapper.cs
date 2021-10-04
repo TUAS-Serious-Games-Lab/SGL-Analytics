@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.WebUtilities {
+namespace SGL.Analytics.Backend.Utilities {
 
 	public class ServiceResultWrapper<T> {
 		public T Result { get; set; }

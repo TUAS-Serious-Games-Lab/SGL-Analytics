@@ -11,7 +11,7 @@ using SGL.Analytics.Backend.Logs.Infrastructure;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
-using SGL.Analytics.Backend.WebUtilities;
+using SGL.Analytics.Backend.Utilities;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
