@@ -1,0 +1,21 @@
+{
+  "Name": "TestApp1",
+  "ApiToken": "JdXRSl5QWnb9JVbLGE+zLKcpDUx7qJPMtGEu59e5oeM=",
+  "UserProperties": [
+    {
+      "Name": "Foo",
+      "Type": "Integer",
+      "Required": false
+    },
+    {
+      "Name": "Bar",
+      "Type": "String",
+      "Required": false
+    },
+    {
+      "Name": "Obj",
+      "Type": "Json",
+      "Required": false
+    }
+  ]
+}
