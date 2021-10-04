@@ -18,35 +18,25 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.AppRegistrationTool {
-	public class PushJob : IScopedBackgroundService {
+	public class PushJob : CommandService {
 		private Program.PushOptions opts;
 		private ILogger<PushJob> logger;
-		private IHost host;
 		private LogsContext logsContext;
 		private UsersContext usersContext;
 		private AppRegistrationManager appRegMgr;
-		private ServiceResultWrapper<int> exitCodeWrapper;
 		private DbContext[] contexts;
 
-		public PushJob(Program.PushOptions opts, ILogger<PushJob> logger, IHost host, LogsContext logsContext, UsersContext usersContext, AppRegistrationManager appRegMgr, ServiceResultWrapper<int> exitCodeWrapper) {
+		public PushJob(IHost host, ServiceResultWrapper<int> exitCodeWrapper, Program.PushOptions opts, ILogger<PushJob> logger,
+			LogsContext logsContext, UsersContext usersContext, AppRegistrationManager appRegMgr) : base(host, exitCodeWrapper) {
 			this.opts = opts;
 			this.logger = logger;
-			this.host = host;
 			this.logsContext = logsContext;
 			this.usersContext = usersContext;
 			this.appRegMgr = appRegMgr;
-			this.exitCodeWrapper = exitCodeWrapper;
 			this.contexts = new DbContext[] { logsContext, usersContext };
 		}
 
-		public async Task ExecuteAsync(CancellationToken stoppingToken) {
-			await Task.Yield();
-			var result = await RunAsync(stoppingToken);
-			exitCodeWrapper.Result = result;
-			_ = host.StopAsync();
-		}
-
-		protected async Task<int> RunAsync(CancellationToken ct) {
+		protected override async Task<int> RunAsync(CancellationToken ct) {
 			try {
 				var files = Directory.EnumerateFiles(opts.AppDefinitionsDirectory).Where(fn => !Path.GetFileName(fn).StartsWith("appsettings.", StringComparison.OrdinalIgnoreCase));
 				var definitions = await files.BatchAsync(64, batch => batch.Select(file => readDefinitionAsync(file, ct)), ct).ToListAsync(ct);
