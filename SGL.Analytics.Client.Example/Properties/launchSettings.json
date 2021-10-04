@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SGL.Analytics.Client.Example": {
+      "commandName": "Project",
+      "commandLineArgs": "-v"
+    }
+  }
+}

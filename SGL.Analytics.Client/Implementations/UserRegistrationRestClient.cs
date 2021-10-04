@@ -56,7 +56,7 @@ namespace SGL.Analytics.Client {
 		}
 
 		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO) {
-			var options = new JsonSerializerOptions() { WriteIndented = true };
+			var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true };
 			var content = JsonContent.Create(loginDTO, new MediaTypeHeaderValue("application/json"), options);
 			var response = await httpClient.PostAsync(loginApiRoute, content);
 			if (response is null) throw new LoginErrorException("Did not receive a valid response for the login request.");
@@ -74,7 +74,7 @@ namespace SGL.Analytics.Client {
 		}
 
 		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken) {
-			var options = new JsonSerializerOptions() { WriteIndented = true };
+			var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true };
 			var content = JsonContent.Create(userDTO, new MediaTypeHeaderValue("application/json"), options);
 			content.Headers.Add("App-API-Token", appAPIToken);
 			var response = await httpClient.PostAsync(userRegistrationApiRoute, content);
