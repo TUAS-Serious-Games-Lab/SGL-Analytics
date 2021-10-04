@@ -2,6 +2,7 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -31,6 +32,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			else {
 				return null;
 			}
+		}
+
+		public async Task<Domain.Entity.Application> UpdateApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {
+			await Task.CompletedTask;
+			Debug.Assert(apps.ContainsKey(app.Name));
+			ct.ThrowIfCancellationRequested();
+			apps[app.Name] = app;
+			return app;
 		}
 	}
 }

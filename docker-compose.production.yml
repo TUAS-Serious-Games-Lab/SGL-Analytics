@@ -27,13 +27,18 @@ volumes:
          o: bind
 
 services:
+  app-registrations:
+    environment:
+    - DOTNET_ENVIRONMENT=Production
+    volumes:
+    - "/var/sgl/analytics/app-definitions:/app/definitions"
   logs-collector-app:
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=https://+:443;http://+:80
   users-registration-app:
     environment:
-      - ASPNETCORE_ENVIRONMENT=Staging
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=https://+:443;http://+:80
   api-gateway:
     profiles:

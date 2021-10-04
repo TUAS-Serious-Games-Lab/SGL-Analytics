@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using SGL.Analytics.Backend.Security;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -12,7 +13,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.Security {
+namespace SGL.Analytics.Backend.WebUtilities {
 	public class Authentication { };
 
 	public static class JwtAuthenticationExtensions {

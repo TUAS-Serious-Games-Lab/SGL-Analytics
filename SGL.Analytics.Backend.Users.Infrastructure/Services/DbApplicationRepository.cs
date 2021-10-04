@@ -5,6 +5,7 @@ using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -43,6 +44,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 
 		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, CancellationToken ct = default) {
 			return await context.Applications.Include(a => a.UserProperties).Where(a => a.Name == appName).SingleOrDefaultAsync(ct);
+		}
+
+		public async Task<ApplicationWithUserProperties> UpdateApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default) {
+			Debug.Assert(context.Entry(app).State is EntityState.Modified or EntityState.Unchanged);
+			await context.SaveChangesAsync(ct);
+			return app;
 		}
 	}
 }

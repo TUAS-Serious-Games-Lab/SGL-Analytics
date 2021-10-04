@@ -18,6 +18,7 @@ using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Analytics.Backend.Users.Infrastructure.Services;
 using SGL.Analytics.Utilities.Logging.FileLogging;
 using SGL.Analytics.Backend.WebUtilities;
+using SGL.Analytics.Backend.Users.Infrastructure;
 
 namespace SGL.Analytics.Backend.Users.Registration {
 	public class Startup {
@@ -35,11 +36,8 @@ namespace SGL.Analytics.Backend.Users.Registration {
 
 			services.AddControllers();
 
-			services.AddDbContext<UsersContext>(options =>
-					options.UseNpgsql(Configuration.GetConnectionString("UsersContext")));
+			services.UseUsersBackendInfrastructure(Configuration);
 
-			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
-			services.AddScoped<IUserRepository, DbUserRepository>();
 			services.AddScoped<IUserManager, UserManager>();
 			services.AddScoped<ILoginService, JwtLoginService>();
 			services.UseJwtLoginService(Configuration);

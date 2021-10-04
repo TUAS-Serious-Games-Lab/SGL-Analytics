@@ -96,5 +96,14 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			userWrap.LoadAppPropertiesFromUnderlying();
 			return user;
 		}
+
+		public async Task<ApplicationWithUserProperties> UpdateApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default) {
+			await Task.CompletedTask;
+			Debug.Assert(Apps.ContainsKey(app.Name));
+			assignPropDefIds(app);
+			ct.ThrowIfCancellationRequested();
+			Apps[app.Name] = app;
+			return app;
+		}
 	}
 }

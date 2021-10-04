@@ -5,7 +5,6 @@
     <Nullable>enable</Nullable>
     <AnalysisLevel>Preview</AnalysisLevel>
   </PropertyGroup>
-
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugType>Portable</DebugType>
   </PropertyGroup>
@@ -14,12 +13,12 @@
     <DebugType>None</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="5.0.10" />
-    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="5.0.10" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.10" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.12.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj" />
   </ItemGroup>
+
 </Project>

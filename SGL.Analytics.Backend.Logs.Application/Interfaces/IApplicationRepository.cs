@@ -9,5 +9,6 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 	public interface IApplicationRepository {
 		Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName, CancellationToken ct = default);
 		Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default);
+		Task<Domain.Entity.Application> UpdateApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default);
 	}
 }

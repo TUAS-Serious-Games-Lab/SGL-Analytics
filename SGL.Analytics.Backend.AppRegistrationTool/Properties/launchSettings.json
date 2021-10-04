@@ -1,0 +1,23 @@
+{
+  "profiles": {
+    "SGL.Analytics.Backend.AppRegistrationTool push": {
+      "commandName": "Project",
+      "commandLineArgs": "push ./Dev-Definitions",
+      "workingDirectory": "$(ProjectDir)",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    "SGL.Analytics.Backend.AppRegistrationTool generate-api-token": {
+      "commandName": "Project",
+      "commandLineArgs": "generate-api-token",
+      "workingDirectory": "$(ProjectDir)",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
