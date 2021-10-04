@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,8 +15,13 @@ namespace SGL.Analytics.Backend.WebUtilities {
 
 		public async Task ExecuteAsync(CancellationToken stoppingToken) {
 			await Task.Yield();
-			var result = await RunAsync(stoppingToken);
-			exitCodeWrapper.Result = result;
+			try {
+				var result = await RunAsync(stoppingToken);
+				exitCodeWrapper.Result = result;
+			}
+			catch (Exception ex) {
+				exitCodeWrapper.Result = 255;
+			}
 			_ = host.StopAsync();
 		}
 
