@@ -73,6 +73,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 				logger.LogDebug("IngestLog POST request from user {userId} was cancelled while fetching application metadata.", userId);
 				throw;
 			}
+			catch (BadHttpRequestException ex) when (ex.StatusCode == StatusCodes.Status413RequestEntityTooLarge) {
+				logger.LogCritical("IngestLog POST request from user {userId} failed because the log file was too large for the server's limit. " +
+					"The Content-Length given by the client was {size}.", userId, HttpContext.Request.ContentLength);
+				throw;
+			}
 			catch (Exception ex) {
 				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to unexpected exception during log ingest.", userId);
 				throw;

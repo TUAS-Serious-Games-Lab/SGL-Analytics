@@ -84,7 +84,13 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					logMetadata.UploadTime = DateTime.Now;
 					logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 				}
-				await logFileRepo.StoreLogAsync(appName, logMetadata.UserId, logMetadata.Id, logMetadata.FilenameSuffix, logContent, ct);
+				try {
+					await logFileRepo.StoreLogAsync(appName, logMetadata.UserId, logMetadata.Id, logMetadata.FilenameSuffix, logContent, ct);
+				}
+				catch (IOException ex) {
+					logger.LogError(ex, "Log transfer of logfile {logId} from user {userId} failed due to I/O error.", logMetadata.Id, logMetadata.UserId);
+					throw;
+				}
 				logMetadata.Complete = true;
 				logMetadata.UploadTime = DateTime.Now;
 				logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
