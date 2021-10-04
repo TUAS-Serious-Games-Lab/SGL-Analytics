@@ -13,10 +13,10 @@ namespace SGL.Analytics.Client.Example {
 		class Options {
 			[Option('b', "backend", HelpText = "(Default: https://localhost) Specify the base URL of the API backend.")]
 			public Uri Backend { get; set; } = new Uri("https://localhost");
-			[Option('a', "appname", HelpText = "Specify the app name to use under which the demo app is registered in the backend.", Default = "SGL.Analytics.Client.Demo")]
+			[Option('a', "appname", HelpText = "Specify the app name to use under which the demo app is registered in the backend.", Default = "SGL.Analytics.Client.Example")]
 			public string AppName { get; set; } = "SGL.Analytics.Client.Example";
-			[Option('t', "token", HelpText = "Specify the API token value to use that is registered in the backend.", Required = true)]
-			public string AppApiToken { get; set; } = "";
+			[Option('t', "token", HelpText = "Specify the API token value to use that is registered in the backend.")]
+			public string AppApiToken { get; set; } = "FUfq7iwB43fCkIXLlRSiSy2CKrm6FWmAt/L3kzAqELU=";
 			[Option('u', "username", HelpText = "Username to use for the registration if not already registered. If not specified, an alphanumeric random string is used.")]
 			public string Username { get; set; } = StringGenerator.GenerateRandomWord(8);
 			[Option('v', "verbose", HelpText = "Produce extra output. (Draws the board after each move.)")]
