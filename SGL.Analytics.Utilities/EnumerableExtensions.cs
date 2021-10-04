@@ -35,5 +35,38 @@ namespace SGL.Analytics.Utilities {
 				}
 			}
 		}
+
+		public static async IAsyncEnumerable<TResult> MapBufferedAsync<TSource, TResult>(this IEnumerable<TSource> source, int bufferSize, Func<TSource, Task<TResult>> mapFunc, [EnumeratorCancellation] CancellationToken ct = default) {
+			var mapBuffer = new Queue<Task<TResult>>();
+			var yieldBuffer = new Queue<TResult>();
+			var sourceEnumerator = source.GetEnumerator();
+			var sourceAvailable = sourceEnumerator.MoveNext();
+			// Iterate as long as we have anything that will eventually be yield returned.
+			while (sourceAvailable || mapBuffer.Count > 0 || yieldBuffer.Count > 0) {
+				ct.ThrowIfCancellationRequested();
+				bool progress = false;
+				// Map source elements if available and mapBuffer is not full.
+				while (sourceAvailable && mapBuffer.Count < bufferSize) {
+					progress = true;
+					mapBuffer.Enqueue(mapFunc(sourceEnumerator.Current));
+					sourceAvailable = sourceEnumerator.MoveNext();
+				}
+				// Transfer completed Tasks to yieldBuffer if it isn't full yet.
+				while (yieldBuffer.Count < bufferSize && mapBuffer.TryPeek(out var peekTask) && peekTask.IsCompleted) {
+					progress = true;
+					yieldBuffer.Enqueue(await mapBuffer.Dequeue()); // Unwrap using await, doesn't suspend beacuse the task is ready.
+				}
+				// yield return element from yieldBuffer if available.
+				// No loop, because we should re-evaluate the above loops after the suspension by yield return.
+				// So we simply do another round of the outer loop to get to the next yield return.
+				if (yieldBuffer.TryDequeue(out var result)) {
+					progress = true;
+					yield return result;
+				}
+				// if we made no progress at all in this iteration and the yieldBuffer is not full, await unfinished Task from mapBuffer if available.
+				// This is the point where suspension for waiting for results happens.
+				if (!progress && yieldBuffer.Count < bufferSize && mapBuffer.TryDequeue(out var dequeuedTask)) yieldBuffer.Enqueue(await dequeuedTask);
+			}
+		}
 	}
 }
