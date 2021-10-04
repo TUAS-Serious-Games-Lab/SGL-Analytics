@@ -68,5 +68,13 @@ namespace SGL.Analytics.Utilities {
 				if (!progress && yieldBuffer.Count < bufferSize && mapBuffer.TryDequeue(out var dequeuedTask)) yieldBuffer.Enqueue(await dequeuedTask);
 			}
 		}
+
+		public static async Task<IList<T>> ToListAsync<T>(this IAsyncEnumerable<T> source, CancellationToken ct = default) {
+			var list = new List<T>();
+			await foreach (var val in source.WithCancellation(ct)) {
+				list.Add(val);
+			}
+			return list;
+		}
 	}
 }
