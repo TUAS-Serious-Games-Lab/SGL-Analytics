@@ -3,6 +3,11 @@
     "SGL.Analytics.Client.Example": {
       "commandName": "Project",
       "commandLineArgs": "-v"
+    },
+    "SGL.Analytics.Client.Example ExampleSession.txt": {
+      "commandName": "Project",
+      "workingDirectory": "$(ProjectDir)",
+      "commandLineArgs": "-v ExampleSession.txt"
     }
   }
 }
