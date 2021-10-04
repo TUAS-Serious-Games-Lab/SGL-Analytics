@@ -2,7 +2,7 @@
   "profiles": {
     "SGL.Analytics.Backend.AppRegistrationTool push": {
       "commandName": "Project",
-      "commandLineArgs": "push ./TestData",
+      "commandLineArgs": "push ./Dev-Definitions",
       "workingDirectory": "$(ProjectDir)",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
