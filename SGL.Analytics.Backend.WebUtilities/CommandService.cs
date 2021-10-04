@@ -19,7 +19,7 @@ namespace SGL.Analytics.Backend.WebUtilities {
 				var result = await RunAsync(stoppingToken);
 				exitCodeWrapper.Result = result;
 			}
-			catch (Exception ex) {
+			catch (Exception) {
 				exitCodeWrapper.Result = 255;
 			}
 			_ = host.StopAsync();
