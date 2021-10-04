@@ -3,6 +3,7 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,6 +33,15 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			else {
 				return null;
 			}
+		}
+
+		public async Task<ApplicationWithUserProperties> UpdateApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default) {
+			await Task.CompletedTask;
+			Debug.Assert(apps.ContainsKey(app.Name));
+			assignPropertyDefinitionIds(app);
+			ct.ThrowIfCancellationRequested();
+			apps[app.Name] = app;
+			return app;
 		}
 
 		private void assignPropertyDefinitionIds(ApplicationWithUserProperties app) {

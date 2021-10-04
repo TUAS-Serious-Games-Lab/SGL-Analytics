@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+sed -i 's/host all all all md5/host all all all scram-sha-256/' /var/lib/postgresql/data/pg_hba.conf
+
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"<<-EOSQL
 	CREATE USER sgla_users WITH ENCRYPTED PASSWORD '${USERREG_PW}';
 	CREATE DATABASE sgla_users;

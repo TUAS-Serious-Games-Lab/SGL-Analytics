@@ -116,6 +116,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend_conf.d", "backend_c
 		SGL.Analytics.Backend.APIGW\etc\backend_conf.d\Analytics.UserRegistration.conf = SGL.Analytics.Backend.APIGW\etc\backend_conf.d\Analytics.UserRegistration.conf
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.AppRegistrationTool", "SGL.Analytics.Backend.AppRegistrationTool\SGL.Analytics.Backend.AppRegistrationTool.csproj", "{ACC8E73F-9F1D-4BFA-8E7A-C62BF0C0F121}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Backend.Utilities", "SGL.Analytics.Backend.Utilities\SGL.Analytics.Backend.Utilities.csproj", "{68F29BAE-31B5-4C08-AC26-2CEA3DCFFA5D}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Client.Example", "SGL.Analytics.Client.Example\SGL.Analytics.Client.Example.csproj", "{010C19BB-216E-4725-A655-9572EB023DE1}"
 EndProject
 Global
@@ -228,6 +232,14 @@ Global
 		{A6854915-3ACA-4D22-BE83-6034A645041C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A6854915-3ACA-4D22-BE83-6034A645041C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A6854915-3ACA-4D22-BE83-6034A645041C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACC8E73F-9F1D-4BFA-8E7A-C62BF0C0F121}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACC8E73F-9F1D-4BFA-8E7A-C62BF0C0F121}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACC8E73F-9F1D-4BFA-8E7A-C62BF0C0F121}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACC8E73F-9F1D-4BFA-8E7A-C62BF0C0F121}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68F29BAE-31B5-4C08-AC26-2CEA3DCFFA5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68F29BAE-31B5-4C08-AC26-2CEA3DCFFA5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68F29BAE-31B5-4C08-AC26-2CEA3DCFFA5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68F29BAE-31B5-4C08-AC26-2CEA3DCFFA5D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{010C19BB-216E-4725-A655-9572EB023DE1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{010C19BB-216E-4725-A655-9572EB023DE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{010C19BB-216E-4725-A655-9572EB023DE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -269,6 +281,8 @@ Global
 		{E100863E-A894-418F-8E68-07E520D8AD96} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{13A0FB28-A928-47AD-BF5E-3D83EE59B337} = {E100863E-A894-418F-8E68-07E520D8AD96}
 		{C7DAA7BA-2CB3-47FE-99F4-7D786A5091CA} = {E100863E-A894-418F-8E68-07E520D8AD96}
+		{ACC8E73F-9F1D-4BFA-8E7A-C62BF0C0F121} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
+		{68F29BAE-31B5-4C08-AC26-2CEA3DCFFA5D} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{010C19BB-216E-4725-A655-9572EB023DE1} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
