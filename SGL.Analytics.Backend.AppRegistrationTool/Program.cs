@@ -15,29 +15,32 @@ using SGL.Analytics.Backend.WebUtilities;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.AppRegistrationTool {
-	class Program {
-		class BaseOptions {
+	public class Program {
+		public class BaseOptions {
 			[Option('c', "config", HelpText = "Specifies an additional config file to use.")]
 			public IEnumerable<string> ConfigFiles { get; set; } = new List<string>();
 		}
 		[Verb("generate-api-token", HelpText = "Generates an API token for an application registration.")]
-		class GenerateApiTokenOptions : BaseOptions { }
+		public class GenerateApiTokenOptions : BaseOptions { }
 		[Verb("push", HelpText = "Push application registration data into backend. Registers new application, adds new user registration properties.")]
-		class PushOptions : BaseOptions {
-			[Value(0, MetaName = "APP_DEFINITIONS_DIRECTORY", HelpText = "(Default: Current Directory) The directory in which there is one json file for each application to push.")]
+		public class PushOptions : BaseOptions {
+			[Value(0, MetaName = "APP_DEFINITIONS_DIRECTORY", HelpText = "(Default: Current Directory) The directory in which there is one json file for each application to push. Note: appsettings.*.json and appsettings.json files are ignored.")]
 			public string AppDefinitionsDirectory { get; set; } = Environment.CurrentDirectory;
 		}
 		[Verb("remove-property", HelpText = "(Not yet implemented) Remove a user registration property from an application registration and all its instances.")]
-		class RemovePropertyOptions : BaseOptions {
+		public class RemovePropertyOptions : BaseOptions {
 			// Not implemented
 		}
 		[Verb("remove-application", HelpText = "(Not yet implemented) Removes an application AND ALL ASSOCIATED DATABASE ENTRIES (user registrations, property definitions, app log metadata).")]
-		class RemoveApplicationOptions : BaseOptions {
+		public class RemoveApplicationOptions : BaseOptions {
 			// Not implemented
 		}
 		async static Task<int> Main(string[] args) => await ((Func<ParserResult<object>, Task<int>>)(res => res.MapResult(
@@ -59,9 +62,9 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			return 1;
 		}
 
-		static IHostBuilder CreateHostBuilder(PushOptions opts) =>
+		static IHostBuilder CreateHostBuilder(PushOptions opts, ServiceResultWrapper<int> exitCodeWrapper) =>
 			 Host.CreateDefaultBuilder()
-					.UseConsoleLifetime()
+					.UseConsoleLifetime(options => options.SuppressStatusMessages = true)
 					.ConfigureAppConfiguration(config => {
 						foreach (var configFile in opts.ConfigFiles) {
 							config.AddJsonFile(configFile);
@@ -71,52 +74,16 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 						services.UseUsersBackendInfrastructure(context.Configuration);
 						services.UseLogsBackendInfrastructure(context.Configuration);
 						services.AddScoped<AppRegistrationManager>();
+						services.AddSingleton(opts);
+						services.AddSingleton(exitCodeWrapper);
+						services.AddScopedBackgroundService<PushJob>();
 					});
 
 		async static Task<int> PushMain(PushOptions opts) {
-			using var host = CreateHostBuilder(opts).Build();
-
-			var contextTypes = new[] { typeof(LogsContext), typeof(UsersContext) };
-			await host.WaitForDbsReadyAsync<LogsContext, UsersContext>(pollingInterval: TimeSpan.FromMilliseconds(100));
-			using (var scope = host.Services.CreateScope()) {
-				var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-				try {
-					using var transactions = (await Task.WhenAll(
-						contextTypes.Select(ctxT => scope.ServiceProvider.GetRequiredService(ctxT))
-							.OfType<DbContext>()
-							.Select(ctx => ctx.Database.BeginTransactionAsync())
-					)).ToDisposableEnumerable<IDbContextTransaction>();
-
-					var appRegMgr = scope.ServiceProvider.GetRequiredService<AppRegistrationManager>();
-
-					var definitions = new List<ApplicationWithUserProperties>();
-					var results = Enumerable.Empty<AppRegistrationManager.PushResult>();
-					foreach (var appDef in definitions) {
-						// Can't use Select(), because definitions need to be processed in sequence, Select() would map to task and run all
-						// push operations concurrently, which is not supported by DbContext. Therefore, we need to await each push operation separately.
-						results.Concat(await appRegMgr.PushApplicationAsync(appDef));
-					}
-
-					if (results.Any(res => res == AppRegistrationManager.PushResult.Error)) {
-						logger.LogInformation("Due to the above errors, the transactions for the updates are being rolled back now...");
-						foreach (var t in transactions) {
-							await t.RollbackAsync();
-						}
-						return 2;
-					}
-					else {
-						foreach (var t in transactions) {
-							await t.CommitAsync();
-						}
-						logger.LogInformation("The transactions were successfully committed.");
-						return 0;
-					}
-				}
-				catch (Exception ex) {
-					logger.LogError(ex, "Encountered and unexpected error.");
-					return 3;
-				}
-			}
+			ServiceResultWrapper<int> exitCodeWrapper = new(0);
+			using var host = CreateHostBuilder(opts, exitCodeWrapper).Build();
+			await host.RunAsync();
+			return exitCodeWrapper.Result;
 		}
 
 		async static Task<int> GenerateApiTokenMain(GenerateApiTokenOptions opts) {
