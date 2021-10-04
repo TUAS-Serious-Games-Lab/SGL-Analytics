@@ -26,6 +26,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		// POST: api/AnalyticsLog
+		[RequestSizeLimit(200 * 1024 * 1024)]
 		[Consumes("application/octet-stream")]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
