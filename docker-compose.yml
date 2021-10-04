@@ -53,6 +53,21 @@ services:
     - db
     networks:
     - backend
+
+  app-registrations:
+    image: ${DOCKER_REGISTRY-}sglanalytics/app-registration
+    build:
+      context: .
+      dockerfile: SGL.Analytics.Backend.AppRegistrationTool/Dockerfile
+    environment:
+      ConnectionStrings__LogsContext:
+      ConnectionStrings__UsersContext:
+    depends_on:
+    - db
+    - users-registration-migrations
+    - logs-collector-migrations
+    networks:
+    - backend
   
   logs-collector-app:
     image: ${DOCKER_REGISTRY-}sglanalytics/logs-collector

@@ -1,6 +1,12 @@
 version: '3.4'
 
 services:
+  app-registrations:
+    environment:
+    - DOTNET_ENVIRONMENT=Development
+    volumes:
+    - "./SGL.Analytics.Backend.AppRegistrationTool/Dev-Definitions:/app/definitions"
+
   logs-collector-app:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
