@@ -191,6 +191,7 @@ namespace SGL.Analytics.Client.Example {
 				if (verbose) await board.PrintBoardAsync(output);
 				await output.WriteAsync($"{board.NextTurn}'s move: ");
 				while ((line = await reader.ReadLineAsync()) != null) {
+					if (string.IsNullOrWhiteSpace(line)) continue;
 					if (line.Trim().Equals("exit", StringComparison.OrdinalIgnoreCase)) return;
 					var numbers = line.Split(',').Select(part => int.Parse(part)).ToList();
 					var column = numbers.Take(1).Single();
@@ -203,6 +204,7 @@ namespace SGL.Analytics.Client.Example {
 			catch (Exception ex) {
 				analytics.RecordEventUnshared("Errors", new ErrorEvent(ex.Message, ex.GetType().Name, ex.StackTrace));
 				await Console.Error.WriteLineAsync($"\nError: {ex.Message}");
+				Environment.ExitCode = 1;
 			}
 		}
 	}
