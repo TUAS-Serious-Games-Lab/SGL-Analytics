@@ -203,6 +203,7 @@ namespace SGL.Analytics.Client.Example {
 			catch (Exception ex) {
 				analytics.RecordEventUnshared("Errors", new ErrorEvent(ex.Message, ex.GetType().Name, ex.StackTrace));
 				await Console.Error.WriteLineAsync($"\nError: {ex.Message}");
+				Environment.ExitCode = 1;
 			}
 		}
 	}

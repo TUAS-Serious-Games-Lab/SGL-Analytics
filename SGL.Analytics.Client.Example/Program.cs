@@ -57,6 +57,7 @@ namespace SGL.Analytics.Client.Example {
 			if (!analytics.IsRegistered()) {
 				try {
 					await analytics.RegisterAsync(new BaseUserData(opts.Username));
+					Environment.ExitCode = 2;
 				}
 				catch (Exception ex) {
 					await Console.Error.WriteLineAsync($"Registration Error: {ex.Message}");
