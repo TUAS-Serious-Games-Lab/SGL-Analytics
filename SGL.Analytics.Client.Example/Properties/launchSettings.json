@@ -6,8 +6,8 @@
     },
     "SGL.Analytics.Client.Example ExampleSession.txt": {
       "commandName": "Project",
-      "workingDirectory": "$(ProjectDir)",
-      "commandLineArgs": "-v ExampleSession.txt"
+      "commandLineArgs": "-v ExampleSession.txt -l Trace",
+      "workingDirectory": "$(ProjectDir)"
     }
   }
 }

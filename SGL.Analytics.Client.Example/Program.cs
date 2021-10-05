@@ -1,5 +1,7 @@
 ﻿using CommandLine;
 using CommandLine.Text;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Analytics.Utilities;
 using System;
 using System.Collections.Generic;
@@ -21,6 +23,8 @@ namespace SGL.Analytics.Client.Example {
 			public string Username { get; set; } = StringGenerator.GenerateRandomWord(8);
 			[Option('v', "verbose", HelpText = "Produce extra output. (Draws the board after each move.)")]
 			public bool Verbose { get; set; } = false;
+			[Option('l', "log-level", HelpText = "Diagnostics logging level for SGL Analytics.")]
+			public LogLevel LoggingLevel { get; set; } = LogLevel.None;
 
 			[Value(0, MetaName = "MOVES_FILES", HelpText = "The name(s) / path(s) of one or more files containing the moves to make in the simulated TicTacToe game in order. " +
 				"Each line in these files should consist of two numbers in range 1-3, separated by a comma, that indicate the column and row position to mark. " +
@@ -51,9 +55,14 @@ namespace SGL.Analytics.Client.Example {
 		}
 
 		async static Task RealMain(Options opts) {
+			ILogger<SGLAnalytics> logger = NullLogger<SGLAnalytics>.Instance;
+			if (opts.LoggingLevel < LogLevel.None) {
+				logger = LoggerFactory.Create(config => config.ClearProviders().AddConsole().SetMinimumLevel(opts.LoggingLevel)).CreateLogger<SGLAnalytics>();
+			}
 			SGLAnalytics analytics = new SGLAnalytics(opts.AppName, opts.AppApiToken,
 				logCollectorClient: new LogCollectorRestClient(opts.Backend),
-				userRegistrationClient: new UserRegistrationRestClient(opts.Backend));
+				userRegistrationClient: new UserRegistrationRestClient(opts.Backend),
+				diagnosticsLogger: logger);
 			if (!analytics.IsRegistered()) {
 				try {
 					await analytics.RegisterAsync(new BaseUserData(opts.Username));
