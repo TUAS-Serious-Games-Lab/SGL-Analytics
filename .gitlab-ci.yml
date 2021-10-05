@@ -2,6 +2,7 @@ image: mcr.microsoft.com/dotnet/sdk:latest
 
 stages:
   - build
+  - docbuild
   - test
   - package
   - deploy
@@ -26,6 +27,10 @@ build:
   parallel:
     matrix:
       - CONFIG: [Debug, Release]
+  artifacts:
+    expire_in: 14 days
+    paths:
+      - SGL.Analytics.*/*/*/*/SGL.Analytics.*.xml
 
 test:
   stage: test
@@ -43,6 +48,17 @@ test:
        - ./TestResults/*.xml
       cobertura:
        - '*/TestResults/*/coverage.cobertura.xml'
+
+docs:
+  stage: docbuild
+  image: ${CI_REGISTRY}/serious-games-lab/docfx-ci-build-image
+  before_script: []
+  script:
+    - docfx docfx_project/docfx.json
+  artifacts:
+    expire_in: 14 days
+    paths:
+      - docfx_output
 
 .package-client-lib:
   stage: package
