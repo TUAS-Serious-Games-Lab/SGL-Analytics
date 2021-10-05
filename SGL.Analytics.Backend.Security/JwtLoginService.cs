@@ -78,30 +78,30 @@ namespace SGL.Analytics.Backend.Security {
 			try {
 				if (userId is null) {
 					logger.LogError("Login failed because no userId was given.");
-					await fixedFailureDelay.WaitAsync();
+					await fixedFailureDelay.WaitAsync().ConfigureAwait(false);
 					return null;
 				}
-				user = await lookupUserAsync(userId);
+				user = await lookupUserAsync(userId).ConfigureAwait(false);
 				if (user is null) {
 					logger.LogError("Login failed because the user with id {userId} was not found.", userId);
-					await fixedFailureDelay.WaitAsync();
+					await fixedFailureDelay.WaitAsync().ConfigureAwait(false);
 					return null;
 				}
 				hashedSecret = getHashedSecret(user);
 				(secretCorrect, rehashed) = SecretHashing.VerifyHashedSecret(ref hashedSecret, providedPlainSecret);
 				if (!secretCorrect) {
 					logger.LogError("Login failed because the given secret didn't match the hashed secret of the given user with id {userId}.", userId);
-					await fixedFailureDelay.WaitAsync();
+					await fixedFailureDelay.WaitAsync().ConfigureAwait(false);
 					return null;
 				}
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "Login failed due to unexpected exception.", userId);
-				await fixedFailureDelay.WaitAsync();
+				await fixedFailureDelay.WaitAsync().ConfigureAwait(false);
 				return null;
 			}
 			if (rehashed) {
-				await updateHashedSecretAsync(user, hashedSecret);
+				await updateHashedSecretAsync(user, hashedSecret).ConfigureAwait(false);
 			}
 			var claims = additionalClaims.Select(cg => new Claim(cg.ClaimType, cg.GetClaimValue(user)))
 				.Prepend(new Claim("userid", userId.ToString() ?? "")).ToArray();
