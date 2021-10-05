@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <PackageId>SGL.Analytics.Client</PackageId>
     <Version>0.0.0-dev</Version>
     <Authors>Stefan Bodenschatz</Authors>
