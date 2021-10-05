@@ -130,6 +130,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 				normalMessageFormatter.AppendFormattedTo(stringBuilder, msg);
 			}
 			await writer.WriteLineAsync(stringBuilder);
+			await writer.FlushAsync();
 		}
 
 		public void Dispose() {
