@@ -76,7 +76,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			catch (BadHttpRequestException ex) when (ex.StatusCode == StatusCodes.Status413RequestEntityTooLarge) {
 				logger.LogCritical("IngestLog POST request from user {userId} failed because the log file was too large for the server's limit. " +
 					"The Content-Length given by the client was {size}.", userId, HttpContext.Request.ContentLength);
-				throw;
+				return StatusCode(ex.StatusCode, "The log file's size exceeds the limit.");
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to unexpected exception during log ingest.", userId);
