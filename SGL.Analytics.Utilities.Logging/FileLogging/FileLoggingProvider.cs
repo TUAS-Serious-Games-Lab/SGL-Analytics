@@ -81,7 +81,13 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 				// For this, we use this factory to always format the strings with epoch for the time-based placeholders.
 				builder.AddPlaceholder("Time", m => DateTime.UnixEpoch);
 			});
-			sinks = options.Sinks.Select(s => new FileLoggingSink(s, formatterFactory.Create(s.BaseDirectory ?? options.BaseDirectory), formatterFactory, formatterFactoryFixedTime)).ToList();
+			sinks = options.Sinks.Select(s => new FileLoggingSink(s,
+				formatterFactory.Create(s.BaseDirectory ?? options.BaseDirectory),
+				formatterFactory.Create(s.MessageFormat ?? options.MessageFormat),
+				formatterFactory.Create(s.MessageFormatException ?? options.MessageFormatException),
+				formatterFactory.Create(s.FilenameFormat ?? options.FilenameFormat),
+				formatterFactoryFixedTime.Create(s.FilenameFormat ?? options.FilenameFormat)
+				)).ToList();
 			writerWorkerHandle = startWriterWorker();
 		}
 

@@ -8,9 +8,6 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Utilities.Logging.FileLogging {
 	public class FileLoggingSink : IDisposable, IAsyncDisposable {
-		private NamedPlaceholderFormatterFactory<LogMessage> formatterFactory;
-		private NamedPlaceholderFormatterFactory<LogMessage> formatterFactoryFixedTime;
-
 		private NamedPlaceholderFormatter<LogMessage> baseDirectoryFormatter;
 		private NamedPlaceholderFormatter<LogMessage> normalMessageFormatter;
 		private NamedPlaceholderFormatter<LogMessage> exceptionMessageFormatter;
@@ -19,20 +16,17 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		private bool timeBased;
 
 		public FileLoggingSink(FileLoggingSinkOptions options,
-			NamedPlaceholderFormatter<LogMessage> baseDirectoryFormatter,
-			NamedPlaceholderFormatterFactory<LogMessage> formatterFactory,
-			NamedPlaceholderFormatterFactory<LogMessage> formatterFactoryFixedTime) {
+			NamedPlaceholderFormatter<LogMessage> baseDirectoryFormatter, NamedPlaceholderFormatter<LogMessage> normalMessageFormatter,
+			NamedPlaceholderFormatter<LogMessage> exceptionMessageFormatter, NamedPlaceholderFormatter<LogMessage> fileNameFormatter,
+			NamedPlaceholderFormatter<LogMessage>? fileNameFormatterFixedTime) {
 			this.options = options;
-			this.formatterFactory = formatterFactory;
-			this.formatterFactoryFixedTime = formatterFactoryFixedTime;
-
 			this.baseDirectoryFormatter = baseDirectoryFormatter;
-			normalMessageFormatter = formatterFactory.Create(options.MessageFormat);
-			exceptionMessageFormatter = formatterFactory.Create(options.MessageFormatException);
-			fileNameFormatter = formatterFactory.Create(options.FilenameFormat);
+			this.normalMessageFormatter = normalMessageFormatter;
+			this.exceptionMessageFormatter = exceptionMessageFormatter;
+			this.fileNameFormatter = fileNameFormatter;
+			this.fileNameFormatterFixedTime = fileNameFormatterFixedTime;
 			timeBased = fileNameFormatter.UsesPlaceholder("Time") || baseDirectoryFormatter.UsesPlaceholder("Time");
 			if (timeBased) {
-				fileNameFormatterFixedTime = formatterFactoryFixedTime.Create(options.FilenameFormat);
 				timeBasedWriters = options.MaxOpenStreams > 0 ?
 					new LRUCache<string, (string Path, StreamWriter Writer)>(options.MaxOpenStreams, w => closeList.Add(w.Writer)) :
 					new Dictionary<string, (string Path, StreamWriter Writer)>();
