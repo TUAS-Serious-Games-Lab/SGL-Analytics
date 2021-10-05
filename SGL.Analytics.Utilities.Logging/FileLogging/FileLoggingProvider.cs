@@ -29,9 +29,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		private Task startWriterWorker() {
 			return Task.Run(async () => {
 				await foreach (var msg in WriterQueue.DequeueAllAsync()) {
-					foreach (var sink in sinks) {
-						await sink.WriteAsync(msg);
-					}
+					await Task.WhenAll(sinks.Select(sink => sink.WriteAsync(msg)).ToArray());
 				}
 			});
 		}
