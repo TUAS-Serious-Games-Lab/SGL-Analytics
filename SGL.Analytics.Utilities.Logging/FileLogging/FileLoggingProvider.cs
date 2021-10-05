@@ -28,8 +28,8 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 
 		private Task startWriterWorker() {
 			return Task.Run(async () => {
-				await foreach (var msg in WriterQueue.DequeueAllAsync()) {
-					await Task.WhenAll(sinks.Select(sink => sink.WriteAsync(msg)).ToArray());
+				await foreach (var msg in WriterQueue.DequeueAllAsync().ConfigureAwait(false)) {
+					await Task.WhenAll(sinks.Select(sink => sink.WriteAsync(msg)).ToArray()).ConfigureAwait(false);
 				}
 			});
 		}
@@ -93,9 +93,9 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			if (disposed) return;
 			disposed = true;
 			WriterQueue.Finish();
-			await writerWorkerHandle;
+			await writerWorkerHandle.ConfigureAwait(false);
 			foreach (var sink in sinks) {
-				await sink.DisposeAsync();
+				await sink.DisposeAsync().ConfigureAwait(false);
 			}
 		}
 
