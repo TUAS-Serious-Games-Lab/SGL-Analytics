@@ -20,18 +20,25 @@ cache:
 before_script:
   - 'dotnet restore --packages $NUGET_PACKAGES_DIRECTORY SGL.Analytics.sln'
 
-build:
+.build:
   stage: build
   script:
     - 'dotnet build --configuration ${CONFIG} --no-restore SGL.Analytics.sln'
-  parallel:
-    matrix:
-      - CONFIG: [Debug, Release]
+
+build-debug:
+  extends: .build
+  variables:
+    CONFIG: Debug
   artifacts:
     expire_in: 2 days
     paths:
       - SGL.Analytics.*/bin/Debug/*/SGL.Analytics.*.xml
       - SGL.Analytics.*/bin/Debug/*/SGL.Analytics.*.dll
+
+build-release:
+  extends: .build
+  variables:
+    CONFIG: Release
 
 test:
   stage: test
