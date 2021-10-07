@@ -36,7 +36,11 @@
     "content": [
       {
         "files": [
-          "README.md"
+          "docs/**.md",
+          "docs/**/toc.yml",
+          "SGL.Analytics.*/toc.yml",
+          "SGL.Analytics.*/index.md",
+          "index.md"
         ],
         "src": ".."
       },
@@ -48,10 +52,9 @@
       },
       {
         "files": [
-          "articles/**.md",
-          "articles/**/toc.yml",
           "toc.yml",
-          "*.md"
+          "tools/toc.yml",
+          "tools/index.md"
         ]
       }
     ],

@@ -33,6 +33,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		.gitlab-ci.yml = .gitlab-ci.yml
+		index.md = index.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Client.Tests", "SGL.Analytics.Client.Tests\SGL.Analytics.Client.Tests.csproj", "{437E71CA-095B-48AA-A527-2FF000AD5D84}"
@@ -118,9 +119,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend_conf.d", "backend_c
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.AppRegistrationTool", "SGL.Analytics.Backend.AppRegistrationTool\SGL.Analytics.Backend.AppRegistrationTool.csproj", "{ACC8E73F-9F1D-4BFA-8E7A-C62BF0C0F121}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Backend.Utilities", "SGL.Analytics.Backend.Utilities\SGL.Analytics.Backend.Utilities.csproj", "{68F29BAE-31B5-4C08-AC26-2CEA3DCFFA5D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Utilities", "SGL.Analytics.Backend.Utilities\SGL.Analytics.Backend.Utilities.csproj", "{68F29BAE-31B5-4C08-AC26-2CEA3DCFFA5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.Client.Example", "SGL.Analytics.Client.Example\SGL.Analytics.Client.Example.csproj", "{010C19BB-216E-4725-A655-9572EB023DE1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Client.Example", "SGL.Analytics.Client.Example\SGL.Analytics.Client.Example.csproj", "{010C19BB-216E-4725-A655-9572EB023DE1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DocFx", "DocFx", "{0B25318D-BFA3-4E53-A36F-89071951B747}"
+	ProjectSection(SolutionItems) = preProject
+		docfx_project\docfx.json = docfx_project\docfx.json
+		docfx_project\toc.yml = docfx_project\toc.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

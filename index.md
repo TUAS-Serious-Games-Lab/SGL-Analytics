@@ -11,8 +11,8 @@ It consists of two main parts:
 	- Logs Collector: Accepts the actual file uploads from the clients and catalogs the file by application and user, including relevant metadata
 
 Furthermore, this project contains
-- The [application registration tool](https://gitlab.rlp.net/serious-games-lab/sgl-analytics/-/tree/main/SGL.Analytics.Backend.AppRegistrationTool) that is used to make new applications / games known to the backend services
-- Minor components needed to run the backup containerized in `docker-compose`
+- The [application registration tool](SGL.Analytics.Backend.AppRegistrationTool/index.md) that is used to make new applications / games known to the backend services
+- Components needed to run the backend containerized in `docker-compose`
 	- A [Postgres-based database container image](https://gitlab.rlp.net/serious-games-lab/sgl-analytics/-/tree/main/SGL.Analytics.Backend.DB) that is automatically prepared with the needed databases and user credentials
 	- An [Nginx-based container image for an API Gateway](https://gitlab.rlp.net/serious-games-lab/sgl-analytics/-/tree/main/SGL.Analytics.Backend.APIGW) to distribute requests coming into the server to the two backend services
 	- The `docker-compose` definition files
