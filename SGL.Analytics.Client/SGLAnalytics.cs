@@ -137,11 +137,11 @@ namespace SGL.Analytics.Client {
 		/// <remarks>
 		/// Uploading may fail for various reasons:
 		/// <list type="bullet">
-		///		<item>The client is not yet fully registered and has thus not obtained a valid user id yet. In this case, the upload is not attempted in the first place and this method only flushed in-memory queues to the log files. Those are only kept locally.</item>
-		///		<item>The client has no connection to the internet. The upload will be retried later, when the application is used again.</item>
-		///		<item>The backend server is not operating correctly. The upload will be retried later, when the application is used again.</item>
-		///		<item>The server rejects the upload due to an invalid user id or application id. In case of a transient configuration error, the upload will be retried later, when the application is used again. The server should also log this problem for investigation.</item>
-		///		<item>The server rejects the upload due to exceeding the maximum file size. In this case, the file is moved to a special directory for further investigation to not waste the users bandwidth with further attempts. The server should also log this problem to indicate, that an application generates larger than expected log files.</item>
+		///		<item><description>The client is not yet fully registered and has thus not obtained a valid user id yet. In this case, the upload is not attempted in the first place and this method only flushed in-memory queues to the log files. Those are only kept locally.</description></item>
+		///		<item><description>The client has no connection to the internet. The upload will be retried later, when the application is used again.</description></item>
+		///		<item><description>The backend server is not operating correctly. The upload will be retried later, when the application is used again.</description></item>
+		///		<item><description>The server rejects the upload due to an invalid user id or application id. In case of a transient configuration error, the upload will be retried later, when the application is used again. The server should also log this problem for investigation.</description></item>
+		///		<item><description>The server rejects the upload due to exceeding the maximum file size. In this case, the file is moved to a special directory for further investigation to not waste the users bandwidth with further attempts. The server should also log this problem to indicate, that an application generates larger than expected log files.</description></item>
 		/// </list>
 		///
 		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
