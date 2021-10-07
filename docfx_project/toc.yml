@@ -1,3 +1,5 @@
+- name: Genreal Documentation
+  href: ../docs/
 - name: Api Documentation
   href: api/
 - name: Tools
