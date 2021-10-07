@@ -62,6 +62,7 @@ docs:
   image: ${CI_REGISTRY}/serious-games-lab/docfx-ci-build-image
   before_script: []
   script:
+    - cp README.md docfx_project/index.md
     - docfx docfx_project/docfx.json
   artifacts:
     expire_in: 14 days
