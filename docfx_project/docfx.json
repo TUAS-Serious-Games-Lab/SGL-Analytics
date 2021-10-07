@@ -46,6 +46,12 @@
       },
       {
         "files": [
+          "restapi/*.swagger.json",
+          "restapi/toc.yml"
+        ]
+      },
+      {
+        "files": [
           "api/**.yml",
           "api/index.md"
         ]
