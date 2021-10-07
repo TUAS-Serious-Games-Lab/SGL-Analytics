@@ -5,6 +5,9 @@
     <Nullable>enable</Nullable>
     <AnalysisLevel>Preview</AnalysisLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.10" />
