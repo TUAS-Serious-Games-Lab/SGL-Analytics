@@ -24,7 +24,7 @@
             "SGL.Analytics.Utilities/bin/Debug/*/SGL.Analytics.Utilities.dll",
             "SGL.Analytics.Utilities.Logging/bin/Debug/*/SGL.Analytics.Utilities.Logging.dll"
           ],
-		  "src" : ".."
+          "src": ".."
         }
       ],
       "dest": "api",
@@ -34,12 +34,12 @@
   ],
   "build": {
     "content": [
-	  {
-		"files" :[
-			"README.md"
-		],
-		"src" : ".."
-	  },
+      {
+        "files": [
+          "README.md"
+        ],
+        "src": ".."
+      },
       {
         "files": [
           "api/**.yml",
@@ -77,7 +77,8 @@
     "globalMetadataFiles": [],
     "fileMetadataFiles": [],
     "template": [
-      "default","statictoc"
+      "default",
+      "statictoc"
     ],
     "postProcessors": [],
     "markdownEngineName": "markdig",
