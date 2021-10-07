@@ -28,9 +28,10 @@ build:
     matrix:
       - CONFIG: [Debug, Release]
   artifacts:
-    expire_in: 14 days
+    expire_in: 2 days
     paths:
       - SGL.Analytics.*/*/*/*/SGL.Analytics.*.xml
+      - SGL.Analytics.*/*/*/*/SGL.Analytics.*.dll
 
 test:
   stage: test
