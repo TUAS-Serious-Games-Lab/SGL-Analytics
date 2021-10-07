@@ -30,8 +30,8 @@ build:
   artifacts:
     expire_in: 2 days
     paths:
-      - SGL.Analytics.*/*/*/*/SGL.Analytics.*.xml
-      - SGL.Analytics.*/*/*/*/SGL.Analytics.*.dll
+      - SGL.Analytics.*/bin/Debug/*/SGL.Analytics.*.xml
+      - SGL.Analytics.*/bin/Debug/*/SGL.Analytics.*.dll
 
 test:
   stage: test

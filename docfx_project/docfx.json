@@ -4,9 +4,9 @@
       "src": [
         {
           "files": [
-            "SGL.Analytics.Client/bin/*/*/SGL.Analytics.Client.dll",
-            "SGL.Analytics.Backend.Logs.Collector/bin/*/*/SGL.Analytics.Backend.Logs.Collector.dll",
-            "SGL.Analytics.Backend.Users.Registration/bin/*/*/SGL.Analytics.Backend.Users.Registration.dll"
+            "SGL.Analytics.Client/bin/Debug/*/SGL.Analytics.Client.dll",
+            "SGL.Analytics.Backend.Logs.Collector/bin/Debug/*/SGL.Analytics.Backend.Logs.Collector.dll",
+            "SGL.Analytics.Backend.Users.Registration/bin/Debug/*/SGL.Analytics.Backend.Users.Registration.dll"
           ],
 		  "src" : ".."
         }
