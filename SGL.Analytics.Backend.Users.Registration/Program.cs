@@ -18,6 +18,7 @@ namespace SGL.Analytics.Backend.Users.Registration {
 		public static async Task Main(string[] args) {
 			IHost host = CreateHostBuilder(args).Build();
 			await host.WaitForDbReadyAsync<UsersContext>(pollingInterval: TimeSpan.FromMilliseconds(500));
+			await host.WaitForConfigValueSet("Jwt:SymmetricKey", TimeSpan.FromMilliseconds(500));
 			await host.RunAsync();
 		}
 
