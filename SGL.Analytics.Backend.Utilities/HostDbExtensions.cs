@@ -15,7 +15,7 @@ namespace SGL.Analytics.Backend.Utilities {
 			using (var serviceScope = host.Services.CreateScope()) {
 				using (var contexts = contextTypes.Select(type => serviceScope.ServiceProvider.GetRequiredService(type)).OfType<DbContext>().ToDisposableEnumerable()) {
 					if (!(await Task.WhenAll(contexts.Select(context => context.Database.CanConnectAsync(ct)))).All(b => b)) {
-						await Console.Out.WriteLineAsync("the database server is not yet available.");
+						await Console.Out.WriteLineAsync("The database server is not yet available.");
 						await Console.Out.WriteAsync("Waiting for the database to be available for connection.");
 						while (!(await Task.WhenAll(contexts.Select(context => context.Database.CanConnectAsync(ct)))).All(b => b)) {
 							await Task.Delay(pollingInterval, ct);
