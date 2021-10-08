@@ -23,6 +23,10 @@ namespace SGL.Analytics.Backend.Users.Registration {
 
 		public static IHostBuilder CreateHostBuilder(string[] args) =>
 			Host.CreateDefaultBuilder(args)
+				.ConfigureAppConfiguration(config => {
+					var keyDir = config.Build().GetValue<string>("Jwt:KeyDirectory") ?? "./JWT-Key";
+					config.AddKeyPerFile(keyDir, optional: true, reloadOnChange: true);
+				})
 				.ConfigureWebHostDefaults(webBuilder => {
 					webBuilder.UseStartup<Startup>();
 				})
