@@ -39,7 +39,6 @@ namespace SGL.Analytics.Backend.Users.Registration {
 			services.UseUsersBackendInfrastructure(Configuration);
 
 			services.AddScoped<IUserManager, UserManager>();
-			services.AddScoped<ILoginService, JwtLoginService>();
 			services.UseJwtLoginService(Configuration);
 		}
 
