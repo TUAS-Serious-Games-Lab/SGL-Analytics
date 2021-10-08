@@ -12,6 +12,7 @@ volumes:
   game-logs:
   log-collector-log-files:
   user-registration-log-files:
+  jwt-key-config:
 
 services:
   db:
@@ -85,6 +86,7 @@ services:
     volumes:
     - "game-logs:/var/game-logs"
     - "log-collector-log-files:/var/log/SGL.Analytics.LogCollector"
+    - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
 
   users-registration-app:
     image: ${DOCKER_REGISTRY-}sglanalytics/users-registration
@@ -101,6 +103,7 @@ services:
     - backend
     volumes:
     - "user-registration-log-files:/var/log/SGL.Analytics.UserRegistration"
+    - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
 
   api-gateway:
     image: ${DOCKER_REGISTRY-}sglanalytics/api-gateway
