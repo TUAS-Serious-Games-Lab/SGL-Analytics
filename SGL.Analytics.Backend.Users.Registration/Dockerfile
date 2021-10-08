@@ -12,6 +12,7 @@ COPY ["SGL.Analytics.Backend.Users.Registration/SGL.Analytics.Backend.Users.Regi
 COPY ["SGL.Analytics.Backend.Security/SGL.Analytics.Backend.Security.csproj", "SGL.Analytics.Backend.Security/"]
 COPY ["SGL.Analytics.DTO/SGL.Analytics.DTO.csproj", "SGL.Analytics.DTO/"]
 COPY ["SGL.Analytics.Utilities/SGL.Analytics.Utilities.csproj", "SGL.Analytics.Utilities/"]
+COPY ["SGL.Analytics.Utilities.Logging/SGL.Analytics.Utilities.Logging.csproj", "SGL.Analytics.Utilities.Logging/"]
 COPY ["SGL.Analytics.Backend.Utilities/SGL.Analytics.Backend.Utilities.csproj", "SGL.Analytics.Backend.Utilities/"]
 COPY ["SGL.Analytics.Backend.WebUtilities/SGL.Analytics.Backend.WebUtilities.csproj", "SGL.Analytics.Backend.WebUtilities/"]
 COPY ["SGL.Analytics.Backend.Users.Infrastructure/SGL.Analytics.Backend.Users.Infrastructure.csproj", "SGL.Analytics.Backend.Users.Infrastructure/"]
