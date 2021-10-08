@@ -8,9 +8,24 @@ using System.Text;
 using System.Threading.Tasks;
 using SGL.Analytics.Utilities;
 using System.Threading;
+using Microsoft.Extensions.Configuration;
 
 namespace SGL.Analytics.Backend.Utilities {
-	public static class HostDbExtensions {
+	public static class HostExtensions {
+
+		public static async Task WaitForConfigValueSet(this IHost host, string key, TimeSpan pollingInterval, CancellationToken ct = default) {
+			var conf = host.Services.GetRequiredService<IConfiguration>();
+			if (string.IsNullOrWhiteSpace(conf.GetValue<string>(key))) {
+				await Console.Out.WriteLineAsync($"The required config value '{key}' is not yet set.");
+				await Console.Out.WriteAsync("Waiting for it to be set through config reloading.");
+				while (string.IsNullOrWhiteSpace(conf.GetValue<string>(key))) {
+					await Task.Delay(pollingInterval, ct);
+					await Console.Out.WriteAsync(".");
+				}
+				await Console.Out.WriteLineAsync();
+			}
+		}
+
 		public static async Task WaitForDbsReadyAsync(this IHost host, TimeSpan pollingInterval, CancellationToken ct, params Type[] contextTypes) {
 			using (var serviceScope = host.Services.CreateScope()) {
 				using (var contexts = contextTypes.Select(type => serviceScope.ServiceProvider.GetRequiredService(type)).OfType<DbContext>().ToDisposableEnumerable()) {

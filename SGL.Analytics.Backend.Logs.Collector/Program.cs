@@ -18,11 +18,16 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 		public static async Task Main(string[] args) {
 			IHost host = CreateHostBuilder(args).Build();
 			await host.WaitForDbReadyAsync<LogsContext>(pollingInterval: TimeSpan.FromMilliseconds(500));
+			await host.WaitForConfigValueSet("Jwt:SymmetricKey", TimeSpan.FromMilliseconds(500));
 			await host.RunAsync();
 		}
 
 		public static IHostBuilder CreateHostBuilder(string[] args) =>
 			Host.CreateDefaultBuilder(args)
+				.ConfigureAppConfiguration(config => {
+					var keyDir = config.Build().GetValue<string>("Jwt:KeyDirectory") ?? "./JWT-Key";
+					config.AddKeyPerFile(keyDir, optional: true, reloadOnChange: true);
+				})
 				.ConfigureWebHostDefaults(webBuilder => {
 					webBuilder.UseStartup<Startup>();
 				})

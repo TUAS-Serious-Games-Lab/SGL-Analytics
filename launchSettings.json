@@ -7,7 +7,10 @@
         "logs-collector-app": "StartDebugging",
         "logs-collector-migrations": "DoNotStart",
         "users-registration-app": "StartDebugging",
-        "users-registration-migrations": "DoNotStart"
+        "users-registration-migrations": "DoNotStart",
+        "api-gateway": "StartWithoutDebugging",
+        "app-registrations": "StartDebugging",
+        "jwt-secret-key-gen": "StartWithoutDebugging"
       },
       "commandVersion": "1.0"
     }
