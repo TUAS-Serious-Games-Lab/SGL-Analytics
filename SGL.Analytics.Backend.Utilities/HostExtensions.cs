@@ -10,7 +10,7 @@ using SGL.Analytics.Utilities;
 using System.Threading;
 
 namespace SGL.Analytics.Backend.Utilities {
-	public static class HostDbExtensions {
+	public static class HostExtensions {
 		public static async Task WaitForDbsReadyAsync(this IHost host, TimeSpan pollingInterval, CancellationToken ct, params Type[] contextTypes) {
 			using (var serviceScope = host.Services.CreateScope()) {
 				using (var contexts = contextTypes.Select(type => serviceScope.ServiceProvider.GetRequiredService(type)).OfType<DbContext>().ToDisposableEnumerable()) {
