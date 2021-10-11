@@ -30,7 +30,7 @@ RUN dotnet tool install --global dotnet-ef &&\
 	cd ../SGL.Analytics.Backend.Logs.Infrastructure && \
 	dotnet ef migrations script --startup-project ../SGL.Analytics.Backend.Logs.Collector --idempotent --output /app/publish/DbMigrations.sql
 
-FROM base AS final
+FROM ${SERVICE_BASE_IMAGE_OVERRIDE:-base} AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "SGL.Analytics.Backend.Logs.Collector.dll"]

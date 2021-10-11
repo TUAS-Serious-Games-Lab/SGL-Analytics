@@ -40,9 +40,19 @@ package-client-lib-tags:
   - BUILD_OPTS="--cleanup --cache=true --insecure-registry=registry:5000 --cache-repo=registry:5000/cache --context ${PACKAGE_IMAGE_CONTEXT-${CI_PROJECT_DIR}} --dockerfile ${PACKAGE_IMAGE_DIR}/Dockerfile --target final"
   - /kaniko/executor $BUILD_OPTS --destination "${PACKAGE_IMAGE}:${PACKAGE_IMAGE_TAG_1}" --destination "${PACKAGE_IMAGE}:${PACKAGE_IMAGE_TAG_2}" --destination "${PACKAGE_IMAGE}:${CI_COMMIT_SHORT_SHA}"
 
+build-service-base-image:
+  extends: .package-backend-docker-images
+  stage: build
+  variables:
+    PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
+    PACKAGE_IMAGE_TAG_2: latest
+    PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.ServiceBaseImage"
+    PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/base"
+
 pkg-docker:
   extends: .package-backend-docker-images
   variables:
+    SERVICE_BASE_IMAGE_OVERRIDE: "${CI_REGISTRY_IMAGE}/base:${CI_COMMIT_SHORT_SHA}"
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
     PACKAGE_IMAGE_TAG_2: latest
   parallel:
