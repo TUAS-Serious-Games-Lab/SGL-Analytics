@@ -4,3 +4,16 @@ services:
   app-registrations:
     labels:
       com.microsoft.visualstudio.debuggee.arguments: "--additionalProbingPath /root/.nuget/packages --additionalProbingPath /root/.nuget/fallbackpackages  \"/app/bin/Debug/net5.0/SGL.Analytics.Backend.AppRegistrationTool.dll\" push /app/definitions"
+    image: sgl-analytics-app-registration:vs-release
+  db:
+    image: sgl-analytics-db:vs-release
+  logs-collector-migrations:
+    image: sgl-analytics-logs-collector:vs-release
+  users-registration-migrations:
+    image: sgl-analytics-users-registration:vs-release
+  logs-collector-app:
+    image: sgl-analytics-logs-collector:vs-release
+  users-registration-app:
+    image: sgl-analytics-users-registration:vs-release
+  api-gateway:
+    image: sgl-analytics-api-gateway:vs-release
