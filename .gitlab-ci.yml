@@ -44,26 +44,5 @@ test:
       cobertura:
        - '*/TestResults/*/coverage.cobertura.xml'
 
-.package-client-lib:
-  stage: package
-  script:
-    - 'cd SGL.Analytics.Client'
-    - 'dotnet pack -c Release -p:Version="$(git describe --tags --abbrev=0)${VERSION_SUFFIX}"'
-    - 'dotnet nuget add source "${CI_API_V4_URL}/projects/${PACKAGE_REPO_PROJECT_ID}/packages/nuget/index.json" --name gitlab --username gitlab-ci-token --password $CI_JOB_TOKEN --store-password-in-clear-text'
-    - 'dotnet nuget push "bin/Release/*.nupkg" --source gitlab --symbol-source gitlab'
-
-package-client-lib-main:
-  extends: .package-client-lib
-  variables:
-    GIT_DEPTH: 0
-    VERSION_SUFFIX: "-dev"
-  only:
-    - main
-
-package-client-lib-tags:
-  extends: .package-client-lib
-  variables:
-    GIT_DEPTH: 0
-    VERSION_SUFFIX: ""
-  only:
-    - tags
+include:
+- local: '/package.gitlab-ci.yml'
