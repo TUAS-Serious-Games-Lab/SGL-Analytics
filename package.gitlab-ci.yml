@@ -43,7 +43,22 @@ package-client-lib-tags:
 package-backend-docker-images:
   extends: .package-backend-docker-images
   variables:
-    PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.Logs.Collector"
-    PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/logs-collector"
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
     PACKAGE_IMAGE_TAG_2: latest
+  parallel:
+    matrix:
+    - IMAGE_NAME: LogsCollector
+      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.Logs.Collector"
+      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/logs-collector"
+    - IMAGE_NAME: UsersRegistration
+      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.Users.Registration"
+      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/users-registration"
+    - IMAGE_NAME: AppRegistrationTool
+      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.AppRegistrationTool"
+      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/app-registration"
+    - IMAGE_NAME: DB
+      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.DB"
+      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/db"
+    - IMAGE_NAME: APIGW
+      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.APIGW"
+      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/api-gateway"
