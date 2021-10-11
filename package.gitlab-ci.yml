@@ -22,3 +22,28 @@ package-client-lib-tags:
   only:
     - tags
 
+.package-backend-docker-images:
+  stage: package
+  variables:
+    REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${CI_PROJECT_DIR}/docker_ci_cache
+  services:
+  - registry:2
+  before_script:
+  - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  cache:
+    paths:
+    - 'docker_ci_cache'
+  script:
+  - BUILD_OPTS="--cleanup --cache=true --insecure-registry=registry:5000 --cache-repo=registry:5000/cache --context ${CI_PROJECT_DIR} --dockerfile ${PACKAGE_IMAGE_DIR}/Dockerfile --target final"
+  - /kaniko/executor $BUILD_OPTS --destination "${PACKAGE_IMAGE}:${PACKAGE_IMAGE_TAG_1}" --destination "${PACKAGE_IMAGE}:${PACKAGE_IMAGE_TAG_2}" --destination "${PACKAGE_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+
+package-backend-docker-images:
+  extends: .package-backend-docker-images
+  variables:
+    PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.Logs.Collector"
+    PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/logs-collector"
+    PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
+    PACKAGE_IMAGE_TAG_2: latest
