@@ -1,0 +1,103 @@
+.package-client-lib:
+  stage: package
+  script:
+    - 'cd SGL.Analytics.Client'
+    - 'dotnet pack -c Release -p:Version="$(git describe --tags --abbrev=0)${VERSION_SUFFIX}"'
+    - 'dotnet nuget add source "${CI_API_V4_URL}/projects/${PACKAGE_REPO_PROJECT_ID}/packages/nuget/index.json" --name gitlab --username gitlab-ci-token --password $CI_JOB_TOKEN --store-password-in-clear-text'
+    - 'dotnet nuget push "bin/Release/*.nupkg" --source gitlab --symbol-source gitlab'
+
+package-client-lib-main:
+  extends: .package-client-lib
+  variables:
+    GIT_DEPTH: 0
+    VERSION_SUFFIX: "-dev"
+  only:
+    - main
+
+package-client-lib-tags:
+  extends: .package-client-lib
+  variables:
+    GIT_DEPTH: 0
+    VERSION_SUFFIX: ""
+  only:
+    - tags
+
+.package-backend-docker-images:
+  stage: package
+  variables:
+    REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${CI_PROJECT_DIR}/docker_ci_cache
+  services:
+  - registry:2
+  before_script:
+  - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  cache:
+    paths:
+    - 'docker_ci_cache'
+  script:
+  - BUILD_OPTS="--cleanup --cache=true --insecure-registry=registry:5000 --cache-repo=registry:5000/cache --context ${PACKAGE_IMAGE_CONTEXT-${CI_PROJECT_DIR}} --dockerfile ${PACKAGE_IMAGE_DIR}/Dockerfile --target final --build-arg SERVICE_BASE_IMAGE_OVERRIDE=${SERVICE_BASE_IMAGE_OVERRIDE} --ignore-path docker_ci_cache"
+  - /kaniko/executor $BUILD_OPTS --destination "${PACKAGE_IMAGE}:${PACKAGE_IMAGE_TAG_1}" --destination "${PACKAGE_IMAGE}:${PACKAGE_IMAGE_TAG_2}" --destination "${PACKAGE_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+
+.pkg-docker:
+  extends: .package-backend-docker-images
+  parallel:
+    matrix:
+    - IMAGE_NAME: LogsCollector
+      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.Logs.Collector"
+      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/logs-collector"
+    - IMAGE_NAME: UsersRegistration
+      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.Users.Registration"
+      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/users-registration"
+    - IMAGE_NAME: AppRegistrationTool
+      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.AppRegistrationTool"
+      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/app-registration"
+    - IMAGE_NAME: DB
+      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.DB"
+      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/db"
+      PACKAGE_IMAGE_CONTEXT: "${CI_PROJECT_DIR}/SGL.Analytics.Backend.DB"
+    - IMAGE_NAME: APIGW
+      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.APIGW"
+      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/api-gateway"
+      PACKAGE_IMAGE_CONTEXT: "${CI_PROJECT_DIR}/SGL.Analytics.Backend.APIGW"
+
+build-service-base-image-main:
+  extends: .package-backend-docker-images
+  stage: build
+  variables:
+    PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
+    PACKAGE_IMAGE_TAG_2: latest
+    PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.ServiceBaseImage"
+    PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/base"
+  only:
+    - main
+
+pkg-docker-main:
+  extends: .pkg-docker
+  variables:
+    SERVICE_BASE_IMAGE_OVERRIDE: "${CI_REGISTRY_IMAGE}/base:${CI_COMMIT_SHORT_SHA}"
+    PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
+    PACKAGE_IMAGE_TAG_2: latest
+  only:
+    - main
+
+build-service-base-image-tags:
+  extends: .package-backend-docker-images
+  stage: build
+  variables:
+    PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_TAG}
+    PACKAGE_IMAGE_TAG_2: prod
+    PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.ServiceBaseImage"
+    PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/base"
+  only:
+    - tags
+
+pkg-docker-tags:
+  extends: .pkg-docker
+  variables:
+    SERVICE_BASE_IMAGE_OVERRIDE: "${CI_REGISTRY_IMAGE}/base:${CI_COMMIT_TAG}"
+    PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_TAG}
+    PACKAGE_IMAGE_TAG_2: prod
+  only:
+    - tags
