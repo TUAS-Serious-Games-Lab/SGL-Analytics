@@ -16,7 +16,7 @@ volumes:
 
 services:
   db:
-    image: ${DOCKER_REGISTRY_IMAGE-localhost:5000/sgl-analytics}/db
+    image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/db:${DOCKER_TAG-latest}
     build:
       context: SGL.Analytics.Backend.DB
       dockerfile: Dockerfile
@@ -40,7 +40,7 @@ services:
     - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
 
   logs-collector-migrations:
-    image: ${DOCKER_REGISTRY_IMAGE-localhost:5000/sgl-analytics}/logs-collector
+    image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/logs-collector:${DOCKER_TAG-latest}
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Logs.Collector/Dockerfile
@@ -53,7 +53,7 @@ services:
     - backend
 
   users-registration-migrations:
-    image: ${DOCKER_REGISTRY_IMAGE-localhost:5000/sgl-analytics}/users-registration
+    image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/users-registration:${DOCKER_TAG-latest}
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Users.Registration/Dockerfile
@@ -66,7 +66,7 @@ services:
     - backend
 
   app-registrations:
-    image: ${DOCKER_REGISTRY_IMAGE-localhost:5000/sgl-analytics}/app-registration
+    image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/app-registration:${DOCKER_TAG-latest}
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.AppRegistrationTool/Dockerfile
@@ -81,7 +81,7 @@ services:
     - backend
   
   logs-collector-app:
-    image: ${DOCKER_REGISTRY_IMAGE-localhost:5000/sgl-analytics}/logs-collector
+    image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/logs-collector:${DOCKER_TAG-latest}
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Logs.Collector/Dockerfile
@@ -99,7 +99,7 @@ services:
     - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
 
   users-registration-app:
-    image: ${DOCKER_REGISTRY_IMAGE-localhost:5000/sgl-analytics}/users-registration
+    image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/users-registration:${DOCKER_TAG-latest}
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Users.Registration/Dockerfile
@@ -116,7 +116,7 @@ services:
     - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
 
   api-gateway:
-    image: ${DOCKER_REGISTRY_IMAGE-localhost:5000/sgl-analytics}/api-gateway
+    image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/api-gateway:${DOCKER_TAG-latest}
     build:
       context: SGL.Analytics.Backend.APIGW
       dockerfile: Dockerfile
