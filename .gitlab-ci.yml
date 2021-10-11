@@ -45,4 +45,5 @@ test:
        - '*/TestResults/*/coverage.cobertura.xml'
 
 include:
+- template: 'Workflows/Branch-Pipelines.gitlab-ci.yml'
 - local: '/package.gitlab-ci.yml'
