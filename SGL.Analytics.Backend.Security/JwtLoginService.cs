@@ -18,6 +18,7 @@ namespace SGL.Analytics.Backend.Security {
 	public static class JwtLoginServiceExtensions {
 		public static IServiceCollection UseJwtLoginService(this IServiceCollection services, IConfiguration config) {
 			services.Configure<JwtOptions>(config.GetSection(JwtOptions.Jwt));
+			services.AddScoped<ILoginService, JwtLoginService>();
 			return services;
 		}
 	}

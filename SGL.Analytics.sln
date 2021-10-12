@@ -34,6 +34,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		.gitlab-ci.yml = .gitlab-ci.yml
 		index.md = index.md
+		package.gitlab-ci.yml = package.gitlab-ci.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Client.Tests", "SGL.Analytics.Client.Tests\SGL.Analytics.Client.Tests.csproj", "{437E71CA-095B-48AA-A527-2FF000AD5D84}"
@@ -139,6 +140,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "restapi", "restapi", "{4D50
 		docfx_project\restapi\SGL.Analytics.Backend.Logs.Collector.swagger.json = docfx_project\restapi\SGL.Analytics.Backend.Logs.Collector.swagger.json
 		docfx_project\restapi\SGL.Analytics.Backend.Users.Registration.swagger.json = docfx_project\restapi\SGL.Analytics.Backend.Users.Registration.swagger.json
 		docfx_project\restapi\toc.yml = docfx_project\restapi\toc.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ServiceBaseImage", "ServiceBaseImage", "{086D1600-5C7B-41FD-B842-A793B60CB3C5}"
+	ProjectSection(SolutionItems) = preProject
+		SGL.Analytics.Backend.ServiceBaseImage\Dockerfile = SGL.Analytics.Backend.ServiceBaseImage\Dockerfile
 	EndProjectSection
 EndProject
 Global
@@ -305,6 +311,7 @@ Global
 		{010C19BB-216E-4725-A655-9572EB023DE1} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
 		{D364628F-966B-492D-93B4-D386BAFAF383} = {0B25318D-BFA3-4E53-A36F-89071951B747}
 		{4D50226A-5E77-44E6-A90D-2AF56DC51858} = {0B25318D-BFA3-4E53-A36F-89071951B747}
+		{086D1600-5C7B-41FD-B842-A793B60CB3C5} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9107486E-74EF-450A-956B-BF17C61467C5}
