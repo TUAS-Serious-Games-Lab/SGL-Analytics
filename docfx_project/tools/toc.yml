@@ -1,0 +1,12 @@
+- name: Application Registration Tool
+  items:
+  - name: Documentation
+    href: ../../SGL.Analytics.Backend.AppRegistrationTool/index.md
+  - name: Browse Source Code
+    href: https://gitlab.rlp.net/serious-games-lab/sgl-analytics/-/tree/main/SGL.Analytics.Backend.AppRegistrationTool
+- name: Log Repository Garbage Collector
+  items:
+  - name: Documentation
+    href: ../../SGL.Analytics.Backend.Logs.LogRepositoryGC/index.md
+  - name: Browse Source Code
+    href: https://gitlab.rlp.net/serious-games-lab/sgl-analytics/-/tree/main/SGL.Analytics.Backend.Logs.LogRepositoryGC

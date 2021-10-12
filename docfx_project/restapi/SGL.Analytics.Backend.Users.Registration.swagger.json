@@ -1,0 +1,166 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "SGL.Analytics.Backend.Users.Registration",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/AnalyticsUser": {
+      "post": {
+        "tags": [
+          "AnalyticsUser"
+        ],
+        "operationId": "RegisterUser",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "App-API-Token",
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+              "type": "UserRegistrationDTO"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+              "type": "UserRegistrationResultDTO"
+          },
+          "401": {
+            "description": "Unauthorized",
+              "type": "string"
+          },
+          "409": {
+            "description": "Conflict",
+              "type": "string"
+          },
+          "400": {
+            "description": "Bad Request",
+              "type": "string"
+          }
+        }
+      }
+    },
+    "/api/AnalyticsUser/login": {
+      "post": {
+        "tags": [
+          "AnalyticsUser"
+        ],
+        "operationId": "Login",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+              "type": "LoginRequestDTO"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+              "type": "LoginResponseDTO"
+          },
+          "401": {
+            "description": "Unauthorized",
+              "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AuthorizationToken": {
+      "type": "object",
+      "properties": {
+        "scheme": {
+          "$ref": "#/definitions/AuthorizationTokenScheme"
+        },
+        "value": {
+          "type": "string",
+          "readOnly": true
+        }
+      }
+    },
+    "AuthorizationTokenScheme": {
+      "format": "int32",
+      "enum": [
+        0
+      ],
+      "type": "integer"
+    },
+    "LoginRequestDTO": {
+      "type": "object",
+      "properties": {
+        "appName": {
+          "type": "string"
+        },
+        "appApiToken": {
+          "type": "string"
+        },
+        "userId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "userSecret": {
+          "type": "string"
+        }
+      }
+    },
+    "LoginResponseDTO": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "$ref": "#/definitions/AuthorizationToken"
+        }
+      }
+    },
+    "UserRegistrationDTO": {
+      "type": "object",
+      "properties": {
+        "appName": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "secret": {
+          "type": "string"
+        },
+        "studySpecificProperties": {
+          "type": "object",
+          "additionalProperties": { }
+        }
+      }
+    },
+    "UserRegistrationResultDTO": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -10,6 +10,9 @@
     <Product>SGL Analytics</Product>
     <Authors>Stefan Bodenschatz</Authors>
   </PropertyGroup>
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
 
 
   <ItemGroup>

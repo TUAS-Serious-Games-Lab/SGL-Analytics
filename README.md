@@ -1,2 +1,0 @@
-# SGL Analytics
-

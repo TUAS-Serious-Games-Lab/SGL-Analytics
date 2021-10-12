@@ -7,6 +7,9 @@
     <AnalysisLevel>Preview</AnalysisLevel>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
 
   <ItemGroup>
     <None Remove="appsettings.Development.json" />

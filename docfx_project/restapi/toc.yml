@@ -1,0 +1,4 @@
+- name: SGL.Analytics.Backend.Logs.Collector
+  href: SGL.Analytics.Backend.Logs.Collector.swagger.json
+- name: SGL.Analytics.Backend.Users.Registration
+  href: SGL.Analytics.Backend.Users.Registration.swagger.json

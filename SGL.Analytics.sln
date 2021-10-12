@@ -33,6 +33,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		.gitlab-ci.yml = .gitlab-ci.yml
+		index.md = index.md
 		package.gitlab-ci.yml = package.gitlab-ci.yml
 	EndProjectSection
 EndProject
@@ -122,6 +123,24 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Utilities", "SGL.Analytics.Backend.Utilities\SGL.Analytics.Backend.Utilities.csproj", "{68F29BAE-31B5-4C08-AC26-2CEA3DCFFA5D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Client.Example", "SGL.Analytics.Client.Example\SGL.Analytics.Client.Example.csproj", "{010C19BB-216E-4725-A655-9572EB023DE1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DocFx", "DocFx", "{0B25318D-BFA3-4E53-A36F-89071951B747}"
+	ProjectSection(SolutionItems) = preProject
+		docfx_project\docfx.json = docfx_project\docfx.json
+		docfx_project\toc.yml = docfx_project\toc.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{D364628F-966B-492D-93B4-D386BAFAF383}"
+	ProjectSection(SolutionItems) = preProject
+		docfx_project\tools\toc.yml = docfx_project\tools\toc.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "restapi", "restapi", "{4D50226A-5E77-44E6-A90D-2AF56DC51858}"
+	ProjectSection(SolutionItems) = preProject
+		docfx_project\restapi\SGL.Analytics.Backend.Logs.Collector.swagger.json = docfx_project\restapi\SGL.Analytics.Backend.Logs.Collector.swagger.json
+		docfx_project\restapi\SGL.Analytics.Backend.Users.Registration.swagger.json = docfx_project\restapi\SGL.Analytics.Backend.Users.Registration.swagger.json
+		docfx_project\restapi\toc.yml = docfx_project\restapi\toc.yml
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ServiceBaseImage", "ServiceBaseImage", "{086D1600-5C7B-41FD-B842-A793B60CB3C5}"
 	ProjectSection(SolutionItems) = preProject
@@ -290,6 +309,8 @@ Global
 		{ACC8E73F-9F1D-4BFA-8E7A-C62BF0C0F121} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{68F29BAE-31B5-4C08-AC26-2CEA3DCFFA5D} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{010C19BB-216E-4725-A655-9572EB023DE1} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
+		{D364628F-966B-492D-93B4-D386BAFAF383} = {0B25318D-BFA3-4E53-A36F-89071951B747}
+		{4D50226A-5E77-44E6-A90D-2AF56DC51858} = {0B25318D-BFA3-4E53-A36F-89071951B747}
 		{086D1600-5C7B-41FD-B842-A793B60CB3C5} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
