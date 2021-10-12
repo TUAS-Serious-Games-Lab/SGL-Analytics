@@ -1,5 +1,11 @@
 .package-client-lib:
-  stage: package
+  needs:
+  - job: build-debug
+    artifacts: false
+  - job: build-release
+    artifacts: false
+  - job: test
+    artifacts: false
   script:
     - 'cd SGL.Analytics.Client'
     - 'dotnet pack -c Release -p:Version="$(git describe --tags --abbrev=0)${VERSION_SUFFIX}"'
@@ -23,7 +29,13 @@ package-client-lib-tags:
     - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
 
 .package-backend-docker-images:
-  stage: package
+  needs:
+  - job: build-debug
+    artifacts: false
+  - job: build-release
+    artifacts: false
+  - job: test
+    artifacts: false
   variables:
     REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${CI_PROJECT_DIR}/docker_ci_cache
   services:
@@ -64,7 +76,6 @@ package-client-lib-tags:
 
 build-service-base-image-main:
   extends: .package-backend-docker-images
-  stage: build
   variables:
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
     PACKAGE_IMAGE_TAG_2: latest
@@ -75,6 +86,8 @@ build-service-base-image-main:
 
 pkg-docker-main:
   extends: .pkg-docker
+  needs:
+  - build-service-base-image-main
   variables:
     SERVICE_BASE_IMAGE_OVERRIDE: "${CI_REGISTRY_IMAGE}/base:${CI_COMMIT_SHORT_SHA}"
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
@@ -84,7 +97,6 @@ pkg-docker-main:
 
 build-service-base-image-tags:
   extends: .package-backend-docker-images
-  stage: build
   variables:
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_TAG}
     PACKAGE_IMAGE_TAG_2: prod
@@ -95,6 +107,8 @@ build-service-base-image-tags:
 
 pkg-docker-tags:
   extends: .pkg-docker
+  needs:
+  - build-service-base-image-tags
   variables:
     SERVICE_BASE_IMAGE_OVERRIDE: "${CI_REGISTRY_IMAGE}/base:${CI_COMMIT_TAG}"
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_TAG}
@@ -103,7 +117,13 @@ pkg-docker-tags:
     - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
 
 deployment-package:
-  stage: package
+  needs:
+  - job: build-debug
+    artifacts: false
+  - job: build-release
+    artifacts: false
+  - job: test
+    artifacts: false
   script:
   - mkdir -p sgl-analytics
   - cp -f docker-compose.yml sgl-analytics/docker-compose.yml
