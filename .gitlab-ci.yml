@@ -68,6 +68,18 @@ docs:
     paths:
       - docfx_output
 
+pages:
+  stage: deploy
+  before_script: []
+  script:
+    - rm -rf public
+    - mv docfx_output public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
 include:
 - template: 'Workflows/Branch-Pipelines.gitlab-ci.yml'
 - local: '/package.gitlab-ci.yml'
