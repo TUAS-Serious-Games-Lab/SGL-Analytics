@@ -20,6 +20,7 @@ before_script:
   - 'dotnet restore --packages $NUGET_PACKAGES_DIRECTORY SGL.Analytics.sln'
 
 .build:
+  needs: []
   stage: build
   script:
     - 'dotnet build --configuration ${CONFIG} --no-restore SGL.Analytics.sln'
@@ -41,6 +42,7 @@ build-release:
 
 test:
   stage: test
+  needs: []
   script:
     - 'rm -f */TestResults/*/coverage.cobertura.xml'
     - 'dotnet test --no-restore --configuration Debug --collect:"XPlat Code Coverage" --test-adapter-path:. --logger:"junit;LogFilePath=../TestResults/{assembly}.xml;MethodFormat=Class;FailureBodyFormat=Verbose" SGL.Analytics.sln'
