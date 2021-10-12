@@ -1,5 +1,12 @@
 .package-client-lib:
   stage: package
+  needs:
+  - job: build-debug
+    artifacts: false
+  - job: build-release
+    artifacts: false
+  - job: test
+    artifacts: false
   script:
     - 'cd SGL.Analytics.Client'
     - 'dotnet pack -c Release -p:Version="$(git describe --tags --abbrev=0)${VERSION_SUFFIX}"'
@@ -11,19 +18,26 @@ package-client-lib-main:
   variables:
     GIT_DEPTH: 0
     VERSION_SUFFIX: "-dev"
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 package-client-lib-tags:
   extends: .package-client-lib
   variables:
     GIT_DEPTH: 0
     VERSION_SUFFIX: ""
-  only:
-    - tags
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
 
 .package-backend-docker-images:
   stage: package
+  needs:
+  - job: build-debug
+    artifacts: false
+  - job: build-release
+    artifacts: false
+  - job: test
+    artifacts: false
   variables:
     REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${CI_PROJECT_DIR}/docker_ci_cache
   services:
@@ -64,46 +78,55 @@ package-client-lib-tags:
 
 build-service-base-image-main:
   extends: .package-backend-docker-images
-  stage: build
   variables:
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
     PACKAGE_IMAGE_TAG_2: latest
     PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.ServiceBaseImage"
     PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/base"
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 pkg-docker-main:
   extends: .pkg-docker
+  needs:
+  - build-service-base-image-main
   variables:
     SERVICE_BASE_IMAGE_OVERRIDE: "${CI_REGISTRY_IMAGE}/base:${CI_COMMIT_SHORT_SHA}"
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
     PACKAGE_IMAGE_TAG_2: latest
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 build-service-base-image-tags:
   extends: .package-backend-docker-images
-  stage: build
   variables:
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_TAG}
     PACKAGE_IMAGE_TAG_2: prod
     PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.ServiceBaseImage"
     PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/base"
-  only:
-    - tags
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
 
 pkg-docker-tags:
   extends: .pkg-docker
+  needs:
+  - build-service-base-image-tags
   variables:
     SERVICE_BASE_IMAGE_OVERRIDE: "${CI_REGISTRY_IMAGE}/base:${CI_COMMIT_TAG}"
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_TAG}
     PACKAGE_IMAGE_TAG_2: prod
-  only:
-    - tags
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
 
 deployment-package:
   stage: package
+  needs:
+  - job: build-debug
+    artifacts: false
+  - job: build-release
+    artifacts: false
+  - job: test
+    artifacts: false
   script:
   - mkdir -p sgl-analytics
   - cp -f docker-compose.yml sgl-analytics/docker-compose.yml
@@ -113,6 +136,6 @@ deployment-package:
     paths:
     - sgl-analytics/docker-compose.yml
     - sgl-analytics/docker-compose.*.yml
-  only:
-    - main
-    - tags
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'

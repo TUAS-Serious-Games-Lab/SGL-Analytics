@@ -2,7 +2,6 @@ image: mcr.microsoft.com/dotnet/sdk:latest
 
 stages:
   - build
-  - docbuild
   - test
   - package
   - deploy
@@ -21,6 +20,7 @@ before_script:
   - 'dotnet restore --packages $NUGET_PACKAGES_DIRECTORY SGL.Analytics.sln'
 
 .build:
+  needs: []
   stage: build
   script:
     - 'dotnet build --configuration ${CONFIG} --no-restore SGL.Analytics.sln'
@@ -42,6 +42,7 @@ build-release:
 
 test:
   stage: test
+  needs: []
   script:
     - 'rm -f */TestResults/*/coverage.cobertura.xml'
     - 'dotnet test --no-restore --configuration Debug --collect:"XPlat Code Coverage" --test-adapter-path:. --logger:"junit;LogFilePath=../TestResults/{assembly}.xml;MethodFormat=Class;FailureBodyFormat=Verbose" SGL.Analytics.sln'
@@ -58,7 +59,9 @@ test:
        - '*/TestResults/*/coverage.cobertura.xml'
 
 docs:
-  stage: docbuild
+  stage: build
+  needs:
+  - build-debug
   image: ${CI_REGISTRY}/serious-games-lab/docfx-ci-build-image
   before_script: []
   script:
@@ -70,6 +73,8 @@ docs:
 
 pages:
   stage: deploy
+  needs:
+  - docs
   before_script: []
   script:
     - rm -rf public
