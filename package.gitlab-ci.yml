@@ -11,16 +11,16 @@ package-client-lib-main:
   variables:
     GIT_DEPTH: 0
     VERSION_SUFFIX: "-dev"
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 package-client-lib-tags:
   extends: .package-client-lib
   variables:
     GIT_DEPTH: 0
     VERSION_SUFFIX: ""
-  only:
-    - tags
+  rules:
+    - if: $CI_COMMIT_TAG
 
 .package-backend-docker-images:
   stage: package
@@ -70,8 +70,8 @@ build-service-base-image-main:
     PACKAGE_IMAGE_TAG_2: latest
     PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.ServiceBaseImage"
     PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/base"
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 pkg-docker-main:
   extends: .pkg-docker
@@ -79,8 +79,8 @@ pkg-docker-main:
     SERVICE_BASE_IMAGE_OVERRIDE: "${CI_REGISTRY_IMAGE}/base:${CI_COMMIT_SHORT_SHA}"
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
     PACKAGE_IMAGE_TAG_2: latest
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 build-service-base-image-tags:
   extends: .package-backend-docker-images
@@ -90,8 +90,8 @@ build-service-base-image-tags:
     PACKAGE_IMAGE_TAG_2: prod
     PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.ServiceBaseImage"
     PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/base"
-  only:
-    - tags
+  rules:
+    - if: $CI_COMMIT_TAG
 
 pkg-docker-tags:
   extends: .pkg-docker
@@ -99,8 +99,8 @@ pkg-docker-tags:
     SERVICE_BASE_IMAGE_OVERRIDE: "${CI_REGISTRY_IMAGE}/base:${CI_COMMIT_TAG}"
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_TAG}
     PACKAGE_IMAGE_TAG_2: prod
-  only:
-    - tags
+  rules:
+    - if: $CI_COMMIT_TAG
 
 deployment-package:
   stage: package
@@ -113,6 +113,6 @@ deployment-package:
     paths:
     - sgl-analytics/docker-compose.yml
     - sgl-analytics/docker-compose.*.yml
-  only:
-    - main
-    - tags
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: $CI_COMMIT_TAG
