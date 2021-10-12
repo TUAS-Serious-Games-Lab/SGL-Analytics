@@ -123,6 +123,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Utili
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Client.Example", "SGL.Analytics.Client.Example\SGL.Analytics.Client.Example.csproj", "{010C19BB-216E-4725-A655-9572EB023DE1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ServiceBaseImage", "ServiceBaseImage", "{086D1600-5C7B-41FD-B842-A793B60CB3C5}"
+	ProjectSection(SolutionItems) = preProject
+		SGL.Analytics.Backend.ServiceBaseImage\Dockerfile = SGL.Analytics.Backend.ServiceBaseImage\Dockerfile
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -285,6 +290,7 @@ Global
 		{ACC8E73F-9F1D-4BFA-8E7A-C62BF0C0F121} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{68F29BAE-31B5-4C08-AC26-2CEA3DCFFA5D} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{010C19BB-216E-4725-A655-9572EB023DE1} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
+		{086D1600-5C7B-41FD-B842-A793B60CB3C5} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9107486E-74EF-450A-956B-BF17C61467C5}
