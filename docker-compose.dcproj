@@ -7,9 +7,13 @@
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/api/AnalyticsLog</DockerServiceUrl>
     <DockerServiceName>api-gateway</DockerServiceName>
+	<AdditionalComposeFilePaths>docker-compose.build.yml</AdditionalComposeFilePaths>
   </PropertyGroup>
   <ItemGroup>
     <None Include=".env" />
+    <None Include="docker-compose.build.yml">
+      <DependentUpon>docker-compose.yml</DependentUpon>
+    </None>
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>

@@ -17,9 +17,6 @@ volumes:
 services:
   db:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/db:${DOCKER_TAG-latest}
-    build:
-      context: SGL.Analytics.Backend.DB
-      dockerfile: Dockerfile
     environment:
       USERREG_PW:
       LOGS_PW:
@@ -41,9 +38,6 @@ services:
 
   logs-collector-migrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/logs-collector:${DOCKER_TAG-latest}
-    build:
-      context: .
-      dockerfile: SGL.Analytics.Backend.Logs.Collector/Dockerfile
     entrypoint: ["wait-for-it", "-s", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_logs", "-f", "DbMigrations.sql"]
     environment:
       PGPASSWORD: $LOGS_PW
@@ -54,9 +48,6 @@ services:
 
   users-registration-migrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/users-registration:${DOCKER_TAG-latest}
-    build:
-      context: .
-      dockerfile: SGL.Analytics.Backend.Users.Registration/Dockerfile
     entrypoint: ["wait-for-it", "-s", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_users", "-f", "DbMigrations.sql"]
     environment:
       PGPASSWORD: $USERREG_PW
@@ -67,9 +58,6 @@ services:
 
   app-registrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/app-registration:${DOCKER_TAG-latest}
-    build:
-      context: .
-      dockerfile: SGL.Analytics.Backend.AppRegistrationTool/Dockerfile
     environment:
       ConnectionStrings__LogsContext:
       ConnectionStrings__UsersContext:
@@ -82,9 +70,6 @@ services:
   
   logs-collector-app:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/logs-collector:${DOCKER_TAG-latest}
-    build:
-      context: .
-      dockerfile: SGL.Analytics.Backend.Logs.Collector/Dockerfile
     environment:
       ConnectionStrings__LogsContext:
     depends_on:
@@ -100,9 +85,6 @@ services:
 
   users-registration-app:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/users-registration:${DOCKER_TAG-latest}
-    build:
-      context: .
-      dockerfile: SGL.Analytics.Backend.Users.Registration/Dockerfile
     environment:
       ConnectionStrings__UsersContext:
     depends_on:
@@ -117,9 +99,6 @@ services:
 
   api-gateway:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/api-gateway:${DOCKER_TAG-latest}
-    build:
-      context: SGL.Analytics.Backend.APIGW
-      dockerfile: Dockerfile
     depends_on:
     - logs-collector-app
     - users-registration-app
