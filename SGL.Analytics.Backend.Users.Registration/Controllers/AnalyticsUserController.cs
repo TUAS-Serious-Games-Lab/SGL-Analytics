@@ -43,6 +43,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[HttpPost]
 		public async Task<ActionResult<UserRegistrationResultDTO>> RegisterUser([FromHeader(Name = "App-API-Token")] string appApiToken,
 			[FromBody] UserRegistrationDTO userRegistration, CancellationToken ct = default) {
+			using var appScope = logger.BeginApplicationScope(userRegistration.AppName);
 			ApplicationWithUserProperties? app = null;
 			try {
 				app = await appRepo.GetApplicationByNameAsync(userRegistration.AppName, ct);
@@ -110,6 +111,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[HttpPost("login")]
 		public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginRequestDTO loginRequest, CancellationToken ct = default) {
+			using var appScope = logger.BeginApplicationScope(loginRequest.AppName);
 			try {
 				using var userScope = logger.BeginUserScope(loginRequest.UserId);
 				var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName, ct);

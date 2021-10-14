@@ -29,5 +29,13 @@ namespace SGL.Analytics.Backend.WebUtilities {
 			});
 			return builder;
 		}
+		public static IFileLoggingProviderBuilder AddAppNameScopePlaceholder(this IFileLoggingProviderBuilder builder) {
+			builder.AddPlaceholder("AppName", m => {
+				var scope = m.Scopes.FirstOrDefault(s => s.Contains("AppName")) ?? "";
+				var parts = scope.Split(':');
+				return parts.ElementAtOrDefault(1) ?? "No_App_Name";
+			});
+			return builder;
+		}
 	}
 }
