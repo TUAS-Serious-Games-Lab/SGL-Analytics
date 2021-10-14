@@ -16,15 +16,15 @@ namespace SGL.Analytics.Backend.WebUtilities {
 			this.logger = logger;
 		}
 
-		public Task Invoke(HttpContext httpContext) {
+		public async Task Invoke(HttpContext httpContext) {
 			var userid = httpContext.User?.Claims?.FirstOrDefault(c => c.Type.Equals("userid", StringComparison.OrdinalIgnoreCase))?.Value;
 			if (userid != null) {
 				using (var scope = logger.BeginUserScope(userid)) {
-					return next(httpContext);
+					await next(httpContext);
 				}
 			}
 			else {
-				return next(httpContext);
+				await next(httpContext);
 			}
 		}
 	}
