@@ -4,11 +4,14 @@ services:
   app-registrations:
     environment:
     - DOTNET_ENVIRONMENT=Development
+    - ConnectionStrings__LogsContext
+    - ConnectionStrings__UsersContext
     volumes:
     - "./SGL.Analytics.Backend.AppRegistrationTool/Dev-Definitions:/app/definitions"
 
   logs-collector-app:
     environment:
+      - ConnectionStrings__LogsContext
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
       - FileSystemLogRepository__StorageDirectory=/var/game-logs
@@ -18,6 +21,7 @@ services:
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
   users-registration-app:
     environment:
+      - ConnectionStrings__UsersContext
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
       - Logging__File__BaseDirectory=/var/log/SGL.Analytics.UserRegistration

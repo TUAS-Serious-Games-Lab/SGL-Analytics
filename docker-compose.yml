@@ -58,9 +58,6 @@ services:
 
   app-registrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/app-registration:${DOCKER_TAG-latest}
-    environment:
-      ConnectionStrings__LogsContext:
-      ConnectionStrings__UsersContext:
     depends_on:
     - db
     - users-registration-migrations
@@ -70,8 +67,6 @@ services:
   
   logs-collector-app:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/logs-collector:${DOCKER_TAG-latest}
-    environment:
-      ConnectionStrings__LogsContext:
     depends_on:
     - db
     - logs-collector-migrations
@@ -85,8 +80,6 @@ services:
 
   users-registration-app:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/users-registration:${DOCKER_TAG-latest}
-    environment:
-      ConnectionStrings__UsersContext:
     depends_on:
     - db
     - users-registration-migrations
