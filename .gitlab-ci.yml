@@ -94,7 +94,7 @@ deploy-shg-test:
   inherit:
     variables: false
   variables:
-    SGL_ANALYTICS_TEST_IMAGE_TAG: "main"
+    SGL_ANALYTICS_IMAGE_TAG: "main"
   needs:
   - pkg-docker-main
   trigger:
