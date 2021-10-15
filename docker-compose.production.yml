@@ -25,13 +25,18 @@ volumes:
          type: none
          device: /var/log/SGL.Analytics.UserRegistration
          o: bind
+  app-definitions:
+   driver_opts:
+         type: none
+         device: /var/sgl/analytics/app-definitions
+         o: bind
 
 services:
   app-registrations:
     environment:
     - DOTNET_ENVIRONMENT=Production
     volumes:
-    - "/var/sgl/analytics/app-definitions:/app/definitions"
+    - "app-definitions:/app/definitions"
   logs-collector-app:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
