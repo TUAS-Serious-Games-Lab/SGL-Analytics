@@ -95,6 +95,8 @@ deploy-shg-test:
     variables: false
   variables:
     SGL_ANALYTICS_TEST_IMAGE_TAG: "main"
+  needs:
+  - pkg-docker-main
   trigger:
     project: serious-games-lab/senior-health-games/sgl-analytics-deployment
     branch: main
