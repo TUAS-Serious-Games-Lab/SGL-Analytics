@@ -28,7 +28,8 @@ namespace SGL.Analytics.Backend.Users.Registration {
 					var tmpConf = config.Build();
 					var keyDir = tmpConf.GetValue<string>("Jwt:KeyDirectory") ?? "./JWT-Key";
 					config.AddKeyPerFile(keyDir, optional: true, reloadOnChange: true);
-					var additionalConfFiles = tmpConf.GetValue<IEnumerable<string>>("AdditionalConfigFiles") ?? new List<string>();
+					var additionalConfFiles = new List<string>();
+					tmpConf.GetSection("AdditionalConfigFiles").Bind(additionalConfFiles);
 					foreach (var acf in additionalConfFiles) {
 						Console.WriteLine($"Including additional config file {acf}");
 						config.AddJsonFile(acf, optional: true, reloadOnChange: true);
