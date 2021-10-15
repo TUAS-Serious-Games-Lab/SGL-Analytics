@@ -52,11 +52,12 @@ package-client-lib-tags:
     - 'docker_ci_cache'
   script:
   - IMAGE_CONTEXT_NAME=${IMAGE_NAME}_PACKAGE_IMAGE_CONTEXT
-  - IMAGE_CONTEXT=${!IMAGE_CONTEXT_NAME:-${CI_PROJECT_DIR}}
+  - eval IMAGE_CONTEXT='$'${IMAGE_CONTEXT_NAME}
+  - IMAGE_CONTEXT=${IMAGE_CONTEXT:-${CI_PROJECT_DIR}}
   - IMAGE_DIR_NAME=${IMAGE_NAME}_PACKAGE_IMAGE_DIR
-  - IMAGE_DIR=${!IMAGE_DIR_NAME}
+  - eval IMAGE_DIR='$'${IMAGE_DIR_NAME}
   - IMAGE_URL_NAME=${IMAGE_NAME}_PACKAGE_IMAGE
-  - IMAGE_URL=${!IMAGE_URL_NAME}
+  - eval IMAGE_URL='$'${IMAGE_URL_NAME}
   - BUILD_OPTS="--cleanup --cache=true --insecure-registry=registry:5000 --cache-repo=registry:5000/cache --context ${IMAGE_CONTEXT} --dockerfile ${IMAGE_DIR}/Dockerfile --target final --build-arg SERVICE_BASE_IMAGE_OVERRIDE=${SERVICE_BASE_IMAGE_OVERRIDE} --ignore-path docker_ci_cache"
   - /kaniko/executor $BUILD_OPTS --destination "${IMAGE_URL}:${PACKAGE_IMAGE_TAG_1}" --destination "${IMAGE_URL}:${PACKAGE_IMAGE_TAG_2}" --destination "${IMAGE_URL}:${CI_COMMIT_SHORT_SHA}"
 
