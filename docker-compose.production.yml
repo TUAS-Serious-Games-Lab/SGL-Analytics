@@ -30,6 +30,16 @@ volumes:
          type: none
          device: /var/sgl/analytics/app-definitions
          o: bind
+  log-collector-conf:
+   driver_opts:
+         type: none
+         device: /var/sgl/analytics/conf/LogCollector
+         o: bind
+  user-registration-conf:
+   driver_opts:
+         type: none
+         device: /var/sgl/analytics/conf/UserRegistration
+         o: bind
 
 services:
   app-registrations:

@@ -13,6 +13,8 @@ volumes:
   log-collector-log-files:
   user-registration-log-files:
   jwt-key-config:
+  log-collector-db-conf:
+  user-registration-db-conf:
 
 services:
   db:
@@ -64,7 +66,10 @@ services:
     - logs-collector-migrations
     networks:
     - backend
-  
+    volumes:
+    - "log-collector-conf:/etc/SGL.Analytics/LogCollector/"
+    - "user-registration-conf:/etc/SGL.Analytics/UserRegistration/"
+
   logs-collector-app:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/logs-collector:${DOCKER_TAG-latest}
     depends_on:
@@ -77,6 +82,7 @@ services:
     - "game-logs:/var/game-logs"
     - "log-collector-log-files:/var/log/SGL.Analytics.LogCollector"
     - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
+    - "log-collector-conf:/etc/SGL.Analytics/LogCollector/"
 
   users-registration-app:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/users-registration:${DOCKER_TAG-latest}
@@ -89,6 +95,7 @@ services:
     volumes:
     - "user-registration-log-files:/var/log/SGL.Analytics.UserRegistration"
     - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
+    - "user-registration-conf:/etc/SGL.Analytics/UserRegistration/"
 
   api-gateway:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/api-gateway:${DOCKER_TAG-latest}

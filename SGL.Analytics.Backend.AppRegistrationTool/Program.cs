@@ -69,6 +69,12 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 						foreach (var configFile in opts.ConfigFiles) {
 							config.AddJsonFile(configFile);
 						}
+						var tmpConf = config.Build();
+						var additionalConfFiles = tmpConf.GetValue<IEnumerable<string>>("AdditionalConfigFiles") ?? new List<string>();
+						foreach (var acf in additionalConfFiles) {
+							Console.WriteLine($"Including additional config file {acf}");
+							config.AddJsonFile(acf, optional: true, reloadOnChange: true);
+						}
 					})
 					.ConfigureServices((context, services) => {
 						services.UseUsersBackendInfrastructure(context.Configuration);

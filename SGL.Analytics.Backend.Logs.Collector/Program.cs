@@ -25,8 +25,14 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 		public static IHostBuilder CreateHostBuilder(string[] args) =>
 			Host.CreateDefaultBuilder(args)
 				.ConfigureAppConfiguration(config => {
-					var keyDir = config.Build().GetValue<string>("Jwt:KeyDirectory") ?? "./JWT-Key";
+					var tmpConf = config.Build();
+					var keyDir = tmpConf.GetValue<string>("Jwt:KeyDirectory") ?? "./JWT-Key";
 					config.AddKeyPerFile(keyDir, optional: true, reloadOnChange: true);
+					var additionalConfFiles = tmpConf.GetValue<IEnumerable<string>>("AdditionalConfigFiles") ?? new List<string>();
+					foreach (var acf in additionalConfFiles) {
+						Console.WriteLine($"Including additional config file {acf}");
+						config.AddJsonFile(acf, optional: true, reloadOnChange: true);
+					}
 				})
 				.ConfigureWebHostDefaults(webBuilder => {
 					webBuilder.UseStartup<Startup>();
