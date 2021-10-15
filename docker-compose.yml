@@ -13,8 +13,8 @@ volumes:
   log-collector-log-files:
   user-registration-log-files:
   jwt-key-config:
-  log-collector-db-conf:
-  user-registration-db-conf:
+  log-collector-conf:
+  user-registration-conf:
 
 services:
   db:
