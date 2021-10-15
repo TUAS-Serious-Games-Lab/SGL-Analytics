@@ -51,30 +51,33 @@ package-client-lib-tags:
     paths:
     - 'docker_ci_cache'
   script:
-  - BUILD_OPTS="--cleanup --cache=true --insecure-registry=registry:5000 --cache-repo=registry:5000/cache --context ${PACKAGE_IMAGE_CONTEXT-${CI_PROJECT_DIR}} --dockerfile ${PACKAGE_IMAGE_DIR}/Dockerfile --target final --build-arg SERVICE_BASE_IMAGE_OVERRIDE=${SERVICE_BASE_IMAGE_OVERRIDE} --ignore-path docker_ci_cache"
-  - /kaniko/executor $BUILD_OPTS --destination "${PACKAGE_IMAGE}:${PACKAGE_IMAGE_TAG_1}" --destination "${PACKAGE_IMAGE}:${PACKAGE_IMAGE_TAG_2}" --destination "${PACKAGE_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+  - BUILD_OPTS="--cleanup --cache=true --insecure-registry=registry:5000 --cache-repo=registry:5000/cache --context ${${IMAGE_NAME}_PACKAGE_IMAGE_CONTEXT-${CI_PROJECT_DIR}} --dockerfile ${${IMAGE_NAME}_PACKAGE_IMAGE_DIR}/Dockerfile --target final --build-arg SERVICE_BASE_IMAGE_OVERRIDE=${SERVICE_BASE_IMAGE_OVERRIDE} --ignore-path docker_ci_cache"
+  - /kaniko/executor $BUILD_OPTS --destination "${${IMAGE_NAME}_PACKAGE_IMAGE}:${PACKAGE_IMAGE_TAG_1}" --destination "${${IMAGE_NAME}_PACKAGE_IMAGE}:${PACKAGE_IMAGE_TAG_2}" --destination "${${IMAGE_NAME}_PACKAGE_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+
+.docker_images_mapping:
+  variables:
+    LogsCollector_PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.Logs.Collector"
+    LogsCollector_PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/logs-collector"
+    UsersRegistration_PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.Users.Registration"
+    UsersRegistration_PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/users-registration"
+    AppRegistrationTool_PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.AppRegistrationTool"
+    AppRegistrationTool_PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/app-registration"
+    DB_PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.DB"
+    DB_PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/db"
+    DB_PACKAGE_IMAGE_CONTEXT: "${CI_PROJECT_DIR}/SGL.Analytics.Backend.DB"
+    APIGW_PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.APIGW"
+    APIGW_PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/api-gateway"
+    APIGW_PACKAGE_IMAGE_CONTEXT: "${CI_PROJECT_DIR}/SGL.Analytics.Backend.APIGW"
 
 .pkg-docker:
   extends: .package-backend-docker-images
   parallel:
     matrix:
     - IMAGE_NAME: LogsCollector
-      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.Logs.Collector"
-      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/logs-collector"
     - IMAGE_NAME: UsersRegistration
-      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.Users.Registration"
-      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/users-registration"
     - IMAGE_NAME: AppRegistrationTool
-      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.AppRegistrationTool"
-      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/app-registration"
     - IMAGE_NAME: DB
-      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.DB"
-      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/db"
-      PACKAGE_IMAGE_CONTEXT: "${CI_PROJECT_DIR}/SGL.Analytics.Backend.DB"
     - IMAGE_NAME: APIGW
-      PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.APIGW"
-      PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/api-gateway"
-      PACKAGE_IMAGE_CONTEXT: "${CI_PROJECT_DIR}/SGL.Analytics.Backend.APIGW"
 
 build-service-base-image-main:
   extends: .package-backend-docker-images
@@ -87,7 +90,9 @@ build-service-base-image-main:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
 pkg-docker-main:
-  extends: .pkg-docker
+  extends:
+  - .pkg-docker
+  - .docker_images_mapping
   needs:
   - build-service-base-image-main
   variables:
