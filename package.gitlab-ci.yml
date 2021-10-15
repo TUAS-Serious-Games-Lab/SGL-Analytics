@@ -92,7 +92,9 @@ package-client-lib-tags:
     - IMAGE_NAME: APIGW
 
 build-service-base-image-main:
-  extends: .package-backend-docker-images
+  extends:
+  - .package-backend-docker-images
+  - .docker_images_mapping
   variables:
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
     PACKAGE_IMAGE_TAG_2: latest
@@ -114,7 +116,9 @@ pkg-docker-main:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
 build-service-base-image-tags:
-  extends: .package-backend-docker-images
+  extends:
+  - .package-backend-docker-images
+  - .docker_images_mapping
   variables:
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_TAG}
     PACKAGE_IMAGE_TAG_2: prod
