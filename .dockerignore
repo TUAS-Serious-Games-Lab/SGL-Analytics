@@ -24,3 +24,6 @@
 LICENSE
 README.md
 docker_ci_cache
+/docs
+/docfx_project
+*.gitlab-ci.yml
