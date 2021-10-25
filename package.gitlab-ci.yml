@@ -48,7 +48,7 @@ package-client-lib-tags:
   - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
   after_script:
   - CURRENT_CACHE_SIZE=$(du -ms ${CI_PROJECT_DIR}/docker_ci_cache | cut -f1)
-  - if [[ ${CURRENT_CACHE_SIZE} -ge ${CACHE_CLEANUP_THRESHOLD} ]]; then echo "Clearing docker layer cache because it has reached ${CURRENT_CACHE_SIZE} MiB."; rm -rfv "${CI_PROJECT_DIR}/docker_ci_cache/*"; else echo "Current docker layer cache size is ${CURRENT_CACHE_SIZE} MiB."; fi
+  - if [[ ${CURRENT_CACHE_SIZE} -ge ${CACHE_CLEANUP_THRESHOLD} ]]; then echo "Clearing docker layer cache because it has reached ${CURRENT_CACHE_SIZE} MiB."; rm -rfv "${CI_PROJECT_DIR}/docker_ci_cache"; mkdir -p "${CI_PROJECT_DIR}/docker_ci_cache"; else echo "Current docker layer cache size is ${CURRENT_CACHE_SIZE} MiB."; fi
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
