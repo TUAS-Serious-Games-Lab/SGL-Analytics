@@ -50,11 +50,9 @@ services:
   logs-collector-app:
     environment:
       - ASPNETCORE_ENVIRONMENT=Staging
-      - ASPNETCORE_URLS=https://+:443;http://+:80
   users-registration-app:
     environment:
       - ASPNETCORE_ENVIRONMENT=Staging
-      - ASPNETCORE_URLS=https://+:443;http://+:80
   api-gateway:
     profiles:
     - DontLaunchOnStaging
