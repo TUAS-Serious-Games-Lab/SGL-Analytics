@@ -66,7 +66,7 @@ package-client-lib-tags:
   - BUILD_OPTS="--cleanup --cache=true --insecure-registry=registry:5000 --cache-repo=registry:5000/cache --context ${IMAGE_CONTEXT} --dockerfile ${IMAGE_DIR}/Dockerfile --target final --build-arg SERVICE_BASE_IMAGE_OVERRIDE=${SERVICE_BASE_IMAGE_OVERRIDE} --ignore-path docker_ci_cache"
   - /kaniko/executor $BUILD_OPTS --destination "${IMAGE_URL}:${PACKAGE_IMAGE_TAG_1}" --destination "${IMAGE_URL}:${PACKAGE_IMAGE_TAG_2}" --destination "${IMAGE_URL}:${CI_COMMIT_SHORT_SHA}"
   - CURRENT_CACHE_SIZE=$(du -ms ${CI_PROJECT_DIR}/docker_ci_cache | cut -f1)
-  - if [[ ${CURRENT_CACHE_SIZE} -ge ${CACHE_CLEANUP_THRESHOLD} ]]; then rm -rf "${CI_PROJECT_DIR}/docker_ci_cache/*"; else echo "Current Docker cache size is ${CURRENT_CACHE_SIZE}"; fi
+  - if [[ ${CURRENT_CACHE_SIZE} -ge ${CACHE_CLEANUP_THRESHOLD} ]]; then echo "Clearing docker layer cache."; rm -rf "${CI_PROJECT_DIR}/docker_ci_cache/*"; else echo "Current docker layer cache size is ${CURRENT_CACHE_SIZE} MiB."; fi
 
 .docker_images_mapping:
   variables:
