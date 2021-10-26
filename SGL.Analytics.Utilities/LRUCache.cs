@@ -30,6 +30,7 @@ namespace SGL.Analytics.Utilities {
 			for (int i = 0; i < count; ++i) {
 				var node = recentList.First;
 				if (node == null) throw new InvalidOperationException("Couldn't remove the required number of elements from the LRUCache, because it ran out of elements to remove and is now empty.");
+				RemovingAction(node.Value.Value);
 				recentList.RemoveFirst();
 				entryMap.Remove(node.Value.Key);
 			}
@@ -152,6 +153,7 @@ namespace SGL.Analytics.Utilities {
 
 		public bool Remove(TKey key) {
 			if (entryMap.TryGetValue(key, out var node)) {
+				RemovingAction(node.Value.Value);
 				recentList.Remove(node);
 				return entryMap.Remove(key);
 			}
