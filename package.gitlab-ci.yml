@@ -39,13 +39,13 @@ package-client-lib-tags:
   - job: test
     artifacts: false
   variables:
-    REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${CI_PROJECT_DIR}/docker_ci_cache
+    REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${CI_PROJECT_DIR}/../docker_ci_cache
     # Max size for docker layer cache in MiB. If it goes over this, empty the cache to avoid wasting disk space and pessimising build time due to long cache extraction.
     CACHE_CLEANUP_THRESHOLD: 512
   services:
   - registry:2
   before_script:
-  - mv ${CI_PROJECT_DIR}/docker_ci_cache ${CI_PROJECT_DIR}/../docker_ci_cache
+  - mv ${CI_PROJECT_DIR}/docker_ci_cache ${CI_PROJECT_DIR}/../docker_ci_cache | mkdir -p ${CI_PROJECT_DIR}/../docker_ci_cache
   - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
   after_script:
   - mv ${CI_PROJECT_DIR}/../docker_ci_cache ${CI_PROJECT_DIR}/docker_ci_cache
