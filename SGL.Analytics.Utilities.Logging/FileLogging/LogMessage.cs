@@ -12,7 +12,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		public string Text { get; }
 		public Exception? Exception { get; }
 
-		public LogMessage(string category, List<string> scopes, LogLevel level, EventId eventId, DateTime time, string text, Exception? exception) {
+		internal LogMessage(string category, List<string> scopes, LogLevel level, EventId eventId, DateTime time, string text, Exception? exception) {
 			Category = category;
 			Scopes = scopes;
 			Level = level;
