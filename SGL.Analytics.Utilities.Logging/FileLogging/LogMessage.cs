@@ -29,7 +29,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		/// </summary>
 		public DateTime Time { get; }
 		/// <summary>
-		/// The actual text of the log message.
+		/// The actual text of the log message with log method level placeholders already inserted.
 		/// </summary>
 		public string Text { get; }
 		/// <summary>
