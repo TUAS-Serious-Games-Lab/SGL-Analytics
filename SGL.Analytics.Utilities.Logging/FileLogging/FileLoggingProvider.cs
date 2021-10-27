@@ -106,7 +106,7 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 		}
 
 		public void Dispose() {
-			DisposeAsync().AsTask().Wait();
+			DisposeAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 		}
 	}
 }
