@@ -4,13 +4,13 @@ using System.Collections.Generic;
 
 namespace SGL.Analytics.Utilities.Logging.FileLogging {
 	public struct LogMessage {
-		public string Category { get; set; }
-		public List<string> Scopes { get; set; }
-		public LogLevel Level { get; set; }
-		public EventId EventId { get; set; }
-		public DateTime Time { get; set; }
-		public string Text { get; set; }
-		public Exception? Exception { get; set; }
+		public string Category { get; }
+		public List<string> Scopes { get; }
+		public LogLevel Level { get; }
+		public EventId EventId { get; }
+		public DateTime Time { get; }
+		public string Text { get; }
+		public Exception? Exception { get; }
 
 		public LogMessage(string category, List<string> scopes, LogLevel level, EventId eventId, DateTime time, string text, Exception? exception) {
 			Category = category;
