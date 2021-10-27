@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Utilities.Logging.FileLogging {
-	public class FileLoggingSink : IDisposable, IAsyncDisposable {
+	internal class FileLoggingSink : IDisposable, IAsyncDisposable {
 		private NamedPlaceholderFormatter<LogMessage> baseDirectoryFormatter;
 		private NamedPlaceholderFormatter<LogMessage> normalMessageFormatter;
 		private NamedPlaceholderFormatter<LogMessage> exceptionMessageFormatter;

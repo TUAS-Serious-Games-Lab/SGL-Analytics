@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 
 namespace SGL.Analytics.Utilities.Logging.FileLogging {
-	public class FileLogger : ILogger {
+	internal class FileLogger : ILogger {
 		private string categoryName;
 		private FileLoggingProvider provider;
 		private LogLevel MinLogLevel { get; }
