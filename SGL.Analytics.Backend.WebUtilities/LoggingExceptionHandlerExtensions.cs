@@ -12,7 +12,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace SGL.Analytics.Backend.WebUtilities {
 
+	/// <summary>
+	/// Provides the <see cref="UseLoggingExceptionHandler{TStartup}(IApplicationBuilder)"/> extension method.
+	/// </summary>
 	public static class LoggingExceptionHandlerExtensions {
+		/// <summary>
+		/// Installs a simple exception handler in the <c>app</c> that logs the exception to an <c><![CDATA[ILogger<TStartup>]]></c> and responds with a generic plain text error message <c>"Internal server error."</c>.
+		/// </summary>
+		/// <typeparam name="TStartup">The Startup class of the webapp, only used as the logging category.</typeparam>
+		/// <param name="app">The builder for the application in which the handler shall be installed.</param>
+		/// <returns>A reference to <c>app</c> for chaining.</returns>
 		public static IApplicationBuilder UseLoggingExceptionHandler<TStartup>(this IApplicationBuilder app) {
 			app.UseExceptionHandler(errorHandler => {
 				errorHandler.Run(async context => {
