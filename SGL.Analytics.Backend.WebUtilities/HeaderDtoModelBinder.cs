@@ -79,8 +79,17 @@ namespace SGL.Analytics.Backend.WebUtilities {
 		}
 	}
 
+	/// <summary>
+	/// Marks a data transfer object (DTO) of a POD type to have its properties bound from http(s) request headers.
+	/// </summary>
 	public class DtoFromHeaderModelBinderAttribute : ModelBinderAttribute {
+		/// <summary>
+		/// Constructs a <see cref="DtoFromHeaderModelBinderAttribute"/>.
+		/// </summary>
 		public DtoFromHeaderModelBinderAttribute() : base(typeof(HeaderDtoModelBinder)) { }
+		/// <summary>
+		/// Specifies the bindung source as <see cref="BindingSource.Header"/>.
+		/// </summary>
 		public override BindingSource BindingSource => BindingSource.Header;
 	}
 }
