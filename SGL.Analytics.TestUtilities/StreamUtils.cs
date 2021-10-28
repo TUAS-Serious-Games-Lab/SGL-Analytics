@@ -1,6 +1,8 @@
+using SGL.Analytics.Utilities;
 using System.IO;
 using System.Linq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SGL.Analytics.TestUtilities {
 	public static class StreamUtils {
@@ -17,6 +19,14 @@ namespace SGL.Analytics.TestUtilities {
 				readBytesAct = actual.Read(actBuff, 0, actBuff.Length);
 			}
 			Assert.Equal(readBytesExp, readBytesAct);
+		}
+
+		public static void WriteStreamContents(this ITestOutputHelper output, Stream textStream) {
+			using (var rdr = new StreamReader(textStream, leaveOpen: true)) {
+				foreach (var line in rdr.EnumerateLines()) {
+					output.WriteLine(line);
+				}
+			}
 		}
 	}
 }
