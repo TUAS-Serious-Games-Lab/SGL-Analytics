@@ -23,7 +23,6 @@ namespace SGL.Analytics.Backend.WebUtilities {
 			var ctorArgs = new object?[constructor.GetParameters().Length];
 			var ctorParams = constructor.GetParameters();
 			for (int i = 0; i < ctorParams.Length; ++i) {
-				// If this header mapping is updated, also update OwnerAuthorizationHandler accordingly!
 				var headerName = $"{prefix}{ctorParams[i].Name}";
 				if (bindingContext.HttpContext.Request.Headers.TryGetValue(headerName, out var values) && values.Count > 0) {
 					var strVal = values.First();
