@@ -23,9 +23,13 @@ namespace SGL.Analytics.TestUtilities {
 
 		public static void WriteStreamContents(this ITestOutputHelper output, Stream textStream) {
 			using (var rdr = new StreamReader(textStream, leaveOpen: true)) {
-				foreach (var line in rdr.EnumerateLines()) {
-					output.WriteLine(line);
-				}
+				output.WriteTextReaderContents(rdr);
+			}
+		}
+
+		public static void WriteTextReaderContents(this ITestOutputHelper output, TextReader reader) {
+			foreach (var line in reader.EnumerateLines()) {
+				output.WriteLine(line);
 			}
 		}
 	}
