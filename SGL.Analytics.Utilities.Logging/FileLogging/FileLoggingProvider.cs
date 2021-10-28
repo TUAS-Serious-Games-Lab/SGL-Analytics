@@ -44,22 +44,22 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 	/// <term>Type</term>
 	/// <term>Value / Meaning</term>
 	/// </listheader>
-	/// <item><term>AppDomainName</term><term><see cref="string"/></term><term>The name of the application domain as given by <c>AppDomain.CurrentDomain.FriendlyName</c>.</term></item>
-	/// <item><term>Category</term><term><see cref="string"/></term><term>The category name of the logger from which the message originates.</term></item>
-	/// <item><term>ScopesJoined</term><term><see cref="string"/></term><term>The string representations of the scopes applicable for the message, joined using <c>';'</c>.</term></item>
-	/// <item><term>Scope0</term><term><see cref="string"/></term><term>The string representation of the first scope applicable for the message.</term></item>
-	/// <item><term>Scope1</term><term><see cref="string"/></term><term>The string representation of the second scope applicable for the message.</term></item>
-	/// <item><term>Scope2</term><term><see cref="string"/></term><term>The string representation of the third scope applicable for the message.</term></item>
-	/// <item><term>Scope3</term><term><see cref="string"/></term><term>The string representation of the fourth scope applicable for the message.</term></item>
-	/// <item><term>Scope4</term><term><see cref="string"/></term><term>The string representation of the fifth scope applicable for the message.</term></item>
-	/// <item><term>Scope5</term><term><see cref="string"/></term><term>The string representation of the sixth scope applicable for the message.</term></item>
-	/// <item><term>Scope6</term><term><see cref="string"/></term><term>The string representation of the seventh scope applicable for the message.</term></item>
-	/// <item><term>Scope7</term><term><see cref="string"/></term><term>The string representation of the eigth scope applicable for the message.</term></item>
-	/// <item><term>Level</term><term><see cref="LogLevel"/></term><term>The log verbosity level with which the message is associated.</term></item>
-	/// <item><term>EventId</term><term><see cref="EventId"/></term><term>The event id for the message that was passed to the logger.</term></item>
-	/// <item><term>Time</term><term><see cref="DateTime"/></term><term>The timestamp when the call to the logging method was made.</term></item>
-	/// <item><term>Text</term><term><see cref="string"/></term><term>The actual message text of the message with log method level placeholders already inserted. This should not be used when formatting filename as it is typically unreasonably long for this purpose.</term></item>
-	/// <item><term>Exception</term><term><see cref="string"/></term><term>A string representation of the exception associated with the message, including the stack trace, or an empty string if the message has no associated exception. This should not be used when formatting filename as it is typically unreasonably long for this purpose.</term></item>
+	/// <item><term>AppDomainName</term><term><see cref="string"/></term><description>The name of the application domain as given by <c>AppDomain.CurrentDomain.FriendlyName</c>.</description></item>
+	/// <item><term>Category</term><term><see cref="string"/></term><description>The category name of the logger from which the message originates.</description></item>
+	/// <item><term>ScopesJoined</term><term><see cref="string"/></term><description>The string representations of the scopes applicable for the message, joined using <c>';'</c>.</description></item>
+	/// <item><term>Scope0</term><term><see cref="string"/></term><description>The string representation of the first scope applicable for the message.</description></item>
+	/// <item><term>Scope1</term><term><see cref="string"/></term><description>The string representation of the second scope applicable for the message.</description></item>
+	/// <item><term>Scope2</term><term><see cref="string"/></term><description>The string representation of the third scope applicable for the message.</description></item>
+	/// <item><term>Scope3</term><term><see cref="string"/></term><description>The string representation of the fourth scope applicable for the message.</description></item>
+	/// <item><term>Scope4</term><term><see cref="string"/></term><description>The string representation of the fifth scope applicable for the message.</description></item>
+	/// <item><term>Scope5</term><term><see cref="string"/></term><description>The string representation of the sixth scope applicable for the message.</description></item>
+	/// <item><term>Scope6</term><term><see cref="string"/></term><description>The string representation of the seventh scope applicable for the message.</description></item>
+	/// <item><term>Scope7</term><term><see cref="string"/></term><description>The string representation of the eigth scope applicable for the message.</description></item>
+	/// <item><term>Level</term><term><see cref="LogLevel"/></term><description>The log verbosity level with which the message is associated.</description></item>
+	/// <item><term>EventId</term><term><see cref="EventId"/></term><description>The event id for the message that was passed to the logger.</description></item>
+	/// <item><term>Time</term><term><see cref="DateTime"/></term><description>The timestamp when the call to the logging method was made.</description></item>
+	/// <item><term>Text</term><term><see cref="string"/></term><description>The actual message text of the message with log method level placeholders already inserted. This should not be used when formatting filename as it is typically unreasonably long for this purpose.</description></item>
+	/// <item><term>Exception</term><term><see cref="string"/></term><description>A string representation of the exception associated with the message, including the stack trace, or an empty string if the message has no associated exception. This should not be used when formatting filename as it is typically unreasonably long for this purpose.</description></item>
 	/// </list>
 	/// </remarks>
 	[ProviderAlias("File")]
