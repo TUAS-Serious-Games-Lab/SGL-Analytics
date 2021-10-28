@@ -16,8 +16,27 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Backend.WebUtilities {
 	internal class Authentication { };
 
+	/// <summary>
+	/// Provides the <see cref="UseJwtBearerAuthentication(IServiceCollection, IConfiguration)"/> extension method.
+	/// </summary>
 	public static class JwtAuthenticationExtensions {
 
+		/// <summary>
+		/// Enables JWT bearer token authentication to accept requests authorized by tokens issued by <see cref="JwtLoginService"/>, mapping the claims contained in the token into the <see cref="HttpContext.User"/>.
+		/// </summary>
+		/// <param name="services">The service collection where the authentication handler shall added.</param>
+		/// <param name="config">The configuration root to use.</param>
+		/// <returns></returns>
+		/// <remarks>
+		/// The given configuration needs to contain the following keys:
+		/// <list type="table">
+		/// <listheader><term>Key</term><term>Meaning</term></listheader>
+		/// <item><term><c>Jwt:Issuer</c></term><description>The issuer identification from which tokens must be issued to be accepted.</description></item>
+		/// <item><term><c>Jwt:Audience</c></term><description>The audience identification for which a token must be issued to be accepted.</description></item>
+		/// <item><term><c>Jwt:SymmetricKey</c></term><description>The secret string used as the symmetric key for validating the token signatures.</description></item>
+		/// </list>
+		/// Note that this configuration structure is compatible with that used by <see cref="JwtOptions"/>.
+		/// </remarks>
 		public static IServiceCollection UseJwtBearerAuthentication(this IServiceCollection services, IConfiguration config) {
 			services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
 				options.TokenValidationParameters = new TokenValidationParameters {
