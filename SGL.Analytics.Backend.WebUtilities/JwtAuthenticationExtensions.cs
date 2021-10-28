@@ -14,10 +14,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.WebUtilities {
-	public class Authentication { };
+	internal class Authentication { };
 
 	public static class JwtAuthenticationExtensions {
-
 
 		public static IServiceCollection UseJwtBearerAuthentication(this IServiceCollection services, IConfiguration config) {
 			services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
