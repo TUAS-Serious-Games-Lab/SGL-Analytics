@@ -60,7 +60,7 @@ namespace SGL.Analytics.TestUtilities {
 			return new XUnitLogger(outputObtainer, categoryName, scopes);
 		}
 
-		public void Dispose() { }
+		void IDisposable.Dispose() { }
 	}
 
 	public static class XUnitLoggingExtensions {
