@@ -29,11 +29,27 @@ namespace SGL.Analytics.Backend.WebUtilities {
 			}
 		}
 	}
+
+	/// <summary>
+	/// Provides extension methods to add per-application log scoping.
+	/// </summary>
 	public static class ApplicationLogScopingExtensions {
+		/// <summary>
+		/// Enables a middleware that automatically adds an <c>AppName:{Name}</c> scope to requests where an <c>appname</c> claim is persent in <see cref="HttpContext.User"/>.
+		/// </summary>
+		/// <param name="builder">The application builder where the middleware should be enabled.</param>
+		/// <returns>A reference to <c>builder</c> for chaining.</returns>
 		public static IApplicationBuilder UseApplicationLogScoping(this IApplicationBuilder builder) {
 			return builder.UseMiddleware<ApplicationLogScoping>();
 		}
 
+		/// <summary>
+		/// Opens an <c>AppName:{Name}</c> logging scope.
+		/// </summary>
+		/// <typeparam name="T">The category type of the logger.</typeparam>
+		/// <param name="logger">The logger to call <see cref="LoggerExtensions.BeginScope(ILogger, string, object[])"/> on.</param>
+		/// <param name="appName">The name of the application for which to open the scope.</param>
+		/// <returns>An <see cref="IDisposable"/> object that closes the scope when disposed.</returns>
 		public static IDisposable BeginApplicationScope<T>(this ILogger<T> logger, string appName) {
 			return logger.BeginScope("AppName:{0}", appName);
 		}
