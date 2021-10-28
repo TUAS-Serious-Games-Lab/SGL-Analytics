@@ -14,7 +14,7 @@ namespace SGL.Analytics.TestUtilities {
 		private static ThreadLocal<StringBuilder> cachedStringBuilder = new(() => new StringBuilder());
 		private LoggerExternalScopeProvider scopes = new LoggerExternalScopeProvider();
 
-		public class XUnitLogger : ILogger {
+		internal class XUnitLogger : ILogger {
 			private Func<ITestOutputHelper?> outputObtainer;
 			private string categoryName;
 			private LoggerExternalScopeProvider scopes;
