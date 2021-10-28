@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.WebUtilities {
-	public class HeaderDtoModelBinder : IModelBinder {
+	internal class HeaderDtoModelBinder : IModelBinder {
 		public async Task BindModelAsync(ModelBindingContext bindingContext) {
 			if (bindingContext == null) throw new ArgumentNullException(nameof(bindingContext));
 			var modelName = bindingContext.FieldName;
