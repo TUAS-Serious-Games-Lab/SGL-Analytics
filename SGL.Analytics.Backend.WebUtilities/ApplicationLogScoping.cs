@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.WebUtilities {
-	public class ApplicationLogScoping {
+	internal class ApplicationLogScoping {
 		private readonly RequestDelegate next;
 		private readonly ILogger<ApplicationLogScoping> logger;
 
