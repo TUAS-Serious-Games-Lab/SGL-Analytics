@@ -23,6 +23,7 @@ namespace SGL.Analytics.Backend.WebUtilities {
 
 		/// <summary>
 		/// Enables JWT bearer token authentication to accept requests authorized by tokens issued by <see cref="JwtLoginService"/>, mapping the claims contained in the token into the <see cref="HttpContext.User"/>.
+		/// It also enables logging for authentication events.
 		/// </summary>
 		/// <param name="services">The service collection where the authentication handler shall added.</param>
 		/// <param name="config">The configuration root to use.</param>
