@@ -81,7 +81,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		public class LogFile : ILogStorage.ILogFile {
+		private class LogFile : ILogStorage.ILogFile {
 			private DirectoryLogStorage storage;
 			public Guid ID { get; private set; }
 			public DateTime CreationTime => File.GetCreationTime(FullFileName);
