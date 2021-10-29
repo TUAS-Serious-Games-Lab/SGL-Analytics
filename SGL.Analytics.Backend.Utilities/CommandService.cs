@@ -14,7 +14,7 @@ namespace SGL.Analytics.Backend.Utilities {
 			this.resultWrapper = resultWrapper;
 		}
 
-		public async Task ExecuteAsync(CancellationToken stoppingToken) {
+		async Task IScopedBackgroundService.ExecuteAsync(CancellationToken stoppingToken) {
 			await Task.Yield();
 			try {
 				var result = await RunAsync(stoppingToken);
