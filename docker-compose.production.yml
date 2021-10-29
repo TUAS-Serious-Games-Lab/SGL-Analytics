@@ -48,11 +48,14 @@ services:
     volumes:
     - "app-definitions:/app/definitions"
   logs-collector-app:
+    restart: unless-stopped
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
   users-registration-app:
+    restart: unless-stopped
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
   api-gateway:
-    profiles:
-    - DontLaunchOnStaging
+    restart: unless-stopped
+  db:
+    restart: unless-stopped

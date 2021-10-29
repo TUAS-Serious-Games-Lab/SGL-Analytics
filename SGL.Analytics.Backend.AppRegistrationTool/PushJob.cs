@@ -18,7 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.AppRegistrationTool {
-	public class PushJob : CommandService {
+	public class PushJob : CommandService<int> {
 		private Program.PushOptions opts;
 		private ILogger<PushJob> logger;
 		private LogsContext logsContext;
@@ -94,5 +94,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				return def;
 			}, ct);
 		}
+
+		protected override int ResultForUncaughtException(Exception ex) => 5;
 	}
 }
