@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace SGL.Analytics.Client {
 	[JsonConverter(typeof(LogEntryJsonConverter))]
-	public class LogEntry {
+	internal class LogEntry {
 		public enum LogEntryType {
 			Event, Snapshot
 		}
@@ -41,7 +41,7 @@ namespace SGL.Analytics.Client {
 		}
 	}
 
-	public class LogEntryJsonConverter : JsonConverter<LogEntry> {
+	internal class LogEntryJsonConverter : JsonConverter<LogEntry> {
 		public override LogEntry? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
 			if (reader.TokenType != JsonTokenType.StartObject) {
 				throw new JsonException();
