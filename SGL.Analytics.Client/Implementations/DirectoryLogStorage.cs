@@ -7,11 +7,20 @@ using System.Threading.Tasks;
 
 
 namespace SGL.Analytics.Client {
+	/// <summary>
+	/// An implementation of <see cref="ILogStorage"/> that used a directory on the local filesystem to store the logs as files.
+	/// It uses the filename to associate the <see cref="ILogStorage.ILogFile.ID"/>, and the file timestamps to store the <see cref="ILogStorage.ILogFile.CreationTime"/> and
+	/// <see cref="ILogStorage.ILogFile.EndTime"/> and thus doesn't need a separate metadata storage.
+	/// The implementations also supports optional compression of the files as well as archiving locally removed files in a separate directory.
+	/// </summary>
 	public class DirectoryLogStorage : ILogStorage {
 		private string directory;
 		private bool useCompressedFiles = true;
 		private List<Guid> logFilesOpenForWriting = new();
 
+		/// <summary>
+		/// Specifies whether the log files should be compressed.
+		/// </summary>
 		public bool UseCompressedFiles {
 			get => useCompressedFiles;
 			set {
@@ -19,9 +28,20 @@ namespace SGL.Analytics.Client {
 				FileSuffix = useCompressedFiles ? ".log.gz" : ".log";
 			}
 		}
+		/// <summary>
+		/// Specifies the currently used filename suffix for the stored log files.
+		/// </summary>
 		public string FileSuffix { get; set; } = ".log.gz";
+
+		/// <summary>
+		/// Specifies whether removed files are archived in an <c>archive</c> subdirectory, otherwise they are actually deleted.
+		/// </summary>
 		public bool Archiving { get; set; } = false;
 
+		/// <summary>
+		/// Instantiates the log storage using the given directory.
+		/// </summary>
+		/// <param name="directory">The path of the directory in which the logs shall be stored.</param>
 		public DirectoryLogStorage(string directory) {
 			this.directory = directory;
 			Directory.CreateDirectory(directory);
@@ -118,6 +138,7 @@ namespace SGL.Analytics.Client {
 			public bool Equals(ILogStorage.ILogFile? other) => other is LogFile lfo ? (ID == other.ID && storage.directory == lfo.storage.directory) : false;
 		}
 
+		/// <inheritdoc/>
 		public Stream CreateLogFile(out ILogStorage.ILogFile logFileMetadata) {
 			var id = Guid.NewGuid();
 			var logFile = new LogFile(id, this);
@@ -141,6 +162,10 @@ namespace SGL.Analytics.Client {
 				return null;
 			}
 		}
+		/// <summary>
+		/// Enumerates all log files in the directory with the currently set <see cref="FileSuffix"/>.
+		/// </summary>
+		/// <returns>An enumerable to iterate over the logs.</returns>
 		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() => from file in (from filename in Directory.EnumerateFiles(directory, "*" + FileSuffix)
 																				  let idString = getFilename(filename)
 																				  let id = (idString is not null && Guid.TryParse(idString, out var guid)) ? guid : (Guid?)null
@@ -149,6 +174,12 @@ namespace SGL.Analytics.Client {
 																	orderby file.CreationTime
 																	select file;
 
+		/// <summary>
+		/// Enumerates the log files in the directory with the currently set <see cref="FileSuffix"/>, excluding those that are currently open for writing by this object.
+		/// Note that simlutaneous access by multiple processes or by multiple <see cref="DirectoryLogStorage"/> in the same process to the directory is not supported and
+		/// thus, files open for writing by other processes can not be properly excluded.
+		/// </summary>
+		/// <returns>An enumerable to iterate over the logs.</returns>
 		public IEnumerable<ILogStorage.ILogFile> EnumerateFinishedLogs() => EnumerateLogs().Where(log => !logFilesOpenForWriting.Contains(log.ID));
 	}
 }
