@@ -18,7 +18,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 		public static async Task Main(string[] args) {
 			IHost host = CreateHostBuilder(args).Build();
 			await host.WaitForDbReadyAsync<LogsContext>(pollingInterval: TimeSpan.FromMilliseconds(500));
-			await host.WaitForConfigValueSet("Jwt:SymmetricKey", TimeSpan.FromMilliseconds(500));
+			await host.WaitForConfigValueSetAsync("Jwt:SymmetricKey", TimeSpan.FromMilliseconds(500));
 			await host.RunAsync();
 		}
 

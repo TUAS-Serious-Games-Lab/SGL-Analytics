@@ -13,7 +13,7 @@ using Microsoft.Extensions.Configuration;
 namespace SGL.Analytics.Backend.Utilities {
 	public static class HostExtensions {
 
-		public static async Task WaitForConfigValueSet(this IHost host, string key, TimeSpan pollingInterval, CancellationToken ct = default) {
+		public static async Task WaitForConfigValueSetAsync(this IHost host, string key, TimeSpan pollingInterval, CancellationToken ct = default) {
 			var conf = host.Services.GetRequiredService<IConfiguration>();
 			if (string.IsNullOrWhiteSpace(conf.GetValue<string>(key))) {
 				await Console.Out.WriteLineAsync($"The required config value '{key}' is not yet set.");
