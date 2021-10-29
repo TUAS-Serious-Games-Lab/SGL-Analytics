@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Backend.Utilities {
 
 	public abstract class CommandService<TResult> : IScopedBackgroundService {
-		protected IHost host;
-		protected ServiceResultWrapper<TResult> resultWrapper;
+		private IHost host;
+		private ServiceResultWrapper<TResult> resultWrapper;
 
 		protected CommandService(IHost host, ServiceResultWrapper<TResult> resultWrapper) {
 			this.host = host;
