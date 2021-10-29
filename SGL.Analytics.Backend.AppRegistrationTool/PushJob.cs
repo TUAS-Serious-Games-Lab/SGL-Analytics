@@ -26,7 +26,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		private AppRegistrationManager appRegMgr;
 		private DbContext[] contexts;
 
-		public PushJob(IHost host, ServiceResultWrapper<int> exitCodeWrapper, Program.PushOptions opts, ILogger<PushJob> logger,
+		public PushJob(IHost host, ServiceResultWrapper<PushJob, int> exitCodeWrapper, Program.PushOptions opts, ILogger<PushJob> logger,
 			LogsContext logsContext, UsersContext usersContext, AppRegistrationManager appRegMgr) : base(host, exitCodeWrapper) {
 			this.opts = opts;
 			this.logger = logger;
@@ -94,7 +94,5 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				return def;
 			}, ct);
 		}
-
-
 	}
 }

@@ -6,11 +6,15 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Utilities {
 
-	public class ServiceResultWrapper<T> {
-		public T Result { get; set; }
+	public class ServiceResultWrapper<TValue> {
+		public TValue Result { get; set; }
 
-		public ServiceResultWrapper(T result) {
+		protected ServiceResultWrapper(TValue result) {
 			Result = result;
 		}
+	}
+
+	public class ServiceResultWrapper<TService, TValue> : ServiceResultWrapper<TValue> {
+		public ServiceResultWrapper(TValue result) : base(result) { }
 	}
 }
