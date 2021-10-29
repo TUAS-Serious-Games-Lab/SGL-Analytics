@@ -11,7 +11,6 @@
             "SGL.Analytics.Backend.Logs.Infrastructure/bin/Debug/*/SGL.Analytics.Backend.Logs.Infrastructure.dll",
             "SGL.Analytics.Backend.Security/bin/Debug/*/SGL.Analytics.Backend.Security.dll",
             "SGL.Analytics.Backend.TestUtilities/bin/Debug/*/SGL.Analytics.Backend.TestUtilities.dll",
-            "SGL.Analytics.Backend.UserDB.Tests/bin/Debug/*/SGL.Analytics.Backend.UserDB.Tests.dll",
             "SGL.Analytics.Backend.Users.Application/bin/Debug/*/SGL.Analytics.Backend.Users.Application.dll",
             "SGL.Analytics.Backend.Users.Infrastructure/bin/Debug/*/SGL.Analytics.Backend.Users.Infrastructure.dll",
             "SGL.Analytics.Backend.Users.Registration/bin/Debug/*/SGL.Analytics.Backend.Users.Registration.dll",
