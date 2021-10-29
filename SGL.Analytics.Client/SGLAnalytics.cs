@@ -55,7 +55,7 @@ namespace SGL.Analytics.Client {
 		/// <param name="logStorage">
 		/// Specifies the local analytics log storage implementation to use. This is used to manage the locally stored analytics log files.
 		/// It defaults to a <see cref="DirectoryLogStorage"/>, storing the logs as compressed files under a subfolder named <c>DataLogs</c> under the <see cref="IRootDataStore.DataDirectory"/>
-		/// property of <paramref name="rootDataStore"/> and deleting logs after they are uploaded (instead of archiving them).
+		/// property of <paramref name="rootDataStore"/>, using the file timestamps to store the time metadata of the log, and deleting logs after they are uploaded (instead of archiving them).
 		/// </param>
 		/// <param name="logCollectorClient">
 		/// Specifies the client implementation to use for the log collector backend.
