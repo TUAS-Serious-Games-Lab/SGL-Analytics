@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.AppRegistrationTool {
 	public class PushJob : CommandService<int> {
+		private IHost host;
 		private Program.PushOptions opts;
 		private ILogger<PushJob> logger;
 		private LogsContext logsContext;
@@ -28,6 +29,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 
 		public PushJob(IHost host, ServiceResultWrapper<PushJob, int> exitCodeWrapper, Program.PushOptions opts, ILogger<PushJob> logger,
 			LogsContext logsContext, UsersContext usersContext, AppRegistrationManager appRegMgr) : base(host, exitCodeWrapper) {
+			this.host = host;
 			this.opts = opts;
 			this.logger = logger;
 			this.logsContext = logsContext;
