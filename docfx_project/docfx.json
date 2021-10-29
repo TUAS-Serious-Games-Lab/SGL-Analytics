@@ -18,7 +18,6 @@
             "SGL.Analytics.Backend.Utilities/bin/Debug/*/SGL.Analytics.Backend.Utilities.dll",
             "SGL.Analytics.Backend.WebUtilities/bin/Debug/*/SGL.Analytics.Backend.WebUtilities.dll",
             "SGL.Analytics.Client/bin/Debug/*/SGL.Analytics.Client.dll",
-            "SGL.Analytics.Client.Example/bin/Debug/*/SGL.Analytics.Client.Example.dll",
             "SGL.Analytics.DTO/bin/Debug/*/SGL.Analytics.DTO.dll",
             "SGL.Analytics.TestUtilities/bin/Debug/*/SGL.Analytics.TestUtilities.dll",
             "SGL.Analytics.Utilities/bin/Debug/*/SGL.Analytics.Utilities.dll",
