@@ -62,7 +62,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			return 1;
 		}
 
-		static IHostBuilder CreateHostBuilder(PushOptions opts, ServiceResultWrapper<int> exitCodeWrapper) =>
+		static IHostBuilder CreateHostBuilder(PushOptions opts, ServiceResultWrapper<PushJob, int> exitCodeWrapper) =>
 			 Host.CreateDefaultBuilder()
 					.UseConsoleLifetime(options => options.SuppressStatusMessages = true)
 					.ConfigureAppConfiguration(config => {
@@ -87,7 +87,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 					});
 
 		async static Task<int> PushMain(PushOptions opts) {
-			ServiceResultWrapper<int> exitCodeWrapper = new(0);
+			ServiceResultWrapper<PushJob, int> exitCodeWrapper = new(0);
 			using var host = CreateHostBuilder(opts, exitCodeWrapper).Build();
 			await host.RunAsync();
 			return exitCodeWrapper.Result;
