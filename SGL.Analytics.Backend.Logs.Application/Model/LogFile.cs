@@ -2,6 +2,7 @@
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Application.Model {
@@ -24,11 +25,11 @@ namespace SGL.Analytics.Backend.Logs.Application.Model {
 		public string FilenameSuffix => entity.FilenameSuffix;
 		public bool Complete => entity.Complete;
 
-		public async Task<Stream> OpenReadAsync() {
-			return await fileRepo.ReadLogAsync(App.Name, UserId, Id, FilenameSuffix);
+		public async Task<Stream> OpenReadAsync(CancellationToken ct = default) {
+			return await fileRepo.ReadLogAsync(App.Name, UserId, Id, FilenameSuffix, ct);
 		}
-		public async Task CopyToAsync(Stream stream) {
-			await fileRepo.CopyLogIntoAsync(App.Name, UserId, Id, FilenameSuffix, stream);
+		public async Task CopyToAsync(Stream stream, CancellationToken ct = default) {
+			await fileRepo.CopyLogIntoAsync(App.Name, UserId, Id, FilenameSuffix, stream, ct);
 		}
 	}
 }
