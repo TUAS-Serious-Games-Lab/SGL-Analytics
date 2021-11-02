@@ -2,6 +2,9 @@ using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
+	/// <summary>
+	/// Models the metadata entry for an analytics log file.
+	/// </summary>
 	public class LogMetadata {
 		/// <summary>
 		/// The unique id of the analytics log file.
