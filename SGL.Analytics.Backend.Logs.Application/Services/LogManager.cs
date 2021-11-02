@@ -12,14 +12,28 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Application.Services {
+
+	/// <summary>
+	/// Implements the management logic for analytics log files and their metadata.
+	/// </summary>
 	public class LogManager : ILogManager {
 		private IApplicationRepository appRepo;
 		private ILogMetadataRepository logMetaRepo;
 		private ILogFileRepository logFileRepo;
 		private ILogger<LogManager> logger;
 
+		/// <summary>
+		/// The filename suffix to use for incoming logs.
+		/// </summary>
 		public string LogFileSuffix { get; set; } = ".log.gz";
 
+		/// <summary>
+		/// Creates a <see cref="LogManager"/> using the given repository implementation objects and the given logger for diagnostics logging.
+		/// </summary>
+		/// <param name="appRepo">The application repository to use.</param>
+		/// <param name="logMetaRepo">The log metadata repository to use.</param>
+		/// <param name="logFileRepo">the log file repository to use.</param>
+		/// <param name="logger">A logger to log status, warning and error messages to.</param>
 		public LogManager(IApplicationRepository appRepo, ILogMetadataRepository logMetaRepo, ILogFileRepository logFileRepo, ILogger<LogManager> logger) {
 			this.appRepo = appRepo;
 			this.logMetaRepo = logMetaRepo;
@@ -27,6 +41,9 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 			this.logger = logger;
 		}
 
+		/// <summary>
+		/// Ingests the log file with the given metadata and content as described by <see cref="ILogManager.IngestLogAsync(Guid, string, LogMetadataDTO, Stream, CancellationToken)"/>.
+		/// </summary>
 		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent, CancellationToken ct = default) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, ct);
 			if (app is null) {
