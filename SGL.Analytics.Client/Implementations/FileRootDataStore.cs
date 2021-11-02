@@ -21,7 +21,7 @@ namespace SGL.Analytics.Client {
 		public FileRootDataStore(string appName) {
 			this.appName = appName;
 			Directory.CreateDirectory(DataDirectory);
-			LoadAsync().Wait();
+			Task.Run(async () => await LoadAsync()).GetAwaiter().GetResult();
 		}
 
 		public async Task LoadAsync() {
