@@ -50,7 +50,7 @@ namespace SGL.Analytics.Client {
 		bool IsActive => true;
 
 		/// <summary>
-		/// Asynchronously uploads the given analytics log file to the backend using the given application credential and the given authorization token for the user. 
+		/// Asynchronously uploads the given analytics log file to the backend using the given application credentials and the given authorization token for the user.
 		/// </summary>
 		/// <param name="appName">The technical name of the application used to identify it in the backend.</param>
 		/// <param name="appAPIToken">The API token for the application to authenticate it with the backend.</param>
