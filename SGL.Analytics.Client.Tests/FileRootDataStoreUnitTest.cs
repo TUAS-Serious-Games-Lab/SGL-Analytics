@@ -15,7 +15,7 @@ namespace SGL.Analytics.Client.Tests {
 		private void cleanUp() {
 			string filename;
 			FileRootDataStore temp = getDS();
-			filename = temp.StorageFile;
+			filename = temp.StorageFilePath;
 			File.Delete(filename);
 			File.Delete(Path.ChangeExtension(filename, ".invalid.json"));
 		}
@@ -64,14 +64,14 @@ namespace SGL.Analytics.Client.Tests {
 		[Fact]
 		public void EmptyStorageFileIsEquivalentToInitialState() {
 			var store1 = getDS();
-			using (File.Create(store1.StorageFile)) { }
+			using (File.Create(store1.StorageFilePath)) { }
 			var store2 = getDS();
 			Assert.Null(store2.UserID);
 		}
 		[Fact]
 		public void InvalidStorageFileIsEquivalentToInitialStateAndBackedUp() {
 			var store1 = getDS();
-			var file = store1.StorageFile;
+			var file = store1.StorageFilePath;
 			using (var writer = File.CreateText(file)) {
 				writer.WriteLine("This is not valid JSON.");
 			}

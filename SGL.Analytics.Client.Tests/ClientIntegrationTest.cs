@@ -38,7 +38,7 @@ namespace SGL.Analytics.Client.Tests {
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
 			this.serverFixture = serverFixture;
 
-			File.Delete(new FileRootDataStore(appName).StorageFile);
+			File.Delete(new FileRootDataStore(appName).StorageFilePath);
 			rootDS = new FileRootDataStore(appName);
 			storage = new DirectoryLogStorage(Path.Combine(rootDS.DataDirectory, "DataLogs"));
 			storage.Archiving = false;
@@ -218,7 +218,7 @@ namespace SGL.Analytics.Client.Tests {
 			foreach (var log in storage.EnumerateLogs()) {
 				log.Remove();
 			}
-			File.Delete(rootDS.StorageFile);
+			File.Delete(rootDS.StorageFilePath);
 			serverFixture.Reset();
 		}
 	}

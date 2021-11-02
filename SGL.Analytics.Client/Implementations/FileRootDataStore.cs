@@ -18,14 +18,15 @@ namespace SGL.Analytics.Client {
 		public Guid? UserID { get => storage.UserID; set => storage.UserID = value; }
 		public string UserSecret { get => storage.UserSecret; set => storage.UserSecret = value; }
 
-		public FileRootDataStore(string appName) {
+		public FileRootDataStore(string appName, string? storageFileName = null) {
 			this.appName = appName;
+			if (storageFileName != null) StorageFileName = storageFileName;
 			Directory.CreateDirectory(DataDirectory);
 			Task.Run(async () => await LoadAsync()).GetAwaiter().GetResult();
 		}
 
 		public async Task LoadAsync() {
-			var file = StorageFile;
+			var file = StorageFilePath;
 			if (!File.Exists(file) || (new FileInfo(file)).Length == 0) {
 				// No saved state found, use default state.
 				return;
@@ -42,10 +43,11 @@ namespace SGL.Analytics.Client {
 
 		public string DataDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), appName);
 
-		public string StorageFile => Path.Combine(DataDirectory, "AppDataStore.json");
+		public string StorageFileName { get; set; } = "SGLAnalytics_AppDataStore.json";
+		public string StorageFilePath => Path.Combine(DataDirectory, StorageFileName);
 
 		public async Task SaveAsync() {
-			await using (var storageFileStream = new FileStream(StorageFile, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
+			await using (var storageFileStream = new FileStream(StorageFilePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
 				await JsonSerializer.SerializeAsync<StorageStructure>(storageFileStream, storage, jsonOptions);
 			}
 		}
