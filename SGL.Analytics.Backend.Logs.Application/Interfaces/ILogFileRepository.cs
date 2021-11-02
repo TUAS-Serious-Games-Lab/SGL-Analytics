@@ -81,7 +81,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <param name="logId">The unique id of the log file itself.</param>
 		/// <param name="suffix">The file suffix for the file name.</param>
 		/// <param name="content">A <see cref="Stream"/> with the desired content. The stream will be read to completion, copying all read data into the target file.</param>
-		/// <param name="ct">A cancellation token to allow cancelling the store operation.<</param>
+		/// <param name="ct">A cancellation token to allow cancelling the store operation.</param>
 		/// <returns>A task object representing the store operation.</returns>
 		Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default);
 		/// <summary>
