@@ -10,9 +10,20 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
 
+	/// <summary>
+	/// Can be used to annotate types used as event representations for <see cref="SGLAnalytics.RecordEvent(string, ICloneable)"/> or
+	/// <see cref="SGLAnalytics.RecordEventUnshared(string, object)"/> to use an event type name that differs from the types name.
+	/// </summary>
 	[AttributeUsage(AttributeTargets.Class)]
 	public class EventTypeAttribute : Attribute {
+		/// <summary>
+		/// The name to use in the analytics logs to represent the event type.
+		/// </summary>
 		public string EventTypeName { get; private set; }
+		/// <summary>
+		/// Instantiates the attribute.
+		/// </summary>
+		/// <param name="eventTypeName">The name to use in the analytics logs to represent the event type.</param>
 		public EventTypeAttribute(string eventTypeName) {
 			EventTypeName = eventTypeName;
 		}
