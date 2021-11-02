@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Backend.Domain.Entity {
 	public class ApplicationWithUserProperties : Application {
 		public ICollection<ApplicationUserPropertyDefinition> UserProperties { get; set; } = null!;
-		public ICollection<UserRegistration> UserRegistrations { get; set; } = null!;
+		public IReadOnlyCollection<UserRegistration> UserRegistrations { get; set; } = null!;
 
 		public ApplicationWithUserProperties(Guid id, string name, string apiToken) :
 			base(id, name, apiToken) { }
