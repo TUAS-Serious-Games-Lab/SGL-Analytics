@@ -7,23 +7,23 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Application.Model {
 	public class LogFile {
-		private LogMetadata entity;
+		private LogMetadata metadata;
 		private ILogFileRepository fileRepo;
 
-		public LogFile(LogMetadata entity, ILogFileRepository fileRepo) {
-			this.entity = entity;
+		public LogFile(LogMetadata metadata, ILogFileRepository fileRepo) {
+			this.metadata = metadata;
 			this.fileRepo = fileRepo;
 		}
 
-		public Guid Id => entity.Id;
-		public Domain.Entity.Application App => entity.App;
-		public Guid UserId => entity.UserId;
-		public Guid LocalLogId => entity.LocalLogId;
-		public DateTime CreationTime => entity.CreationTime;
-		public DateTime EndTime => entity.EndTime;
-		public DateTime UploadTime => entity.UploadTime;
-		public string FilenameSuffix => entity.FilenameSuffix;
-		public bool Complete => entity.Complete;
+		public Guid Id => metadata.Id;
+		public Domain.Entity.Application App => metadata.App;
+		public Guid UserId => metadata.UserId;
+		public Guid LocalLogId => metadata.LocalLogId;
+		public DateTime CreationTime => metadata.CreationTime;
+		public DateTime EndTime => metadata.EndTime;
+		public DateTime UploadTime => metadata.UploadTime;
+		public string FilenameSuffix => metadata.FilenameSuffix;
+		public bool Complete => metadata.Complete;
 
 		public async Task<Stream> OpenReadAsync(CancellationToken ct = default) {
 			return await fileRepo.ReadLogAsync(App.Name, UserId, Id, FilenameSuffix, ct);
