@@ -7,6 +7,9 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
+	/// <summary>
+	/// An implementation of <see cref="ILogCollectorClient"/> that uses REST API calls to contact the log collector backend.
+	/// </summary>
 	public class LogCollectorRestClient : ILogCollectorClient {
 		private readonly static HttpClient httpClient = new();
 		private Uri backendServerBaseUri;
@@ -19,14 +22,29 @@ namespace SGL.Analytics.Client {
 		}
 
 		// TODO: Support configuration of URIs through general configuration system.
+
+		/// <summary>
+		/// Creates a client object that uses <see cref="SGLAnalytics.DefaultBackendBaseUri"/> as the backend server URI.
+		/// </summary>
 		public LogCollectorRestClient() : this(SGLAnalytics.DefaultBackendBaseUri) { }
+		/// <summary>
+		/// Creates a client object that uses the given base URI of the backend server and the standard API URI <c>api/AnalyticsLog</c>.
+		/// </summary>
+		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
 		public LogCollectorRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/AnalyticsLog", UriKind.Relative)) { }
+
+		/// <summary>
+		/// Creates a client object that uses the given base URI of the backend server and the given relative API endpoint below it as the target for the requests.
+		/// </summary>
+		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
+		/// <param name="logCollectorApiEndpoint">The relative URI under <paramref name="backendServerBaseUri"/> to the API endpoint, e.g. <c>api/AnalyticsLog</c>.</param>
 		public LogCollectorRestClient(Uri backendServerBaseUri, Uri logCollectorApiEndpoint) {
 			this.backendServerBaseUri = backendServerBaseUri;
 			this.logCollectorApiEndpoint = logCollectorApiEndpoint;
 			this.logCollectorApiFullUri = new Uri(backendServerBaseUri, logCollectorApiEndpoint);
 		}
 
+		/// <inheritdoc/>
 		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile) {
 			try {
 				using (var stream = logFile.OpenReadRaw()) {
