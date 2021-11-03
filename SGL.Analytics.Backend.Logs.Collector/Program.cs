@@ -14,7 +14,14 @@ using SGL.Analytics.Backend.WebUtilities;
 using SGL.Analytics.Backend.Utilities;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
+	/// <summary>
+	/// The main class for the logs collector service.
+	/// </summary>
 	public class Program {
+
+		/// <summary>
+		/// The entry point to the service executable.
+		/// </summary>
 		public static async Task Main(string[] args) {
 			IHost host = CreateHostBuilder(args).Build();
 			await host.WaitForDbReadyAsync<LogsContext>(pollingInterval: TimeSpan.FromMilliseconds(500));
@@ -22,6 +29,9 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			await host.RunAsync();
 		}
 
+		/// <summary>
+		/// The factory method for the host builder for the logs collector service.
+		/// </summary>
 		public static IHostBuilder CreateHostBuilder(string[] args) =>
 			Host.CreateDefaultBuilder(args)
 				.ConfigureAppConfiguration(config => {

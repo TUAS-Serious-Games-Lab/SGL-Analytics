@@ -21,14 +21,25 @@ using SGL.Analytics.Backend.WebUtilities;
 using SGL.Analytics.Backend.Users.Infrastructure;
 
 namespace SGL.Analytics.Backend.Users.Registration {
+	/// <summary>
+	/// Configures the hosting environment for the user registration service.
+	/// </summary>
 	public class Startup {
+		/// <summary>
+		/// Instantiates the startup class using the give root configuration object.
+		/// </summary>
 		public Startup(IConfiguration configuration) {
 			Configuration = configuration;
 		}
 
+		/// <summary>
+		/// Provides the configuration root.
+		/// </summary>
 		public IConfiguration Configuration { get; }
 
-		// This method gets called by the runtime. Use this method to add services to the container.
+		/// <summary>
+		/// This method gets called by the runtime to add services to the container.
+		/// </summary>
 		public void ConfigureServices(IServiceCollection services) {
 			services.Configure<FileLoggingProviderOptions>(config => {
 				config.Constants.TryAdd("ServiceName", "SGL.Analytics.UserRegistration");
@@ -42,7 +53,9 @@ namespace SGL.Analytics.Backend.Users.Registration {
 			services.UseJwtLoginService(Configuration);
 		}
 
-		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+		/// <summary>
+		/// This method gets called by the runtime to configure the HTTP request pipeline. 
+		/// </summary>
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
 			if (env.IsDevelopment()) {
 				app.UseDeveloperExceptionPage();

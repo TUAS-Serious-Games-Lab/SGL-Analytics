@@ -23,22 +23,46 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.AppRegistrationTool {
+	/// <summary>
+	/// The main class for the AppRegistrationTool program.
+	/// </summary>
 	public class Program {
+		/// <summary>
+		/// Represents the common command-line options for all verbs supported by the tool.
+		/// </summary>
 		public class BaseOptions {
+			/// <summary>
+			/// Specifies the additional config files to use.
+			/// </summary>
 			[Option('c', "config", HelpText = "Specifies an additional config file to use.")]
 			public IEnumerable<string> ConfigFiles { get; set; } = new List<string>();
 		}
+		/// <summary>
+		/// Represents the command line options for the <c>generate-api-token</c> verb.
+		/// </summary>
 		[Verb("generate-api-token", HelpText = "Generates an API token for an application registration.")]
 		public class GenerateApiTokenOptions : BaseOptions { }
+		/// <summary>
+		/// Represents the command line options for the <c>push</c> verb.
+		/// </summary>
 		[Verb("push", HelpText = "Push application registration data into backend. Registers new application, adds new user registration properties.")]
 		public class PushOptions : BaseOptions {
+			/// <summary>
+			/// Specifies the directory containing the application definition files to push.
+			/// </summary>
 			[Value(0, MetaName = "APP_DEFINITIONS_DIRECTORY", HelpText = "(Default: Current Directory) The directory in which there is one json file for each application to push. Note: appsettings.*.json and appsettings.json files are ignored.")]
 			public string AppDefinitionsDirectory { get; set; } = Environment.CurrentDirectory;
 		}
+		/// <summary>
+		/// Represents the command line options for the currently unimplemented <c>remove-property</c> verb.
+		/// </summary>
 		[Verb("remove-property", HelpText = "(Not yet implemented) Remove a user registration property from an application registration and all its instances.")]
 		public class RemovePropertyOptions : BaseOptions {
 			// Not implemented
 		}
+		/// <summary>
+		/// Represents the command line options for the currently unimplemented <c>remove-application</c> verb.
+		/// </summary>
 		[Verb("remove-application", HelpText = "(Not yet implemented) Removes an application AND ALL ASSOCIATED DATABASE ENTRIES (user registrations, property definitions, app log metadata).")]
 		public class RemoveApplicationOptions : BaseOptions {
 			// Not implemented
