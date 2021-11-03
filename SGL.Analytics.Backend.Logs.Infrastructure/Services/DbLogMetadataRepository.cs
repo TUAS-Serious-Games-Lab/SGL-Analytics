@@ -12,13 +12,21 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
+	/// <summary>
+	/// Provides a persistent implementation of <see cref="ILogMetadataRepository"/> using Entity Framework Core to map the objects into a relational database.
+	/// </summary>
 	public class DbLogMetadataRepository : ILogMetadataRepository {
 		private LogsContext context;
 
+		/// <summary>
+		/// Creates a repository object using the given database context object for data access.
+		/// </summary>
+		/// <param name="context">The <see cref="DbContext"/> implementation for the database.</param>
 		public DbLogMetadataRepository(LogsContext context) {
 			this.context = context;
 		}
 
+		/// <inheritdoc/>
 		public async Task<LogMetadata> AddLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default) {
 			context.LogMetadata.Add(logMetadata);
 			try {
@@ -40,14 +48,17 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			return logMetadata;
 		}
 
+		/// <inheritdoc/>
 		public async Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId, CancellationToken ct = default) {
 			return await context.LogMetadata.Include(lmd => lmd.App).Where(lmd => lmd.Id == logId).SingleOrDefaultAsync<LogMetadata?>(ct);
 		}
 
+		/// <inheritdoc/>
 		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId, CancellationToken ct = default) {
 			return await context.LogMetadata.Include(lmd => lmd.App).Where(lmd => lmd.AppId == userAppId && lmd.UserId == userId && lmd.LocalLogId == localLogId).SingleOrDefaultAsync<LogMetadata?>(ct);
 		}
 
+		/// <inheritdoc/>
 		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default) {
 			Debug.Assert(context.Entry(logMetadata).State is EntityState.Modified or EntityState.Unchanged);
 			await context.SaveChangesAsync(ct);
