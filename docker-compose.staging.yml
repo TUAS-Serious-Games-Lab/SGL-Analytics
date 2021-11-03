@@ -60,3 +60,6 @@ services:
     - DontLaunchOnStaging
   db:
     restart: unless-stopped
+  jwt-secret-key-gen:
+    # set restart to ensure a restart at host boot to generate a key the cleared tmpfs.
+    restart: unless-stopped

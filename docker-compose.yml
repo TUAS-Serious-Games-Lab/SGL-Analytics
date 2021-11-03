@@ -13,6 +13,9 @@ volumes:
   log-collector-log-files:
   user-registration-log-files:
   jwt-key-config:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
   log-collector-conf:
   user-registration-conf:
 
@@ -31,10 +34,12 @@ services:
   jwt-secret-key-gen:
     image: debian:buster-slim
     command: >
-        bash -c "cd /etc/SGL.Analytics/JWT-Key/
+        bash -c "(cd /etc/SGL.Analytics/JWT-Key/
         && if [ -f 'Jwt__SymmetricKey' ]; then echo 'Using existing JWT key.'; exit 0; fi
         && (dd if=/dev/random bs=512 count=1 | base64 -w 0 > ignore.NewKey)
-        && chmod 600 ignore.NewKey && mv ignore.NewKey Jwt__SymmetricKey"
+        && chmod 600 ignore.NewKey && mv ignore.NewKey Jwt__SymmetricKey)
+        && tail -f /dev/null"
+        # The tail at the end keeps container alive to prevent restart loops when restart policy is set for staging and production environment.
     volumes:
     - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
 
