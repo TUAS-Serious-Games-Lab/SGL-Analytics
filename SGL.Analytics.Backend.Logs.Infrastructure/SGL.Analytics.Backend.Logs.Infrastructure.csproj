@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SGL.Analytics.Backend.Logs.Application\SGL.Analytics.Backend.Logs.Application.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.Backend.Utilities\SGL.Analytics.Backend.Utilities.csproj" />
   </ItemGroup>
 
 </Project>

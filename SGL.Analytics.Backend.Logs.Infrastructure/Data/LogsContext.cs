@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
-using SGL.Analytics.Backend.Logs.Infrastructure.Utilities;
+using SGL.Analytics.Backend.Utilities;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 	/// <summary>

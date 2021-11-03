@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.Logs.Infrastructure.Utilities {
+namespace SGL.Analytics.Backend.Utilities {
 	/// <summary>
 	/// Provides extension methods for working with date and time values in Entity Framework Core.
 	/// </summary>
