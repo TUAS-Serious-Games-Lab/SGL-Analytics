@@ -8,11 +8,21 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.AppRegistrationTool {
+
+	/// <summary>
+	/// Provides functionality to manage application registrations in the databases of both, the logs collector service database and the user registration service database.
+	/// </summary>
 	public class AppRegistrationManager {
 		private Logs.Application.Interfaces.IApplicationRepository logsAppRepo;
 		private Users.Application.Interfaces.IApplicationRepository usersAppRepo;
 		private ILogger<AppRegistrationManager> logger;
 
+		/// <summary>
+		/// Constructs a application registration manager operating on the two given application repository, one for each service's database.
+		/// </summary>
+		/// <param name="logsAppRepo">The application repository object for the logs collector service.</param>
+		/// <param name="usersAppRepo">The application repository object for the user registration service.</param>
+		/// <param name="logger">A logger to log diagnostig messages to.</param>
 		public AppRegistrationManager(
 			Logs.Application.Interfaces.IApplicationRepository logsAppRepo,
 			Users.Application.Interfaces.IApplicationRepository usersAppRepo,
@@ -22,10 +32,34 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			this.logger = logger;
 		}
 
+		/// <summary>
+		/// Represents the result of an operation of <see cref="PushApplicationAsync(ApplicationWithUserProperties, CancellationToken)"/> for each of the databases.
+		/// </summary>
 		public enum PushResult {
-			Unchanged, Added, Updated, Error
+			/// <summary>
+			/// The application was already present and either already has the expected state and thus was not changed, or was not changed because the change was prevented as a safety measure.
+			/// </summary>
+			Unchanged,
+			/// <summary>
+			/// The application was not yet present and was added to the database.
+			/// </summary>
+			Added,
+			/// <summary>
+			/// The application was already present but had a different state, thus the state in the database was updated.
+			/// </summary>
+			Updated,
+			/// <summary>
+			/// An error prevented pushing the application definition.
+			/// </summary>
+			Error
 		}
 
+		/// <summary>
+		/// Asynchronously pushes the given application definition into the service databases.
+		/// </summary>
+		/// <param name="application">The application definition to push.</param>
+		/// <param name="ct">A cancellation token allowing the cancellation of the operation.</param>
+		/// <returns>A task object representing the operation, providing an enumerable with one <see cref="PushResult"/> for each target database.</returns>
 		public async Task<IEnumerable<PushResult>> PushApplicationAsync(ApplicationWithUserProperties application, CancellationToken ct = default) {
 			return await Task.WhenAll(PushLogsApplication(application, ct), PushUsersApplication(application, ct));
 		}
