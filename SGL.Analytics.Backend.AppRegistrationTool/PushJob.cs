@@ -18,6 +18,10 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.AppRegistrationTool {
+	/// <summary>
+	/// Implements the functionality of a <c>push</c> operation of the AppRegistrationTool.
+	/// It runs as a scoped hosted service in the service container with dependency injection provided by <see cref="IHost"/>.
+	/// </summary>
 	public class PushJob : CommandService<int> {
 		private IHost host;
 		private Program.PushOptions opts;
@@ -27,6 +31,9 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		private AppRegistrationManager appRegMgr;
 		private DbContext[] contexts;
 
+		/// <summary>
+		/// Instantiates the job object using the given injected dependency objects.
+		/// </summary>
 		public PushJob(IHost host, ServiceResultWrapper<PushJob, int> exitCodeWrapper, Program.PushOptions opts, ILogger<PushJob> logger,
 			LogsContext logsContext, UsersContext usersContext, AppRegistrationManager appRegMgr) : base(host, exitCodeWrapper) {
 			this.host = host;
@@ -38,6 +45,11 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			this.contexts = new DbContext[] { logsContext, usersContext };
 		}
 
+		/// <summary>
+		/// Runs the push operation.
+		/// </summary>
+		/// <param name="ct">A cancellation token triggered when the command is interruped by host shutdown.</param>
+		/// <returns>A task representing the operation, providing an exit code as a result upon termination.</returns>
 		protected override async Task<int> RunAsync(CancellationToken ct) {
 			try {
 				var files = Directory.EnumerateFiles(opts.AppDefinitionsDirectory).Where(fn => !Path.GetFileName(fn).StartsWith("appsettings.", StringComparison.OrdinalIgnoreCase));
@@ -97,6 +109,9 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			}, ct);
 		}
 
+		/// <summary>
+		/// Returns 5 as the exit code for unexpected exceptions.
+		/// </summary>
 		protected override int ResultForUncaughtException(Exception ex) => 5;
 	}
 }
