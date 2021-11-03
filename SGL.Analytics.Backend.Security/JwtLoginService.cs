@@ -23,7 +23,7 @@ namespace SGL.Analytics.Backend.Security {
 		/// </summary>
 		/// <param name="services">The service collection to add to.</param>
 		/// <param name="config">The root configuration obejct to obtain configuration options from.</param>
-		/// <returns>A reference to <c>services</c> for chaining.</returns>
+		/// <returns>A reference to <paramref name="services"/> for chaining.</returns>
 		public static IServiceCollection UseJwtLoginService(this IServiceCollection services, IConfiguration config) {
 			services.Configure<JwtOptions>(config.GetSection(JwtOptions.Jwt));
 			services.AddScoped<ILoginService, JwtLoginService>();

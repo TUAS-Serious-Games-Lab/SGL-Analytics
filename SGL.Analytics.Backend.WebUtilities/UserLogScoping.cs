@@ -37,7 +37,7 @@ namespace SGL.Analytics.Backend.WebUtilities {
 		/// Enables a middleware that automatically adds a <c>UserId:{ID}</c> scope to requests where a <c>userid</c> claim is persent in <see cref="HttpContext.User"/>.
 		/// </summary>
 		/// <param name="builder">The application builder where the middleware should be enabled.</param>
-		/// <returns>A reference to <c>builder</c> for chaining.</returns>
+		/// <returns>A reference to <paramref name="builder"/> for chaining.</returns>
 		public static IApplicationBuilder UseUserLogScoping(this IApplicationBuilder builder) {
 			return builder.UseMiddleware<UserLogScoping>();
 		}

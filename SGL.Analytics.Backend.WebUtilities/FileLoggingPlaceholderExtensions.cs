@@ -16,7 +16,7 @@ namespace SGL.Analytics.Backend.WebUtilities {
 		/// If no such scope is present for a <see cref="LogMessage"/>, <c>"No_Request_Path"</c> and <c>"No_Request_Id"</c> are returned respectively instead.
 		/// </summary>
 		/// <param name="builder">The builder for the <see cref="FileLoggingProvider"/> where the placeholders shall be added.</param>
-		/// <returns>A reference to <c>builder</c> for chaining.</returns>
+		/// <returns>A reference to <paramref name="builder"/> for chaining.</returns>
 		public static IFileLoggingProviderBuilder AddRequestScopePlaceholders(this IFileLoggingProviderBuilder builder) {
 			builder.AddPlaceholder("RequestPath", m => {
 				var scope = m.Scopes.FirstOrDefault(s => s.Contains("RequestPath")) ?? "";
@@ -37,7 +37,7 @@ namespace SGL.Analytics.Backend.WebUtilities {
 		/// This placeholder can e.g. be used to implement per-user log files.
 		/// </summary>
 		/// <param name="builder">The builder for the <see cref="FileLoggingProvider"/> where the placeholder shall be added.</param>
-		/// <returns>A reference to <c>builder</c> for chaining.</returns>
+		/// <returns>A reference to <paramref name="builder"/> for chaining.</returns>
 		public static IFileLoggingProviderBuilder AddUserIdScopePlaceholder(this IFileLoggingProviderBuilder builder) {
 			builder.AddPlaceholder("UserId", m => {
 				var scope = m.Scopes.FirstOrDefault(s => s.Contains("UserId")) ?? "";
@@ -52,7 +52,7 @@ namespace SGL.Analytics.Backend.WebUtilities {
 		/// This placeholder can e.g. be used to implement per-app log files.
 		/// </summary>
 		/// <param name="builder">The builder for the <see cref="FileLoggingProvider"/> where the placeholder shall be added.</param>
-		/// <returns>A reference to <c>builder</c> for chaining.</returns>
+		/// <returns>A reference to <paramref name="builder"/> for chaining.</returns>
 		public static IFileLoggingProviderBuilder AddAppNameScopePlaceholder(this IFileLoggingProviderBuilder builder) {
 			builder.AddPlaceholder("AppName", m => {
 				var scope = m.Scopes.FirstOrDefault(s => s.Contains("AppName")) ?? "";

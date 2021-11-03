@@ -65,7 +65,7 @@ namespace SGL.Analytics.Backend.Utilities {
 		/// </summary>
 		/// <typeparam name="TService">The class implementing the service.</typeparam>
 		/// <param name="services">The service collection to add the service to.</param>
-		/// <returns>A reference to <c>services</c> for chaining.</returns>
+		/// <returns>A reference to <paramref name="services"/> for chaining.</returns>
 		public static IServiceCollection AddScopedBackgroundService<TService>(this IServiceCollection services) where TService : class, IScopedBackgroundService {
 			services.AddScoped<TService>();
 			services.AddHostedService<ScopingBackgroundService<TService>>();

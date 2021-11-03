@@ -257,7 +257,7 @@ namespace SGL.Analytics.Utilities {
 		/// </summary>
 		/// <param name="sb">The <see cref="StringBuilder"/> to append to.</param>
 		/// <param name="objectToFormat">The object to format.</param>
-		/// <returns>A reference to <c>sb</c> to allow chaining.</returns>
+		/// <returns>A reference to <paramref name="sb"/> to allow chaining.</returns>
 		public StringBuilder AppendFormattedTo(StringBuilder sb, T objectToFormat) {
 			foreach (var comp in components) {
 				comp.AppendFormattedTo(sb, objectToFormat);

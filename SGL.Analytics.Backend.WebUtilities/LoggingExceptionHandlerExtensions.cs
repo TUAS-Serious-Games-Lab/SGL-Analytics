@@ -21,7 +21,7 @@ namespace SGL.Analytics.Backend.WebUtilities {
 		/// </summary>
 		/// <typeparam name="TStartup">The Startup class of the webapp, only used as the logging category.</typeparam>
 		/// <param name="app">The builder for the application in which the handler shall be installed.</param>
-		/// <returns>A reference to <c>app</c> for chaining.</returns>
+		/// <returns>A reference to <paramref name="app"/> for chaining.</returns>
 		public static IApplicationBuilder UseLoggingExceptionHandler<TStartup>(this IApplicationBuilder app) {
 			app.UseExceptionHandler(errorHandler => {
 				errorHandler.Run(async context => {
