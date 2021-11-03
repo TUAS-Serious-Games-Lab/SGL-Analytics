@@ -36,7 +36,7 @@ services:
     command: >
         bash -c "(cd /etc/SGL.Analytics/JWT-Key/
         && if [ -f 'Jwt__SymmetricKey' ]; then echo 'Using existing JWT key.'; exit 0; fi
-        && (dd if=/dev/random bs=512 count=1 | base64 -w 0 > ignore.NewKey)
+        && (head -c 512 /dev/urandom | base64 -w 0 > ignore.NewKey)
         && chmod 600 ignore.NewKey && mv ignore.NewKey Jwt__SymmetricKey)
         && tail -f /dev/null"
         # The tail at the end keeps container alive to prevent restart loops when restart policy is set for staging and production environment.
