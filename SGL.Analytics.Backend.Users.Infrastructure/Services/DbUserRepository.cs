@@ -12,13 +12,21 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
+	/// <summary>
+	/// Provides a persistent implementation of <see cref="IUserRepository"/> using Entity Framework Core to map the objects into a relational database.
+	/// </summary>
 	public class DbUserRepository : IUserRepository {
 		private UsersContext context;
 
+		/// <summary>
+		/// Creates a repository object using the given database context object for data access.
+		/// </summary>
+		/// <param name="context">The <see cref="DbContext"/> implementation for the database.</param>
 		public DbUserRepository(UsersContext context) {
 			this.context = context;
 		}
 
+		/// <inheritdoc/>
 		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, CancellationToken ct = default) {
 			return await context.UserRegistrations
 				.Include(u => u.App).ThenInclude(a => a.UserProperties)
@@ -27,6 +35,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 				.SingleOrDefaultAsync<UserRegistration?>(ct);
 		}
 
+		/// <inheritdoc/>
 		public async Task<UserRegistration> RegisterUserAsync(UserRegistration userReg, CancellationToken ct = default) {
 			userReg.ValidateProperties(); // Throws on error
 			context.UserRegistrations.Add(userReg);
@@ -51,6 +60,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			return userReg;
 		}
 
+		/// <inheritdoc/>
 		public async Task<UserRegistration> UpdateUserAsync(UserRegistration userReg, CancellationToken ct = default) {
 			Debug.Assert(context.Entry(userReg).State is EntityState.Modified or EntityState.Unchanged);
 			userReg.ValidateProperties(); // Throws on error
