@@ -5,6 +5,10 @@ using System.Net.Http.Headers;
 using System.Reflection;
 
 namespace SGL.Analytics.Utilities {
+
+	/// <summary>
+	/// Provides the <see cref="MapDtoProperties(HttpHeaders, object)"/> extension method.
+	/// </summary>
 	public static class DtoHeaderBindingExtensions {
 		private static Func<object, string?>? getTypeMapping(PropertyInfo prop) {
 			var type = prop.PropertyType;
@@ -25,6 +29,14 @@ namespace SGL.Analytics.Utilities {
 			// TODO check for attributes that can override the name
 			return prop.Name;
 		}
+		/// <summary>
+		/// Adds HTTP headers to the given <c>headers</c> object that represent the public non-static properties of the given <c>source</c> data transfer object.
+		/// </summary>
+		/// <param name="headers">The header collection to which the entries are to be added.</param>
+		/// <param name="source">The DTO to take the header names and values from.</param>
+		/// <remarks>
+		/// This mapping is usefull to pass parameters (contained in an object) to a web API where the paramters don't fit into route or query parameters semantically and the request body can't be used because it is already otherwise occupied, e.g. for a file upload.
+		/// </remarks>
 		public static void MapDtoProperties(this HttpHeaders headers, object source) {
 			var props = source.GetType().GetProperties();
 			var mappings = (from prop in props

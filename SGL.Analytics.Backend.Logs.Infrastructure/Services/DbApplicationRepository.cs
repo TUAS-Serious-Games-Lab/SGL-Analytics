@@ -11,17 +11,26 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
+	/// <summary>
+	/// Provides a persistent implementation of <see cref="IApplicationRepository"/> using Entity Framework Core to map the objects into a relational database.
+	/// </summary>
 	public class DbApplicationRepository : IApplicationRepository {
 		private LogsContext context;
 
+		/// <summary>
+		/// Creates a repository object using the given database context object for data access.
+		/// </summary>
+		/// <param name="context">The <see cref="DbContext"/> implementation for the database.</param>
 		public DbApplicationRepository(LogsContext context) {
 			this.context = context;
 		}
 
+		/// <inheritdoc/>
 		public Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName, CancellationToken ct = default) {
 			return context.Applications.Where(a => a.Name == appName).SingleOrDefaultAsync<Domain.Entity.Application?>(ct);
 		}
 
+		/// <inheritdoc/>
 		public async Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {
 			context.Applications.Add(app);
 			try {
@@ -45,6 +54,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			return app;
 		}
 
+		/// <inheritdoc/>
 		public async Task<Domain.Entity.Application> UpdateApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {
 			Debug.Assert(context.Entry(app).State is EntityState.Modified or EntityState.Unchanged);
 			await context.SaveChangesAsync(ct);

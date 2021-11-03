@@ -12,13 +12,33 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 
+	/// <summary>
+	/// Encapsulates the configuration options for <see cref="Services.FileSystemLogRepository"/>
+	/// </summary>
 	public class FileSystemLogRepositoryOptions {
+		/// <summary>
+		/// The config key under which the options are looked up, <c>FileSystemLogRepository</c>.
+		/// </summary>
 		public const string FileSystemLogRepository = "FileSystemLogRepository";
 
+		/// <summary>
+		/// The directory where the log files shall be stored in per-application and per-user subdirectories.
+		/// Defaults to the directory <c>LogStorage</c> under the current directory.
+		/// </summary>
 		public string StorageDirectory { get; set; } = Path.Combine(Environment.CurrentDirectory, "LogStorage");
 	}
 
+	/// <summary>
+	/// Provides the <see cref="UseFileSystemCollectorLogStorage(IServiceCollection, IConfiguration)"/> extension method.
+	/// </summary>
 	public static class FileSystemLogRepositoryExtensions {
+		/// <summary>
+		/// Adds <see cref="FileSystemLogRepository"/> as the implementation for <see cref="ILogFileRepository"/>
+		/// with its configuration options obtained from the configuration root object <paramref name="config"/> in the service collection.
+		/// </summary>
+		/// <param name="services">The service collection to add to.</param>
+		/// <param name="config">The config root to use.</param>
+		/// <returns>A reference to <paramref name="services"/> for chaining.</returns>
 		public static IServiceCollection UseFileSystemCollectorLogStorage(this IServiceCollection services, IConfiguration config) {
 			services.Configure<FileSystemLogRepositoryOptions>(config.GetSection(FileSystemLogRepositoryOptions.FileSystemLogRepository));
 			services.AddScoped<ILogFileRepository, FileSystemLogRepository>();
@@ -26,6 +46,10 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 	}
 
+	/// <summary>
+	/// Provides an imlementation of <see cref="ILogFileRepository"/> that stores the analytics log files under a specified directory
+	/// with subdirectories for the application, containing per-user subdirectories that contain the log files.
+	/// </summary>
 	public class FileSystemLogRepository : ILogFileRepository {
 		private static readonly int guidLength = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx".Length;
 		private static readonly string tempSeparator = ".temp-";
@@ -33,8 +57,20 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		private static readonly int tempSuffixLength = makeTempSuffix().Length;
 		private readonly string storageDirectory;
 
+		/// <summary>
+		/// Creates a repository using the given configuration options.
+		/// </summary>
+		/// <param name="configOptions">The configuration options.</param>
 		public FileSystemLogRepository(IOptions<FileSystemLogRepositoryOptions> configOptions) : this(configOptions.Value) { }
+		/// <summary>
+		/// Creates a repository using the given configuration options.
+		/// </summary>
+		/// <param name="options">The configuration options.</param>
 		public FileSystemLogRepository(FileSystemLogRepositoryOptions options) : this(options.StorageDirectory) { }
+		/// <summary>
+		/// Creates a repository using the given directory path as its root directory under which the subdirectories and log files are stored.
+		/// </summary>
+		/// <param name="storageDirectory"></param>
 		public FileSystemLogRepository(string storageDirectory) {
 			this.storageDirectory = storageDirectory;
 		}
@@ -84,22 +120,26 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 				   select logPath.Value;
 		}
 
+		/// <inheritdoc/>
 		public async Task CopyLogIntoAsync(string appName, Guid userId, Guid logId, string suffix, Stream contentDestination, CancellationToken ct = default) {
 			await using (var stream = await ReadLogAsync(appName, userId, logId, suffix, ct)) {
 				await stream.CopyToAsync(contentDestination, ct);
 			}
 		}
 
+		/// <inheritdoc/>
 		public Task DeleteLogAsync(string appName, Guid userId, Guid logId, string suffix, CancellationToken ct = default) {
 			return Task.Run(() => {
 				File.Delete(makeFilePath(appName, userId, logId, suffix));
 			});
 		}
 
+		/// <inheritdoc/>
 		public IEnumerable<LogPath> EnumerateLogs(string appName, Guid userId) {
 			return enumerateDirectory(appName, userId);
 		}
 
+		/// <inheritdoc/>
 		public IEnumerable<LogPath> EnumerateLogs(string appName) {
 			var dirs = Directory.EnumerateDirectories(Path.Combine(storageDirectory, appName));
 			var userIds = from dir in dirs
@@ -113,6 +153,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			}
 		}
 
+		/// <inheritdoc/>
 		public IEnumerable<LogPath> EnumerateLogs() {
 			var dirs = from dir in Directory.EnumerateDirectories(storageDirectory)
 					   select Path.GetFileName(dir);
@@ -123,11 +164,27 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			}
 		}
 
+		/// <summary>
+		/// Represents a temporary file left by a failed <see cref="StoreLogAsync(string, Guid, Guid, string, Stream, CancellationToken)"/>
+		/// operation where the temporary file could not be removed, e.g. because of a server crash.
+		/// </summary>
 		public struct TempFilePath {
+			/// <summary>
+			/// The <see cref="LogPath.AppName"/> for the file.
+			/// </summary>
 			public string AppName { get; set; }
+			/// <summary>
+			/// The <see cref="LogPath.UserId"/> for the file.
+			/// </summary>
 			public string UserDir { get; set; }
+			/// <summary>
+			/// The name of the file within the application and user directory.
+			/// </summary>
 			public string FileName { get; set; }
 
+			/// <summary>
+			/// Returns the combined path relative to the storage directory as a string representation.
+			/// </summary>
 			public override string ToString() {
 				return Path.Combine(AppName, UserDir, FileName);
 			}
@@ -139,6 +196,12 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			}
 		}
 
+		/// <summary>
+		/// Enumerates temporary files left by failed <see cref="StoreLogAsync(string, Guid, Guid, string, Stream, CancellationToken)"/>
+		/// operations where the temporary file could not be removed, e.g. because of a server crash.
+		/// These files can be removed using <see cref="DeleteTempFile(TempFilePath)"/>.
+		/// </summary>
+		/// <returns>An enumerable to iterate over the relative paths of the files.</returns>
 		public IEnumerable<TempFilePath> EnumerateTempFiles() {
 			string searchPattern = $"*{tempSeparator}{new string('?', tempSuffixLength)}";
 			var appDirs = from dir in Directory.EnumerateDirectories(storageDirectory)
@@ -158,10 +221,15 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			}
 		}
 
+		/// <summary>
+		/// Deletes the temporary file represented by the given <see cref="TempFilePath"/>.
+		/// </summary>
+		/// <param name="tempFile">The path of the file to remove.</param>
 		public void DeleteTempFile(TempFilePath tempFile) {
 			File.Delete(Path.Combine(storageDirectory, tempFile.AppName, tempFile.UserDir, tempFile.FileName));
 		}
 
+		/// <inheritdoc/>
 		public Task<Stream> ReadLogAsync(string appName, Guid userId, Guid logId, string suffix, CancellationToken ct = default) {
 			return Task.Run(() => {
 				try {
@@ -178,6 +246,14 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			}, ct);
 		}
 
+		/// <inheritdoc/>
+		/// <remarks>
+		/// The log is first written to a temporary file that is not found by the enumerating and reading methods.
+		/// and then renamed to the correct final filename upon successful completion.
+		/// Thus, if an error occurs during the writing process, the incomplete contents are not visible.
+		/// Instead the temporary file is removed if transfer fails.
+		/// Furthermore, this strategy provides a last-writer wins resolution for concurrent uploads of the same log, where 'last' refers to the operation the finishes last.
+		/// </remarks>
 		public Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
 			return Task.Run(async () => {
 				ct.ThrowIfCancellationRequested();

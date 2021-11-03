@@ -13,23 +13,34 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Services {
+	/// <summary>
+	/// Implements the functionality required by <see cref="IUserManager"/>.
+	/// </summary>
 	public class UserManager : IUserManager {
 		private IApplicationRepository appRepo;
 		private IUserRepository userRepo;
 		private ILogger<UserManager> logger;
 
+		/// <summary>
+		/// Creates a <see cref="UserManager"/> using the given repository implementation objects and the given logger for diagnostics logging.
+		/// </summary>
+		/// <param name="appRepo">The application repository to use.</param>
+		/// <param name="userRepo">The user registration repository to use.</param>
+		/// <param name="logger">A logger to log status, warning and error messages to.</param>
 		public UserManager(IApplicationRepository appRepo, IUserRepository userRepo, ILogger<UserManager> logger) {
 			this.appRepo = appRepo;
 			this.userRepo = userRepo;
 			this.logger = logger;
 		}
 
+		/// <inheritdoc/>
 		public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default) {
 			var userReg = await userRepo.GetUserByIdAsync(userId, ct);
 			if (userReg is null) return null;
 			return new User(userReg);
 		}
 
+		/// <inheritdoc/>
 		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO, CancellationToken ct = default) {
 			var app = await appRepo.GetApplicationByNameAsync(userRegDTO.AppName, ct);
 			if (app is null) {
@@ -64,6 +75,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			return user;
 		}
 
+		/// <inheritdoc/>
 		public async Task<User> UpdateUserAsync(User user, CancellationToken ct = default) {
 			IUserRegistrationWrapper userWrap = user;
 			try {

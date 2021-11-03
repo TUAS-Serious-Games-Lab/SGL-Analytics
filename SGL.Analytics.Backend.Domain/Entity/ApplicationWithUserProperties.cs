@@ -6,23 +6,57 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
+	/// <summary>
+	/// Models a registered application that uses SGL Analytics, extending <see cref="Application"/> with the ability to store application-specific per-user registration properties.
+	/// </summary>
 	public class ApplicationWithUserProperties : Application {
-		public ICollection<ApplicationUserPropertyDefinition> UserProperties { get; set; } = null!;
-		public ICollection<UserRegistration> UserRegistrations { get; set; } = null!;
 
+		/// <summary>
+		/// A collection containing the per-user property definitions for this application.
+		/// It indicates which properties are supported or required.
+		/// </summary>
+		public ICollection<ApplicationUserPropertyDefinition> UserProperties { get; set; } = null!;
+		/// <summary>
+		/// A collection containing the user registration for this application.
+		/// </summary>
+		public IReadOnlyCollection<UserRegistration> UserRegistrations { get; set; } = null!;
+
+		/// <summary>
+		/// Creates an <see cref="ApplicationWithUserProperties"/> with the given data values, leaving <see cref="UserProperties"/> and <see cref="UserRegistrations"/> empty.
+		/// This constructor is intended to be used by the OR mapper. To create a new application, see <see cref="Create(string, string)"/>.
+		/// </summary>
 		public ApplicationWithUserProperties(Guid id, string name, string apiToken) :
 			base(id, name, apiToken) { }
 
+		/// <summary>
+		/// Creates an application object with the given id and data values.
+		/// The <see cref="UserProperties"/> are initialized with an empty collection object, that can be filled with <see cref="AddProperty(string, UserPropertyType, bool)"/>.
+		/// </summary>
+		/// <returns>The created object.</returns>
 		public static ApplicationWithUserProperties Create(Guid id, string name, string apiToken) {
 			var app = new ApplicationWithUserProperties(id, name, apiToken);
 			app.UserProperties = new List<ApplicationUserPropertyDefinition>();
 			return app;
 		}
 
+		/// <summary>
+		/// Creates an application object with the given id and data values.
+		/// The <see cref="UserProperties"/> are initialized with an empty collection object, that can be filled with <see cref="AddProperty(string, UserPropertyType, bool)"/>.
+		/// </summary>
+		/// <returns>The created object.</returns>
 		public static new ApplicationWithUserProperties Create(string name, string apiToken) {
 			return Create(Guid.NewGuid(), name, apiToken);
 		}
 
+		/// <summary>
+		/// Adds a new property definition to the application object.
+		/// Definitions with <paramref name="required"/> set to <see langword="true"/> should preferably only be added to newly created applications,
+		/// as adding one after the fact doesn't automatically add instances of the property to existing user registrations.
+		/// </summary>
+		/// <param name="name">The name of the property. Must be unique within the application.</param>
+		/// <param name="type">The data type of the property.</param>
+		/// <param name="required">Whether the property is required, otherwise it is optional.</param>
+		/// <returns>The created <see cref="ApplicationUserPropertyDefinition"/>.</returns>
 		public ApplicationUserPropertyDefinition AddProperty(string name, UserPropertyType type, bool required = false) {
 			if (UserProperties.Count(p => p.Name == name) > 0) {
 				throw new ConflictingPropertyNameException(name);

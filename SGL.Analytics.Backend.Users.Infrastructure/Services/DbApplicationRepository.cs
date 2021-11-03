@@ -12,13 +12,21 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
+	/// <summary>
+	/// Provides a persistent implementation of <see cref="IApplicationRepository"/> using Entity Framework Core to map the objects into a relational database.
+	/// </summary>
 	public class DbApplicationRepository : IApplicationRepository {
 		private UsersContext context;
 
+		/// <summary>
+		/// Creates a repository object using the given database context object for data access.
+		/// </summary>
+		/// <param name="context">The <see cref="DbContext"/> implementation for the database.</param>
 		public DbApplicationRepository(UsersContext context) {
 			this.context = context;
 		}
 
+		/// <inheritdoc/>
 		public async Task<ApplicationWithUserProperties> AddApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default) {
 			context.Applications.Add(app);
 			try {
@@ -42,10 +50,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			return app;
 		}
 
+		/// <inheritdoc/>
 		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, CancellationToken ct = default) {
 			return await context.Applications.Include(a => a.UserProperties).Where(a => a.Name == appName).SingleOrDefaultAsync(ct);
 		}
 
+		/// <inheritdoc/>
 		public async Task<ApplicationWithUserProperties> UpdateApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default) {
 			Debug.Assert(context.Entry(app).State is EntityState.Modified or EntityState.Unchanged);
 			await context.SaveChangesAsync(ct);

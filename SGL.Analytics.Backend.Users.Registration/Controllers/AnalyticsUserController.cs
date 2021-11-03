@@ -18,6 +18,9 @@ using System.Threading;
 using SGL.Analytics.Backend.WebUtilities;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
+	/// <summary>
+	/// The controller class serving the <c>api/AnalyticsUser</c> and <c>api/AnalyticsUser/login</c> routes that manage user registrations for SGL Analytics and perform logins for user sessions.
+	/// </summary>
 	[Route("api/[controller]")]
 	[ApiController]
 	public class AnalyticsUserController : ControllerBase {
@@ -26,6 +29,9 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		private readonly ILogger<AnalyticsUserController> logger;
 		private readonly ILoginService loginService;
 
+		/// <summary>
+		/// Instantiates the controller, injecting the required dependency objects.
+		/// </summary>
 		public AnalyticsUserController(IUserManager userManager, ILoginService loginService, IApplicationRepository appRepo, ILogger<AnalyticsUserController> logger) {
 			this.userManager = userManager;
 			this.loginService = loginService;
@@ -36,6 +42,18 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		// POST: api/AnalyticsUser
 		// To protect from overposting attacks, enable the specific properties you want to bind to, for
 		// more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+		/// <summary>
+		/// Handles POST requests to <c>api/AnalyticsUser</c> for user registrations.
+		/// The controller responds with a <see cref="UserRegistrationResultDTO"/> in JSON form, containing the assigned user id, and a <see cref="StatusCodes.Status201Created"/> upon sucess.
+		/// The client needs to use this id wenn logging in using <see cref="Login(LoginRequestDTO, CancellationToken)"/>.
+		/// If the <see cref="UserRegistrationDTO.StudySpecificProperties"/> contains invalid properties, the controller responds with a <see cref="StatusCodes.Status400BadRequest"/>.
+		/// If the <see cref="UserRegistrationDTO.Username"/> is already in use, the controller responds with a <see cref="StatusCodes.Status409Conflict"/>.
+		/// If the <see cref="UserRegistrationDTO.AppName"/> or <paramref name="appApiToken"/> don't match or are otherwise invalid, the controller responds with a <see cref="StatusCodes.Status401Unauthorized"/>.
+		/// Other errors are represented by responding with a <see cref="StatusCodes.Status500InternalServerError"/>.
+		/// </summary>
+		/// <param name="appApiToken">The API token of the client application, provided by the HTTP header <c>App-API-Token</c>.</param>
+		/// <param name="userRegistration">The data transfer object describing the user registration data, provided through the request body in JSON form.</param>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
 		[ProducesResponseType(typeof(UserRegistrationResultDTO), StatusCodes.Status201Created)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
@@ -107,6 +125,16 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 		}
 
+		/// <summary>
+		/// Handles POST requests to <c>api/AnalyticsUser/login</c> for user logins to start a session.
+		/// Upon success, the controller responds with a JSON-encoded <see cref="LoginResponseDTO"/>, containing a session token that can be used to
+		/// authenticate requests to SGL Analytics services as the logged-in user, and a <see cref="StatusCodes.Status200OK"/>.
+		/// If the login fails because any of the credentials is incorrect or the credentials don't match, the controller responds with a <see cref="StatusCodes.Status401Unauthorized"/>.
+		/// A further distinction which part of the credentials was incorrect is not made for security reasons.
+		/// Other errors are represented by responding with a <see cref="StatusCodes.Status500InternalServerError"/>.
+		/// </summary>
+		/// <param name="loginRequest">A data transfer object, containing the credentials to use for the login attempt.</param>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
 		[ProducesResponseType(typeof(LoginResponseDTO), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[HttpPost("login")]

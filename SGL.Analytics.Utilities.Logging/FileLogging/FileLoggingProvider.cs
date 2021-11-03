@@ -8,10 +8,60 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Utilities.Logging.FileLogging {
+
+	/// <summary>
+	/// A builder interface, used to customize initialization of a <see cref="FileLoggingProvider"/>, following the builder pattern.
+	/// It can be used to add additional placeholders beyond the directly message-based placeholders provided by default.
+	/// </summary>
 	public interface IFileLoggingProviderBuilder {
+		/// <summary>
+		/// Adds a placeholder with the given name and using the given delegate to obtain its value for a given message.
+		/// </summary>
+		/// <param name="name">The placeholder name to define.</param>
+		/// <param name="valueGetter">A getter delegate to obtain the value.</param>
 		void AddPlaceholder(string name, PlaceholderValueGetter<LogMessage> valueGetter);
 	}
 
+	/// <summary>
+	/// Provides logging functionality using simple log files written to the (local) filesystem.
+	/// The messages logged to loggers created from this provider are queued and asynchronously written to arbitrarily many logging sinks in the background.
+	/// </summary>
+	/// <remarks>
+	/// The logging sinks are configured using the options passed to the constructors and can be used to filter and categorize the messages into different log files,
+	/// based on their properties and to format them appropriately for different purposes.
+	/// Both, the log file paths and the message format of a sink use format strings with named placeholders for the log message data.
+	/// See <see cref="NamedPlaceholderFormatterFactory{T}"/> for the format string syntax used.
+	/// Using those placeholders for filenames allows things like per-category, per-day, per-month, per-loglevel, etc. files and subdirectories.
+	/// For example, <c>logs/{Category}/{Time:yyyy}-{Level}.log</c> generates a per-category subdirectories, containing per-year-and-loglevel files.
+	/// The resulting path strings are sanitized using a positive list of valid characters.
+	/// This list consists of <see cref="System.IO.Path.DirectorySeparatorChar"/>, <see cref="System.IO.Path.AltDirectorySeparatorChar"/>, letters, digits, and the special characters <c>".-()[]"</c>.
+	/// All other characters are replaced by <c>'_'</c>.
+	///
+	/// The following placeholders are supported by default:
+	/// <list type="table">
+	/// <listheader>
+	/// <term>Name</term>
+	/// <term>Type</term>
+	/// <term>Value / Meaning</term>
+	/// </listheader>
+	/// <item><term>AppDomainName</term><term><see cref="string"/></term><description>The name of the application domain as given by <c>AppDomain.CurrentDomain.FriendlyName</c>.</description></item>
+	/// <item><term>Category</term><term><see cref="string"/></term><description>The category name of the logger from which the message originates.</description></item>
+	/// <item><term>ScopesJoined</term><term><see cref="string"/></term><description>The string representations of the scopes applicable for the message, joined using <c>';'</c>.</description></item>
+	/// <item><term>Scope0</term><term><see cref="string"/></term><description>The string representation of the first scope applicable for the message.</description></item>
+	/// <item><term>Scope1</term><term><see cref="string"/></term><description>The string representation of the second scope applicable for the message.</description></item>
+	/// <item><term>Scope2</term><term><see cref="string"/></term><description>The string representation of the third scope applicable for the message.</description></item>
+	/// <item><term>Scope3</term><term><see cref="string"/></term><description>The string representation of the fourth scope applicable for the message.</description></item>
+	/// <item><term>Scope4</term><term><see cref="string"/></term><description>The string representation of the fifth scope applicable for the message.</description></item>
+	/// <item><term>Scope5</term><term><see cref="string"/></term><description>The string representation of the sixth scope applicable for the message.</description></item>
+	/// <item><term>Scope6</term><term><see cref="string"/></term><description>The string representation of the seventh scope applicable for the message.</description></item>
+	/// <item><term>Scope7</term><term><see cref="string"/></term><description>The string representation of the eigth scope applicable for the message.</description></item>
+	/// <item><term>Level</term><term><see cref="LogLevel"/></term><description>The log verbosity level with which the message is associated.</description></item>
+	/// <item><term>EventId</term><term><see cref="EventId"/></term><description>The event id for the message that was passed to the logger.</description></item>
+	/// <item><term>Time</term><term><see cref="DateTime"/></term><description>The timestamp when the call to the logging method was made.</description></item>
+	/// <item><term>Text</term><term><see cref="string"/></term><description>The actual message text of the message with log method level placeholders already inserted. This should not be used when formatting filename as it is typically unreasonably long for this purpose.</description></item>
+	/// <item><term>Exception</term><term><see cref="string"/></term><description>A string representation of the exception associated with the message, including the stack trace, or an empty string if the message has no associated exception. This should not be used when formatting filename as it is typically unreasonably long for this purpose.</description></item>
+	/// </list>
+	/// </remarks>
 	[ProviderAlias("File")]
 	public class FileLoggingProvider : ILoggerProvider, IAsyncDisposable {
 		private FileLoggingProviderOptions options;
@@ -46,9 +96,21 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			}
 		}
 
+		/// <summary>
+		/// Constructs a <see cref="FileLoggingProvider"/> by passing the unwrapped <see cref="IOptions{FileLoggingProviderOptions}"/> and the given builder to <see cref="FileLoggingProvider(FileLoggingProviderOptions,Action{IFileLoggingProviderBuilder})"/>.
+		/// </summary>
+		/// <param name="options">The configuration options for the file logging provider, wrapped in an <see cref="IOptions{FileLoggingProviderOptions}"/>.</param>
+		/// <param name="logProvBuilder">A builder delegate that can be used to add custom placeholders to the provider.</param>
 		public FileLoggingProvider(IOptions<FileLoggingProviderOptions> options, Action<IFileLoggingProviderBuilder> logProvBuilder) :
 			this(options.Value, logProvBuilder) { }
 
+		/// <summary>
+		/// Constructs a <see cref="FileLoggingProvider"/>, configured using the given options and the given builder.
+		/// The options describe general configuration parameters, default configuration parameters for sinks, and a list of sink configurations.
+		/// Per-sink configuration parameters include a base directory, format strings for the messages and file paths, and filters based on category and level.
+		/// </summary>
+		/// <param name="options">The configuration options for the file logging provider.</param>
+		/// <param name="logProvBuilder">A builder delegate that can be used to add custom placeholders to the provider.</param>
 		public FileLoggingProvider(FileLoggingProviderOptions options, Action<IFileLoggingProviderBuilder> logProvBuilder) {
 			this.options = options;
 			MinLevel = options.Sinks.Any() ? options.Sinks.Select(s => s.MinLevel).Min() : LogLevel.None;
@@ -91,10 +153,15 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			writerWorkerHandle = startWriterWorker();
 		}
 
+		/// <inheritdoc/>
 		public ILogger CreateLogger(string categoryName) {
 			return new FileLogger(categoryName, this, LogLevel.Trace);
 		}
 
+		/// <summary>
+		/// Cleanly shuts down the logging provider asynchronously by finishing the message queue, waiting for the background writer process to drain it and then disposing the sinks to close all open file streams.
+		/// </summary>
+		/// <returns>A task representing the asynchronous operation.</returns>
 		public async ValueTask DisposeAsync() {
 			if (disposed) return;
 			disposed = true;
@@ -105,6 +172,9 @@ namespace SGL.Analytics.Utilities.Logging.FileLogging {
 			}
 		}
 
+		/// <summary>
+		/// Cleanly shuts down the logging provider by finishing the message queue, waiting for the background writer process to drain it and then disposing the sinks to close all open file streams.
+		/// </summary>
 		public void Dispose() {
 			DisposeAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 		}

@@ -10,18 +10,77 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
 
+	/// <summary>
+	/// Can be used to annotate types used as event representations for <see cref="SGLAnalytics.RecordEvent(string, ICloneable)"/> or
+	/// <see cref="SGLAnalytics.RecordEventUnshared(string, object)"/> to use an event type name that differs from the types name.
+	/// </summary>
 	[AttributeUsage(AttributeTargets.Class)]
 	public class EventTypeAttribute : Attribute {
+		/// <summary>
+		/// The name to use in the analytics logs to represent the event type.
+		/// </summary>
 		public string EventTypeName { get; private set; }
+		/// <summary>
+		/// Instantiates the attribute.
+		/// </summary>
+		/// <param name="eventTypeName">The name to use in the analytics logs to represent the event type.</param>
 		public EventTypeAttribute(string eventTypeName) {
 			EventTypeName = eventTypeName;
 		}
 	}
 
+	/// <summary>
+	/// Acts as the central facade class for the functionality of SGL Analytics and coordinates its operation.
+	/// It provides a simple to use mechanism to record analytics log files (containing different streams of events and object state snapshots).
+	/// The writing of this files to disk is done asynchronously in the background to not slow down the application and
+	/// the completed files are uploaded to a collector backend that catalogs them by application and user.
+	/// The upload process also happens automatically in the background and retries failed uploads on startup or when <see cref="StartRetryUploads"/> is called.
+	///
+	/// The public methods allow registering the user, beginning a new analytics log file, recording events and snapshots into the current analytics log file,
+	/// and finishing the analytics log operations by finishing the current file, waiting for it to be written and ensuring all pending uploads are complete.
+	/// </summary>
 	public partial class SGLAnalytics {
-		// TODO: Replace default URL with registered URL of Prod backend when available.
+		/// <summary>
+		/// Acts as the default value for the <c>backendBaseUri</c> parameter of the constructor and can be set before instantiating the object.
+		/// It defaults to localhost for testing. Thus, released applications need to either set this property before instantiating SGL Analytics or pass a <c>backendBaseUri</c> to the constructor.
+		/// </summary>
 		public static Uri DefaultBackendBaseUri { get; set; } = new Uri("https://localhost/");
+		// TODO: Replace default URL with registered URL of Prod backend when available.
 
+		/// <summary>
+		/// Initializes the SGL Analytics service with the given configuration parameters.
+		/// The parameters can be used to adapt SGL Analytics for the different applications and their environment, or may be used to replace some functionality with a dummy for testing purposes.
+		/// If an parameter is passed as <see langword="null"/>, as is their syntactic default, it is internally set to a resonable default. These semantic defaults are documented with each optional parameter.
+		/// </summary>
+		/// <param name="appName">The technical name of the application for which analytics logs are recorded. This is used for identifying the application in the backend and the application must be registered there for log collection and user registration to work properly.</param>
+		/// <param name="appAPIToken">The API token assigned to the application in the backend. This is used as an additional security layer in the communication with the backend.</param>
+		/// <param name="backendBaseUri">
+		/// The base URI of the REST API backend. The API routes are prefixed with this and it needs to be an absolute URI to specify the domain name of the server.
+		/// It defaults to the value specified in <see cref="DefaultBackendBaseUri"/>.
+		/// </param>
+		/// <param name="rootDataStore">
+		/// Specifies the root data store implementation to use. This is used to store the user registration data (usually on the device).
+		/// It defaults to a <see cref="FileRootDataStore"/> that stores the data in a JSON file under a subfolder, named after <paramref name="appName"/> in the user's application data folder
+		/// as identified by <see cref="Environment.SpecialFolder.ApplicationData"/>.
+		/// </param>
+		/// <param name="logStorage">
+		/// Specifies the local analytics log storage implementation to use. This is used to manage the locally stored analytics log files.
+		/// It defaults to a <see cref="DirectoryLogStorage"/>, storing the logs as compressed files under a subfolder named <c>DataLogs</c> under the <see cref="IRootDataStore.DataDirectory"/>
+		/// property of <paramref name="rootDataStore"/>, using the file timestamps to store the time metadata of the log, and deleting logs after they are uploaded (instead of archiving them).
+		/// </param>
+		/// <param name="logCollectorClient">
+		/// Specifies the client implementation to use for the log collector backend.
+		/// It defaults to using a <see cref="LogCollectorRestClient"/> that uses REST API calls to the backend specified by <paramref name="backendBaseUri"/>.
+		/// </param>
+		/// <param name="userRegistrationClient">
+		/// Specifies the client implementation to use for the user registration backend.
+		/// It defaults to using a <see cref="UserRegistrationRestClient"/> that uses REST API calls to the backend specified by <paramref name="backendBaseUri"/>.
+		/// </param>
+		/// <param name="diagnosticsLogger">
+		/// Allows providing an <see cref="ILogger{SGLAnalytics}"/> to which SGL Analytics should log its internal diagnostic log events and possible errors.
+		/// Note that this does not affect the analytics logs, which log data about the application, but it is used to log data about SGL Analytics itself.
+		/// It defaults to <see cref="NullLogger{SGLAnalytics}.Instance"/> so that log messages are ignored.
+		/// </param>
 		public SGLAnalytics(string appName, string appAPIToken, Uri? backendBaseUri = null, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
 			// Capture the SynchronizationContext of the 'main' thread, so we can perform tasks that need to run there by Post()ing to the context.
 			mainSyncContext = SynchronizationContext.Current ?? new SynchronizationContext();
@@ -43,7 +102,16 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		/// <summary>
+		/// Specifies the strength of the secret that is generated upon user registration.
+		/// The secret is created by generating the given number of bytes and then base64-encoding them.
+		/// Therefore the actual secret string will be longer due to encoding overhead.
+		/// </summary>
 		public int UserRegistrationSecretLength { get; set; } = 16;
+
+		/// <summary>
+		/// Gets the technical name of the application that uses this SGL Analytics instance, as specified in the constructor.
+		/// </summary>
 		public string AppName { get => appName; }
 
 		/// <summary>

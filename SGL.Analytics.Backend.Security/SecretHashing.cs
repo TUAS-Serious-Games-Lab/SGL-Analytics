@@ -7,17 +7,21 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Security {
+	/// <summary>
+	/// Centralizes hashing for user secrets to simplify change.
+	/// </summary>
+	/// <remarks>
+	/// To avoid writing our own implementation of hashing and the related encoding or decoding, which might introduce very critical and subtile bugs,
+	/// we instead use the PasswordHasher from ASP.Net Core's Identity library which is widely used and mature.
+	/// As the PasswordHasher doesn't actually access the user object it is passed, we simplify usage by passing a DummyUser object.
+	/// All required data (e.g. salt, algo, iteration count) for a hashed password are encoded in the hased password string itself,
+	/// hence no access to the user object is needed and we can avoid passing it through.
+	///
+	/// To further simplify usage, we provide the options statically from here:
+	/// For the compatibility mode, we use the current default coming from Identity.
+	/// The IterationCount is 10 times the default value. At the time of writing, the default is 10000 and we thus use 100000.
+	/// </remarks>
 	public static class SecretHashing {
-		// Centralizes hashing for user secrets to simplify change.
-		// To avoid writing our own implementation of hashing and the related encoding or decoding, which might introduce very critical and subtile bugs,
-		// we instead use the PasswordHasher from ASP.Net Core's Identity library which is widely used and mature.
-		// As the PasswordHasher doesn't actually access the user object it is passed, we simplify usage by passing a DummyUser object.
-		// All required data (e.g. salt, algo, iteration count) for a hashed password are encoded in the hased password string itself,
-		// hence no access to the user object is needed and we can avoid passing it through.
-
-		// To further simplify usage, we provide the options statically from here:
-		// For the compatibility mode, we use the current default coming from Identity.
-		// The IterationCount is 10 times the default value. At the time of writing, the default is 10000 and we thus use 100000.
 		private static readonly IOptions<PasswordHasherOptions> options = Options.Create(new PasswordHasherOptions() { IterationCount = 10 * (new PasswordHasherOptions().IterationCount) });
 		private class DummyUser { }
 		private static readonly DummyUser dummyUser = new DummyUser();

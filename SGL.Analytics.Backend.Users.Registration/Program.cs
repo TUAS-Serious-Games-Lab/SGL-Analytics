@@ -14,14 +14,23 @@ using SGL.Analytics.Backend.WebUtilities;
 using SGL.Analytics.Backend.Utilities;
 
 namespace SGL.Analytics.Backend.Users.Registration {
+	/// <summary>
+	/// The main class for the user registration service.
+	/// </summary>
 	public class Program {
+		/// <summary>
+		/// The entry point to the service executable.
+		/// </summary>
 		public static async Task Main(string[] args) {
 			IHost host = CreateHostBuilder(args).Build();
 			await host.WaitForDbReadyAsync<UsersContext>(pollingInterval: TimeSpan.FromMilliseconds(500));
-			await host.WaitForConfigValueSet("Jwt:SymmetricKey", TimeSpan.FromMilliseconds(500));
+			await host.WaitForConfigValueSetAsync("Jwt:SymmetricKey", TimeSpan.FromMilliseconds(500));
 			await host.RunAsync();
 		}
 
+		/// <summary>
+		/// The factory method for the host builder for the user registration service.
+		/// </summary>
 		public static IHostBuilder CreateHostBuilder(string[] args) =>
 			Host.CreateDefaultBuilder(args)
 				.ConfigureAppConfiguration(config => {
