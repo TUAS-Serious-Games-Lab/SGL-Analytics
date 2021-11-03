@@ -30,7 +30,6 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		[Consumes("application/octet-stream")]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 		[HttpPost]
 		[Authorize]
 		public async Task<ActionResult> IngestLog([FromHeader(Name = "App-API-Token")] string appApiToken, [DtoFromHeaderModelBinder] LogMetadataDTO logMetadata, CancellationToken ct = default) {
