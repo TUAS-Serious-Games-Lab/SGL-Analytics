@@ -24,4 +24,12 @@
     <ProjectReference Include="..\SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <PackageId>SGL.Utilities.Logging</PackageId>
+    <Version>0.0.0-dev</Version>
+    <Authors>Stefan Bodenschatz</Authors>
+    <Company>Hochschule Trier, Serious Games Lab</Company>
+    <Description>A library providing common logging-related functionality for SGL Projects.</Description>
+  </PropertyGroup>
+
 </Project>

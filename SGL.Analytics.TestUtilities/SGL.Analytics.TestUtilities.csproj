@@ -25,4 +25,12 @@
     <ProjectReference Include="..\SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <PackageId>SGL.Utilities.TestUtilities.xunit</PackageId>
+    <Version>0.0.0-dev</Version>
+    <Authors>Stefan Bodenschatz</Authors>
+    <Company>Hochschule Trier, Serious Games Lab</Company>
+    <Description>A library providing common utilities for testing purposes in SGL projects using the xuint test framework.</Description>
+  </PropertyGroup>
+
 </Project>

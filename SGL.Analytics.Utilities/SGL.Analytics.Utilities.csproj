@@ -17,4 +17,12 @@
     <DebugType>None</DebugType>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageId>SGL.Utilities</PackageId>
+    <Version>0.0.0-dev</Version>
+    <Authors>Stefan Bodenschatz</Authors>
+    <Company>Hochschule Trier, Serious Games Lab</Company>
+    <Description>A library providing common utilities for SGL projects.</Description>
+  </PropertyGroup>
+
 </Project>

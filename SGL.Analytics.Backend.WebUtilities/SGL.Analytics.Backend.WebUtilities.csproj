@@ -28,4 +28,13 @@
     <ProjectReference Include="..\SGL.Analytics.Utilities.Logging\SGL.Analytics.Utilities.Logging.csproj" />
     <ProjectReference Include="..\SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <PackageId>SGL.Utilities.Backend.AspNetCore</PackageId>
+    <Version>0.0.0-dev</Version>
+    <Authors>Stefan Bodenschatz</Authors>
+    <Company>Hochschule Trier, Serious Games Lab</Company>
+    <Description>A library providing common utilities for web services and web applications ASP.Net Core in SGL projects using.</Description>
+  </PropertyGroup>
+
 </Project>

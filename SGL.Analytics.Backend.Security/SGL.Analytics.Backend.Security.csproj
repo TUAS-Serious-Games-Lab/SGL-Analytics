@@ -20,4 +20,12 @@
     <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <PackageId>SGL.Utilities.Backend.Security</PackageId>
+    <Version>0.0.0-dev</Version>
+    <Authors>Stefan Bodenschatz</Authors>
+    <Company>Hochschule Trier, Serious Games Lab</Company>
+    <Description>A library providing common security functionality for backend services in SGL projects.</Description>
+  </PropertyGroup>
+
 </Project>
