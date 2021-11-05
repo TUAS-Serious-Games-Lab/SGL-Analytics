@@ -13,22 +13,6 @@
     - 'dotnet nuget add source "${CI_API_V4_URL}/projects/${PACKAGE_REPO_PROJECT_ID}/packages/nuget/index.json" --name gitlab --username gitlab-ci-token --password $CI_JOB_TOKEN --store-password-in-clear-text'
     - 'dotnet nuget push "bin/Release/*.nupkg" --source gitlab --symbol-source gitlab'
 
-nuget-package-ci-test:
-  extends: .package-nuget-lib
-  variables:
-    GIT_DEPTH: 0
-    VERSION_SUFFIX: "-ci-test"
-  parallel:
-    matrix:
-    - PACKAGE_DIRECTORY: "SGL.Analytics.Client"
-    - PACKAGE_DIRECTORY: "SGL.Analytics.Utilities"
-    - PACKAGE_DIRECTORY: "SGL.Analytics.Utilities.Logging"
-    - PACKAGE_DIRECTORY: "SGL.Analytics.TestUtilities"
-    - PACKAGE_DIRECTORY: "SGL.Analytics.Backend.Utilities"
-    - PACKAGE_DIRECTORY: "SGL.Analytics.Backend.Security"
-    - PACKAGE_DIRECTORY: "SGL.Analytics.Backend.WebUtilities"
-    - PACKAGE_DIRECTORY: "SGL.Analytics.Backend.TestUtilities"
-
 package-client-lib-main:
   extends: .package-nuget-lib
   variables:
