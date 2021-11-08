@@ -10,8 +10,8 @@
   script:
     - 'cd ${PACKAGE_DIRECTORY}'
     - 'dotnet pack -c Release -p:Version="$(git describe --tags --abbrev=0)${VERSION_SUFFIX}"'
-    - 'dotnet nuget add source "${CI_API_V4_URL}/projects/${PACKAGE_REPO_PROJECT_ID}/packages/nuget/index.json" --name gitlab --username gitlab-ci-token --password $CI_JOB_TOKEN --store-password-in-clear-text'
-    - 'dotnet nuget push "bin/Release/*.nupkg" --source gitlab --symbol-source gitlab'
+    - 'dotnet nuget update source SGL --username gitlab-ci-token --password $CI_JOB_TOKEN --store-password-in-clear-text'
+    - 'dotnet nuget push "bin/Release/*.nupkg" --source SGL --symbol-source SGL'
 
 package-client-lib-main:
   extends: .package-nuget-lib
