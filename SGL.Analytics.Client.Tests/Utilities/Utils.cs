@@ -1,4 +1,4 @@
-using SGL.Analytics.Utilities;
+using SGL.Utilities;
 using System.IO;
 using Xunit.Abstractions;
 

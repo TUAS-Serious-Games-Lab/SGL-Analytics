@@ -17,6 +17,6 @@
     <DebugType>None</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj" />
+    <PackageReference Include="SGL.Utilities" Version="0.0.1" />
   </ItemGroup>
 </Project>

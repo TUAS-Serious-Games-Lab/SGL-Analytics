@@ -2,7 +2,7 @@
 using CommandLine.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using SGL.Analytics.Utilities;
+using SGL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;

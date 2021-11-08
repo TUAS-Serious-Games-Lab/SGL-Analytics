@@ -9,13 +9,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
-using SGL.Analytics.Backend.Security;
+using SGL.Utilities.Backend.Security;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.DTO;
 using SGL.Analytics.Backend.Users.Application.Model;
 using System.Threading;
-using SGL.Analytics.Backend.WebUtilities;
+using SGL.Utilities.Backend.AspNetCore;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	/// <summary>
@@ -180,7 +180,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 						"Which of these is / are incorrect is not stated for security reasons.");
 				}
 				else {
-					return new LoginResponseDTO((AuthorizationToken)token);
+					return new LoginResponseDTO(new AuthorizationToken(token));
 				}
 			}
 			catch (OperationCanceledException) {

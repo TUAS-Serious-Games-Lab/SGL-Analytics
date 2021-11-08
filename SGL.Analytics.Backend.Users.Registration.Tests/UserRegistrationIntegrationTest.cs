@@ -3,11 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
-using SGL.Analytics.Backend.Security;
-using SGL.Analytics.Backend.TestUtilities;
+using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Backend.TestUtilities;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
-using SGL.Analytics.Utilities;
-using SGL.Analytics.TestUtilities;
+using SGL.Utilities;
+using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -231,7 +231,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(jsonOptions);
 				Assert.NotNull(result);
 				var token = result!.Token;
-				var (principal, validatedToken) = fixture.TokenValidator.Validate(token);
+				var (principal, validatedToken) = fixture.TokenValidator.Validate(token.Value);
 				Assert.Equal(userId, principal.GetClaim<Guid>("userid", Guid.TryParse));
 				Assert.Equal(fixture.AppName, principal.GetClaim("appname"));
 			}

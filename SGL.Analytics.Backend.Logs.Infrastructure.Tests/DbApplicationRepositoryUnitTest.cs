@@ -1,8 +1,8 @@
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
-using SGL.Analytics.Backend.TestUtilities;
-using SGL.Analytics.Utilities;
+using SGL.Utilities.Backend.TestUtilities;
+using SGL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

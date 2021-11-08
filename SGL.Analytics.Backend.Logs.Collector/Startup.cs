@@ -6,8 +6,8 @@ using Microsoft.Extensions.Hosting;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
 using System;
-using SGL.Analytics.Utilities.Logging.FileLogging;
-using SGL.Analytics.Backend.WebUtilities;
+using SGL.Utilities.Logging.FileLogging;
+using SGL.Utilities.Backend.AspNetCore;
 using SGL.Analytics.Backend.Logs.Infrastructure;
 
 namespace SGL.Analytics.Backend.Logs.Collector {

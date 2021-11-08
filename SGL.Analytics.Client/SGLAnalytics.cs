@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using SGL.Analytics.Utilities;
+using SGL.Utilities;
 using System;
 using System.IO;
 using System.Linq;

@@ -1,4 +1,4 @@
-using SGL.Analytics.Utilities;
+using SGL.Utilities;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 

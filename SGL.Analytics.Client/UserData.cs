@@ -1,5 +1,5 @@
 using SGL.Analytics.DTO;
-using SGL.Analytics.Utilities;
+using SGL.Utilities;
 
 namespace SGL.Analytics.Client {
 
