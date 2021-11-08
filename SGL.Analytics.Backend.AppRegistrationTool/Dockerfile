@@ -15,7 +15,13 @@ COPY ["SGL.Analytics.Backend.Logs.Application/SGL.Analytics.Backend.Logs.Applica
 COPY ["SGL.Analytics.Backend.Logs.Infrastructure/SGL.Analytics.Backend.Logs.Infrastructure.csproj", "SGL.Analytics.Backend.Logs.Infrastructure/"]
 COPY ["SGL.Analytics.Backend.Users.Infrastructure/SGL.Analytics.Backend.Users.Infrastructure.csproj", "SGL.Analytics.Backend.Users.Infrastructure/"]
 COPY ["SGL.Analytics.Backend.AppRegistrationTool/SGL.Analytics.Backend.AppRegistrationTool.csproj", "SGL.Analytics.Backend.AppRegistrationTool/"]
-RUN dotnet restore "SGL.Analytics.Backend.AppRegistrationTool/SGL.Analytics.Backend.AppRegistrationTool.csproj"
+COPY ["NuGet.config", "NuGet.config"]
+ARG SGL_PKG_USER
+ARG SGL_PKG_TOKEN
+RUN echo 'dotnet nuget update source SGL --username ${SGL_PKG_USER} --password ${SGL_PKG_TOKEN} --store-password-in-clear-text' > pkg-login.sh &&\
+	chmod +x pkg-login.sh && ./pkg-login.sh &&\
+	dotnet restore "SGL.Analytics.Backend.AppRegistrationTool/SGL.Analytics.Backend.AppRegistrationTool.csproj" &&\
+	dotnet nuget remove source SGL && rm pkg-login.sh
 COPY . .
 WORKDIR "/src/SGL.Analytics.Backend.AppRegistrationTool"
 RUN dotnet build "SGL.Analytics.Backend.AppRegistrationTool.csproj" -c Release -o /app/build

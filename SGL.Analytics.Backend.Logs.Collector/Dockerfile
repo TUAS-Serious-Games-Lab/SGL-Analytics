@@ -7,6 +7,8 @@ EXPOSE 80
 EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="$PATH:/root/.dotnet/tools"
 WORKDIR /src
 COPY ["SGL.Analytics.DTO/SGL.Analytics.DTO.csproj", "SGL.Analytics.DTO/"]
 COPY ["SGL.Analytics.Backend.Domain/SGL.Analytics.Backend.Domain.csproj", "SGL.Analytics.Backend.Domain/"]
@@ -18,16 +20,20 @@ COPY ["SGL.Analytics.Backend.WebUtilities/SGL.Analytics.Backend.WebUtilities.csp
 COPY ["SGL.Analytics.Backend.Logs.Application/SGL.Analytics.Backend.Logs.Application.csproj", "SGL.Analytics.Backend.Logs.Application/"]
 COPY ["SGL.Analytics.Backend.Logs.Infrastructure/SGL.Analytics.Backend.Logs.Infrastructure.csproj", "SGL.Analytics.Backend.Logs.Infrastructure/"]
 COPY ["SGL.Analytics.Backend.Logs.Collector/SGL.Analytics.Backend.Logs.Collector.csproj", "SGL.Analytics.Backend.Logs.Collector/"]
-RUN dotnet restore "SGL.Analytics.Backend.Logs.Collector/SGL.Analytics.Backend.Logs.Collector.csproj"
+COPY ["NuGet.config", "NuGet.config"]
+ARG SGL_PKG_USER
+ARG SGL_PKG_TOKEN
+RUN echo 'dotnet nuget update source SGL --username ${SGL_PKG_USER} --password ${SGL_PKG_TOKEN} --store-password-in-clear-text' > pkg-login.sh &&\
+	chmod +x pkg-login.sh && ./pkg-login.sh &&\
+	dotnet restore "SGL.Analytics.Backend.Logs.Collector/SGL.Analytics.Backend.Logs.Collector.csproj" &&\
+	dotnet nuget remove source SGL && rm pkg-login.sh
 COPY . .
 WORKDIR "/src/SGL.Analytics.Backend.Logs.Collector"
 RUN dotnet build "SGL.Analytics.Backend.Logs.Collector.csproj" -c Release -o /app/build
 
 FROM build AS publish
 RUN dotnet publish "SGL.Analytics.Backend.Logs.Collector.csproj" -c Release -o /app/publish
-RUN dotnet tool install --global dotnet-ef &&\
-	export PATH="$PATH:/root/.dotnet/tools" && \
-	cd ../SGL.Analytics.Backend.Logs.Infrastructure && \
+RUN cd ../SGL.Analytics.Backend.Logs.Infrastructure && \
 	dotnet ef migrations script --startup-project ../SGL.Analytics.Backend.Logs.Collector --idempotent --output /app/publish/DbMigrations.sql
 
 FROM ${SERVICE_BASE_IMAGE_OVERRIDE:-base} AS final

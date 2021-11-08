@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <AnalysisLevel>Preview</AnalysisLevel>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileBuildArguments>--build-arg SGL_PKG_USER --build-arg SGL_PKG_TOKEN</DockerfileBuildArguments>
   </PropertyGroup>
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

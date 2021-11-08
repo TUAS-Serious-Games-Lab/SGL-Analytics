@@ -70,7 +70,7 @@ package-client-lib-tags:
   - echo IMAGE_CONTEXT=${IMAGE_CONTEXT}
   - echo IMAGE_DIR=${IMAGE_DIR}
   - echo IMAGE_URL=${IMAGE_URL}
-  - BUILD_OPTS="--cleanup --cache=true --insecure-registry=registry:5000 --cache-repo=registry:5000/cache --context ${IMAGE_CONTEXT} --dockerfile ${IMAGE_DIR}/Dockerfile --target final --build-arg SERVICE_BASE_IMAGE_OVERRIDE=${SERVICE_BASE_IMAGE_OVERRIDE} --ignore-path docker_ci_cache"
+  - BUILD_OPTS="--build-arg SGL_PKG_USER --build-arg SGL_PKG_TOKEN --cleanup --cache=true --insecure-registry=registry:5000 --cache-repo=registry:5000/cache --context ${IMAGE_CONTEXT} --dockerfile ${IMAGE_DIR}/Dockerfile --target final --build-arg SERVICE_BASE_IMAGE_OVERRIDE=${SERVICE_BASE_IMAGE_OVERRIDE} --ignore-path docker_ci_cache"
   - /kaniko/executor $BUILD_OPTS --destination "${IMAGE_URL}:${PACKAGE_IMAGE_TAG_1}" --destination "${IMAGE_URL}:${PACKAGE_IMAGE_TAG_2}" --destination "${IMAGE_URL}:${CI_COMMIT_SHORT_SHA}"
 
 .docker_images_mapping:

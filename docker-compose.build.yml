@@ -9,22 +9,37 @@ services:
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Logs.Collector/Dockerfile
+      args:
+        SGL_PKG_USER:
+        SGL_PKG_TOKEN:
   users-registration-migrations:
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Users.Registration/Dockerfile
+      args:
+        SGL_PKG_USER:
+        SGL_PKG_TOKEN:
   app-registrations:
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.AppRegistrationTool/Dockerfile
+      args:
+        SGL_PKG_USER:
+        SGL_PKG_TOKEN:
   logs-collector-app:
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Logs.Collector/Dockerfile
+      args:
+        SGL_PKG_USER:
+        SGL_PKG_TOKEN:
   users-registration-app:
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Users.Registration/Dockerfile
+      args:
+        SGL_PKG_USER:
+        SGL_PKG_TOKEN:
   api-gateway:
     build:
       context: SGL.Analytics.Backend.APIGW

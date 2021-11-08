@@ -5,6 +5,7 @@
     <UserSecretsId>26136c78-c390-48db-a4fe-e3ef26abdeef</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+    <DockerfileBuildArguments>--build-arg SGL_PKG_USER --build-arg SGL_PKG_TOKEN</DockerfileBuildArguments>
     <Nullable>enable</Nullable>
     <AnalysisLevel>Preview</AnalysisLevel>
   </PropertyGroup>
