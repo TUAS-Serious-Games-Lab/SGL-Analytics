@@ -18,6 +18,7 @@ cache:
 
 before_script:
   - 'dotnet nuget update source SGL --username ${SGL_PKG_USER} --password ${SGL_PKG_TOKEN} --store-password-in-clear-text'
+  - 'cat NuGet.config'
   - 'dotnet restore --packages $NUGET_PACKAGES_DIRECTORY SGL.Analytics.sln'
 
 after_script:
