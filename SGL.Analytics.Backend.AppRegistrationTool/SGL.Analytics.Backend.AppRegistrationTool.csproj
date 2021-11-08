@@ -41,8 +41,8 @@
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
-    <PackageReference Include="SGL.Utilities" Version="0.0.1" />
-    <PackageReference Include="SGL.Utilities.Backend" Version="0.0.1" />
+    <PackageReference Include="SGL.Utilities" Version="0.1.0" />
+    <PackageReference Include="SGL.Utilities.Backend" Version="0.1.0" />
   </ItemGroup>
 
   <ItemGroup>
