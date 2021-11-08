@@ -108,8 +108,8 @@ build-service-base-image-main:
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
     PACKAGE_IMAGE_TAG_2: latest
     IMAGE_NAME: Base
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+#  rules:
+#    - if: '$CI_COMMIT_BRANCH == "main"'
 
 pkg-docker-main:
   extends:
@@ -121,8 +121,8 @@ pkg-docker-main:
     SERVICE_BASE_IMAGE_OVERRIDE: "${CI_REGISTRY_IMAGE}/base:${CI_COMMIT_SHORT_SHA}"
     PACKAGE_IMAGE_TAG_1: ${CI_COMMIT_REF_SLUG}
     PACKAGE_IMAGE_TAG_2: latest
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+#  rules:
+#    - if: '$CI_COMMIT_BRANCH == "main"'
 
 build-service-base-image-tags:
   extends:
