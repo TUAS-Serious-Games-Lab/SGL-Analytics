@@ -1,5 +1,5 @@
 using SGL.Analytics.Backend.Domain.Exceptions;
-using SGL.Analytics.Utilities;
+using SGL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;

@@ -9,9 +9,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using SGL.Analytics.Utilities.Logging.FileLogging;
-using SGL.Analytics.Backend.WebUtilities;
-using SGL.Analytics.Backend.Utilities;
+using SGL.Utilities.Logging.FileLogging;
+using SGL.Utilities.Backend.AspNetCore;
+using SGL.Utilities.Backend;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	/// <summary>

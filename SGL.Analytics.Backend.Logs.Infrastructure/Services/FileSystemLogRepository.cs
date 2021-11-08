@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
-using SGL.Analytics.Utilities;
+using SGL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;

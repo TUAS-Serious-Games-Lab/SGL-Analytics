@@ -11,6 +11,7 @@
     <PackageReference Include="JunitXml.TestLogger" Version="3.0.98" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+    <PackageReference Include="SGL.Utilities.TestUtilities.XUnit" Version="0.1.0" />
     <PackageReference Include="WireMock.Net" Version="1.4.23" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
@@ -26,7 +27,6 @@
   <ItemGroup>
     <ProjectReference Include="..\SGL.Analytics.Client\SGL.Analytics.Client.csproj" />
     <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
-    <ProjectReference Include="..\SGL.Analytics.TestUtilities\SGL.Analytics.TestUtilities.csproj" />
   </ItemGroup>
 
 </Project>

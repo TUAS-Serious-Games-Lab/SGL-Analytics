@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <AnalysisLevel>Preview</AnalysisLevel>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileBuildArguments>--build-arg SGL_PKG_USER --build-arg SGL_PKG_TOKEN</DockerfileBuildArguments>
   </PropertyGroup>
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -40,13 +41,13 @@
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
+    <PackageReference Include="SGL.Utilities" Version="0.1.0" />
+    <PackageReference Include="SGL.Utilities.Backend" Version="0.1.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SGL.Analytics.Backend.Logs.Infrastructure\SGL.Analytics.Backend.Logs.Infrastructure.csproj" />
     <ProjectReference Include="..\SGL.Analytics.Backend.Users.Infrastructure\SGL.Analytics.Backend.Users.Infrastructure.csproj" />
-    <ProjectReference Include="..\SGL.Analytics.Backend.Utilities\SGL.Analytics.Backend.Utilities.csproj" />
-    <ProjectReference Include="..\SGL.Analytics.Utilities\SGL.Analytics.Utilities.csproj" />
   </ItemGroup>
 
 </Project>

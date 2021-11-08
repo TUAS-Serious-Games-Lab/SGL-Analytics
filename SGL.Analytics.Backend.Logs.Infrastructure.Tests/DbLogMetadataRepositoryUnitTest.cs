@@ -3,7 +3,7 @@ using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
-using SGL.Analytics.Backend.TestUtilities;
+using SGL.Utilities.Backend.TestUtilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

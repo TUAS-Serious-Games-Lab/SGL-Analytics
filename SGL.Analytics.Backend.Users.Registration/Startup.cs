@@ -12,12 +12,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
-using SGL.Analytics.Backend.Security;
+using SGL.Utilities.Backend.Security;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Analytics.Backend.Users.Infrastructure.Services;
-using SGL.Analytics.Utilities.Logging.FileLogging;
-using SGL.Analytics.Backend.WebUtilities;
+using SGL.Utilities.Logging.FileLogging;
+using SGL.Utilities.Backend.AspNetCore;
 using SGL.Analytics.Backend.Users.Infrastructure;
 
 namespace SGL.Analytics.Backend.Users.Registration {

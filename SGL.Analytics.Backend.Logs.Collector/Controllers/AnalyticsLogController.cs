@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
-using SGL.Analytics.Backend.Security;
-using SGL.Analytics.Backend.WebUtilities;
+using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Backend.AspNetCore;
 using SGL.Analytics.DTO;
 
 namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
