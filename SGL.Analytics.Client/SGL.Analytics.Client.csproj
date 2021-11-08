@@ -13,7 +13,7 @@
   <PropertyGroup>
     <PackageId>SGL.Analytics.Client</PackageId>
     <Version>0.0.0-dev</Version>
-    <Authors>Stefan Bodenschatz</Authors>
+    <Authors>Serious Games Lab Team at Hochschule Trier</Authors>
     <Company>Hochschule Trier, Serious Games Lab</Company>
     <Description>The engine-neutral .NET Core client library for the SGL Analytics service.</Description>
   </PropertyGroup>
