@@ -12,7 +12,7 @@
     "SGL.Analytics.Backend.Logs.Collector": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "api/AnalyticsLog",
+      "launchUrl": "api/analytics/log",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "Jwt__SymmetricKey": "Jwt Dev Signing Secret Key"
@@ -22,7 +22,7 @@
     "Docker": {
       "commandName": "Docker",
       "launchBrowser": true,
-      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/api/AnalyticsLog",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/api/analytics/log",
       "publishAllPorts": true,
       "useSSL": true
     }

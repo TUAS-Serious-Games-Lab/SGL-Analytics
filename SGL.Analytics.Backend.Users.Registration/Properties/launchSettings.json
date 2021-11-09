@@ -12,7 +12,7 @@
     "SGL.Analytics.Backend.User.Registration": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "api/AnalyticsUser",
+      "launchUrl": "api/analytics/user",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "Jwt__SymmetricKey": "Jwt Dev Signing Secret Key"
@@ -22,7 +22,7 @@
     "Docker": {
       "commandName": "Docker",
       "launchBrowser": true,
-      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/api/AnalyticsUser",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/api/analytics/user",
       "publishAllPorts": true,
       "useSSL": true
     }

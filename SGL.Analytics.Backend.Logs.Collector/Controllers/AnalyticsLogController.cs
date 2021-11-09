@@ -13,9 +13,9 @@ using SGL.Analytics.DTO;
 
 namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 	/// <summary>
-	/// The controller class serving the <c>api/AnalyticsLog</c> route that accepts uploads of analytics log files for SGL Analytics.
+	/// The controller class serving the <c>api/analytics/log</c> route that accepts uploads of analytics log files for SGL Analytics.
 	/// </summary>
-	[Route("api/[controller]")]
+	[Route("api/analytics/log")]
 	[ApiController]
 	public class AnalyticsLogController : ControllerBase {
 		private readonly ILogManager logManager;
@@ -31,11 +31,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			this.logger = logger;
 		}
 
-		// POST: api/AnalyticsLog
+		// POST: api/analytics/log
 		/// <summary>
-		/// Handles POST requests to <c>api/AnalyticsLog</c> for analytics log files with the log contents and associated metadata.
+		/// Handles POST requests to <c>api/analytics/log</c> for analytics log files with the log contents and associated metadata.
 		/// Request body shall consist of the raw log file contents. The associated metadata for the log file are accepted in the for of custom HTTP headers with the names of the properties of <see cref="LogMetadataDTO"/>.
-		/// This route requires authorization using a JWT bearer token issued by the controller for <c>api/AnalyticsUser/login</c> in the user registration service.
+		/// This route requires authorization using a JWT bearer token issued by the controller for <c>api/analytics/user/login</c> in the user registration service.
 		/// If no such token is present, the authorization layer will reject the request and respond with a <see cref="StatusCodes.Status401Unauthorized"/>, containing a <c>WWW-Authenticate</c> header as an authorization challenge.
 		/// Upon successful upload, the controller responds with a <see cref="StatusCodes.Status201Created"/>.
 		/// If there is an error with either the JWT bearer token or with <paramref name="appApiToken"/>, the controller responds with a <see cref="StatusCodes.Status401Unauthorized"/>.

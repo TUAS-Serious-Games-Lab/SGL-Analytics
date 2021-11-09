@@ -5,7 +5,7 @@
     "version": "1.0"
   },
   "paths": {
-    "/api/AnalyticsUser": {
+    "/api/analytics/user": {
       "post": {
         "tags": [
           "AnalyticsUser"
@@ -30,30 +30,30 @@
           {
             "in": "body",
             "name": "body",
-              "type": "UserRegistrationDTO"
+            "type": "UserRegistrationDTO"
           }
         ],
         "responses": {
           "201": {
             "description": "Success",
-              "type": "UserRegistrationResultDTO"
+            "type": "UserRegistrationResultDTO"
           },
           "401": {
             "description": "Unauthorized",
-              "type": "string"
+            "type": "string"
           },
           "409": {
             "description": "Conflict",
-              "type": "string"
+            "type": "string"
           },
           "400": {
             "description": "Bad Request",
-              "type": "string"
+            "type": "string"
           }
         }
       }
     },
-    "/api/AnalyticsUser/login": {
+    "/api/analytics/user/login": {
       "post": {
         "tags": [
           "AnalyticsUser"
@@ -73,17 +73,17 @@
           {
             "in": "body",
             "name": "body",
-              "type": "LoginRequestDTO"
+            "type": "LoginRequestDTO"
           }
         ],
         "responses": {
           "200": {
             "description": "Success",
-              "type": "LoginResponseDTO"
+            "type": "LoginResponseDTO"
           },
           "401": {
             "description": "Unauthorized",
-              "type": "string"
+            "type": "string"
           }
         }
       }
@@ -149,7 +149,7 @@
         },
         "studySpecificProperties": {
           "type": "object",
-          "additionalProperties": { }
+          "additionalProperties": {}
         }
       }
     },

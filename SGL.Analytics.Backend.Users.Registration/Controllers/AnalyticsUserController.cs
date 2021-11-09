@@ -19,9 +19,9 @@ using SGL.Utilities.Backend.AspNetCore;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	/// <summary>
-	/// The controller class serving the <c>api/AnalyticsUser</c> and <c>api/AnalyticsUser/login</c> routes that manage user registrations for SGL Analytics and perform logins for user sessions.
+	/// The controller class serving the <c>api/analytics/user</c> and <c>api/analytics/user/login</c> routes that manage user registrations for SGL Analytics and perform logins for user sessions.
 	/// </summary>
-	[Route("api/[controller]")]
+	[Route("api/analytics/user")]
 	[ApiController]
 	public class AnalyticsUserController : ControllerBase {
 		private readonly IUserManager userManager;
@@ -39,11 +39,11 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			this.logger = logger;
 		}
 
-		// POST: api/AnalyticsUser
+		// POST: /api/analytics/user
 		// To protect from overposting attacks, enable the specific properties you want to bind to, for
 		// more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
 		/// <summary>
-		/// Handles POST requests to <c>api/AnalyticsUser</c> for user registrations.
+		/// Handles POST requests to <c>api/analytics/user</c> for user registrations.
 		/// The controller responds with a <see cref="UserRegistrationResultDTO"/> in JSON form, containing the assigned user id, and a <see cref="StatusCodes.Status201Created"/> upon sucess.
 		/// The client needs to use this id wenn logging in using <see cref="Login(LoginRequestDTO, CancellationToken)"/>.
 		/// If the <see cref="UserRegistrationDTO.StudySpecificProperties"/> contains invalid properties, the controller responds with a <see cref="StatusCodes.Status400BadRequest"/>.
@@ -126,7 +126,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		/// <summary>
-		/// Handles POST requests to <c>api/AnalyticsUser/login</c> for user logins to start a session.
+		/// Handles POST requests to <c>api/analytics/user/login</c> for user logins to start a session.
 		/// Upon success, the controller responds with a JSON-encoded <see cref="LoginResponseDTO"/>, containing a session token that can be used to
 		/// authenticate requests to SGL Analytics services as the logged-in user, and a <see cref="StatusCodes.Status200OK"/>.
 		/// If the login fails because any of the credentials is incorrect or the credentials don't match, the controller responds with a <see cref="StatusCodes.Status401Unauthorized"/>.

@@ -98,7 +98,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			content.Headers.MapDtoProperties(logMDTO);
 			content.Headers.Add("App-API-Token", fixture.AppApiToken);
 			content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-			var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
+			var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 				fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", appName)));
 			request.Content = content;
@@ -158,7 +158,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
 				content.Headers.Add("App-API-Token", "IncorrectToken");
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 					fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
 				request.Content = content;
@@ -178,7 +178,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
 				content.Headers.Add("App-API-Token", fixture.AppApiToken);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
 				request.Content = content;
 				var response = await client.SendAsync(request);
 				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
@@ -197,7 +197,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
 				content.Headers.Add("App-API-Token", fixture.AppApiToken);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 									new JwtTokenGenerator(fixture.JwtOptions.Issuer, fixture.JwtOptions.Audience, "InvalidKeyInvalidKeyInvalidKeyInvalidKeyInvalidKey")
 									.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
@@ -219,7 +219,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
 				content.Headers.Add("App-API-Token", fixture.AppApiToken);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 									new JwtTokenGenerator("InvalidIssuer", fixture.JwtOptions.Audience, fixture.JwtOptions.SymmetricKey!)
 									.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
@@ -241,7 +241,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2)));
 				content.Headers.Add("App-API-Token", fixture.AppApiToken);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/AnalyticsLog");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 									new JwtTokenGenerator(fixture.JwtOptions.Issuer, "InvalidAudience", fixture.JwtOptions.SymmetricKey!)
 									.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));

@@ -5,7 +5,7 @@
     "version": "1.0"
   },
   "paths": {
-    "/api/AnalyticsLog": {
+    "/api/analytics/log": {
       "post": {
         "tags": [
           "AnalyticsLog"
@@ -25,7 +25,7 @@
           {
             "in": "header",
             "name": "logMetadata",
-			"type": "LogMetadataDTO"
+            "type": "LogMetadataDTO"
           }
         ],
         "responses": {
@@ -83,7 +83,7 @@
           "type": "string"
         }
       },
-      "additionalProperties": { }
+      "additionalProperties": {}
     }
   }
 }
