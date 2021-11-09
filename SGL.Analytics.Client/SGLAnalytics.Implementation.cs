@@ -156,7 +156,7 @@ namespace SGL.Analytics.Client {
 					logger.LogInformation("Uploading data log {logId} failed because the backend told us that we need to login first. " +
 						"The most likely reason is that our session token expired. Obtaining a new session token by logging in again, after which we will retry the upload ...", logFile.ID);
 					try {
-						authToken = await loginAsync();
+						authToken = await loginAsync(true);
 					}
 					catch (Exception ex) {
 						logger.LogError(ex, "The login attempt failed. Exiting the upload process ...");
