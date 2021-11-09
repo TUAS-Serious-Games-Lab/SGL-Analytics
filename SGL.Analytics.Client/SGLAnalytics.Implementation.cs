@@ -140,8 +140,21 @@ namespace SGL.Analytics.Client {
 
 		private async Task uploadFilesAsync() {
 			if (!logCollectorClient.IsActive) return;
-			var authToken = await loginAsync();
-			if (authToken == null) return;
+			try {
+				var authToken = await loginAsync();
+			}
+			catch (LoginFailedException ex) {
+				logger.LogError(ex, "The login attempt failed due to incorrect credentials.");
+				throw;
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "The login attempt failed due to an error. Exiting the upload process ...");
+				return;
+			}
+			if (authToken == null) {
+				logger.LogError("The registered login credentails are missing. This is unexpected at this point. Exiting the upload process ...");
+				return;
+			}
 			logger.LogDebug("Started log uploader to asynchronously upload finished data logs to the backend.");
 			var completedLogFiles = new HashSet<Guid>();
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
@@ -156,10 +169,14 @@ namespace SGL.Analytics.Client {
 					logger.LogInformation("Uploading data log {logId} failed because the backend told us that we need to login first. " +
 						"The most likely reason is that our session token expired. Obtaining a new session token by logging in again, after which we will retry the upload ...", logFile.ID);
 					try {
-						authToken = await loginAsync();
+						authToken = await loginAsync(true);
+					}
+					catch (LoginFailedException ex) {
+						logger.LogError(ex, "The login attempt failed due to incorrect credentials.");
+						throw;
 					}
 					catch (Exception ex) {
-						logger.LogError(ex, "The login attempt failed. Exiting the upload process ...");
+						logger.LogError(ex, "The login attempt failed due to an error. Exiting the upload process ...");
 						return;
 					}
 					if (authToken == null) {
