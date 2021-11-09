@@ -29,10 +29,11 @@ RUN dotnet build "SGL.Analytics.Backend.Users.Registration.csproj" -c Release -o
 FROM build AS publish
 RUN dotnet publish "SGL.Analytics.Backend.Users.Registration.csproj" -c Release -o /app/publish
 RUN cd ../SGL.Analytics.Backend.Users.Infrastructure && \
-	dotnet ef migrations script --startup-project ../SGL.Analytics.Backend.Users.Registration --idempotent --output /app/publish/DbMigrations.sql &&\
-	../remove_BOM.sh /app/publish/DbMigrations.sql
+	dotnet ef migrations script --startup-project ../SGL.Analytics.Backend.Users.Registration --idempotent --output /app/DbMigrations.sql &&\
+	../remove_BOM.sh /app/DbMigrations.sql
 
 FROM ${SERVICE_BASE_IMAGE_OVERRIDE:-base} AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY --from=publish /app/DbMigrations.sql /
 ENTRYPOINT ["dotnet", "SGL.Analytics.Backend.Users.Registration.dll"]
