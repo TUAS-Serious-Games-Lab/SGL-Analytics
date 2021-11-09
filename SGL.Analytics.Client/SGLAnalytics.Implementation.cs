@@ -143,8 +143,12 @@ namespace SGL.Analytics.Client {
 			try {
 				var authToken = await loginAsync();
 			}
+			catch (LoginFailedException ex) {
+				logger.LogError(ex, "The login attempt failed due to incorrect credentials.");
+				throw;
+			}
 			catch (Exception ex) {
-				logger.LogError(ex, "The login attempt failed. Exiting the upload process ...");
+				logger.LogError(ex, "The login attempt failed due to an error. Exiting the upload process ...");
 				return;
 			}
 			if (authToken == null) {
@@ -167,8 +171,12 @@ namespace SGL.Analytics.Client {
 					try {
 						authToken = await loginAsync(true);
 					}
+					catch (LoginFailedException ex) {
+						logger.LogError(ex, "The login attempt failed due to incorrect credentials.");
+						throw;
+					}
 					catch (Exception ex) {
-						logger.LogError(ex, "The login attempt failed. Exiting the upload process ...");
+						logger.LogError(ex, "The login attempt failed due to an error. Exiting the upload process ...");
 						return;
 					}
 					if (authToken == null) {
