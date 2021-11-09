@@ -83,7 +83,13 @@ namespace SGL.Analytics.Client.Example {
 			else {
 				await gameController.ReadAndProcessMoves(Console.In);
 			}
-			await analytics.FinishAsync();
+			try {
+				await analytics.FinishAsync();
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "An exception was thrown from FinishAsync.");
+				Environment.ExitCode = 3;
+			}
 			await Console.Out.WriteLineAsync($"\n The following logs were recorded: {string.Join(", ", gameController.LogIds.Select(id => id.ToString()))}");
 		}
 	}
