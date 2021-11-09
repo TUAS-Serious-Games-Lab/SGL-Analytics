@@ -8,9 +8,17 @@ services:
   db:
     image: sgl-analytics-db:vs-release
   logs-collector-migrations:
-    image: sgl-analytics-logs-collector:vs-release
+    container_name: SGL.Analytics.Backend.Logs.Collector-Migrations
+    image: sgl-analytics-logs-collector:vs-release-migrations
+    entrypoint: ["wait-for-it", "-s", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_logs", "-f", "/DbMigrations.sql"]
+    build:
+      target: final
   users-registration-migrations:
-    image: sgl-analytics-users-registration:vs-release
+    container_name: SGL.Analytics.Backend.Users.Registration-Migrations
+    image: sgl-analytics-users-registration:vs-release-migrations
+    entrypoint: ["wait-for-it", "-s", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_users", "-f", "/DbMigrations.sql"]
+    build:
+      target: final
   logs-collector-app:
     image: sgl-analytics-logs-collector:vs-release
   users-registration-app:

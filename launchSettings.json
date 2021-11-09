@@ -5,9 +5,9 @@
       "serviceActions": {
         "db": "StartWithoutDebugging",
         "logs-collector-app": "StartDebugging",
-        "logs-collector-migrations": "DoNotStart",
+        "logs-collector-migrations": "StartWithoutDebugging",
         "users-registration-app": "StartDebugging",
-        "users-registration-migrations": "DoNotStart",
+        "users-registration-migrations": "StartWithoutDebugging",
         "api-gateway": "StartWithoutDebugging",
         "app-registrations": "StartDebugging",
         "jwt-secret-key-gen": "StartWithoutDebugging"
