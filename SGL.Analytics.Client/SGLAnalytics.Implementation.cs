@@ -140,8 +140,17 @@ namespace SGL.Analytics.Client {
 
 		private async Task uploadFilesAsync() {
 			if (!logCollectorClient.IsActive) return;
-			var authToken = await loginAsync();
-			if (authToken == null) return;
+			try {
+				var authToken = await loginAsync();
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "The login attempt failed. Exiting the upload process ...");
+				return;
+			}
+			if (authToken == null) {
+				logger.LogError("The registered login credentails are missing. This is unexpected at this point. Exiting the upload process ...");
+				return;
+			}
 			logger.LogDebug("Started log uploader to asynchronously upload finished data logs to the backend.");
 			var completedLogFiles = new HashSet<Guid>();
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
