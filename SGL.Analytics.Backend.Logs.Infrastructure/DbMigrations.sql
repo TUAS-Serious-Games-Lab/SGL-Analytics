@@ -7,7 +7,7 @@
 START TRANSACTION;
 
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920155909_InitialCreate') THEN
     CREATE TABLE "Applications" (
@@ -17,9 +17,9 @@ BEGIN
         CONSTRAINT "PK_Applications" PRIMARY KEY ("Id")
     );
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920155909_InitialCreate') THEN
     CREATE TABLE "LogMetadata" (
@@ -36,35 +36,54 @@ BEGIN
         CONSTRAINT "FK_LogMetadata_Applications_AppId" FOREIGN KEY ("AppId") REFERENCES "Applications" ("Id") ON DELETE CASCADE
     );
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920155909_InitialCreate') THEN
     CREATE UNIQUE INDEX "IX_Applications_Name" ON "Applications" ("Name");
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920155909_InitialCreate') THEN
     CREATE INDEX "IX_LogMetadata_AppId" ON "LogMetadata" ("AppId");
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920155909_InitialCreate') THEN
     CREATE INDEX "IX_LogMetadata_AppId_UserId" ON "LogMetadata" ("AppId", "UserId");
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920155909_InitialCreate') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20210920155909_InitialCreate', '5.0.9');
+    VALUES ('20210920155909_InitialCreate', '5.0.10');
     END IF;
-END $$;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20211109180225_AddLogContentEncoding') THEN
+    ALTER TABLE "LogMetadata" ADD "Encoding" integer NOT NULL DEFAULT 1;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20211109180225_AddLogContentEncoding') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20211109180225_AddLogContentEncoding', '5.0.10');
+    END IF;
+END $EF$;
 COMMIT;
 

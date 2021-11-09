@@ -1,3 +1,4 @@
+using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,6 +24,14 @@ namespace SGL.Analytics.Client {
 			/// Gets the time when recording of the log file ended.
 			/// </summary>
 			public DateTime EndTime { get; }
+			/// <summary>
+			/// Gets the name suffix of the log file.
+			/// </summary>
+			public string Suffix { get; }
+			/// <summary>
+			/// Gets the encoding used for the files content.
+			/// </summary>
+			public LogContentEncoding Encoding { get; }
 			/// <summary>
 			/// Opens the represented log file for reading.
 			/// If the implementation encodes or compresses the files, this needs to provide the uncompressed / decoded content.

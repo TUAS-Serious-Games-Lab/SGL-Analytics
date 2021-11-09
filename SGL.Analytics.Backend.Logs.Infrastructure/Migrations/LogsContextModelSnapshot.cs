@@ -16,7 +16,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Relational:MaxIdentifierLength", 63)
-                .HasAnnotation("ProductVersion", "5.0.9")
+                .HasAnnotation("ProductVersion", "5.0.10")
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
             modelBuilder.Entity("SGL.Analytics.Backend.Domain.Entity.Application", b =>
@@ -57,6 +57,11 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("Encoding")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
 
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("timestamp without time zone");

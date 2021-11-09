@@ -35,12 +35,13 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			var content = new MemoryStream();
 			await logContent.CopyToAsync(content, ct);
 			content.Position = 0;
-			var logMd = new Domain.Entity.LogMetadata(logMetaDTO.LogFileId, app.Id, userId, logMetaDTO.LogFileId,
-				logMetaDTO.CreationTime.ToUniversalTime(), logMetaDTO.EndTime.ToUniversalTime(), DateTime.Now.ToUniversalTime(), ".log.gz", true);
+			var logMd = new LogMetadata(logMetaDTO.LogFileId, app.Id, userId, logMetaDTO.LogFileId,
+				logMetaDTO.CreationTime.ToUniversalTime(), logMetaDTO.EndTime.ToUniversalTime(), DateTime.Now.ToUniversalTime(),
+				logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, true);
 			logMd.App = app;
 			ct.ThrowIfCancellationRequested();
 			Ingests.Add(new IngestOperation(logMetaDTO, logMd, content));
-			return new LogFile(logMd, new SingleLogFileRepository(app.Name, userId, logMd.Id, ".log.gz", content));
+			return new LogFile(logMd, new SingleLogFileRepository(app.Name, userId, logMd.Id, logMd.FilenameSuffix, content));
 		}
 
 		public void Dispose() {
