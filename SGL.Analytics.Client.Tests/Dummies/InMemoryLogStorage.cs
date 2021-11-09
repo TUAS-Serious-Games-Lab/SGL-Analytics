@@ -1,3 +1,4 @@
+using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -132,7 +133,12 @@ namespace SGL.Analytics.Client.Tests {
 			public DateTime EndTime { get; set; } = DateTime.Now;
 
 			public bool WriteClosed { get; set; } = false;
+
 			public bool Deleted { get; set; } = false;
+
+			public string Suffix => ".log";
+
+			public LogContentEncoding Encoding => LogContentEncoding.Plain;
 
 			public MemoryStream Content => content;
 

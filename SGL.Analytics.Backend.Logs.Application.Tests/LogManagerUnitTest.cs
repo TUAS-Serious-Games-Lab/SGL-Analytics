@@ -48,8 +48,9 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 		public async Task IngestingNewLogFileWithUniqueIdWorksCorrectly() {
 			Guid logFileId = Guid.NewGuid();
 			Guid userId = Guid.NewGuid();
-			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
-			var key = new LogPath() { AppName = appName, UserId = userId, LogId = logFileId, Suffix = manager.LogFileSuffix };
+			string suffix = ".log";
+			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
+			var key = new LogPath() { AppName = appName, UserId = userId, LogId = logFileId, Suffix = suffix };
 			await using (var origContent = generateRandomMemoryStream()) {
 				await manager.IngestLogAsync(userId, appName, dto, origContent);
 				var logMd = await logMetadataRepo.GetLogMetadataByIdAsync(logFileId);
@@ -70,8 +71,9 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			Guid logFileId = Guid.NewGuid();
 			Guid user1Id = Guid.NewGuid();
 			Guid user2Id = Guid.NewGuid();
-			LogMetadataDTO dto1 = new(logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95));
-			LogMetadataDTO dto2 = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			string suffix = ".log";
+			LogMetadataDTO dto1 = new(logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95), suffix, LogContentEncoding.Plain);
+			LogMetadataDTO dto2 = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
 			await using (var content = generateRandomMemoryStream()) {
 				await manager.IngestLogAsync(user1Id, appName, dto1, content);
 			}
@@ -94,7 +96,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 		public async Task PreviouslyUnfinishedLogFileUploadIsReattemptedCorrectly() {
 			Guid logFileId = Guid.NewGuid();
 			Guid userId = Guid.NewGuid();
-			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			string suffix = ".log";
+			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
 			await using (var origContent = generateRandomMemoryStream()) {
 				var streamWrapper = new TriggeredBlockingStream(origContent);
 				var task = manager.IngestLogAsync(userId, appName, dto, streamWrapper);
@@ -120,7 +123,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 		public async Task AttemptingToIngestLogFileWithNonExistentApplicationThrowsTheCorrectException() {
 			Guid logFileId = Guid.NewGuid();
 			Guid userId = Guid.NewGuid();
-			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			string suffix = ".log";
+			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
 			await using (var origContent = generateRandomMemoryStream()) {
 				await Assert.ThrowsAsync<ApplicationDoesNotExistException>(async () => await manager.IngestLogAsync(userId, "DoesNotExist", dto, origContent));
 			}
@@ -129,13 +133,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 		public async Task ReattemptingIngestOfLogWhereServerAssignedNewIdPicksUpTheExistingEntry() {
 			Guid logFileId = Guid.NewGuid();
 			Guid user1Id = Guid.NewGuid();
-			LogMetadataDTO dto1 = new(logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95));
+			string suffix = ".log";
+			LogMetadataDTO dto1 = new(logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95), suffix, LogContentEncoding.Plain);
 			await using (var content = generateRandomMemoryStream()) {
 				await manager.IngestLogAsync(user1Id, appName, dto1, content);
 			}
 
 			Guid user2Id = Guid.NewGuid();
-			LogMetadataDTO dto2 = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2));
+			LogMetadataDTO dto2 = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
 			await using (var origContent = generateRandomMemoryStream()) {
 				var streamWrapper = new TriggeredBlockingStream(origContent);
 				var task = manager.IngestLogAsync(user2Id, appName, dto2, streamWrapper);

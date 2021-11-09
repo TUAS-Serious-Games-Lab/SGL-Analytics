@@ -49,7 +49,7 @@ namespace SGL.Analytics.Client {
 			try {
 				using (var stream = logFile.OpenReadRaw()) {
 					var content = new StreamContent(stream);
-					content.Headers.MapDtoProperties(new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime));
+					content.Headers.MapDtoProperties(new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding));
 					content.Headers.Add("App-API-Token", appAPIToken);
 					content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 					var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);

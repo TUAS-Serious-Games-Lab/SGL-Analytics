@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.DTO;
 using SGL.Utilities.Backend;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
@@ -32,6 +33,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 			logMetadata.Property(lm => lm.EndTime).IsStoredInUtc();
 			logMetadata.Property(lm => lm.UploadTime).IsStoredInUtc();
 			logMetadata.Property(lm => lm.FilenameSuffix).HasMaxLength(16);
+			logMetadata.Property(lm => lm.Encoding).HasDefaultValue(LogContentEncoding.GZipCompressed);
 
 			var application = modelBuilder.Entity<Domain.Entity.Application>();
 			application.Property(a => a.Name).HasMaxLength(128);

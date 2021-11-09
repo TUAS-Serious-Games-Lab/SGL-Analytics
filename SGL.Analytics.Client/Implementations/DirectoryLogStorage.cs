@@ -1,3 +1,4 @@
+using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,6 +21,8 @@ namespace SGL.Analytics.Client {
 
 		/// <summary>
 		/// Specifies whether the log files should be compressed.
+		/// This property must not be changed during normal operation but only when no <see cref="SGLAnalytics"/> object uses this object.
+		/// Changing it while a <see cref="SGLAnalytics"/> is using it can cause problems with files not being found or listed correctly, depending on when the change happens.
 		/// </summary>
 		public bool UseCompressedFiles {
 			get => useCompressedFiles;
@@ -30,6 +33,8 @@ namespace SGL.Analytics.Client {
 		}
 		/// <summary>
 		/// Specifies the currently used filename suffix for the stored log files.
+		/// This property must not be changed during normal operation but only when no <see cref="SGLAnalytics"/> object uses this object.
+		/// Changing it while a <see cref="SGLAnalytics"/> is using it can cause problems with files not being found or listed correctly, depending on when the change happens.
 		/// </summary>
 		public string FileSuffix { get; set; } = ".log.gz";
 
@@ -108,6 +113,10 @@ namespace SGL.Analytics.Client {
 			public DateTime EndTime => File.GetLastWriteTime(FullFileName);
 
 			public string FullFileName => Path.Combine(storage.directory, ID.ToString() + storage.FileSuffix);
+
+			public string Suffix => storage.FileSuffix;
+
+			public LogContentEncoding Encoding => storage.UseCompressedFiles ? LogContentEncoding.GZipCompressed : LogContentEncoding.Plain;
 
 			public LogFile(Guid id, DirectoryLogStorage storage) {
 				this.storage = storage;

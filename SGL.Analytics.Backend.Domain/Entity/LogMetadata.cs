@@ -1,3 +1,4 @@
+using SGL.Analytics.DTO;
 using System;
 using System.ComponentModel.DataAnnotations;
 
@@ -49,6 +50,10 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// </summary>
 		public string FilenameSuffix { get; set; }
 		/// <summary>
+		/// The encoding used for the file content.
+		/// </summary>
+		public LogContentEncoding Encoding { get; set; }
+		/// <summary>
 		/// Indicates whether the log was uploaded completely.
 		/// If this is <see langword="false"/>, it may indicate, that the upload is still running or that it was interrupted and may be reattempted.
 		/// </summary>
@@ -58,7 +63,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// Constructs a LogMetadata with the given data values.
 		/// </summary>
 		public LogMetadata(Guid id, Guid appId, Guid userId, Guid localLogId,
-			DateTime creationTime, DateTime endTime, DateTime uploadTime, string filenameSuffix, bool complete = false) {
+			DateTime creationTime, DateTime endTime, DateTime uploadTime, string filenameSuffix, LogContentEncoding encoding, bool complete = false) {
 			Id = id;
 			AppId = appId;
 			UserId = userId;
@@ -66,8 +71,9 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			CreationTime = creationTime;
 			EndTime = endTime;
 			UploadTime = uploadTime;
-			Complete = complete;
 			FilenameSuffix = filenameSuffix;
+			Encoding = encoding;
+			Complete = complete;
 		}
 	}
 }
