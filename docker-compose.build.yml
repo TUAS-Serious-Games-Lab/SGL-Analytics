@@ -5,10 +5,12 @@ services:
     build:
       context: SGL.Analytics.Backend.DB
       dockerfile: Dockerfile
+      target: final
   logs-collector-migrations:
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Logs.Collector/Dockerfile
+      target: final
       args:
         SGL_PKG_USER:
         SGL_PKG_TOKEN:
@@ -16,6 +18,7 @@ services:
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Users.Registration/Dockerfile
+      target: final
       args:
         SGL_PKG_USER:
         SGL_PKG_TOKEN:
@@ -23,6 +26,7 @@ services:
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.AppRegistrationTool/Dockerfile
+      target: final
       args:
         SGL_PKG_USER:
         SGL_PKG_TOKEN:
@@ -30,6 +34,7 @@ services:
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Logs.Collector/Dockerfile
+      target: final
       args:
         SGL_PKG_USER:
         SGL_PKG_TOKEN:
@@ -37,6 +42,7 @@ services:
     build:
       context: .
       dockerfile: SGL.Analytics.Backend.Users.Registration/Dockerfile
+      target: final
       args:
         SGL_PKG_USER:
         SGL_PKG_TOKEN:
@@ -44,3 +50,4 @@ services:
     build:
       context: SGL.Analytics.Backend.APIGW
       dockerfile: Dockerfile
+      target: final
