@@ -23,7 +23,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.10" />
-    <PackageReference Include="SGL.Utilities.Backend" Version="0.1.0" />
+    <PackageReference Include="SGL.Utilities.Backend" Version="0.1.1" />
   </ItemGroup>
 
   <ItemGroup>
