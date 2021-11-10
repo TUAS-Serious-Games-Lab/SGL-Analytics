@@ -7,7 +7,7 @@
 START TRANSACTION;
 
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920162505_InitialCreate') THEN
     CREATE TABLE "Applications" (
@@ -17,9 +17,9 @@ BEGIN
         CONSTRAINT "PK_Applications" PRIMARY KEY ("Id")
     );
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920162505_InitialCreate') THEN
     CREATE TABLE "ApplicationUserPropertyDefinitions" (
@@ -32,9 +32,9 @@ BEGIN
         CONSTRAINT "FK_ApplicationUserPropertyDefinitions_Applications_AppId" FOREIGN KEY ("AppId") REFERENCES "Applications" ("Id") ON DELETE CASCADE
     );
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920162505_InitialCreate') THEN
     CREATE TABLE "UserRegistrations" (
@@ -46,9 +46,9 @@ BEGIN
         CONSTRAINT "FK_UserRegistrations_Applications_AppId" FOREIGN KEY ("AppId") REFERENCES "Applications" ("Id") ON DELETE CASCADE
     );
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920162505_InitialCreate') THEN
     CREATE TABLE "ApplicationUserPropertyInstances" (
@@ -66,49 +66,96 @@ BEGIN
         CONSTRAINT "FK_ApplicationUserPropertyInstances_UserRegistrations_UserId" FOREIGN KEY ("UserId") REFERENCES "UserRegistrations" ("Id") ON DELETE CASCADE
     );
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920162505_InitialCreate') THEN
     CREATE UNIQUE INDEX "IX_Applications_Name" ON "Applications" ("Name");
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920162505_InitialCreate') THEN
     CREATE UNIQUE INDEX "IX_ApplicationUserPropertyDefinitions_AppId_Name" ON "ApplicationUserPropertyDefinitions" ("AppId", "Name");
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920162505_InitialCreate') THEN
     CREATE UNIQUE INDEX "IX_ApplicationUserPropertyInstances_DefinitionId_UserId" ON "ApplicationUserPropertyInstances" ("DefinitionId", "UserId");
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920162505_InitialCreate') THEN
     CREATE INDEX "IX_ApplicationUserPropertyInstances_UserId" ON "ApplicationUserPropertyInstances" ("UserId");
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920162505_InitialCreate') THEN
     CREATE UNIQUE INDEX "IX_UserRegistrations_AppId_Username" ON "UserRegistrations" ("AppId", "Username");
     END IF;
-END $$;
+END $EF$;
 
-DO $$
+DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20210920162505_InitialCreate') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20210920162505_InitialCreate', '5.0.9');
+    VALUES ('20210920162505_InitialCreate', '5.0.10');
     END IF;
-END $$;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20211110153215_AddStringLengthConstraints') THEN
+    ALTER TABLE "UserRegistrations" ALTER COLUMN "Username" TYPE character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20211110153215_AddStringLengthConstraints') THEN
+    ALTER TABLE "UserRegistrations" ALTER COLUMN "HashedSecret" TYPE character varying(128);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20211110153215_AddStringLengthConstraints') THEN
+    ALTER TABLE "ApplicationUserPropertyDefinitions" ALTER COLUMN "Name" TYPE character varying(128);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20211110153215_AddStringLengthConstraints') THEN
+    ALTER TABLE "Applications" ALTER COLUMN "Name" TYPE character varying(128);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20211110153215_AddStringLengthConstraints') THEN
+    ALTER TABLE "Applications" ALTER COLUMN "ApiToken" TYPE character varying(50);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20211110153215_AddStringLengthConstraints') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20211110153215_AddStringLengthConstraints', '5.0.10');
+    END IF;
+END $EF$;
 COMMIT;
 

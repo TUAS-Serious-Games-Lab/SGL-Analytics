@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Utilities.Backend;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 	/// <summary>
@@ -23,12 +24,23 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 		/// </summary>
 		/// <param name="modelBuilder">The builder to use for configuring the model.</param>
 		protected override void OnModelCreating(ModelBuilder modelBuilder) {
-			modelBuilder.Entity<ApplicationWithUserProperties>().HasIndex(a => a.Name).IsUnique();
-			modelBuilder.Entity<UserRegistration>().HasIndex(u => new { u.AppId, u.Username }).IsUnique();
-			modelBuilder.Entity<ApplicationUserPropertyDefinition>().HasIndex(pd => new { pd.AppId, pd.Name }).IsUnique();
-			modelBuilder.Entity<UserRegistration>().OwnsMany(u => u.AppSpecificProperties, p => {
+			var app = modelBuilder.Entity<ApplicationWithUserProperties>();
+			app.HasIndex(a => a.Name).IsUnique();
+			app.Property(a => a.Name).HasMaxLength(128);
+			app.Property(a => a.ApiToken).HasMaxLength(50);
+
+			var propDef = modelBuilder.Entity<ApplicationUserPropertyDefinition>();
+			propDef.HasIndex(pd => (new { pd.AppId, pd.Name })).IsUnique();
+			propDef.Property(pd => pd.Name).HasMaxLength(128);
+
+			var userReg = modelBuilder.Entity<UserRegistration>();
+			userReg.HasIndex(u => (new { u.AppId, u.Username })).IsUnique();
+			userReg.Property(u => u.Username).HasMaxLength(64);
+			userReg.Property(u => u.HashedSecret).HasMaxLength(128);
+			userReg.OwnsMany(u => u.AppSpecificProperties, p => {
 				p.WithOwner(p => p.User);
 				p.HasIndex(pi => new { pi.DefinitionId, pi.UserId }).IsUnique();
+				p.Property(pi => pi.DateTimeValue).IsStoredInUtc();
 			});
 		}
 		/// <summary>

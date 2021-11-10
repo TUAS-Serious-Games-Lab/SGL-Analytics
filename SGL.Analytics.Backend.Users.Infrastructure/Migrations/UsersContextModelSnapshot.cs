@@ -16,7 +16,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Relational:MaxIdentifierLength", 63)
-                .HasAnnotation("ProductVersion", "5.0.9")
+                .HasAnnotation("ProductVersion", "5.0.10")
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
             modelBuilder.Entity("SGL.Analytics.Backend.Domain.Entity.ApplicationUserPropertyDefinition", b =>
@@ -31,7 +31,8 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<bool>("Required")
                         .HasColumnType("boolean");
@@ -55,11 +56,13 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
 
                     b.Property<string>("ApiToken")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.HasKey("Id");
 
@@ -80,11 +83,13 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
 
                     b.Property<string>("HashedSecret")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("Username")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
 
