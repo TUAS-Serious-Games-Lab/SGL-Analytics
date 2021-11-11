@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 if [[ -f /etc/ssl/my/mycert.crt ]] && [[ -f /etc/ssl/my/mycert.key ]]; then
 	echo "${0}: VS certificate is already converted, launching nginx entrypoint..."
@@ -13,7 +13,8 @@ if [[ -z "${VS_CERT_NAME}" ]]; then
 	echo "VS_CERT_NAME not set!"
 	exit 2
 fi
-python3 -c "exit(0)" || apt-get update && apt-get -y install python3
+python3 -c "exit(0)" || apk add --no-cache python3
+openssl version || apk add --no-cache openssl
 echo "${0}: Reading password for VS HTTPS certificate..."
 cd /root/.microsoft/usersecrets/${VS_CERT_SECRET_ID}
 PRIVATE_KEY_PASS=$(python3 -c "import sys, json, codecs; print(json.load(codecs.open('secrets.json', 'r', 'utf-8-sig'))['Kestrel:Certificates:Development:Password'])")
