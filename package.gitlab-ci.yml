@@ -110,6 +110,7 @@ build-service-base-image-main:
     IMAGE_NAME: Base
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: $TEST_DOCKER_BUILD
 
 pkg-docker-main:
   extends:
@@ -123,6 +124,7 @@ pkg-docker-main:
     PACKAGE_IMAGE_TAG_2: latest
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: $TEST_DOCKER_BUILD
 
 build-service-base-image-tags:
   extends:

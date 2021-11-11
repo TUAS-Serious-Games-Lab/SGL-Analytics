@@ -32,9 +32,9 @@ services:
     - "db-data:/var/lib/postgresql/data"
 
   jwt-secret-key-gen:
-    image: debian:buster-slim
+    image: alpine
     command: >
-        bash -c "(cd /etc/SGL.Analytics/JWT-Key/
+        sh -c "(cd /etc/SGL.Analytics/JWT-Key/
         && if [ -f 'Jwt__SymmetricKey' ]; then echo 'Using existing JWT key.'; exit 0; fi
         && (head -c 512 /dev/urandom | base64 -w 0 > ignore.NewKey)
         && chmod 600 ignore.NewKey && mv ignore.NewKey Jwt__SymmetricKey)
@@ -45,7 +45,7 @@ services:
 
   logs-collector-migrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/logs-collector:${DOCKER_TAG-latest}
-    entrypoint: ["wait-for-it", "-s", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_logs", "-f", "/DbMigrations.sql"]
+    entrypoint: ["wait-for", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_logs", "-f", "/DbMigrations.sql"]
     environment:
       PGPASSWORD: $LOGS_PW
     depends_on:
@@ -55,7 +55,7 @@ services:
 
   users-registration-migrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/users-registration:${DOCKER_TAG-latest}
-    entrypoint: ["wait-for-it", "-s", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_users", "-f", "/DbMigrations.sql"]
+    entrypoint: ["wait-for", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_users", "-f", "/DbMigrations.sql"]
     environment:
       PGPASSWORD: $USERREG_PW
     depends_on:
