@@ -284,6 +284,11 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			}, ct);
 		}
 
+		/// <summary>
+		/// Asynchronously checks whether the configured storage directory is available and writeable by creating a directory in it and writing a file into that directory.
+		/// The written file content is then re-read for verification and the directory is deleted afterwards.
+		/// If any of these steps fails, an exception is thrown, indicating a health check failure.
+		/// </summary>
 		public async Task CheckHealthAsync(CancellationToken ct = default) {
 			await Task.Yield();
 			byte[] probe_data = Encoding.UTF8.GetBytes("Health Check Probe");

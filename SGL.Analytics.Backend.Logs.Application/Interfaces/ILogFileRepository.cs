@@ -167,6 +167,12 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <param name="ct">A cancellation token to allow cancelling (the waiting on) the opertation. Note the it is not guaranteed whether this prevents the deletion, as it is dependent on when in the process the task is interrupted.</param>
 		/// <returns>A task object representing the delete operation.</returns>
 		Task DeleteLogAsync(string appName, Guid userId, Guid logId, string suffix, CancellationToken ct = default);
+
+		/// <summary>
+		/// Asynchronously checks the service health of the underlying storage layer and throws an appropriate exception if it is not healthy.
+		/// </summary>
+		/// <param name="ct">A cancellation token to allow cancelling the health check operation.</param>
+		/// <returns>A task representing the health check check operation.</returns>
 		Task CheckHealthAsync(CancellationToken ct = default);
 	}
 }
