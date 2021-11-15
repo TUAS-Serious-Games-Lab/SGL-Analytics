@@ -34,7 +34,7 @@ RUN cd ../SGL.Analytics.Backend.Users.Infrastructure && \
 	../remove_BOM.sh /app/DbMigrations.sql
 
 FROM ${SERVICE_BASE_IMAGE_OVERRIDE:-base} AS final
-HEALTHCHECK --start-period=30s CMD curl --fail http://localhost:80/health || exit 1
+HEALTHCHECK --start-period=30s CMD curl --fail http://localhost:8080/health || exit 1
 WORKDIR /app
 COPY --from=publish /app/publish .
 COPY --from=publish /app/DbMigrations.sql /

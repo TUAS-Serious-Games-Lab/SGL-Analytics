@@ -75,7 +75,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 
 			app.UseEndpoints(endpoints => {
 				endpoints.MapControllers();
-				endpoints.MapHealthChecks("/health");
+				endpoints.MapHealthChecks("/health").RequireHost($"localhost:{Configuration["ManagementPort"]}");
 			});
 		}
 	}
