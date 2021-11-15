@@ -2,7 +2,7 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:5.0-alpine AS base
 ADD https://raw.githubusercontent.com/eficode/wait-for/7761def579a37f9160aa60b73984531b26479993/wait-for /bin/wait-for
-RUN apk add --no-cache postgresql-client && chmod +x /bin/wait-for
+RUN apk add --no-cache postgresql-client curl && chmod +x /bin/wait-for
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
@@ -34,6 +34,7 @@ RUN cd ../SGL.Analytics.Backend.Logs.Infrastructure && \
 	../remove_BOM.sh /app/DbMigrations.sql
 
 FROM ${SERVICE_BASE_IMAGE_OVERRIDE:-base} AS final
+HEALTHCHECK --start-period=30s CMD curl --fail http://localhost:80/health || exit 1
 WORKDIR /app
 COPY --from=publish /app/publish .
 COPY --from=publish /app/DbMigrations.sql /

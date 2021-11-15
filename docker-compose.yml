@@ -46,6 +46,8 @@ services:
   logs-collector-migrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/logs-collector:${DOCKER_TAG-latest}
     entrypoint: ["wait-for", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_logs", "-f", "/DbMigrations.sql"]
+    healthcheck:
+      disable: true
     environment:
       PGPASSWORD: $LOGS_PW
     depends_on:
@@ -56,6 +58,8 @@ services:
   users-registration-migrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/users-registration:${DOCKER_TAG-latest}
     entrypoint: ["wait-for", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_users", "-f", "/DbMigrations.sql"]
+    healthcheck:
+      disable: true
     environment:
       PGPASSWORD: $USERREG_PW
     depends_on:

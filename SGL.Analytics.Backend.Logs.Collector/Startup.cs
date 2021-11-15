@@ -45,6 +45,8 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 
 			services.UseLogsBackendInfrastructure(Configuration);
 			services.AddScoped<ILogManager, LogManager>();
+
+			services.AddHealthChecks();
 		}
 
 		/// <summary>
@@ -69,6 +71,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 
 			app.UseEndpoints(endpoints => {
 				endpoints.MapControllers();
+				endpoints.MapHealthChecks("/health");
 			});
 		}
 	}
