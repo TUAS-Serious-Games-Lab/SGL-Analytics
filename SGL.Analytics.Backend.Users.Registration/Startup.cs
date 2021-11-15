@@ -51,6 +51,9 @@ namespace SGL.Analytics.Backend.Users.Registration {
 
 			services.AddScoped<IUserManager, UserManager>();
 			services.UseJwtLoginService(Configuration);
+
+			services.AddHealthChecks()
+				.AddDbContextCheck<UsersContext>("db_health_check");
 		}
 
 		/// <summary>
@@ -72,6 +75,7 @@ namespace SGL.Analytics.Backend.Users.Registration {
 
 			app.UseEndpoints(endpoints => {
 				endpoints.MapControllers();
+				endpoints.MapHealthChecks("/health").RequireHost($"localhost:{Configuration["ManagementPort"]}");
 			});
 		}
 	}

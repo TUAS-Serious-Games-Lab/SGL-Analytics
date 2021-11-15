@@ -46,6 +46,8 @@ services:
   logs-collector-migrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/logs-collector:${DOCKER_TAG-latest}
     entrypoint: ["wait-for", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_logs", "-f", "/DbMigrations.sql"]
+    healthcheck:
+      disable: true
     environment:
       PGPASSWORD: $LOGS_PW
     depends_on:
@@ -56,6 +58,8 @@ services:
   users-registration-migrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/users-registration:${DOCKER_TAG-latest}
     entrypoint: ["wait-for", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_users", "-f", "/DbMigrations.sql"]
+    healthcheck:
+      disable: true
     environment:
       PGPASSWORD: $USERREG_PW
     depends_on:
@@ -89,7 +93,7 @@ services:
     - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
     - "log-collector-conf:/etc/SGL.Analytics/LogCollector/"
     environment:
-    - ASPNETCORE_URLS=http://+:80
+    - ASPNETCORE_URLS=http://+:80;http://localhost:8080
 
   users-registration-app:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/users-registration:${DOCKER_TAG-latest}
@@ -104,7 +108,7 @@ services:
     - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
     - "user-registration-conf:/etc/SGL.Analytics/UserRegistration/"
     environment:
-    - ASPNETCORE_URLS=http://+:80
+    - ASPNETCORE_URLS=http://+:80;http://localhost:8080
 
   api-gateway:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/api-gateway:${DOCKER_TAG-latest}

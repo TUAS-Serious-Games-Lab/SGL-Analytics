@@ -80,5 +80,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			files[new LogPath() { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix }] = stream;
 			await content.CopyToAsync(stream, ct);
 		}
+
+		public Task CheckHealthAsync(CancellationToken ct = default) => Task.CompletedTask;
 	}
 }

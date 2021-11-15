@@ -91,6 +91,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				this.content = content;
 			}
 
+			public Task CheckHealthAsync(CancellationToken ct = default) => Task.CompletedTask;
+
 			public async Task CopyLogIntoAsync(string appName, Guid userId, Guid logId, string suffix, Stream contentDestination, CancellationToken ct = default) {
 				if ((appName, userId, logId, suffix) != (this.appName, this.userId, this.logId, this.suffix)) {
 					throw new LogFileNotAvailableException(new LogPath { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix });
