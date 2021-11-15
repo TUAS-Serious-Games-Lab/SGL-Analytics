@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -281,6 +282,38 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 				// Rename to final file name to make it visible to other operations.
 				File.Move(filePath, makeFilePath(appName, userId, logId, suffix), overwrite: true);
 			}, ct);
+		}
+
+		public async Task CheckHealthAsync(CancellationToken ct = default) {
+			await Task.Yield();
+			byte[] probe_data = Encoding.UTF8.GetBytes("Health Check Probe");
+			ct.ThrowIfCancellationRequested();
+			var health_check_dir = Path.Combine(storageDirectory, ".server_health_check");
+			try {
+				Directory.Delete(health_check_dir, true);
+			}
+			catch (Exception) { }
+			Directory.CreateDirectory(health_check_dir);
+			ct.ThrowIfCancellationRequested();
+			var probe_file = Path.Combine(health_check_dir, "probe.file");
+			using (var writeStream = new FileStream(probe_file, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
+				ct.ThrowIfCancellationRequested();
+				await writeStream.WriteAsync(probe_data,ct);
+			}
+			ct.ThrowIfCancellationRequested();
+			using (var readStream = new FileStream(probe_file, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true)) {
+				ct.ThrowIfCancellationRequested();
+				byte[] read_probe = new byte[4096];
+				var read_amt = await readStream.ReadAsync(read_probe, ct);
+				if(read_amt != probe_data.Length) {
+					throw new Exception("Read probe data length did not match written probe data length.");
+				}
+				if (!Enumerable.SequenceEqual(probe_data, read_probe.Take(read_amt))) {
+					throw new Exception("Read probe data did not match written probe data.");
+				}
+				ct.ThrowIfCancellationRequested();
+			}
+			Directory.Delete(health_check_dir, true);
 		}
 	}
 }

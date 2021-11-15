@@ -9,6 +9,7 @@ using System;
 using SGL.Utilities.Logging.FileLogging;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Analytics.Backend.Logs.Infrastructure;
+using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	/// <summary>
@@ -46,7 +47,8 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			services.UseLogsBackendInfrastructure(Configuration);
 			services.AddScoped<ILogManager, LogManager>();
 
-			services.AddHealthChecks();
+			services.AddHealthChecks()
+				.AddCheck<LogFileRepositoryHealthCheck>("log_file_repository_health_check");
 		}
 
 		/// <summary>
