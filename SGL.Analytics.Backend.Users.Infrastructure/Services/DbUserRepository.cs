@@ -81,5 +81,13 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			}
 			return userReg;
 		}
+
+		/// <inheritdoc/>
+		public async Task<IDictionary<string, int>> GetUsersCountPerAppAsync(CancellationToken ct = default) {
+			var query = from ur in context.UserRegistrations.Include(ur => ur.App)
+						group ur by ur.App.Name into a
+						select new { AppName = a.Key, UsersCount = a.Count() };
+			return await query.ToDictionaryAsync(e => e.AppName, e => e.UsersCount, ct);
+		}
 	}
 }

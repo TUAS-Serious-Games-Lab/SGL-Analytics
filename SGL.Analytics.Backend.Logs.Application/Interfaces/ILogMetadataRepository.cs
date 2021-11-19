@@ -41,5 +41,12 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the updated object as its result.</returns>
 		Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default);
+
+		/// <summary>
+		/// Asynchronously obtains the per-application counts of the log files in the database.
+		/// </summary>
+		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
+		/// <returns>A task object representing the operation, providing an application name -> log count dictionary as its result.</returns>
+		Task<IDictionary<string,int>> GetLogsCountPerAppAsync(CancellationToken ct = default);
 	}
 }

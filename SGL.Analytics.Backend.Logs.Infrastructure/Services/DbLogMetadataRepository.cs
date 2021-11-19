@@ -59,6 +59,14 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		/// <inheritdoc/>
+		public async Task<IDictionary<string, int>> GetLogsCountPerAppAsync(CancellationToken ct = default) {
+			var query = from lm in context.LogMetadata.Include(lmd => lmd.App)
+			group lm by lm.App.Name into a
+			select new { AppName=a.Key, LogsCount=a.Count() };
+			return await query.ToDictionaryAsync(e=>e.AppName, e=>e.LogsCount,ct);
+		}
+
+		/// <inheritdoc/>
 		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default) {
 			Debug.Assert(context.Entry(logMetadata).State is EntityState.Modified or EntityState.Unchanged);
 			await context.SaveChangesAsync(ct);

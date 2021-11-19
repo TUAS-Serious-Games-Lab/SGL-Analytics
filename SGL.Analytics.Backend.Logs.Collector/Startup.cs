@@ -12,6 +12,7 @@ using SGL.Analytics.Backend.Logs.Infrastructure;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using Prometheus;
+using SGL.Utilities.Backend;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	/// <summary>
@@ -55,6 +56,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 				.ForwardToPrometheus();
 
 			DiagnosticSourceAdapter.StartListening();
+			services.UseApplicationMetricsService<ApplicationMetricsService>(Configuration);
 		}
 
 		/// <summary>
