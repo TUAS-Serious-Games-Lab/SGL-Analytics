@@ -233,7 +233,7 @@ namespace SGL.Analytics.Client {
 					logger.LogError(ex, "Uploading data log {logId} failed with an unexpected exception. It will be retried at next startup on explicit retry.", logFile.ID);
 				}
 				catch (Exception ex) {
-					logger.LogError(ex, "Removing data log {logId} failed with an unexpected exception.", logFile.ID, ex.Message);
+					logger.LogError(ex, "Removing data log {logId} failed with an unexpected exception.", logFile.ID);
 				}
 			}
 		}

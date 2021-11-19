@@ -11,6 +11,7 @@ using SGL.Utilities.Backend.AspNetCore;
 using SGL.Analytics.Backend.Logs.Infrastructure;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
+using Prometheus;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	/// <summary>
@@ -50,7 +51,10 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 
 			services.AddHealthChecks()
 				.AddCheck<LogFileRepositoryHealthCheck>("log_file_repository_health_check")
-				.AddDbContextCheck<LogsContext>("db_health_check");
+				.AddDbContextCheck<LogsContext>("db_health_check")
+				.ForwardToPrometheus();
+
+			DiagnosticSourceAdapter.StartListening();
 		}
 
 		/// <summary>
@@ -68,6 +72,8 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 
 			app.UseRouting();
 
+			app.UseHttpMetrics();
+
 			app.UseAuthentication();
 			app.UseAuthorization();
 			app.UseUserLogScoping();
@@ -76,6 +82,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			app.UseEndpoints(endpoints => {
 				endpoints.MapControllers();
 				endpoints.MapHealthChecks("/health").RequireHost($"localhost:{Configuration["ManagementPort"]}");
+				endpoints.MapMetrics().RequireHost($"*:{Configuration["ManagementPort"]}");
 			});
 		}
 	}

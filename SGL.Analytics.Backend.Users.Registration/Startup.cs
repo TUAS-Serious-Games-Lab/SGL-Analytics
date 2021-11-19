@@ -19,6 +19,7 @@ using SGL.Analytics.Backend.Users.Infrastructure.Services;
 using SGL.Utilities.Logging.FileLogging;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Analytics.Backend.Users.Infrastructure;
+using Prometheus;
 
 namespace SGL.Analytics.Backend.Users.Registration {
 	/// <summary>
@@ -53,7 +54,10 @@ namespace SGL.Analytics.Backend.Users.Registration {
 			services.UseJwtLoginService(Configuration);
 
 			services.AddHealthChecks()
-				.AddDbContextCheck<UsersContext>("db_health_check");
+				.AddDbContextCheck<UsersContext>("db_health_check")
+				.ForwardToPrometheus();
+
+			DiagnosticSourceAdapter.StartListening();
 		}
 
 		/// <summary>
@@ -71,11 +75,14 @@ namespace SGL.Analytics.Backend.Users.Registration {
 
 			app.UseRouting();
 
+			app.UseHttpMetrics();
+
 			app.UseAuthorization();
 
 			app.UseEndpoints(endpoints => {
 				endpoints.MapControllers();
 				endpoints.MapHealthChecks("/health").RequireHost($"localhost:{Configuration["ManagementPort"]}");
+				endpoints.MapMetrics().RequireHost($"*:{Configuration["ManagementPort"]}");
 			});
 		}
 	}
