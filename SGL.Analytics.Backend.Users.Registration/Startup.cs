@@ -56,6 +56,8 @@ namespace SGL.Analytics.Backend.Users.Registration {
 			services.AddHealthChecks()
 				.AddDbContextCheck<UsersContext>("db_health_check")
 				.ForwardToPrometheus();
+
+			DiagnosticSourceAdapter.StartListening();
 		}
 
 		/// <summary>

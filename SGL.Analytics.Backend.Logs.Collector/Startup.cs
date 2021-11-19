@@ -53,6 +53,8 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 				.AddCheck<LogFileRepositoryHealthCheck>("log_file_repository_health_check")
 				.AddDbContextCheck<LogsContext>("db_health_check")
 				.ForwardToPrometheus();
+
+			DiagnosticSourceAdapter.StartListening();
 		}
 
 		/// <summary>
