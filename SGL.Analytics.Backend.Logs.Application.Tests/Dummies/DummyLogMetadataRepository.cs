@@ -40,6 +40,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			return logs.Values.Where(lm => lm.AppId == userAppId && lm.UserId == userId && lm.LocalLogId == localLogId).SingleOrDefault<LogMetadata?>();
 		}
 
+		public async Task<IDictionary<string, int>> GetLogsCountPerAppAsync(CancellationToken ct = default) {
+			await Task.CompletedTask;
+			var query = from lm in logs.Values
+						group lm by lm.App.Id into a
+						select new { AppName = a.First().App.Name, LogsCount = a.Count() };
+			return query.ToDictionary(e => e.AppName, e => e.LogsCount);
+		}
+
 		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
