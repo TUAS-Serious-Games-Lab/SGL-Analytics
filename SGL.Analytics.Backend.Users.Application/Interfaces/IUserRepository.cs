@@ -33,6 +33,11 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <returns>A task object representing the operation, providing the updated object as its result.</returns>
 		Task<UserRegistration> UpdateUserAsync(UserRegistration userReg, CancellationToken ct = default);
 
+		/// <summary>
+		/// Asynchronously obtains the per-application counts of the registered users.
+		/// </summary>
+		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
+		/// <returns>A task object representing the operation, providing an application name -> user count dictionary as its result.</returns>
 		Task<IDictionary<string, int>> GetUsersCountPerAppAsync(CancellationToken ct = default);
 	}
 }
