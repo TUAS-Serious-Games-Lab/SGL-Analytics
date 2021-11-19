@@ -20,6 +20,7 @@ using SGL.Utilities.Logging.FileLogging;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Analytics.Backend.Users.Infrastructure;
 using Prometheus;
+using SGL.Utilities.Backend;
 
 namespace SGL.Analytics.Backend.Users.Registration {
 	/// <summary>
@@ -58,6 +59,7 @@ namespace SGL.Analytics.Backend.Users.Registration {
 				.ForwardToPrometheus();
 
 			DiagnosticSourceAdapter.StartListening();
+			services.UseApplicationMetricsService<ApplicationMetricsService>(Configuration);
 		}
 
 		/// <summary>
