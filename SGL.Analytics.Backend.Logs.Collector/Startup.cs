@@ -55,6 +55,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 				.ForwardToPrometheus();
 
 			DiagnosticSourceAdapter.StartListening();
+			services.UseApplicationMetricsService(Configuration);
 		}
 
 		/// <summary>
