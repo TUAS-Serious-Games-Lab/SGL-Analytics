@@ -1,5 +1,9 @@
 {
   "profiles": {
+    "SGL.Analytics.Client.Example --help": {
+      "commandName": "Project",
+      "commandLineArgs": "--help"
+    },
     "SGL.Analytics.Client.Example": {
       "commandName": "Project",
       "commandLineArgs": "-v"
