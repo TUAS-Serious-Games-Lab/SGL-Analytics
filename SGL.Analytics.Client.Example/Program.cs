@@ -26,6 +26,13 @@ namespace SGL.Analytics.Client.Example {
 			[Option('l', "log-level", HelpText = "Diagnostics logging level for SGL Analytics.")]
 			public LogLevel LoggingLevel { get; set; } = LogLevel.None;
 
+			[Option('o',"logs-list", HelpText = "Write the list of IDs of the recorded game logs.")]
+			public string? LogsListFile { get; set; } = null;
+			[Option('k',"keep", HelpText = "Keep the recorded files in the archive/ subdirectory under the log storage directory after upload.")]
+			public bool KeepFiles { get; set; } = false;
+			[Option('d', "logs-directory", HelpText = "Override the storage directory to use for log storage.")]
+			public string? LogsDirectory { get; set; } = null;
+
 			[Value(0, MetaName = "MOVES_FILES", HelpText = "The name(s) / path(s) of one or more files containing the moves to make in the simulated TicTacToe game in order. " +
 				"Each line in these files should consist of two numbers in range 1-3, separated by a comma, that indicate the column and row position to mark. " +
 				"The moves alternate between players. If no file is given, standard input is used.")]
@@ -49,7 +56,7 @@ namespace SGL.Analytics.Client.Example {
 			await Console.Out.WriteLineAsync(HelpText.AutoBuild(result, h => {
 				h.AdditionalNewLineAfterOption = false;
 				h.Heading = $"SGL Analytics Client Demo {Assembly.GetExecutingAssembly().GetName().Version}";
-				h.MaximumDisplayWidth = 170;
+				h.MaximumDisplayWidth = 180;
 				return h;
 			}));
 		}
@@ -59,7 +66,12 @@ namespace SGL.Analytics.Client.Example {
 			if (opts.LoggingLevel < LogLevel.None) {
 				logger = LoggerFactory.Create(config => config.ClearProviders().AddConsole().SetMinimumLevel(opts.LoggingLevel)).CreateLogger<SGLAnalytics>();
 			}
+			var rootDS = new FileRootDataStore(opts.AppName);
+			var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(rootDS.DataDirectory, "DataLogs"));
+			logStorage.Archiving = opts.KeepFiles;
 			SGLAnalytics analytics = new SGLAnalytics(opts.AppName, opts.AppApiToken,
+				rootDataStore: rootDS,
+				logStorage: logStorage,
 				logCollectorClient: new LogCollectorRestClient(opts.Backend),
 				userRegistrationClient: new UserRegistrationRestClient(opts.Backend),
 				diagnosticsLogger: logger);
@@ -90,7 +102,11 @@ namespace SGL.Analytics.Client.Example {
 				logger.LogError(ex, "An exception was thrown from FinishAsync.");
 				Environment.ExitCode = 3;
 			}
-			await Console.Out.WriteLineAsync($"\n The following logs were recorded: {string.Join(", ", gameController.LogIds.Select(id => id.ToString()))}");
+			var logIds = gameController.LogIds.Select(id => id.ToString());
+			await Console.Out.WriteLineAsync($"\n The following logs were recorded: {string.Join(", ", logIds)}");
+			if (opts.LogsListFile != null) {
+				await File.WriteAllLinesAsync(opts.LogsListFile, logIds);
+			}
 		}
 	}
 }

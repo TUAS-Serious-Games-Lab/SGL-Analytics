@@ -105,5 +105,6 @@ deploy-shg-test:
   trigger:
     project: serious-games-lab/senior-health-games/sgl-analytics-deployment
     branch: main
+    strategy: depend
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
