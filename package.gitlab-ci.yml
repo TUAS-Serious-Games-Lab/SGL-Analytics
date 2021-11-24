@@ -33,6 +33,9 @@ package-client-lib-tags:
 
 package-client-example:
   stage: package
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
   script:
     - dotnet nuget update source SGL --username ${SGL_PKG_USER} --password ${SGL_PKG_TOKEN} --store-password-in-clear-text
     - cd SGL.Analytics.Client.Example
