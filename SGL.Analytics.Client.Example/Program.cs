@@ -56,7 +56,7 @@ namespace SGL.Analytics.Client.Example {
 			await Console.Out.WriteLineAsync(HelpText.AutoBuild(result, h => {
 				h.AdditionalNewLineAfterOption = false;
 				h.Heading = $"SGL Analytics Client Demo {Assembly.GetExecutingAssembly().GetName().Version}";
-				h.MaximumDisplayWidth = 170;
+				h.MaximumDisplayWidth = 180;
 				return h;
 			}));
 		}
