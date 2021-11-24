@@ -37,6 +37,7 @@ package-client-example:
     - dotnet nuget update source SGL --username ${SGL_PKG_USER} --password ${SGL_PKG_TOKEN} --store-password-in-clear-text
     - cd SGL.Analytics.Client.Example
     - dotnet publish -c Release -o ../example_client
+    - cp TestSession.txt ExampleSession.txt ../example_client/
   artifacts:
     expire_in: 14 days
     name: "SGL.Analytics.Client.Example"
