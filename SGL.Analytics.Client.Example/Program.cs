@@ -25,7 +25,8 @@ namespace SGL.Analytics.Client.Example {
 			public bool Verbose { get; set; } = false;
 			[Option('l', "log-level", HelpText = "Diagnostics logging level for SGL Analytics.")]
 			public LogLevel LoggingLevel { get; set; } = LogLevel.None;
-
+			[Option('i',"user-id-file", HelpText ="Write registered user id to the given file.")]
+			public string? UserIdFile { get; set; } = null;
 			[Option('o',"logs-list", HelpText = "Write the list of IDs of the recorded game logs.")]
 			public string? LogsListFile { get; set; } = null;
 			[Option('k',"keep", HelpText = "Keep the recorded files in the archive/ subdirectory under the log storage directory after upload.")]
@@ -83,6 +84,9 @@ namespace SGL.Analytics.Client.Example {
 					await Console.Error.WriteLineAsync($"Registration Error: {ex.Message}");
 					Environment.ExitCode = 2;
 				}
+			}
+			if (opts.UserIdFile != null) {
+				await File.WriteAllLinesAsync(opts.UserIdFile,Enumerable.Repeat(rootDS.UserID.ToString() ?? "<null>",1));
 			}
 			TicTacToeController gameController = new TicTacToeController(analytics, opts.Verbose, Console.Out);
 			if (opts.MovesFiles.Any()) {
