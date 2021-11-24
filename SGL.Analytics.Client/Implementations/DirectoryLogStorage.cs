@@ -137,7 +137,9 @@ namespace SGL.Analytics.Client {
 
 			public void Remove() {
 				if (storage.Archiving) {
-					File.Move(FullFileName, Path.Combine(storage.directory, "archive", ID.ToString() + storage.FileSuffix));
+					var targetDir = Path.Combine(storage.directory, "archive");
+					Directory.CreateDirectory(targetDir);
+					File.Move(FullFileName, Path.Combine(targetDir, ID.ToString() + storage.FileSuffix));
 				}
 				else {
 					File.Delete(FullFileName);
