@@ -31,6 +31,18 @@ package-client-lib-tags:
   rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
 
+package-client-example:
+  stage: package
+  script:
+    - dotnet nuget update source SGL --username ${SGL_PKG_USER} --password ${SGL_PKG_TOKEN} --store-password-in-clear-text
+    - cd SGL.Analytics.Client.Example
+    - dotnet publish -c Release -o ../example_client
+  artifacts:
+    expire_in: 14 days
+    name: "SGL.Analytics.Client.Example"
+    paths:
+      - example_client
+
 .package-backend-docker-images:
   stage: package
   needs:
