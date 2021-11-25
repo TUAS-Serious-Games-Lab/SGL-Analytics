@@ -19,8 +19,10 @@ namespace SGL.Analytics.Client.Example {
 			public string AppName { get; set; } = "SGL.Analytics.Client.Example";
 			[Option('t', "token", HelpText = "Specify the API token value to use that is registered in the backend.")]
 			public string AppApiToken { get; set; } = "FUfq7iwB43fCkIXLlRSiSy2CKrm6FWmAt/L3kzAqELU=";
-			[Option('u', "username", HelpText = "Username to use for the registration if not already registered. If not specified, an alphanumeric random string is used.")]
+			[Option('u', "username", HelpText = "Username to use for the registration if not already registered.\nIf not specified, an alphanumeric random string is used.\nUse --no-username to register with empty username.")]
 			public string Username { get; set; } = StringGenerator.GenerateRandomWord(8);
+			[Option("no-username", HelpText = "Register without username field.") ]
+			public bool NoUsername { get; set; } = false;
 			[Option('v', "verbose", HelpText = "Produce extra output. (Draws the board after each move.)")]
 			public bool Verbose { get; set; } = false;
 			[Option('l', "log-level", HelpText = "Diagnostics logging level for SGL Analytics.")]
@@ -78,7 +80,7 @@ namespace SGL.Analytics.Client.Example {
 				diagnosticsLogger: logger);
 			if (!analytics.IsRegistered()) {
 				try {
-					await analytics.RegisterAsync(new BaseUserData(opts.Username));
+					await analytics.RegisterAsync(new BaseUserData(opts.NoUsername ? null: opts.Username));
 				}
 				catch (Exception ex) {
 					await Console.Error.WriteLineAsync($"Registration Error: {ex.Message}");
