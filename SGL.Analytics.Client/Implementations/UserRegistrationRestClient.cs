@@ -136,7 +136,7 @@ namespace SGL.Analytics.Client {
 			content.Headers.Add("App-API-Token", appAPIToken);
 			var response = await httpClient.PostAsync(userRegistrationApiRoute, content);
 			if (response is null) throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
-			if (response.StatusCode == HttpStatusCode.Conflict) throw new UsernameAlreadyTakenException(userDTO.Username);
+			if (response.StatusCode == HttpStatusCode.Conflict && userDTO.Username!=null) throw new UsernameAlreadyTakenException(userDTO.Username);
 			response.EnsureSuccessStatusCode();
 			var result = await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>(options);
 			return result ?? throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
