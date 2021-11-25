@@ -75,6 +75,17 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			return Create(Guid.NewGuid(), app, username, hashedSecret);
 		}
 
+		/// <summary>
+		/// Creates an user registration object with a generated id for the given application and with the given data values, using the id as the username.
+		/// </summary>
+		/// <param name="app">The application for which the user is registered.</param>
+		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
+		/// <returns>The created object.</returns>
+		public static UserRegistration Create(ApplicationWithUserProperties app, string hashedSecret) {
+			var id = Guid.NewGuid();
+			return Create(id, app, id.ToString(), hashedSecret);
+		}
+
 		private ApplicationUserPropertyInstance setAppSpecificPropertyImpl(string name, object? value, Func<string, ApplicationUserPropertyDefinition> getPropDef) {
 			var propInst = AppSpecificProperties.Where(p => p.Definition.Name == name).SingleOrDefault();
 			if (propInst is null) {
