@@ -82,9 +82,28 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		}
 
 		[Fact]
-		public async Task ValidUserRegistrationIsSuccessfullyCompleted() {
+		public async Task ValidUserRegistrationWithUsernameIsSuccessfullyCompleted() {
 			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = "Hello" };
 			var userRegDTO = new UserRegistrationDTO(fixture.AppName, "Testuser1",
+				StringGenerator.GenerateRandomWord(16),// Not cryptographic, but ok for test
+				props);
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(userRegDTO);
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				request.Content = content;
+				request.Headers.Add("App-API-Token", fixture.AppApiToken);
+				var response = await client.SendAsync(request);
+				response.EnsureSuccessStatusCode();
+				Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+				var result = await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>();
+				Assert.NotNull(result);
+				Assert.NotEqual(Guid.Empty, result!.UserId);
+			}
+		}
+		[Fact]
+		public async Task ValidUserRegistrationWithoutUsernameIsSuccessfullyCompleted() {
+			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = "Hello" };
+			var userRegDTO = new UserRegistrationDTO(fixture.AppName, null,
 				StringGenerator.GenerateRandomWord(16),// Not cryptographic, but ok for test
 				props);
 			using (var client = fixture.CreateClient()) {

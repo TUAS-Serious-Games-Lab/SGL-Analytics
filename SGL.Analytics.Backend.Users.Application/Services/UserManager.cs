@@ -47,7 +47,11 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				logger.LogError("Attempt to register user {username} for non-existent application {appName}.", userRegDTO.Username, userRegDTO.AppName);
 				throw new ApplicationDoesNotExistException(userRegDTO.AppName);
 			}
-			var userReg = UserRegistration.Create(app, userRegDTO.Username, SecretHashing.CreateHashedSecret(userRegDTO.Secret));
+
+			var hashedSecret = SecretHashing.CreateHashedSecret(userRegDTO.Secret);
+			var userReg = userRegDTO.Username != null ?
+				UserRegistration.Create(app, userRegDTO.Username, hashedSecret) :
+				UserRegistration.Create(app, hashedSecret);
 			User user = new User(userReg);
 			foreach (var prop in userRegDTO.StudySpecificProperties) {
 				user.AppSpecificProperties[prop.Key] = prop.Value;

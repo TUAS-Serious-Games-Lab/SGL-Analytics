@@ -65,13 +65,18 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 
 		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegistrationData, CancellationToken ct = default) {
 			await Task.CompletedTask;
-			if (users.Values.Count(u => u.Username == userRegistrationData.Username) > 0) {
+			if (userRegistrationData.Username!=null && users.Values.Count(u => u.Username == userRegistrationData.Username) > 0) {
 				throw new EntityUniquenessConflictException("User", "Username", userRegistrationData.Username);
 			}
 			if (!Apps.TryGetValue(userRegistrationData.AppName, out var app)) {
 				throw new ApplicationDoesNotExistException(userRegistrationData.AppName);
 			}
-			var user = new User(UserRegistration.Create(app!, userRegistrationData.Username, SecretHashing.CreateHashedSecret(userRegistrationData.Secret)));
+
+			string hashedSecret = SecretHashing.CreateHashedSecret(userRegistrationData.Secret);
+			UserRegistration userReg = userRegistrationData.Username != null ?
+				UserRegistration.Create(app!, userRegistrationData.Username, hashedSecret) :
+				UserRegistration.Create(app!, hashedSecret);
+			var user = new User(userReg);
 			foreach (var prop in userRegistrationData.StudySpecificProperties) {
 				user.AppSpecificProperties[prop.Key] = prop.Value;
 			}

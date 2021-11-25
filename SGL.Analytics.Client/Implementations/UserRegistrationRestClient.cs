@@ -131,12 +131,15 @@ namespace SGL.Analytics.Client {
 
 		/// <inheritdoc/>
 		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken) {
-			var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true };
+			var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
+				WriteIndented = true,
+				DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+			};
 			var content = JsonContent.Create(userDTO, new MediaTypeHeaderValue("application/json"), options);
 			content.Headers.Add("App-API-Token", appAPIToken);
 			var response = await httpClient.PostAsync(userRegistrationApiRoute, content);
 			if (response is null) throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
-			if (response.StatusCode == HttpStatusCode.Conflict) throw new UsernameAlreadyTakenException(userDTO.Username);
+			if (response.StatusCode == HttpStatusCode.Conflict && userDTO.Username != null) throw new UsernameAlreadyTakenException(userDTO.Username);
 			response.EnsureSuccessStatusCode();
 			var result = await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>(options);
 			return result ?? throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");

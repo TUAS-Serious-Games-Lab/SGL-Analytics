@@ -12,13 +12,13 @@ namespace SGL.Analytics.Client {
 		/// <summary>
 		/// The username to identify the user.
 		/// </summary>
-		public string Username { get; set; }
+		public string? Username { get; set; }
 
 		/// <summary>
 		/// Instaniates the base class object using the given username.
 		/// </summary>
 		/// <param name="username">The username to store in the object.</param>
-		public BaseUserData(string username) {
+		public BaseUserData(string? username) {
 			Username = username;
 		}
 

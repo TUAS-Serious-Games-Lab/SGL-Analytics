@@ -59,14 +59,16 @@ namespace SGL.Analytics.Client.Tests {
 		}
 
 		public class TestUserData : BaseUserData {
-			public TestUserData(string username) : base(username) { }
+			public TestUserData(string? username) : base(username) { }
 			public string Label { get; set; } = "";
 			public DateTime RegistrationTime { get; set; } = DateTime.Now;
 			public int SomeNumber { get; set; } = 0;
 		}
 
-		[Fact]
-		public async Task LogEventsAreRecordedAndUploadedAsLogFilesWithCorrectContentAfterRegistration() {
+		[Theory]
+		[InlineData("Testuser")]
+		[InlineData(null)]
+		public async Task LogEventsAreRecordedAndUploadedAsLogFilesWithCorrectContentAfterRegistration(string? username) {
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
 			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log").UsingPost()
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
@@ -104,7 +106,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test I" });
 			analytics.RecordSnapshotUnshared("Channel 3", 2, "Snap E");
 
-			var user = new TestUserData("Testuser") { Label = "This is a test!", SomeNumber = 42 };
+			var user = new TestUserData(username) { Label = "This is a test!", SomeNumber = 42 };
 			await analytics.RegisterAsync(user);
 
 			analytics.StartNewLog();
