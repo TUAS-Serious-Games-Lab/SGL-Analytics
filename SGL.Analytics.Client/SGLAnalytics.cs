@@ -147,6 +147,9 @@ namespace SGL.Analytics.Client {
 				lock (lockObject) {
 					rootDataStore.UserID = regResult.UserId;
 					rootDataStore.UserSecret = secret;
+					if (userData.Username != null) {
+						rootDataStore.Username = userData.Username;
+					}
 				}
 				await rootDataStore.SaveAsync();
 				logger.LogInformation("Successfully registered user.");
