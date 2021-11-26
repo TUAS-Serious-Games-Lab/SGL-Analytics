@@ -37,6 +37,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			return new User(userReg);
 		}
 
+		/// <inheritdoc/>
 		public async Task<User?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default) {
 			var userReg = await userRepo.GetUserByUsernameAndAppNameAsync(username, appName, ct);
 			if (userReg is null) return null;

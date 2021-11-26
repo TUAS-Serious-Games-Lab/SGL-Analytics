@@ -17,6 +17,13 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The user object if the user exists, or <see langword="null"/> otherwise.</returns>
 		Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default);
+		/// <summary>
+		/// Asynchronously obtains the user object with the given username in the application given by name if such a user exists.
+		/// </summary>
+		/// <param name="username">The per-application unique username of the user.</param>
+		/// <param name="appName">The application with which the username is associated.</param>
+		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
+		/// <returns>A task object representing the operation, providing the following result: The user object if the user exists, or <see langword="null"/> otherwise.</returns>
 		Task<User?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously registers a user with the registration data from the given <see cref="UserRegistrationDTO"/> reveived from the client.

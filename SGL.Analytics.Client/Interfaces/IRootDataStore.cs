@@ -8,11 +8,12 @@ namespace SGL.Analytics.Client {
 	public interface IRootDataStore {
 		/// <summary>
 		/// Gets or sets the id of the registered user.
-		/// If no user is registerd, the property contains <see langword="null"/>.
+		/// If no user is registerd or the root data store implementation only uses the username, the property contains <see langword="null"/>.
 		/// </summary>
 		Guid? UserID { get; set; }
 		/// <summary>
-		/// Gets or sets the registerd user's login secret used for authentication with the backend.
+		/// Gets or sets the registered user's login secret used for authentication with the backend.
+		/// If no user is registerd, the property contains <see langword="null"/>.
 		/// </summary>
 		string? UserSecret { get; set; }
 
@@ -21,6 +22,10 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		string DataDirectory { get; }
 
+		/// <summary>
+		/// Gets or sets the registered user's username if one was used for registration.
+		/// If no user is registerd or the registation was done without a username, the property contains <see langword="null"/>.
+		/// </summary>
 		string? Username { get; set; }
 
 		/// <summary>

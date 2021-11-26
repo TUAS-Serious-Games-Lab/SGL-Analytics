@@ -8,10 +8,28 @@ namespace SGL.Analytics.DTO {
 	/// </summary>
 	[JsonConverter(typeof(LoginRequestDTOJsonConverter))]
 	public abstract record LoginRequestDTO(string AppName, string AppApiToken, string UserSecret);
+
+	/// <summary>
+	/// Specifies the data transferred from the client to the server when the client attempts to login a user by specifying a user id.
+	/// </summary>
 	public record IdBasedLoginRequestDTO(string AppName, string AppApiToken, Guid UserId, string UserSecret) : LoginRequestDTO(AppName, AppApiToken, UserSecret);
+	/// <summary>
+	/// Specifies the data transferred from the client to the server when the client attempts to login a user by specifying a username.
+	/// </summary>
 	public record UsernameBasedLoginRequestDTO(string AppName, string AppApiToken, string Username, string UserSecret) : LoginRequestDTO(AppName, AppApiToken, UserSecret);
 
+	/// <summary>
+	/// Provides the <see cref="GetUserIdentifier(LoginRequestDTO)"/> extension method.
+	/// </summary>
 	public static class LoginRequestDTOExtensions {
+		/// <summary>
+		/// Obtains a string representation of the user identifier used in a <see cref="LoginRequestDTO"/>.
+		/// If <paramref name="loginRequest"/> is an <see cref="IdBasedLoginRequestDTO"/>, a string representation of the user id is returned.
+		/// If <paramref name="loginRequest"/> is a <see cref="UsernameBasedLoginRequestDTO"/>, the username is returned.
+		/// </summary>
+		/// <param name="loginRequest">The login request DTO from which to obtain the identifier.</param>
+		/// <returns>The identifier used in the login request.</returns>
+		/// <exception cref="NotSupportedException">If an unsupported derived type of <see cref="LoginRequestDTO"/> is given.</exception>
 		public static string GetUserIdentifier(this LoginRequestDTO loginRequest) {
 			if (loginRequest is IdBasedLoginRequestDTO idBased) {
 				return idBased.UserId.ToString();
@@ -25,11 +43,17 @@ namespace SGL.Analytics.DTO {
 		}
 	}
 
+	/// <summary>
+	/// Implements polymorphic JSON serialization and deserialization for <see cref="LoginRequestDTO"/>s.
+	/// It doesn't use a type discriminator, but instead inspects the JSON on deserialization to determine whether a user id or username is present and 
+	/// selects the appropriate derived type of <see cref="LoginRequestDTO"/>, preferring <see cref="IdBasedLoginRequestDTO"/> if both are present.
+	/// </summary>
 	public class LoginRequestDTOJsonConverter : JsonConverter<LoginRequestDTO> {
 		private Func<string, bool> buildNameChecker(string searchedName, JsonSerializerOptions options) {
 			var convertedName = options.PropertyNamingPolicy?.ConvertName(searchedName) ?? searchedName;
 			return currentName => string.Equals(currentName, convertedName, options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
 		}
+		/// <inheritdoc/>
 		public override LoginRequestDTO? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
 			var isAppName = buildNameChecker(nameof(LoginRequestDTO.AppName), options);
 			var isAppApiToken = buildNameChecker(nameof(LoginRequestDTO.AppApiToken), options);
@@ -107,6 +131,7 @@ namespace SGL.Analytics.DTO {
 			}
 		}
 
+		/// <inheritdoc/>
 		public override void Write(Utf8JsonWriter writer, LoginRequestDTO value, JsonSerializerOptions options) {
 			if (value is IdBasedLoginRequestDTO idBased) {
 				JsonSerializer.Serialize(writer, idBased);
