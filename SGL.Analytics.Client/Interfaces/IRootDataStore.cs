@@ -14,7 +14,7 @@ namespace SGL.Analytics.Client {
 		/// <summary>
 		/// Gets or sets the registerd user's login secret used for authentication with the backend.
 		/// </summary>
-		string UserSecret { get; set; }
+		string? UserSecret { get; set; }
 
 		/// <summary>
 		/// Gets a data directory where other storages can store files locally.
