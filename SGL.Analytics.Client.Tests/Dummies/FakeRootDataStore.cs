@@ -10,6 +10,8 @@ namespace SGL.Analytics.Client.Tests {
 
 		public string DataDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SGL.Analytics.Client.Tests.FakeRootDataStore");
 
+		public string? Username { get; set; } = null;
+
 		public Task SaveAsync() {
 			return Task.CompletedTask;
 		}

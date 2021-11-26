@@ -12,6 +12,7 @@ namespace SGL.Analytics.Client {
 		private struct StorageStructure {
 			public Guid? UserID { get; set; }
 			public string? UserSecret { get; set; }
+			public string? Username { get; internal set; }
 		}
 		private StorageStructure storage;
 		string appName;
@@ -23,6 +24,8 @@ namespace SGL.Analytics.Client {
 		public Guid? UserID { get => storage.UserID; set => storage.UserID = value; }
 		/// <inheritdoc/>
 		public string? UserSecret { get => storage.UserSecret; set => storage.UserSecret = value; }
+		/// <inheritdoc/>
+		public string? Username { get => storage.Username; set => storage.Username = value; }
 
 		/// <summary>
 		/// Constructs a <see cref="FileRootDataStore"/> using the givven application name to generate the application user data directory path.

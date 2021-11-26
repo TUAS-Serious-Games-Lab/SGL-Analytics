@@ -21,6 +21,8 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		string DataDirectory { get; }
 
+		string? Username { get; set; }
+
 		/// <summary>
 		/// Asynchronously writes the current data to disk to make them peristent.
 		/// </summary>
