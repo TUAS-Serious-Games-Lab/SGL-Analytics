@@ -1,9 +1,6 @@
 ﻿using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,6 +17,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The user object if the user exists, or <see langword="null"/> otherwise.</returns>
 		Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default);
+		Task<User?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously registers a user with the registration data from the given <see cref="UserRegistrationDTO"/> reveived from the client.
 		/// </summary>

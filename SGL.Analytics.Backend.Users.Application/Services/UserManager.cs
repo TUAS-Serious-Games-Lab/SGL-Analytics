@@ -1,14 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
-using SGL.Utilities.Backend.Security;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Backend.Security;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,6 +33,12 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <inheritdoc/>
 		public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default) {
 			var userReg = await userRepo.GetUserByIdAsync(userId, ct);
+			if (userReg is null) return null;
+			return new User(userReg);
+		}
+
+		public async Task<User?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default) {
+			var userReg = await userRepo.GetUserByUsernameAndAppNameAsync(username, appName, ct);
 			if (userReg is null) return null;
 			return new User(userReg);
 		}
