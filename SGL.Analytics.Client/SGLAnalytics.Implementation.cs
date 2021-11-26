@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -118,7 +117,7 @@ namespace SGL.Analytics.Client {
 			var tcs = new TaskCompletionSource<AuthorizationToken>();
 			mainSyncContext.Post(async s => {
 				try {
-					tcs.SetResult(await userRegistrationClient.LoginUserAsync(new LoginRequestDTO(appName, appAPIToken, userIDOpt.Value, userSecret)));
+					tcs.SetResult(await userRegistrationClient.LoginUserAsync(new IdBasedLoginRequestDTO(appName, appAPIToken, userIDOpt.Value, userSecret)));
 				}
 				catch (Exception ex) {
 					tcs.SetException(ex);

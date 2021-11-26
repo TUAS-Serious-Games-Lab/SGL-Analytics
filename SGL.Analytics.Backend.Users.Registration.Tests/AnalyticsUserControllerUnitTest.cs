@@ -3,17 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Domain.Entity;
-using SGL.Utilities.Backend.Security;
-using SGL.Utilities.Backend.TestUtilities;
 using SGL.Analytics.Backend.Users.Registration.Controllers;
 using SGL.Analytics.Backend.Users.Registration.Tests.Dummies;
 using SGL.Analytics.DTO;
-using SGL.Utilities.TestUtilities.XUnit;
 using SGL.Utilities;
+using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Backend.TestUtilities;
+using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -143,7 +141,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", secret, props);
 			var regResult = await controller.RegisterUser(appApiToken, userRegDTO);
 			var userId = ((regResult.Result as ObjectResult)?.Value as UserRegistrationResultDTO)?.UserId ?? throw new XunitException("Registration failed.");
-			var loginRequest = new LoginRequestDTO(appName, appApiToken, userId, secret);
+			var loginRequest = new IdBasedLoginRequestDTO(appName, appApiToken, userId, secret);
 			var loginResult = await controller.Login(loginRequest);
 			Assert.NotNull(loginResult.Value);
 			var (principal, validatedToken) = tokenValidator.Validate(loginResult.Value.Token.Value);
@@ -154,7 +152,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		[Fact]
 		public async Task LoginWithNonExistentUserFailsWithExpectedError() {
 			var secret = StringGenerator.GenerateRandomWord(16);// Not cryptographic, but ok for test
-			var loginRequest = new LoginRequestDTO(appName, appApiToken, Guid.NewGuid(), secret);
+			var loginRequest = new IdBasedLoginRequestDTO(appName, appApiToken, Guid.NewGuid(), secret);
 			var loginResult = await controller.Login(loginRequest);
 			Assert.Equal(StatusCodes.Status401Unauthorized, Assert.IsType<UnauthorizedObjectResult>(loginResult.Result).StatusCode);
 		}
@@ -165,7 +163,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", secret, props);
 			var regResult = await controller.RegisterUser(appApiToken, userRegDTO);
 			var userId = ((regResult.Result as ObjectResult)?.Value as UserRegistrationResultDTO)?.UserId ?? throw new XunitException("Registration failed.");
-			var loginRequest = new LoginRequestDTO(appName, appApiToken, userId, "Wrong");
+			var loginRequest = new IdBasedLoginRequestDTO(appName, appApiToken, userId, "Wrong");
 			var loginResult = await controller.Login(loginRequest);
 			Assert.Equal(StatusCodes.Status401Unauthorized, Assert.IsType<UnauthorizedObjectResult>(loginResult.Result).StatusCode);
 		}
@@ -176,7 +174,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", secret, props);
 			var regResult = await controller.RegisterUser(appApiToken, userRegDTO);
 			var userId = ((regResult.Result as ObjectResult)?.Value as UserRegistrationResultDTO)?.UserId ?? throw new XunitException("Registration failed.");
-			var loginRequest = new LoginRequestDTO("DoesNotExist", appApiToken, userId, secret);
+			var loginRequest = new IdBasedLoginRequestDTO("DoesNotExist", appApiToken, userId, secret);
 			var loginResult = await controller.Login(loginRequest);
 			Assert.Equal(StatusCodes.Status401Unauthorized, Assert.IsType<UnauthorizedObjectResult>(loginResult.Result).StatusCode);
 		}
@@ -187,7 +185,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", secret, props);
 			var regResult = await controller.RegisterUser(appApiToken, userRegDTO);
 			var userId = ((regResult.Result as ObjectResult)?.Value as UserRegistrationResultDTO)?.UserId ?? throw new XunitException("Registration failed.");
-			var loginRequest = new LoginRequestDTO(appName, "Wrong", userId, secret);
+			var loginRequest = new IdBasedLoginRequestDTO(appName, "Wrong", userId, secret);
 			var loginResult = await controller.Login(loginRequest);
 			Assert.Equal(StatusCodes.Status401Unauthorized, Assert.IsType<UnauthorizedObjectResult>(loginResult.Result).StatusCode);
 		}
@@ -201,7 +199,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", secret, props);
 			var regResult = await controller.RegisterUser(appApiToken, userRegDTO);
 			var userId = ((regResult.Result as ObjectResult)?.Value as UserRegistrationResultDTO)?.UserId ?? throw new XunitException("Registration failed.");
-			var loginRequest = new LoginRequestDTO(appName2, appApiToken2, userId, secret);
+			var loginRequest = new IdBasedLoginRequestDTO(appName2, appApiToken2, userId, secret);
 			var loginResult = await controller.Login(loginRequest);
 			Assert.Equal(StatusCodes.Status401Unauthorized, Assert.IsType<UnauthorizedObjectResult>(loginResult.Result).StatusCode);
 		}
