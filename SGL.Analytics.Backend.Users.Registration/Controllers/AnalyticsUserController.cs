@@ -124,11 +124,14 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		/// Handles POST requests to <c>api/analytics/user/login</c> for user logins to start a session.
 		/// Upon success, the controller responds with a JSON-encoded <see cref="LoginResponseDTO"/>, containing a session token that can be used to
 		/// authenticate requests to SGL Analytics services as the logged-in user, and a <see cref="StatusCodes.Status200OK"/>.
-		/// If the login fails because any of the credentials is incorrect or the credentials don't match, the controller responds with a <see cref="StatusCodes.Status401Unauthorized"/>.
+		/// If the login fails because any of the credentials are incorrect or the credentials don't match, the controller responds with a <see cref="StatusCodes.Status401Unauthorized"/>.
 		/// A further distinction which part of the credentials was incorrect is not made for security reasons.
 		/// Other errors are represented by responding with a <see cref="StatusCodes.Status500InternalServerError"/>.
 		/// </summary>
-		/// <param name="loginRequest">A data transfer object, containing the credentials to use for the login attempt.</param>
+		/// <param name="loginRequest">
+		/// A data transfer object, containing the credentials to use for the login attempt.
+		/// The controller supports the following login request types: <see cref="IdBasedLoginRequestDTO"/>, <see cref="UsernameBasedLoginRequestDTO"/>
+		/// </param>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
 		[ProducesResponseType(typeof(LoginResponseDTO), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
