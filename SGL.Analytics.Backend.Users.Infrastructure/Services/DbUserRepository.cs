@@ -36,6 +36,15 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		}
 
 		/// <inheritdoc/>
+		public async Task<UserRegistration?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default) {
+			return await context.UserRegistrations
+				.Include(u => u.App).ThenInclude(a => a.UserProperties)
+				.Include(u => u.AppSpecificProperties).ThenInclude(p => p.Definition)
+				.Where(u => u.Username == username && u.App.Name == appName)
+				.SingleOrDefaultAsync<UserRegistration?>(ct);
+		}
+
+		/// <inheritdoc/>
 		public async Task<UserRegistration> RegisterUserAsync(UserRegistration userReg, CancellationToken ct = default) {
 			userReg.ValidateProperties(); // Throws on error
 			context.UserRegistrations.Add(userReg);
