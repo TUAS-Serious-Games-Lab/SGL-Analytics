@@ -102,22 +102,34 @@ namespace SGL.Analytics.Client {
 
 		private async Task<AuthorizationToken?> loginAsync(bool expired = false) {
 			Guid? userIDOpt;
+			string? usernameOpt;
 			string? userSecret;
 			AuthorizationToken? authToken;
 			lock (lockObject) {
 				userIDOpt = rootDataStore.UserID;
+				usernameOpt = rootDataStore.Username;
 				userSecret = rootDataStore.UserSecret;
 				authToken = this.authToken;
 			}
 			// Can't login without credentials, the user needs to be registered first.
-			if (userIDOpt is null || userSecret is null) return null;
+			if ((userIDOpt == null && usernameOpt == null) || userSecret is null) return null;
 			// We have loginData already and we weren't called because of expired loginData, return the already present ones.
 			if (authToken != null && !expired) return authToken;
 			logger.LogInformation("Logging in user {userId} ...", userIDOpt);
 			var tcs = new TaskCompletionSource<AuthorizationToken>();
 			mainSyncContext.Post(async s => {
 				try {
-					tcs.SetResult(await userRegistrationClient.LoginUserAsync(new IdBasedLoginRequestDTO(appName, appAPIToken, userIDOpt.Value, userSecret)));
+					LoginRequestDTO loginDTO;
+					if (userIDOpt != null) {
+						loginDTO = new IdBasedLoginRequestDTO(appName, appAPIToken, userIDOpt.Value, userSecret);
+					}
+					else if (usernameOpt != null) {
+						loginDTO = new UsernameBasedLoginRequestDTO(appName, appAPIToken, usernameOpt, userSecret);
+					}
+					else {
+						throw new Exception("UserId and Username are both missing although one of them was present before switching to main context.");
+					}
+					tcs.SetResult(await userRegistrationClient.LoginUserAsync(loginDTO));
 				}
 				catch (Exception ex) {
 					tcs.SetException(ex);
