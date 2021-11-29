@@ -339,5 +339,16 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Empty(response.Headers.WwwAuthenticate);
 			}
 		}
+		[Fact]
+		public async Task LoginWithIncorrectUsernameFailsWithExpectedError() {
+			var secret = StringGenerator.GenerateRandomWord(16);// Not cryptographic, but ok for test
+			var loginReqDTO = new UsernameBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, "DoesNotExist", secret);
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+				Assert.Empty(response.Headers.WwwAuthenticate);
+			}
+		}
 	}
 }
