@@ -115,7 +115,7 @@ namespace SGL.Analytics.Client {
 			if ((userIDOpt == null && usernameOpt == null) || userSecret is null) return null;
 			// We have loginData already and we weren't called because of expired loginData, return the already present ones.
 			if (authToken != null && !expired) return authToken;
-			logger.LogInformation("Logging in user {userId} ...", userIDOpt);
+			logger.LogInformation("Logging in user {userId} ...", userIDOpt?.ToString() ?? usernameOpt);
 			var tcs = new TaskCompletionSource<AuthorizationToken>();
 			mainSyncContext.Post(async s => {
 				try {
@@ -139,7 +139,7 @@ namespace SGL.Analytics.Client {
 				authToken = await tcs.Task;
 			}
 			catch (Exception ex) {
-				logger.LogError(ex, "Login for user {userId} failed with exception.", userIDOpt);
+				logger.LogError(ex, "Login for user {userId} failed with exception.", userIDOpt?.ToString() ?? usernameOpt);
 				throw;
 			}
 			lock (lockObject) {
