@@ -122,7 +122,7 @@ namespace SGL.Analytics.Client {
 		/// <returns>true if the client is already registered, false if the registration is not yet done.</returns>
 		public bool IsRegistered() {
 			lock (lockObject) {
-				return rootDataStore.UserID is not null;
+				return rootDataStore.UserID != null || rootDataStore.Username != null;
 			}
 		}
 
@@ -147,6 +147,9 @@ namespace SGL.Analytics.Client {
 				lock (lockObject) {
 					rootDataStore.UserID = regResult.UserId;
 					rootDataStore.UserSecret = secret;
+					if (userData.Username != null) {
+						rootDataStore.Username = userData.Username;
+					}
 				}
 				await rootDataStore.SaveAsync();
 				logger.LogInformation("Successfully registered user.");

@@ -24,6 +24,11 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			}
 		}
 
+		public async Task<UserRegistration?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default) {
+			await Task.CompletedTask;
+			return users.Values.Where(u => u.Username == username && u.App.Name == appName).SingleOrDefault<UserRegistration?>();
+		}
+
 		public async Task<IDictionary<string, int>> GetUsersCountPerAppAsync(CancellationToken ct = default) {
 			await Task.CompletedTask;
 			var query = from ur in users.Values
