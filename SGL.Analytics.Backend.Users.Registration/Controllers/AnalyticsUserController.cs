@@ -139,15 +139,42 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginRequestDTO loginRequest, CancellationToken ct = default) {
 			using var appScope = logger.BeginApplicationScope(loginRequest.AppName);
 			try {
-
 				using var userScope = logger.BeginUserScope(loginRequest.GetUserIdentifier());
 				var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName, ct);
 				var fixedFailureDelay = loginService.StartFixedFailureDelay(ct);
-				User? user = null;// stash a reference to user to check app association later
-				async Task<(string?, User?)> performLoginAttempt<TIdentifier>(TIdentifier identifier, Func<TIdentifier, CancellationToken, Task<User?>> findUser) {
-					User? user = null;
-					var result = await loginService.LoginAsync(identifier, loginRequest.UserSecret,
-					async userIdent => (user = await findUser(userIdent, ct)),
+				User? user = null; // stash a reference to user to check app association later, and for username-based login between id-lookup and actual login.
+				Guid userid;
+				Func<Guid, Task<User?>> getUser;
+				if (loginRequest is IdBasedLoginRequestDTO idBased) {
+					userid = idBased.UserId;
+					getUser = async uid => user = await userManager.GetUserByIdAsync(userid, ct);
+				}
+				else if (loginRequest is UsernameBasedLoginRequestDTO usernameBased) {
+					user = await userManager.GetUserByUsernameAndAppNameAsync(usernameBased.Username, usernameBased.AppName, ct);
+					if (user != null) {
+						userid = user.Id;
+						getUser = uid => {
+							if (user.Id != uid) {
+								logger.LogError("Unexpected userid mismatch between id lookup and login. Expected {expected}, got {actual}", user.Id, uid);
+								return Task.FromResult<User?>(null);
+							}
+							return Task.FromResult<User?>(user);
+						};
+					}
+					else {
+						logger.LogError("Login attempt for username {username} in application {appName} failed because no such user could be found.", usernameBased.Username, usernameBased.AppName);
+						// Ensure failure of this incorrect login attempt:
+						app = null;
+						userid = Guid.Empty;
+						getUser = uid => Task.FromResult<User?>(null);
+					}
+				}
+				else {
+					logger.LogError("Login attempt with unsupported LoginRequestDTO subtype {type}.", loginRequest.GetType().FullName);
+					return BadRequest("Unsupported login credentials type");
+				}
+				var token = await loginService.LoginAsync(userid, loginRequest.UserSecret,
+					getUser,
 					user => user.HashedSecret,
 					async (user, hashedSecret) => {
 						user.HashedSecret = hashedSecret;
@@ -155,39 +182,26 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 					},
 					fixedFailureDelay!, ct,
 					("appname", u => u.App.Name));
-					return (result, user);
-				}
-				string? token = null;
-				if (loginRequest is IdBasedLoginRequestDTO idBased) {
-					(token, user) = await performLoginAttempt(idBased.UserId, userManager.GetUserByIdAsync);
-				}
-				else if (loginRequest is UsernameBasedLoginRequestDTO usernameBased) {
-					(token, user) = await performLoginAttempt(usernameBased.Username,
-						(username, ct) => userManager.GetUserByUsernameAndAppNameAsync(username, usernameBased.AppName, ct));
-				}
-				else {
-					return BadRequest("Unsupported login credentials type");
-				}
 
 				if (token == null) {
 					logger.LogError("Login attempt for user {userId} failed due to incorrect credentials.", loginRequest.GetUserIdentifier());
 				}
 				// Intentionally no else if here, to log both failures if both, the app credentials AND the user credentials are invalid.
-				if (app is null) {
+				if (app == null) {
 					logger.LogError("Login attempt for user {userId} failed due to unknown application {appName}.", loginRequest.GetUserIdentifier(), loginRequest.AppName);
 				}
 				else if (app.ApiToken != loginRequest.AppApiToken) {
 					app = null; // Clear non-matching app to simplify controll flow below.
 					logger.LogError("Login attempt for user {userId} failed due to incorrect API token for application {appName}.", loginRequest.GetUserIdentifier(), loginRequest.AppName);
 				}
-				if (user is not null && (user.App.Name != loginRequest.AppName)) {
+				if (user != null && (user.App.Name != loginRequest.AppName)) {
 					logger.LogError("Login attempt for user {userId} failed because the retrieved user is not associated with the given application {reqAppName}, but with {userAppName}.", loginRequest.GetUserIdentifier(), loginRequest.AppName, user.App.Name);
 					// Ensure failure, irrespective of what happened with app and user credential checks above.
 					token = null;
 					app = null;
 				}
 
-				if (app is null || token == null) {
+				if (app == null || token == null) {
 					await fixedFailureDelay.WaitAsync(); // If the LoginAsync failed, this is already completed, but await it in case of a failure from app credentials.
 					return Unauthorized("Login failed due to invalid credentials.\n" +
 						"One of the following was incorrect: AppName, AppApiToken, UserId, UserSecret\n" +
