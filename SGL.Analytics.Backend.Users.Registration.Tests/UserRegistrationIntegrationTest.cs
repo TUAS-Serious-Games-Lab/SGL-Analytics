@@ -253,7 +253,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			}
 		}
 		[Fact]
-		public async Task LoginWithNonExistentUserFailsWithExpectedError() {
+		public async Task LoginWithNonExistentUserIdFailsWithExpectedError() {
 			var secret = StringGenerator.GenerateRandomWord(16);// Not cryptographic, but ok for test
 			var userId = Guid.NewGuid();
 			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, secret);
@@ -265,7 +265,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			}
 		}
 		[Fact]
-		public async Task LoginWithIncorrectSecretFailsWithExpectedError() {
+		public async Task LoginWithIdAndIncorrectSecretFailsWithExpectedError() {
 			var (userId, secret) = await createTestUserAsync("Testuser10");
 			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, "Wrong");
 			using (var client = fixture.CreateClient()) {
@@ -298,7 +298,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			}
 		}
 		[Fact]
-		public async Task LoginWithUnmatchingAppAndUserFailsWithExpectedError() {
+		public async Task LoginWithUnmatchingAppAndUserIdFailsWithExpectedError() {
 			// Create user for UserRegistrationIntegrationTest
 			var (userId, secret) = await createTestUserAsync("Testuser13");
 			// But attempt to login with UserRegistrationIntegrationTest_2
