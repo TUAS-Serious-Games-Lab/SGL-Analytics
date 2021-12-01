@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Prometheus;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Utilities.Backend;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,6 +31,10 @@ namespace SGL.Analytics.Backend.Users.Registration {
 			var stats = await repo.GetUsersCountPerAppAsync(ct);
 			foreach (var entry in stats) {
 				registeredUsers.WithLabels(entry.Key).Set(entry.Value);
+			}
+			var disappeared_app_labels = registeredUsers.GetAllLabelValues().Select(e => e.Single()).Where(lbl => !stats.ContainsKey(lbl));
+			foreach(var app_label in disappeared_app_labels) {
+				registeredUsers.WithLabels(app_label).Remove();
 			}
 		}
 	}

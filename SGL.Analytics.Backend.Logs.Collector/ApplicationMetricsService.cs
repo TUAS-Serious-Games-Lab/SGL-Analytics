@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Prometheus;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Utilities.Backend;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,6 +32,10 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			var stats = await repo.GetLogsCountPerAppAsync(ct);
 			foreach (var entry in stats) {
 				logsCollected.WithLabels(entry.Key).Set(entry.Value);
+			}
+			var disappeared_app_labels = logsCollected.GetAllLabelValues().Select(e => e.Single()).Where(lbl => !stats.ContainsKey(lbl));
+			foreach (var app_label in disappeared_app_labels) {
+				logsCollected.WithLabels(app_label).Remove();
 			}
 		}
 	}
