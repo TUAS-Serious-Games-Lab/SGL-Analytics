@@ -1,15 +1,15 @@
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Prometheus;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
-using SGL.Utilities.Backend.Security;
-using SGL.Utilities.Backend.AspNetCore;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Backend.AspNetCore;
+using SGL.Utilities.Backend.Security;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 	/// <summary>
@@ -18,6 +18,12 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 	[Route("api/analytics/log")]
 	[ApiController]
 	public class AnalyticsLogController : ControllerBase {
+		private static readonly Counter errorCounter = Metrics.CreateCounter("sgla_errors_total", "Number of service-level errors encountered by SGL Analytics, labeled by error type and app.", "type", "app");
+		private const string ERROR_LOG_FILE_TOO_LARGE = "Log file too large";
+		private const string ERROR_UNKNOWN_APP = "Unknown app";
+		private const string ERROR_INCORRECT_APP_API_TOKEN = "Incorrect app API token";
+		private const string ERROR_INCORRECT_SECURITY_TOKEN_CLAIMS = "Incorrect security token claims";
+
 		private readonly ILogManager logManager;
 		private readonly IApplicationRepository appRepo;
 		private readonly ILogger<AnalyticsLogController> logger;
@@ -61,6 +67,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 			catch (ClaimException ex) {
 				logger.LogError(ex, "IngestLog operation failed due to an error with the required security token claims.");
+				errorCounter.WithLabels(ERROR_INCORRECT_SECURITY_TOKEN_CLAIMS, "").Inc();
 				return Unauthorized("The operation failed due to a security token error.");
 			}
 			Domain.Entity.Application? app = null;
@@ -72,15 +79,18 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 				throw;
 			}
 			catch (Exception ex) {
-				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to unexpected exception when fetching application metadata.", userId);
+				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to an unexpected exception when fetching application metadata.", userId);
+				errorCounter.WithLabels(ex.GetType().FullName ?? "unknown", appName).Inc();
 				throw;
 			}
 			if (app is null) {
 				logger.LogError("IngestLog POST request from user {userId} failed due to unknown application {appName}.", userId, appName);
+				errorCounter.WithLabels(ERROR_UNKNOWN_APP, appName).Inc();
 				return Unauthorized();
 			}
 			else if (app.ApiToken != appApiToken) {
 				logger.LogError("IngestLog POST request from user {userId} failed due to incorrect API token for application {appName}.", userId, appName);
+				errorCounter.WithLabels(ERROR_INCORRECT_APP_API_TOKEN, appName).Inc();
 				return Unauthorized();
 			}
 
@@ -95,10 +105,12 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			catch (BadHttpRequestException ex) when (ex.StatusCode == StatusCodes.Status413RequestEntityTooLarge) {
 				logger.LogCritical("IngestLog POST request from user {userId} failed because the log file was too large for the server's limit. " +
 					"The Content-Length given by the client was {size}.", userId, HttpContext.Request.ContentLength);
+				errorCounter.WithLabels(ERROR_LOG_FILE_TOO_LARGE, appName).Inc();
 				return StatusCode(ex.StatusCode, "The log file's size exceeds the limit.");
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to unexpected exception during log ingest.", userId);
+				errorCounter.WithLabels(ex.GetType().FullName ?? "unknown", appName).Inc();
 				throw;
 			}
 		}
