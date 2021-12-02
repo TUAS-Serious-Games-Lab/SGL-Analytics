@@ -19,7 +19,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 	[ApiController]
 	public class AnalyticsLogController : ControllerBase {
 		private static readonly Counter errorCounter = Metrics.CreateCounter("sgla_errors_total", "Number of service-level errors encountered by SGL Analytics, labeled by error type and app.", "type", "app");
-		private static readonly Gauge lastLogUploadTime = Metrics.CreateGauge("sgla_last_log_upload_time_seconds", "Unix timestamp of the last successful log upload for the labeled app.", "app");
+		private static readonly Gauge lastLogUploadTime = Metrics.CreateGauge("sgla_last_log_upload_time_seconds", "Unix timestamp of the last successful log upload for the labeled app (in UTC).", "app");
 		private const string ERROR_LOG_FILE_TOO_LARGE = "Log file too large";
 		private const string ERROR_UNKNOWN_APP = "Unknown app";
 		private const string ERROR_INCORRECT_APP_API_TOKEN = "Incorrect app API token";
