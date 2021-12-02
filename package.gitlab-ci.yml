@@ -1,4 +1,4 @@
-.package-nuget-lib:
+nuget-package:
   stage: package
   needs:
   - job: build-debug
@@ -7,28 +7,19 @@
     artifacts: false
   - job: test
     artifacts: false
-  script:
-    - 'cd ${PACKAGE_DIRECTORY}'
-    - 'dotnet pack -c Release -p:Version="$(git describe --tags --abbrev=0)${VERSION_SUFFIX}"'
-    - 'dotnet nuget update source SGL --username gitlab-ci-token --password $CI_JOB_TOKEN --store-password-in-clear-text'
-    - 'dotnet nuget push "bin/Release/*.nupkg" --source SGL --symbol-source SGL'
-
-package-client-lib-main:
-  extends: .package-nuget-lib
   variables:
     GIT_DEPTH: 0
-    VERSION_SUFFIX: "-dev"
-    PACKAGE_DIRECTORY: "SGL.Analytics.Client"
+  script:
+    - VERSION="$(./get_version_from_git.sh)${CI_COMMIT_BRANCH:+-${CI_COMMIT_BRANCH:0:63}}"
+    - 'cd ${PACKAGE_NAME}'
+    - 'dotnet pack -c Release -p:Version="${VERSION}"'
+    - 'dotnet nuget update source SGL --username gitlab-ci-token --password $CI_JOB_TOKEN --store-password-in-clear-text'
+    - 'dotnet nuget push "bin/Release/${PACKAGE_NAME}.${VERSION}.nupkg" --source SGL --symbol-source SGL'
+  parallel:
+    matrix:
+    - PACKAGE_NAME: "SGL.Analytics.Client"
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-
-package-client-lib-tags:
-  extends: .package-nuget-lib
-  variables:
-    GIT_DEPTH: 0
-    VERSION_SUFFIX: ""
-    PACKAGE_DIRECTORY: "SGL.Analytics.Client"
-  rules:
     - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
 
 package-client-example:
