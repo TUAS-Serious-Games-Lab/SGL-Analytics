@@ -22,6 +22,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	public class AnalyticsUserController : ControllerBase {
 		private static readonly Counter loginCounter = Metrics.CreateCounter("sgla_logins_total", "Number of successful logins performed by SGL Analytics, labeled by app.", "app");
 		private static readonly Gauge lastSuccessfulLoginTime = Metrics.CreateGauge("sgla_last_successful_login_time_seconds", "Unix timestamp of the last successful login for the labeled app (in UTC).", "app");
+		private static readonly Gauge lastRegistrationTime = Metrics.CreateGauge("sgla_last_registration_time_seconds", "Unix timestamp of the last user registration for the labeled app (in UTC).", "app");
 		private static readonly Counter errorCounter = Metrics.CreateCounter("sgla_errors_total", "Number of service-level errors encountered by SGL Analytics, labeled by error type and app.", "type", "app");
 		private const string ERROR_NONEXISTENT_USERNAME = "Nonexistent username";
 		private const string ERROR_NONEXISTENT_USERID = "Nonexistent username";
@@ -103,6 +104,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				var result = user.AsRegistrationResult();
 				using var userScope = logger.BeginUserScope(user.Id);
 				logger.LogInformation("Successfully registered user {username} with id {userid} for application {appName}", user.Username, user.Id, user.App.Name);
+				lastRegistrationTime.WithLabels(userRegistration.AppName).IncToCurrentTimeUtc();
 				return StatusCode(StatusCodes.Status201Created, result);
 			}
 			catch (OperationCanceledException) {
