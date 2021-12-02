@@ -20,6 +20,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	[Route("api/analytics/user")]
 	[ApiController]
 	public class AnalyticsUserController : ControllerBase {
+		private static readonly Counter loginCounter = Metrics.CreateCounter("sgla_logins_total", "Number of successful logins performed by SGL Analytics, labeled by app.", "app");
+		private static readonly Gauge lastSuccessfulLoginTime = Metrics.CreateGauge("sgla_last_successful_login_time_seconds", "Unix timestamp of the last successful login for the labeled app (in UTC).", "app");
 		private static readonly Counter errorCounter = Metrics.CreateCounter("sgla_errors_total", "Number of service-level errors encountered by SGL Analytics, labeled by error type and app.", "type", "app");
 		private const string ERROR_NONEXISTENT_USERNAME = "Nonexistent username";
 		private const string ERROR_NONEXISTENT_USERID = "Nonexistent username";
@@ -241,6 +243,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 						"Which of these is / are incorrect is not stated for security reasons.");
 				}
 				else {
+					loginCounter.WithLabels(loginRequest.AppName).Inc();
+					lastSuccessfulLoginTime.WithLabels(loginRequest.AppName).IncToCurrentTimeUtc();
 					return new LoginResponseDTO(new AuthorizationToken(token));
 				}
 			}
