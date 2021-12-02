@@ -171,6 +171,7 @@ deployment-package:
     artifacts: false
   - job: test
     artifacts: false
+  before_script: []
   script:
   - mkdir -p sgl-analytics
   - cp -f docker-compose.yml sgl-analytics/docker-compose.yml
