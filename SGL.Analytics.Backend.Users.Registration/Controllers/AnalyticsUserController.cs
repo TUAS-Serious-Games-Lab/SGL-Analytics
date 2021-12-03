@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Prometheus;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
@@ -20,33 +19,21 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	[Route("api/analytics/user")]
 	[ApiController]
 	public class AnalyticsUserController : ControllerBase {
-		private static readonly Counter loginCounter = Metrics.CreateCounter("sgla_logins_total", "Number of successful logins performed by SGL Analytics, labeled by app.", "app");
-		private static readonly Gauge lastSuccessfulLoginTime = Metrics.CreateGauge("sgla_last_successful_login_time_seconds", "Unix timestamp of the last successful login for the labeled app (in UTC).", "app");
-		private static readonly Gauge lastRegistrationTime = Metrics.CreateGauge("sgla_last_registration_time_seconds", "Unix timestamp of the last user registration for the labeled app (in UTC).", "app");
-		private static readonly Counter errorCounter = Metrics.CreateCounter("sgla_errors_total", "Number of service-level errors encountered by SGL Analytics, labeled by error type and app.", "type", "app");
-		private const string ERROR_NONEXISTENT_USERNAME = "Nonexistent username";
-		private const string ERROR_NONEXISTENT_USERID = "Nonexistent username";
-		private const string ERROR_INCORRECT_USER_SECRET = "Incorrect user secret";
-		private const string ERROR_UNKNOWN_APP = "Unknown app";
-		private const string ERROR_INCORRECT_APP_API_TOKEN = "Incorrect app API token";
-		private const string ERROR_USERID_APP_MISMATCH = "Userid does not belong to app";
-		private const string ERROR_USER_PROP_VALIDATION_FAILED = "User property validation failed";
-		private const string ERROR_CONCURRENCY_CONFLICT = "Concurrency conflict";
-		private const string ERROR_USERNAME_ALREADY_TAKEN = "Username is already taken";
-
 		private readonly IUserManager userManager;
 		private readonly IApplicationRepository appRepo;
 		private readonly ILogger<AnalyticsUserController> logger;
 		private readonly ILoginService loginService;
+		private readonly IMetricsManager metrics;
 
 		/// <summary>
 		/// Instantiates the controller, injecting the required dependency objects.
 		/// </summary>
-		public AnalyticsUserController(IUserManager userManager, ILoginService loginService, IApplicationRepository appRepo, ILogger<AnalyticsUserController> logger) {
+		public AnalyticsUserController(IUserManager userManager, ILoginService loginService, IApplicationRepository appRepo, ILogger<AnalyticsUserController> logger, IMetricsManager metrics) {
 			this.userManager = userManager;
 			this.loginService = loginService;
 			this.appRepo = appRepo;
 			this.logger = logger;
+			this.metrics = metrics;
 		}
 
 		// POST: /api/analytics/user
@@ -82,7 +69,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "RegisterUser POST request for user {username} failed due to an unexpected exception.", userRegistration.Username);
-				errorCounter.WithLabels(ex.GetType().FullName ?? "Unknown", userRegistration.AppName).Inc();
+				metrics.HandleUnexpectedError(userRegistration.AppName, ex);
 				throw;
 			}
 			var appCredentialsErrorMessage = "The registration failed due to invalid application credentials.\n" +
@@ -90,12 +77,12 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 					"Which of these is / are incorrect is not stated for security reasons.";
 			if (app is null) {
 				logger.LogError("RegisterUser POST request for user {username} failed due to unknown application {appName}.", userRegistration.Username, userRegistration.AppName);
-				errorCounter.WithLabels(ERROR_UNKNOWN_APP, userRegistration.AppName).Inc();
+				metrics.HandleUnknownAppError(userRegistration.AppName);
 				return Unauthorized(appCredentialsErrorMessage);
 			}
 			else if (app.ApiToken != appApiToken) {
 				logger.LogError("RegisterUser POST request for user {username} failed due to incorrect API token for application {appName}.", userRegistration.Username, userRegistration.AppName);
-				errorCounter.WithLabels(ERROR_INCORRECT_APP_API_TOKEN, userRegistration.AppName).Inc();
+				metrics.HandleIncorrectAppApiTokenError(userRegistration.AppName);
 				return Unauthorized(appCredentialsErrorMessage);
 			}
 
@@ -104,7 +91,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				var result = user.AsRegistrationResult();
 				using var userScope = logger.BeginUserScope(user.Id);
 				logger.LogInformation("Successfully registered user {username} with id {userid} for application {appName}", user.Username, user.Id, user.App.Name);
-				lastRegistrationTime.WithLabels(userRegistration.AppName).IncToCurrentTimeUtc();
+				metrics.HandleSuccessfulRegistration(userRegistration.AppName);
 				return StatusCode(StatusCodes.Status201Created, result);
 			}
 			catch (OperationCanceledException) {
@@ -116,12 +103,12 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				// This should normally be a 409 - Conflict, but as 409 is specifically needed on this route to indicate a unique-violation for the username, we need to map to a different error.
 				// Thus, rethrow to report a 500 - Internal Server Error, because the concurrency should not be a concern for users here anyway.
 				// But we still use this separate catch becaue we want a separate log statement.
-				errorCounter.WithLabels(ERROR_CONCURRENCY_CONFLICT, userRegistration.AppName).Inc();
+				metrics.HandleConcurrencyConflictError(userRegistration.AppName);
 				throw;
 			}
 			catch (EntityUniquenessConflictException ex) when (ex.ConflictingPropertyName == nameof(UserRegistration.Username)) {
 				logger.LogInformation(ex, "RegisterUser POST request failed because the username {username} is already taken.", userRegistration.Username);
-				errorCounter.WithLabels(ERROR_USERNAME_ALREADY_TAKEN, userRegistration.AppName).Inc();
+				metrics.HandleUsernameAlreadyTakenError(userRegistration.AppName);
 				return Conflict("The requested username is already taken.");
 			}
 			catch (EntityUniquenessConflictException ex) {
@@ -129,17 +116,17 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				// Let that case go to the 500 - ISE handler, triggering the client to retry later.
 				// But before that, log the error.
 				logger.LogError(ex, "Conflicting user id {id} detected during registration.", ex.ConflictingPropertyValue);
-				errorCounter.WithLabels(ERROR_CONCURRENCY_CONFLICT, userRegistration.AppName).Inc();
+				metrics.HandleUniquenessConflictError(userRegistration.AppName);
 				throw;
 			}
 			catch (UserPropertyValidationException ex) {
 				logger.LogError(ex, "The validation of app-specific properties failed while attempting to register user {username}.", userRegistration.Username);
-				errorCounter.WithLabels(ERROR_USER_PROP_VALIDATION_FAILED, userRegistration.AppName).Inc();
+				metrics.HandleUserPropertyValiidationError(userRegistration.AppName);
 				return BadRequest(ex.Message);
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "RegisterUser POST request for user {username} failed due to unexpected exception.", userRegistration.Username);
-				errorCounter.WithLabels(ex.GetType().FullName ?? "Unknown", userRegistration.AppName).Inc();
+				metrics.HandleUnexpectedError(userRegistration.AppName, ex);
 				throw;
 			}
 		}
@@ -174,7 +161,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 					getUser = async uid => {
 						user = await userManager.GetUserByIdAsync(userid, ct);
 						if (user == null) {
-							errorCounter.WithLabels(ERROR_NONEXISTENT_USERID, loginRequest.AppName).Inc();
+							metrics.HandleNonexistentUserIdError(loginRequest.AppName);
 						}
 						return user;
 					};
@@ -193,7 +180,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 					}
 					else {
 						logger.LogError("Login attempt for username {username} in application {appName} failed because no such user could be found.", usernameBased.Username, usernameBased.AppName);
-						errorCounter.WithLabels(ERROR_NONEXISTENT_USERNAME, loginRequest.AppName).Inc();
+						metrics.HandleNonexistentUsernameError(loginRequest.AppName);
 						// Ensure failure of this incorrect login attempt:
 						app = null;
 						userid = Guid.Empty;
@@ -217,22 +204,22 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				if (token == null) {
 					logger.LogError("Login attempt for user {userId} failed due to incorrect credentials.", loginRequest.GetUserIdentifier());
 					if (user != null) {
-						errorCounter.WithLabels(ERROR_INCORRECT_USER_SECRET, loginRequest.AppName).Inc();
+						metrics.HandleIncorrectUserSecretError(loginRequest.AppName);
 					}
 				}
 				// Intentionally no else if here, to log both failures if both, the app credentials AND the user credentials are invalid.
 				if (app == null) {
 					logger.LogError("Login attempt for user {userId} failed due to unknown application {appName}.", loginRequest.GetUserIdentifier(), loginRequest.AppName);
-					errorCounter.WithLabels(ERROR_UNKNOWN_APP, loginRequest.AppName).Inc();
+					metrics.HandleUnknownAppError(loginRequest.AppName);
 				}
 				else if (app.ApiToken != loginRequest.AppApiToken) {
 					app = null; // Clear non-matching app to simplify controll flow below.
 					logger.LogError("Login attempt for user {userId} failed due to incorrect API token for application {appName}.", loginRequest.GetUserIdentifier(), loginRequest.AppName);
-					errorCounter.WithLabels(ERROR_INCORRECT_APP_API_TOKEN, loginRequest.AppName).Inc();
+					metrics.HandleIncorrectAppApiTokenError(loginRequest.AppName);
 				}
 				if (user != null && (user.App.Name != loginRequest.AppName)) {
 					logger.LogError("Login attempt for user {userId} failed because the retrieved user is not associated with the given application {reqAppName}, but with {userAppName}.", loginRequest.GetUserIdentifier(), loginRequest.AppName, user.App.Name);
-					errorCounter.WithLabels(ERROR_USERID_APP_MISMATCH, loginRequest.AppName).Inc();
+					metrics.HandleUserIdAppMismatchError(loginRequest.AppName);
 					// Ensure failure, irrespective of what happened with app and user credential checks above.
 					token = null;
 					app = null;
@@ -245,8 +232,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 						"Which of these is / are incorrect is not stated for security reasons.");
 				}
 				else {
-					loginCounter.WithLabels(loginRequest.AppName).Inc();
-					lastSuccessfulLoginTime.WithLabels(loginRequest.AppName).IncToCurrentTimeUtc();
+					metrics.HandleSuccessfulLogin(loginRequest.AppName);
 					return new LoginResponseDTO(new AuthorizationToken(token));
 				}
 			}

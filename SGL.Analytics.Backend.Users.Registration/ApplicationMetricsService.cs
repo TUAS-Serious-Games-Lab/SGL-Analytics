@@ -1,10 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Prometheus;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Utilities.Backend;
-using SGL.Utilities.PrometheusNet;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,15 +11,14 @@ namespace SGL.Analytics.Backend.Users.Registration {
 	/// </summary>
 	public class ApplicationMetricsService : ApplicationMetricsServiceBase {
 		private IUserRepository repo;
-		private static readonly Gauge registeredUsers = Metrics.CreateGauge("sgla_registered_users",
-			"Number of users registered with SGL Analytics User Registration service.",
-			"app");
+		private IMetricsManager metrics;
 
 		/// <summary>
 		/// Instantiates the service, injecting the given dependencies.
 		/// </summary>
-		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger, IUserRepository repo) : base(options, logger) {
+		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger, IUserRepository repo, IMetricsManager metrics) : base(options, logger) {
 			this.repo = repo;
+			this.metrics = metrics;
 		}
 
 		/// <summary>
@@ -30,7 +26,7 @@ namespace SGL.Analytics.Backend.Users.Registration {
 		/// </summary>
 		protected async override Task UpdateMetrics(CancellationToken ct) {
 			var stats = await repo.GetUsersCountPerAppAsync(ct);
-			registeredUsers.UpdateLabeledValues(stats);
+			metrics.UpdateRegisteredUsers(stats);
 		}
 	}
 }

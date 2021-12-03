@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Registration.Controllers;
 using SGL.Analytics.Backend.Users.Registration.Tests.Dummies;
 using SGL.Analytics.DTO;
@@ -47,7 +48,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			};
 			tokenValidator = new JwtTokenValidator(jwtOptions.Issuer, jwtOptions.Audience, jwtOptions.SymmetricKey);
 			loginService = new JwtLoginService(loggerFactory.CreateLogger<JwtLoginService>(), Options.Create(jwtOptions));
-			controller = new AnalyticsUserController(userManager, loginService, userManager, loggerFactory.CreateLogger<AnalyticsUserController>());
+			controller = new AnalyticsUserController(userManager, loginService, userManager, loggerFactory.CreateLogger<AnalyticsUserController>(), new NullMetricsManager());
 		}
 
 		[Fact]

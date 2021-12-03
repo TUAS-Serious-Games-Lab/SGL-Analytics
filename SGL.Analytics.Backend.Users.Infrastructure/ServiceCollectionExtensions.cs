@@ -4,11 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure {
 	/// <summary>
@@ -26,6 +21,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure {
 
 			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
 			services.AddScoped<IUserRepository, DbUserRepository>();
+			services.AddSingleton<IMetricsManager, MetricsManager>();
 
 			return services;
 		}
