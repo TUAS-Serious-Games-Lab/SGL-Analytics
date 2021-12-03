@@ -35,6 +35,12 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			}
 		}
 
+		public async Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(CancellationToken ct = default) {
+			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
+			return apps.Values.ToList();
+		}
+
 		public async Task<ApplicationWithUserProperties> UpdateApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			Debug.Assert(apps.ContainsKey(app.Name));
