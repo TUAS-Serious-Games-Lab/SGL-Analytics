@@ -33,7 +33,6 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		/// <inheritdoc/>
 		public void EnsureMetricsExist(string appName) {
 			logsCollected.WithLabels(appName);
-			errorCounter.WithLabels(ERROR_UNKNOWN_APP, appName);
 			errorCounter.WithLabels(ERROR_INCORRECT_APP_API_TOKEN, appName);
 			errorCounter.WithLabels(ERROR_LOG_FILE_TOO_LARGE, appName);
 			warningCounter.WithLabels(WARNING_LOG_ID_CONFLICT, appName);

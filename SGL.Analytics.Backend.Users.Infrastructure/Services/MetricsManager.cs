@@ -34,7 +34,6 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			errorCounter.WithLabels(ERROR_INCORRECT_USER_SECRET, appName);
 			errorCounter.WithLabels(ERROR_NONEXISTENT_USERID, appName);
 			errorCounter.WithLabels(ERROR_NONEXISTENT_USERNAME, appName);
-			errorCounter.WithLabels(ERROR_UNKNOWN_APP, appName);
 			errorCounter.WithLabels(ERROR_USERID_APP_MISMATCH, appName);
 			errorCounter.WithLabels(ERROR_USERNAME_ALREADY_TAKEN, appName);
 			errorCounter.WithLabels(ERROR_USER_PROP_VALIDATION_FAILED, appName);
