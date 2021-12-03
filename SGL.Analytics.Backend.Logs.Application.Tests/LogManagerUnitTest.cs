@@ -4,13 +4,11 @@ using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
 using SGL.Analytics.Backend.Logs.Application.Tests.Dummies;
 using SGL.Analytics.DTO;
-using SGL.Utilities.TestUtilities.XUnit;
 using SGL.Utilities;
+using SGL.Utilities.TestUtilities.XUnit;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -29,7 +27,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 		public LogManagerUnitTest(ITestOutputHelper output) {
 			this.output = output;
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
-			manager = new LogManager(appRepo, logMetadataRepo, logFileRepo, loggerFactory.CreateLogger<LogManager>());
+			manager = new LogManager(appRepo, logMetadataRepo, logFileRepo, loggerFactory.CreateLogger<LogManager>(), new NullMetricsManager());
 			appRepo.AddApplicationAsync(new Domain.Entity.Application(Guid.NewGuid(), appName, appApiToken)).Wait();
 		}
 

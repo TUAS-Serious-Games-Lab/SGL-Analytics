@@ -1,10 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Prometheus;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Utilities.Backend;
-using SGL.Utilities.PrometheusNet;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,16 +11,15 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 	/// A background service that periodically updates application-level metrics.
 	/// </summary>
 	public class ApplicationMetricsService : ApplicationMetricsServiceBase {
-		private ILogMetadataRepository repo;
-		private static readonly Gauge logsCollected = Metrics.CreateGauge("sgla_logs_collected",
-			"Number of log files already collected by SGL Analytics Log Collector service.",
-			"app");
+		private readonly ILogMetadataRepository repo;
+		private readonly IMetricsManager metrics;
 
 		/// <summary>
 		/// Instantiates the service, injecting the given dependencies.
 		/// </summary>
-		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger, ILogMetadataRepository repo) : base(options, logger) {
-			this.repo= repo;
+		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger, ILogMetadataRepository repo, IMetricsManager metrics) : base(options, logger) {
+			this.repo = repo;
+			this.metrics = metrics;
 		}
 
 		/// <summary>
@@ -31,7 +27,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 		/// </summary>
 		protected override async Task UpdateMetrics(CancellationToken ct) {
 			var stats = await repo.GetLogsCountPerAppAsync(ct);
-			logsCollected.UpdateLabeledValues(stats);
+			metrics.UpdateCollectedLogs(stats);
 		}
 	}
 }

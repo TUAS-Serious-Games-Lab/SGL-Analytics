@@ -25,6 +25,7 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.10" />
     <PackageReference Include="SGL.Utilities.Backend" Version="0.1.4" />
+    <PackageReference Include="SGL.Utilities.PrometheusNet" Version="0.1.4" />
   </ItemGroup>
 
   <ItemGroup>
