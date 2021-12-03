@@ -1,10 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Prometheus;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Utilities.Backend;
-using SGL.Utilities.PrometheusNet;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,24 +11,31 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 	/// A background service that periodically updates application-level metrics.
 	/// </summary>
 	public class ApplicationMetricsService : ApplicationMetricsServiceBase {
-		private ILogMetadataRepository repo;
-		private static readonly Gauge logsCollected = Metrics.CreateGauge("sgla_logs_collected",
-			"Number of log files already collected by SGL Analytics Log Collector service.",
-			"app");
+		private readonly ILogMetadataRepository logRepo;
+		private readonly IApplicationRepository appRepo;
+		private readonly IMetricsManager metrics;
 
 		/// <summary>
 		/// Instantiates the service, injecting the given dependencies.
 		/// </summary>
-		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger, ILogMetadataRepository repo) : base(options, logger) {
-			this.repo= repo;
+		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger,
+			ILogMetadataRepository logRepo, IApplicationRepository appRepo, IMetricsManager metrics) : base(options, logger) {
+			this.logRepo = logRepo;
+			this.appRepo = appRepo;
+			this.metrics = metrics;
 		}
 
 		/// <summary>
-		/// Asynchronously obtains the current metrics values and updates them in Prometheus-net.
+		/// Asynchronously obtains the current metrics values and updates them in the injected metrics manager.
+		/// It also calls <see cref="IMetricsManager.EnsureMetricsExist(string)"/> for all registered apps.
 		/// </summary>
 		protected override async Task UpdateMetrics(CancellationToken ct) {
-			var stats = await repo.GetLogsCountPerAppAsync(ct);
-			logsCollected.UpdateLabeledValues(stats);
+			var stats = await logRepo.GetLogsCountPerAppAsync(ct);
+			metrics.UpdateCollectedLogs(stats);
+			var apps = await appRepo.ListApplicationsAsync(ct);
+			foreach (var app in apps) {
+				metrics.EnsureMetricsExist(app.Name);
+			}
 		}
 	}
 }

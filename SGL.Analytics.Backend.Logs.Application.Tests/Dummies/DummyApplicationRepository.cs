@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,6 +31,12 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			else {
 				return null;
 			}
+		}
+
+		public async Task<IList<Domain.Entity.Application>> ListApplicationsAsync(CancellationToken ct = default) {
+			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
+			return apps.Values.ToList();
 		}
 
 		public async Task<Domain.Entity.Application> UpdateApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {

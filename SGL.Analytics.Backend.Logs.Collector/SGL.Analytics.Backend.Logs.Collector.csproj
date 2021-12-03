@@ -35,7 +35,6 @@
     <PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.1.4" />
     <PackageReference Include="SGL.Utilities.Backend.Security" Version="0.1.4" />
     <PackageReference Include="SGL.Utilities.Logging" Version="0.1.4" />
-    <PackageReference Include="SGL.Utilities.PrometheusNet" Version="0.1.4" />
   </ItemGroup>
 
   <ItemGroup>

@@ -114,5 +114,11 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			Apps[app.Name] = app;
 			return app;
 		}
+
+		public async Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(CancellationToken ct = default) {
+			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
+			return Apps.Values.ToList();
+		}
 	}
 }

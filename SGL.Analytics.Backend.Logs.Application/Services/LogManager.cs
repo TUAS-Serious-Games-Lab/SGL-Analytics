@@ -5,10 +5,7 @@ using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,30 +19,35 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 		private ILogMetadataRepository logMetaRepo;
 		private ILogFileRepository logFileRepo;
 		private ILogger<LogManager> logger;
+		private IMetricsManager metrics;
 
 		/// <summary>
-		/// Creates a <see cref="LogManager"/> using the given repository implementation objects and the given logger for diagnostics logging.
+		/// Creates a <see cref="LogManager"/> using the given repository implementation objects, the given logger for diagnostics logging, and the given metrics manager.
 		/// </summary>
 		/// <param name="appRepo">The application repository to use.</param>
 		/// <param name="logMetaRepo">The log metadata repository to use.</param>
 		/// <param name="logFileRepo">the log file repository to use.</param>
 		/// <param name="logger">A logger to log status, warning and error messages to.</param>
-		public LogManager(IApplicationRepository appRepo, ILogMetadataRepository logMetaRepo, ILogFileRepository logFileRepo, ILogger<LogManager> logger) {
+		/// <param name="metrics">A metrics manager to which metrics-relevant events are reported.</param>
+		public LogManager(IApplicationRepository appRepo, ILogMetadataRepository logMetaRepo, ILogFileRepository logFileRepo, ILogger<LogManager> logger, IMetricsManager metrics) {
 			this.appRepo = appRepo;
 			this.logMetaRepo = logMetaRepo;
 			this.logFileRepo = logFileRepo;
 			this.logger = logger;
+			this.metrics = metrics;
 		}
 
-		private void updateContentEncodingAndSuffix(LogMetadataDTO logMetaDTO, LogMetadata logMetadata) {
+		private void updateContentEncodingAndSuffix(LogMetadataDTO logMetaDTO, LogMetadata logMetadata, string appName) {
 			if (logMetadata.FilenameSuffix != logMetaDTO.NameSuffix) {
 				logger.LogWarning("Retried upload for log file {logId} from user {userId} uses a different file name sufix, which normally should not happen." +
 					"The old suffix is '{oldSuffix}' and the new suffix is '{newSuffix}'.", logMetadata.Id, logMetadata.UserId, logMetadata.FilenameSuffix, logMetaDTO.NameSuffix);
+				metrics.HandleUploadRetryChangedSuffixWarning(appName);
 				logMetadata.FilenameSuffix = logMetaDTO.NameSuffix;
 			}
 			if (logMetadata.Encoding != logMetaDTO.LogContentEncoding) {
 				logger.LogWarning("Retried upload for log file {logId} from user {userId} uses a different log content encoding, which normally should not happen." +
 					"The old encoding is '{oldEncoding}' and the new encoding is '{newEncoding}'.", logMetadata.Id, logMetadata.UserId, logMetadata.Encoding.ToString(), logMetaDTO.LogContentEncoding.ToString());
+				metrics.HandleUploadRetryChangedEncodingWarning(appName);
 				logMetadata.Encoding = logMetaDTO.LogContentEncoding;
 			}
 		}
@@ -78,6 +80,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 						logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. " +
 							"Resolving this conflict by assigning a new log id {newLogId} for the new log file.",
 							userId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id);
+						metrics.HandleLogIdConflictWarning(appName);
 						logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata, ct);
 					}
 					else {
@@ -89,13 +92,17 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 								"This could happen if the server wrote the log to completion, but the client crashed / disconnected before it could receive the response and " +
 								"remove the file from the upload list.",
 								userId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id, logMetadata.UploadTime);
+							metrics.HandleLogIdConflictWarning(appName);
+							metrics.HandleRetryingCompletedUploadWarning(appName);
 						}
 						else {
 							logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. " +
 								"This conflict was previously resolved by assigning the new log id {newLogId} for the new log file when an upload for it was attempted at {uploadTime:O}. " +
 								"That upload however didn't complete and the client is now reattempting the upload.",
 								userId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id, logMetadata.UploadTime);
-							updateContentEncodingAndSuffix(logMetaDTO, logMetadata);
+							metrics.HandleLogIdConflictWarning(appName);
+							metrics.HandleLogUploadRetryWarning(appName);
+							updateContentEncodingAndSuffix(logMetaDTO, logMetadata, appName);
 							logMetadata.UploadTime = DateTime.Now;
 							logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 						}
@@ -106,11 +113,13 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 						"This could happen if the server wrote the log to completion, but the client crashed / disconnected before it could receive the response and " +
 						"remove the file from the upload list.",
 						userId, logMetaDTO.LogFileId);
+					metrics.HandleRetryingCompletedUploadWarning(appName);
 				}
 				else {
 					logger.LogInformation("Reattempted upload of logfile {logId} from user {userId}, time of original upload attempt: {uploadTime:O}.",
 						logMetadata.Id, logMetadata.UserId, logMetadata.UploadTime);
-					updateContentEncodingAndSuffix(logMetaDTO, logMetadata);
+					metrics.HandleLogUploadRetryWarning(appName);
+					updateContentEncodingAndSuffix(logMetaDTO, logMetadata, appName);
 					logMetadata.UploadTime = DateTime.Now;
 					logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 				}
@@ -122,7 +131,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					throw;
 				}
 				if (logMetadata.Complete) {
-					updateContentEncodingAndSuffix(logMetaDTO, logMetadata);
+					updateContentEncodingAndSuffix(logMetaDTO, logMetadata, appName);
 				}
 				logMetadata.Complete = true;
 				logMetadata.UploadTime = DateTime.Now;
