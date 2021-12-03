@@ -30,6 +30,11 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <returns>A task object representing the operation, providing the updated object as its result.</returns>
 		Task<ApplicationWithUserProperties> UpdateApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default);
 
+		/// <summary>
+		/// Asynchronously obtains a list of all registered applications.
+		/// </summary>
+		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
+		/// <returns>A task object representing the operation, providing the list as its result.</returns>
 		Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(CancellationToken ct = default);
 	}
 }

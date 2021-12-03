@@ -59,6 +59,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			return app;
 		}
 
+		/// <inheritdoc/>
 		public async Task<IList<Domain.Entity.Application>> ListApplicationsAsync(CancellationToken ct = default) {
 			return await context.Applications.ToListAsync(ct);
 		}

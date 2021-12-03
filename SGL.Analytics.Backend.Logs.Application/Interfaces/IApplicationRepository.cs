@@ -30,6 +30,11 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <returns>A task object representing the operation, providing the updated object as its result.</returns>
 		Task<Domain.Entity.Application> UpdateApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default);
 
+		/// <summary>
+		/// Asynchronously obtains a list of all registered applications.
+		/// </summary>
+		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
+		/// <returns>A task object representing the operation, providing the list as its result.</returns>
 		Task<IList<Domain.Entity.Application>> ListApplicationsAsync(CancellationToken ct = default);
 	}
 }

@@ -53,6 +53,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			return await context.Applications.Include(a => a.UserProperties).Where(a => a.Name == appName).SingleOrDefaultAsync(ct);
 		}
 
+		/// <inheritdoc/>
 		public async Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(CancellationToken ct = default) {
 			return await context.Applications.Include(a => a.UserProperties).ToListAsync(ct);
 		}
