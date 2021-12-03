@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 	public interface IMetricsManager {
+		void EnsureMetricsExist(string appName);
 		void HandleUnknownAppError(string appName);
 		void HandleIncorrectAppApiTokenError(string appName);
 		void HandleNonexistentUsernameError(string appName);
@@ -19,6 +20,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		void UpdateRegisteredUsers(IDictionary<string, int> perAppCounts);
 	}
 	public class NullMetricsManager : IMetricsManager {
+		public void EnsureMetricsExist(string appName) { }
 		public void HandleConcurrencyConflictError(string appName) { }
 		public void HandleIncorrectAppApiTokenError(string appName) { }
 		public void HandleIncorrectUserSecretError(string appName) { }

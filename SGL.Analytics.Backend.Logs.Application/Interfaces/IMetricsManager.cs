@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 	public interface IMetricsManager {
+		void EnsureMetricsExist(string appName);
 		void HandleLogFileTooLargeError(string appName);
 		void HandleUnknownAppError(string appName);
 		void HandleIncorrectAppApiTokenError(string appName);
@@ -18,6 +19,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 	}
 
 	public class NullMetricsManager : IMetricsManager {
+		public void EnsureMetricsExist(string appName) { }
 		public void HandleIncorrectAppApiTokenError(string appName) { }
 		public void HandleIncorrectSecurityTokenClaimsError() { }
 		public void HandleLogFileTooLargeError(string appName) { }

@@ -11,14 +11,17 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 	/// A background service that periodically updates application-level metrics.
 	/// </summary>
 	public class ApplicationMetricsService : ApplicationMetricsServiceBase {
-		private readonly ILogMetadataRepository repo;
+		private readonly ILogMetadataRepository logRepo;
+		private readonly IApplicationRepository appRepo;
 		private readonly IMetricsManager metrics;
 
 		/// <summary>
 		/// Instantiates the service, injecting the given dependencies.
 		/// </summary>
-		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger, ILogMetadataRepository repo, IMetricsManager metrics) : base(options, logger) {
-			this.repo = repo;
+		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger,
+			ILogMetadataRepository logRepo, IApplicationRepository appRepo, IMetricsManager metrics) : base(options, logger) {
+			this.logRepo = logRepo;
+			this.appRepo = appRepo;
 			this.metrics = metrics;
 		}
 
@@ -26,8 +29,12 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 		/// Asynchronously obtains the current metrics values and updates them in Prometheus-net.
 		/// </summary>
 		protected override async Task UpdateMetrics(CancellationToken ct) {
-			var stats = await repo.GetLogsCountPerAppAsync(ct);
+			var stats = await logRepo.GetLogsCountPerAppAsync(ct);
 			metrics.UpdateCollectedLogs(stats);
+			var apps = await appRepo.ListApplicationsAsync(ct);
+			foreach (var app in apps) {
+				metrics.EnsureMetricsExist(app.Name);
+			}
 		}
 	}
 }

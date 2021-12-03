@@ -10,14 +10,17 @@ namespace SGL.Analytics.Backend.Users.Registration {
 	/// A background service that periodically updates application-level metrics.
 	/// </summary>
 	public class ApplicationMetricsService : ApplicationMetricsServiceBase {
-		private IUserRepository repo;
-		private IMetricsManager metrics;
+		private readonly IUserRepository userRepo;
+		private readonly IApplicationRepository appRepo;
+		private readonly IMetricsManager metrics;
 
 		/// <summary>
 		/// Instantiates the service, injecting the given dependencies.
 		/// </summary>
-		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger, IUserRepository repo, IMetricsManager metrics) : base(options, logger) {
-			this.repo = repo;
+		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger, IUserRepository userRepo,
+			IApplicationRepository appRepo, IMetricsManager metrics) : base(options, logger) {
+			this.userRepo = userRepo;
+			this.appRepo = appRepo;
 			this.metrics = metrics;
 		}
 
@@ -25,8 +28,12 @@ namespace SGL.Analytics.Backend.Users.Registration {
 		/// Asynchronously obtains the current metrics values and updates them in Prometheus-net.
 		/// </summary>
 		protected async override Task UpdateMetrics(CancellationToken ct) {
-			var stats = await repo.GetUsersCountPerAppAsync(ct);
+			var stats = await userRepo.GetUsersCountPerAppAsync(ct);
 			metrics.UpdateRegisteredUsers(stats);
+			var apps = await appRepo.ListApplicationsAsync(ct);
+			foreach (var app in apps) {
+				metrics.EnsureMetricsExist(app.Name);
+			}
 		}
 	}
 }

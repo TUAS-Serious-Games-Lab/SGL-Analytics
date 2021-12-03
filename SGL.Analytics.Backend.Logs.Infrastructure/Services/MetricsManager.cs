@@ -20,6 +20,22 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		private const string WARNING_UPLOAD_RETRY_CHANGED_SUFFIX = "Upload retry changed file suffix";
 		private const string WARNING_UPLOAD_RETRY_CHANGED_ENCODING = "Upload retry changed file encoding";
 
+		public MetricsManager() {
+			errorCounter.WithLabels(ERROR_INCORRECT_SECURITY_TOKEN_CLAIMS, "");
+		}
+
+		public void EnsureMetricsExist(string appName) {
+			logsCollected.WithLabels(appName);
+			errorCounter.WithLabels(ERROR_UNKNOWN_APP, appName);
+			errorCounter.WithLabels(ERROR_INCORRECT_APP_API_TOKEN, appName);
+			errorCounter.WithLabels(ERROR_LOG_FILE_TOO_LARGE, appName);
+			warningCounter.WithLabels(WARNING_LOG_ID_CONFLICT, appName);
+			warningCounter.WithLabels(WARNING_LOG_UPLOAD_RETRY, appName);
+			warningCounter.WithLabels(WARNING_RETRYING_COMPLETED_UPLOAD, appName);
+			warningCounter.WithLabels(WARNING_UPLOAD_RETRY_CHANGED_SUFFIX, appName);
+			warningCounter.WithLabels(WARNING_UPLOAD_RETRY_CHANGED_ENCODING, appName);
+		}
+
 		public void HandleIncorrectAppApiTokenError(string appName) {
 			errorCounter.WithLabels(ERROR_INCORRECT_APP_API_TOKEN, appName).Inc();
 		}
