@@ -25,7 +25,8 @@ namespace SGL.Analytics.Backend.Users.Registration {
 		}
 
 		/// <summary>
-		/// Asynchronously obtains the current metrics values and updates them in Prometheus-net.
+		/// Asynchronously obtains the current metrics values and updates them in the injected metrics manager.
+		/// It also calls <see cref="IMetricsManager.EnsureMetricsExist(string)"/> for all registered apps.
 		/// </summary>
 		protected async override Task UpdateMetrics(CancellationToken ct) {
 			var stats = await userRepo.GetUsersCountPerAppAsync(ct);

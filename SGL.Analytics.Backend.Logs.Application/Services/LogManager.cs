@@ -22,12 +22,13 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 		private IMetricsManager metrics;
 
 		/// <summary>
-		/// Creates a <see cref="LogManager"/> using the given repository implementation objects and the given logger for diagnostics logging.
+		/// Creates a <see cref="LogManager"/> using the given repository implementation objects, the given logger for diagnostics logging, and the given metrics manager.
 		/// </summary>
 		/// <param name="appRepo">The application repository to use.</param>
 		/// <param name="logMetaRepo">The log metadata repository to use.</param>
 		/// <param name="logFileRepo">the log file repository to use.</param>
 		/// <param name="logger">A logger to log status, warning and error messages to.</param>
+		/// <param name="metrics">A metrics manager to which metrics-relevant events are reported.</param>
 		public LogManager(IApplicationRepository appRepo, ILogMetadataRepository logMetaRepo, ILogFileRepository logFileRepo, ILogger<LogManager> logger, IMetricsManager metrics) {
 			this.appRepo = appRepo;
 			this.logMetaRepo = logMetaRepo;

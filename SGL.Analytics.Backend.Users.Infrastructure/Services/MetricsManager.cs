@@ -5,6 +5,9 @@ using System;
 using System.Collections.Generic;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
+	/// <summary>
+	/// Implements <see cref="IMetricsManager"/> using Prometheus-net metrics.
+	/// </summary>
 	public class MetricsManager : IMetricsManager {
 		private static readonly Gauge registeredUsers = Metrics.CreateGauge("sgla_registered_users", "Number of users registered with SGL Analytics User Registration service.", "app");
 		private static readonly Counter loginCounter = Metrics.CreateCounter("sgla_logins_total", "Number of successful logins performed by SGL Analytics, labeled by app.", "app");
@@ -22,6 +25,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		private const string ERROR_UNIQUENESS_CONFLICT = "Uniqueness conflict";
 		private const string ERROR_USERNAME_ALREADY_TAKEN = "Username is already taken";
 
+		/// <inheritdoc/>
 		public void EnsureMetricsExist(string appName) {
 			registeredUsers.WithLabels(appName);
 			errorCounter.WithLabels(ERROR_CONCURRENCY_CONFLICT, appName);
@@ -36,59 +40,73 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			errorCounter.WithLabels(ERROR_USER_PROP_VALIDATION_FAILED, appName);
 			loginCounter.WithLabels(appName);
 		}
+		/// <inheritdoc/>
 		public void HandleConcurrencyConflictError(string appName) {
 			errorCounter.WithLabels(ERROR_CONCURRENCY_CONFLICT, appName).Inc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleUniquenessConflictError(string appName) {
 			errorCounter.WithLabels(ERROR_UNIQUENESS_CONFLICT, appName).Inc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleIncorrectAppApiTokenError(string appName) {
 			errorCounter.WithLabels(ERROR_INCORRECT_APP_API_TOKEN, appName).Inc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleIncorrectUserSecretError(string appName) {
 			errorCounter.WithLabels(ERROR_INCORRECT_USER_SECRET, appName).Inc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleNonexistentUserIdError(string appName) {
 			errorCounter.WithLabels(ERROR_NONEXISTENT_USERID, appName).Inc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleNonexistentUsernameError(string appName) {
 			errorCounter.WithLabels(ERROR_NONEXISTENT_USERNAME, appName).Inc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleSuccessfulLogin(string appName) {
 			loginCounter.WithLabels(appName).Inc();
 			lastSuccessfulLoginTime.WithLabels(appName).IncToCurrentTimeUtc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleSuccessfulRegistration(string appName) {
 			lastRegistrationTime.WithLabels(appName).IncToCurrentTimeUtc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleUnexpectedError(string appName, Exception ex) {
 			errorCounter.WithLabels(ex.GetType().FullName ?? "Unknown", appName).Inc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleUnknownAppError(string appName) {
 			errorCounter.WithLabels(ERROR_UNKNOWN_APP, appName).Inc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleUserIdAppMismatchError(string appName) {
 			errorCounter.WithLabels(ERROR_USERID_APP_MISMATCH, appName).Inc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleUsernameAlreadyTakenError(string appName) {
 			errorCounter.WithLabels(ERROR_USERNAME_ALREADY_TAKEN, appName).Inc();
 		}
 
+		/// <inheritdoc/>
 		public void HandleUserPropertyValiidationError(string appName) {
 			errorCounter.WithLabels(ERROR_USER_PROP_VALIDATION_FAILED, appName).Inc();
 		}
 
+		/// <inheritdoc/>
 		public void UpdateRegisteredUsers(IDictionary<string, int> perAppCounts) {
 			registeredUsers.UpdateLabeledValues(perAppCounts);
 		}

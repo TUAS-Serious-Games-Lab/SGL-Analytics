@@ -26,7 +26,8 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 		}
 
 		/// <summary>
-		/// Asynchronously obtains the current metrics values and updates them in Prometheus-net.
+		/// Asynchronously obtains the current metrics values and updates them in the injected metrics manager.
+		/// It also calls <see cref="IMetricsManager.EnsureMetricsExist(string)"/> for all registered apps.
 		/// </summary>
 		protected override async Task UpdateMetrics(CancellationToken ct) {
 			var stats = await logRepo.GetLogsCountPerAppAsync(ct);
