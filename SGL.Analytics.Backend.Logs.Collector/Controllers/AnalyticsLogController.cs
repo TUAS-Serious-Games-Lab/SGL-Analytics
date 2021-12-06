@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Prometheus;
+using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.AspNetCore;
@@ -12,6 +16,30 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
+
+	public class AnalyticsLogOptions {
+		public const string AnalyticsLog = "AnalyticsLog";
+		public long UploadSizeLimit { get; set; } = 200 * 1024 * 1024;
+	}
+
+	public static class AnalyticsLogExtensions {
+		public static IServiceCollection UseAnalyticsLogUploadLimit(this IServiceCollection services, IConfiguration config) {
+			services.Configure<AnalyticsLogOptions>(config.GetSection(AnalyticsLogOptions.AnalyticsLog));
+			return services;
+		}
+
+		public static IApplicationBuilder UseAnalyticsLogUploadLimit(this IApplicationBuilder app) {
+			app.UseWhen(context => context.Request.Path.StartsWithSegments("/api/analytics/log"), appBuild => {
+				appBuild.Use((context, next) => {
+					var options = context.RequestServices.GetRequiredService<IOptions<AnalyticsLogOptions>>();
+					context.Features.Get<IHttpMaxRequestBodySizeFeature>().MaxRequestBodySize = options.Value.UploadSizeLimit;
+					return next();
+				});
+			});
+			return app;
+		}
+	}
+
 	/// <summary>
 	/// The controller class serving the <c>api/analytics/log</c> route that accepts uploads of analytics log files for SGL Analytics.
 	/// </summary>
@@ -48,7 +76,6 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		/// <param name="appApiToken">The API token of the client application, provided by the HTTP header <c>App-API-Token</c>.</param>
 		/// <param name="logMetadata">The metadata of the uploaded log file, provided as HTTP headers with the names of the properties of <see cref="LogMetadataDTO"/>.</param>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
-		[RequestSizeLimit(200 * 1024 * 1024)]
 		[Consumes("application/octet-stream")]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -77,7 +104,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to an unexpected exception when fetching application metadata.", userId);
-				metrics.HandleUnexpectedError(appName,ex);
+				metrics.HandleUnexpectedError(appName, ex);
 				throw;
 			}
 			if (app is null) {
