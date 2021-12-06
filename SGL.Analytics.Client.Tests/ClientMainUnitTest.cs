@@ -1,12 +1,11 @@
 using Microsoft.Extensions.Logging;
+using SGL.Analytics.DTO;
 using SGL.Utilities.TestUtilities.XUnit;
-using SGL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
@@ -643,6 +642,116 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.StartRetryUploads();
 			await analytics.FinishAsync();
 			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
+		}
+
+		[Fact]
+		public async Task ProvidingUserIdAndUsernameCausesIdBasedLoginRequest() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			var userid = Guid.NewGuid();
+			ds.UserID = userid;
+			ds.Username = "Testuser";
+			logCollectorClient = new FakeLogCollectorClient();
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+				rootDataStore: ds,
+				logStorage: storage,
+				logCollectorClient: logCollectorClient,
+				userRegistrationClient: userRegClient,
+				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			// Record something and finish to force a login for the triggered upload.
+			analytics.StartNewLog();
+			analytics.RecordEventUnshared("Test", "Testdata");
+			await analytics.FinishAsync();
+			var loginReq = Assert.IsAssignableFrom<IdBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
+			Assert.Equal(userid, loginReq.UserId);
+			Assert.Equal("SGLAnalyticsUnitTests", loginReq.AppName);
+			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
+		}
+		[Fact]
+		public async Task ProvidingOnlyUserIdCausesIdBasedLoginRequest() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			var userid = Guid.NewGuid();
+			ds.UserID = userid;
+			ds.Username = null;
+			logCollectorClient = new FakeLogCollectorClient();
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+				rootDataStore: ds,
+				logStorage: storage,
+				logCollectorClient: logCollectorClient,
+				userRegistrationClient: userRegClient,
+				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			// Record something and finish to force a login for the triggered upload.
+			analytics.StartNewLog();
+			analytics.RecordEventUnshared("Test", "Testdata");
+			await analytics.FinishAsync();
+			var loginReq = Assert.IsAssignableFrom<IdBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
+			Assert.Equal(userid, loginReq.UserId);
+			Assert.Equal("SGLAnalyticsUnitTests", loginReq.AppName);
+			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
+		}
+		[Fact]
+		public async Task ProvidingUsernameButNoUserIdCausesUsernameBasedLoginRequest() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			ds.UserID = null;
+			ds.Username = "Testuser";
+			logCollectorClient = new FakeLogCollectorClient();
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+				rootDataStore: ds,
+				logStorage: storage,
+				logCollectorClient: logCollectorClient,
+				userRegistrationClient: userRegClient,
+				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			// Record something and finish to force a login for the triggered upload.
+			analytics.StartNewLog();
+			analytics.RecordEventUnshared("Test", "Testdata");
+			await analytics.FinishAsync();
+			var loginReq = Assert.IsAssignableFrom<UsernameBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
+			Assert.Equal("Testuser", loginReq.Username);
+			Assert.Equal("SGLAnalyticsUnitTests", loginReq.AppName);
+			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
+		}
+		[Fact]
+		public async Task LoginAfterRegistrationWithUsernameUsesId() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			ds.UserID = null;
+			ds.Username = null;
+			logCollectorClient = new FakeLogCollectorClient();
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+				rootDataStore: ds,
+				logStorage: storage,
+				logCollectorClient: logCollectorClient,
+				userRegistrationClient: userRegClient,
+				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			await analytics.RegisterAsync(new BaseUserData("Testuser"));
+			// Record something and finish to force a login for the triggered upload.
+			analytics.StartNewLog();
+			analytics.RecordEventUnshared("Test", "Testdata");
+			await analytics.FinishAsync();
+			var loginReq = Assert.IsAssignableFrom<IdBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
+			Assert.Equal(ds.UserID, loginReq.UserId);
+			Assert.Equal("SGLAnalyticsUnitTests", loginReq.AppName);
+			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
+		}
+		[Fact]
+		public async Task LoginAfterRegistrationWithoutUsernameUsesId() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			ds.UserID = null;
+			ds.Username = null;
+			logCollectorClient = new FakeLogCollectorClient();
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+				rootDataStore: ds,
+				logStorage: storage,
+				logCollectorClient: logCollectorClient,
+				userRegistrationClient: userRegClient,
+				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			await analytics.RegisterAsync(new BaseUserData());
+			// Record something and finish to force a login for the triggered upload.
+			analytics.StartNewLog();
+			analytics.RecordEventUnshared("Test", "Testdata");
+			await analytics.FinishAsync();
+			var loginReq = Assert.IsAssignableFrom<IdBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
+			Assert.Equal(ds.UserID, loginReq.UserId);
+			Assert.Equal("SGLAnalyticsUnitTests", loginReq.AppName);
+			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
 		}
 	}
 }

@@ -4,11 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure {
 	/// <summary>
@@ -27,6 +22,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure {
 			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
 			services.AddScoped<ILogMetadataRepository, DbLogMetadataRepository>();
 			services.UseFileSystemCollectorLogStorage(config);
+			services.AddSingleton<IMetricsManager, MetricsManager>();
 
 			return services;
 		}

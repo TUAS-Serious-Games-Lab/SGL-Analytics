@@ -1,14 +1,13 @@
 ﻿using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
-using SGL.Utilities.Backend.Security;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Backend.Security;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -63,9 +62,14 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			}
 		}
 
+		public async Task<User?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default) {
+			await Task.CompletedTask;
+			return users.Values.Where(u => u.Username == username && u.App.Name == appName).SingleOrDefault<User?>();
+		}
+
 		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegistrationData, CancellationToken ct = default) {
 			await Task.CompletedTask;
-			if (userRegistrationData.Username!=null && users.Values.Count(u => u.Username == userRegistrationData.Username) > 0) {
+			if (userRegistrationData.Username != null && users.Values.Count(u => u.Username == userRegistrationData.Username) > 0) {
 				throw new EntityUniquenessConflictException("User", "Username", userRegistrationData.Username);
 			}
 			if (!Apps.TryGetValue(userRegistrationData.AppName, out var app)) {
@@ -109,6 +113,12 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			ct.ThrowIfCancellationRequested();
 			Apps[app.Name] = app;
 			return app;
+		}
+
+		public async Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(CancellationToken ct = default) {
+			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
+			return Apps.Values.ToList();
 		}
 	}
 }

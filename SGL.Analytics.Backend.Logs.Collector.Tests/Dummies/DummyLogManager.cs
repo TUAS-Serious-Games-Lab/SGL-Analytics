@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -74,6 +75,13 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			ct.ThrowIfCancellationRequested();
 			Apps[app.Name] = app;
 			return app;
+		}
+
+		public async Task<IList<Domain.Entity.Application>> ListApplicationsAsync(CancellationToken ct = default) {
+			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
+			return Apps.Values.ToList();
+
 		}
 
 		class SingleLogFileRepository : ILogFileRepository, IDisposable {

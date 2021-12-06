@@ -22,6 +22,13 @@ namespace SGL.Analytics.Client {
 			Username = username;
 		}
 
+		/// <summary>
+		/// Instaniates the base class object without a username.
+		/// </summary>
+		public BaseUserData() {
+			Username = null;
+		}
+
 		internal UserRegistrationDTO MakeDTO(string appName, string secret) {
 			// Study-specific data are intended to be kept in derived classes.
 			// => Map all properties of dynamic type to a dictionary for transmission.

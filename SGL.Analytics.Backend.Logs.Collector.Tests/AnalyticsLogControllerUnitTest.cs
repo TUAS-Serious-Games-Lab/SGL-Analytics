@@ -2,13 +2,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
-using SGL.Analytics.Backend.Logs.Application.Services;
 using SGL.Analytics.Backend.Logs.Collector.Controllers;
 using SGL.Analytics.DTO;
-using SGL.Utilities.TestUtilities.XUnit;
 using SGL.Utilities;
+using SGL.Utilities.TestUtilities.XUnit;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -29,7 +27,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			this.output = output;
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
 			logManager.Apps.Add(nameof(AnalyticsLogControllerUnitTest), new Domain.Entity.Application(Guid.NewGuid(), nameof(AnalyticsLogControllerUnitTest), apiToken));
-			controller = new AnalyticsLogController(logManager, logManager, loggerFactory.CreateLogger<AnalyticsLogController>());
+			controller = new AnalyticsLogController(logManager, logManager, loggerFactory.CreateLogger<AnalyticsLogController>(), new NullMetricsManager());
 		}
 
 		private ControllerContext createControllerContext(string appNameClaim, Guid userIdClaim) {

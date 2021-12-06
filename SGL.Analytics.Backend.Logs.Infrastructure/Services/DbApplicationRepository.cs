@@ -2,11 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -59,6 +57,11 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			Debug.Assert(context.Entry(app).State is EntityState.Modified or EntityState.Unchanged);
 			await context.SaveChangesAsync(ct);
 			return app;
+		}
+
+		/// <inheritdoc/>
+		public async Task<IList<Domain.Entity.Application>> ListApplicationsAsync(CancellationToken ct = default) {
+			return await context.Applications.ToListAsync(ct);
 		}
 	}
 }

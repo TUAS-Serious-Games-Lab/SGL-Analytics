@@ -21,7 +21,7 @@ ARG SGL_PKG_USER
 ARG SGL_PKG_TOKEN
 RUN echo 'dotnet nuget update source SGL --username ${SGL_PKG_USER} --password ${SGL_PKG_TOKEN} --store-password-in-clear-text' > pkg-login.sh &&\
 	chmod +x pkg-login.sh && ./pkg-login.sh &&\
-	dotnet restore "SGL.Analytics.Backend.Users.Registration/SGL.Analytics.Backend.Users.Registration.csproj" &&\
+	dotnet restore --disable-parallel "SGL.Analytics.Backend.Users.Registration/SGL.Analytics.Backend.Users.Registration.csproj" &&\
 	dotnet nuget remove source SGL && rm pkg-login.sh
 COPY . .
 WORKDIR "/src/SGL.Analytics.Backend.Users.Registration"
