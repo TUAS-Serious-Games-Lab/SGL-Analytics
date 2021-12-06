@@ -50,6 +50,38 @@ Game code should however prefer the `Unshared` methods to avoid unnecessary copi
 
 ## Backend
 
+The backend of SGL Analytics is split into two separate microservices where one handles the actual ingest of log files from the clients and the other one deals with user accounts, i.e. it performs user registrations and session logins based on the registrations.
+Besides the usual considerations for microservices, the services are also split to (in principle) allow deployment on separate infrastructure for isolation where the data in the log collector service is supposed to only contain pseudonymous data. If this is actually the case depends on the game code not recording identifying information.
+The default deployment as described by the included docker-compose files however puts both services on the same machine behind an API Gateway and thus uses container-level isolation.
+To allow separate deployment, the services have disjunct databases, i.e. although both use a table where the known client applications are registered, they don't share that table but have their own copy.
+
+As the backend is designed to handle multiple applications, all API routes take an application name that uniquely identifies the client app and an application API token that acts as a weak first layer of authentication, authenticating the application itself.
+The application name is take directly as an API parameter for routes without user authentication and as a claim inside the session security token. In the latter case it is set, when the client logs into the application and then reused for all later calls.
+
 ### Log Collector Service
 
+The log collector service provides an API route to upload the log files.
+These files are stored in a directory structure that first divided by the client application from which the files originate and then split by userid.
+Additionally to the file content, metadata for the logs are record to a database table.
+These include:
+- The id of the log (primary key)
+- The owning app
+- The owning user
+- Timestamps for begin and end (as reported by the client) and upload (as seen by the server)
+- Content encoding and filename suffix (as reported by the client)
+- Completion status of the upload
+
 ### User Registration Service
+
+The user registration provides two main API routes: Registering a new user and performing a login operation for an existing user.
+
+The registration route always takes a user secret and can optionally take a username.
+In both cases, the client is provided with a user id upon successful registration.
+Depending on the application, the registration service also takes a set of application-specific user properties.
+These are defined in the user registration service's database with their data type and whether they are optional or required.
+Not providing required properties or providing undefined or incorrectly typed properties makes the registration fail.
+
+The login route takes a set of user credentials in addition to the application credentials mentioned above and attempts to log the user in using those credentials.
+Two kinds of user credentials are supported:
+- userid and user secret: Here, the user secret is usually auto-generated on the client on registration and stored on the device to allow device-based authentication.
+- username and user secret: Here, a user-specified username is used on registration and the user secret is usually a user-supplied password. This mode can be used for applications that require a password-based user registration anyways and allows coupling the SGL Analytics user registration to the general user account for the application.
