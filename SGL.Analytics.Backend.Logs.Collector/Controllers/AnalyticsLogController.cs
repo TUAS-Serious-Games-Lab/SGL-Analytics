@@ -17,17 +17,40 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 
+	/// <summary>
+	/// Encapsulates configuration options for <see cref="AnalyticsLogController"/>.
+	/// </summary>
 	public class AnalyticsLogOptions {
+		/// <summary>
+		/// Provides the name of the config section as a constant with the value <c>AnalyticsLog</c>;
+		/// </summary>
 		public const string AnalyticsLog = "AnalyticsLog";
+		/// <summary>
+		/// Specifies the size limit for uploaded log files in bytes. Defaults to 200 MiB.
+		/// </summary>
 		public long UploadSizeLimit { get; set; } = 200 * 1024 * 1024;
 	}
 
-	public static class AnalyticsLogExtensions {
+	/// <summary>
+	/// Provides extension methods used to add and configure services and middlewares required for the configurable size limit for uploaded log files.
+	/// </summary>
+	public static class AnalyticsLogUploadLimitExtensions {
+		/// <summary>
+		/// Adds the <see cref="IOptions{AnalyticsLogOptions}"/> config object to the dependency injection container.
+		/// </summary>
+		/// <param name="services">The service collection for the DI container.</param>
+		/// <param name="config">The root config object too lookup the config section under.</param>
+		/// <returns>A reference to <paramref name="services"/> for chaining.</returns>
 		public static IServiceCollection UseAnalyticsLogUploadLimit(this IServiceCollection services, IConfiguration config) {
 			services.Configure<AnalyticsLogOptions>(config.GetSection(AnalyticsLogOptions.AnalyticsLog));
 			return services;
 		}
 
+		/// <summary>
+		/// Adds a conditional middleware that sets the configured log file upload size limit for the relevant requests.
+		/// </summary>
+		/// <param name="app">The builder object for the app to configure.</param>
+		/// <returns>A reference to <paramref name="app"/> for chaining.</returns>
 		public static IApplicationBuilder UseAnalyticsLogUploadLimit(this IApplicationBuilder app) {
 			app.UseWhen(context => context.Request.Path.StartsWithSegments("/api/analytics/log"), appBuild => {
 				appBuild.Use((context, next) => {
