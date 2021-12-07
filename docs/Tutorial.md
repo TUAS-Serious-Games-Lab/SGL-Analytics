@@ -30,3 +30,20 @@ IRootDataStore ds = // Instantiate implementation class here
 analytics = new SGLAnalytics(APP_NAME, APP_API_TOKEN, new Uri(BACKEND_BASE_URL), rootDataStore: ds);
 ```
 
+## SGL Analytics Lifecycle
+
+### Application Startup
+
+### Game Session Begin
+
+### Optional: Game Session End
+
+### Application Shutdown
+
+### Optional: Retrying Uploads Explicitly
+
+## Recording Entries
+
+### Game Logic Events
+
+### State Snapshots
