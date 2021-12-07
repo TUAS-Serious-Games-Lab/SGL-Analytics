@@ -157,12 +157,30 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 				logger.LogCritical("IngestLog POST request from user {userId} failed because the log file was too large for the server's limit. " +
 					"The Content-Length given by the client was {size}.", userId, HttpContext.Request.ContentLength);
 				metrics.HandleLogFileTooLargeError(appName);
-				return StatusCode(ex.StatusCode, "The log file's size exceeds the limit.");
+				return AbortWithErrorObject(ex.StatusCode, "The log file's size exceeds the limit.");
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to unexpected exception during log ingest.", userId);
 				metrics.HandleUnexpectedError(appName, ex);
 				throw;
+			}
+		}
+
+		private AbortWithErrorObjectResult AbortWithErrorObject(int statusCode, object value) => new AbortWithErrorObjectResult(statusCode, value);
+
+		private class AbortWithErrorObjectResult : ObjectResult {
+			public AbortWithErrorObjectResult(int statusCode, object value) : base(value) {
+				StatusCode = statusCode;
+			}
+
+			public override async Task ExecuteResultAsync(ActionContext context) {
+				try {
+					await base.ExecuteResultAsync(context);
+					await context.HttpContext.Response.CompleteAsync();
+				}
+				finally {
+					context.HttpContext.Abort();
+				}
 			}
 		}
 	}
