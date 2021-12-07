@@ -158,6 +158,9 @@ namespace SGL.Analytics.Client {
 				logger.LogInformation("Successfully registered user.");
 				startUploadingExistingLogs();
 			}
+			catch (UsernameAlreadyTakenException ex) {
+				logger.LogError("Registration failed because the specified username is already in use.", ex);
+			}
 			catch (UserRegistrationResponseException ex) {
 				logger.LogError("Registration failed due to error with the registration response.", ex);
 				throw;
