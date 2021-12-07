@@ -36,7 +36,7 @@ analytics = new SGLAnalytics(APP_NAME, APP_API_TOKEN, new Uri(BACKEND_BASE_URL),
 ## Backend Configuration
 
 For the application to be able to use a SGLAnalytics backend server, it must be registered there first.
-This is done using `SGL.Analytics.Backend.AppRegistrationTool` that registers the apps described by JSON files in a given directory.
+This is done using the `SGL.Analytics.Backend.AppRegistrationTool` executable that registers the apps described by JSON files in a given directory.
 These files specify the app name and app API token as used above, and they can furthermore specify a set of application-specific user properties to take upon user registration.
 An example for such a file is given below.
 ```json
@@ -65,15 +65,51 @@ An example for such a file is given below.
 
 ## SGL Analytics Lifecycle
 
-### Application Startup
+There are a few places in the game lifecycle where the application needs to perform operations with SGL Analytics.
+
+### User Setup
+
+At some point in time between launching the game application and starting a game session, the application shall check whether the user is registered with SGL Analytics by calling `analytics.IsRegistered()`.
+If they are not yet registered, the application shall display a data collection consent dialog and (if applicable to the app) prompt the user for application-specific registration data.
+When the user agrees (and has filled out the registration data), the application shall register the user by calling and awaiting `analytics.RegisterAsync` with an object of a user data class derived from `BaseUserData`, containing the registration data.
+The application should catch exceptions from the register operation, in case it fails.
+Most possible errors come from technical problems, like no network connection being available or a problem with the backend server.
+However, apps that use the optional username property of `BaseUserData` should specifically catch `UsernameAlreadyTakenException`, which is thrown when the chosen username is already registered with the application.
+As usernames need to be unique per application, the game app should ask the user to pick a different name and remember the other registration data values to retry with the new username.
 
 ### Game Session Begin
 
-### Optional: Game Session End
+When a new game session is started (typically when the user clicks 'New Game' or similar), the game app should call `analytics.StartNewLog()` to start a log file for the starting session.
+A log file needs to be active, before entries can be recorded, thus at least one call to `analytics.StartNewLog()` needs to be made.
+Starting a new log file for each session is however recommended for most cases.
+When `analytics.StartNewLog()` starts a new log and there already was an active one, the old log continues being flushed to disk in the background and is added to the upload queue when the background writing is complete.
 
 ### Application Shutdown
 
+Before the game application is shut down, it needs to call and await `analytics.FinishAsync()`.
+This closes the currently active log (and possibly preceeding ones) by flushing the in-memory buffer to the file(s), ensuring that the closing `]` is written to make the files valid JSON, and then closing the file(s).
+The completed files are then added to the upload queue.
+The asynchronous operation started by `analytics.FinishAsync()` only finishes when all buffered log files are flushed and the background upload task has also worked through its queue, i.e. when all pending log files have either been uploaded to the backend or failed their upload.
+In the latter case they are usually kept locally and their upload is queued for retrying upon instantiating `SGLAnalytics`.
+The only case where the upload is not retried is when the server rejected the upload because the file was bigger than the configured size limit. Retrying those files would only waste the user's network bandwidth, just to fail again.
+
+### Optional: Game Session End
+
+When the user exists a game session to the menu, the game can optionally call and await `analytics.FinishAsync()` instead of waiting until application shutdown.
+This closes the current log file, flushes it and preceeding ones to disk and waits for it and preceeding files to be uploaded.
+To resume SGL Analytics operation, the app then needs to call `analytics.StartNewLog()` again to start a new file.
+Not finishing before exiting the game session is not very problematic, it only keeps the log file active until either a new one is started, or the application is shut down.
+If users tend to leave the game sitting in the menu it might be advantageous to call finish.
+
 ### Optional: Retrying Uploads Explicitly
+
+Usually, log files that previously failed their upload are kept locally and their upload is retried upon next startup, when `SGLAnalytics` is instantiated with a user registered.
+Files are also kept locally if logs are recorded before the user is registered.
+In this case, the uploads of existing files are queued when the registration is completed.
+
+As a typical reason for failing uploads is that the client device currently has no network connection, client applications can explicitly retry uploads either after some time (e.g. after a few minutes) or when it has reason to assume that the device now has a network connection, e.g. because it just established a connection to some other service it uses, e.g. a multiplayer server.
+Queueing upload retries is done by simply calling `analytics.StartRetryUploads()`.
+The application should however **not** frequently trigger retries as this would consume a non-trivial amount of ressources on both, the client and the backend.
 
 ## Recording Entries
 
