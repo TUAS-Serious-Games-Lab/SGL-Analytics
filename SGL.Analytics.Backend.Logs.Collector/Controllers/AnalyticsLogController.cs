@@ -55,7 +55,10 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			app.UseWhen(context => context.Request.Path.StartsWithSegments("/api/analytics/log"), appBuild => {
 				appBuild.Use((context, next) => {
 					var options = context.RequestServices.GetRequiredService<IOptions<AnalyticsLogOptions>>();
-					context.Features.Get<IHttpMaxRequestBodySizeFeature>().MaxRequestBodySize = options.Value.UploadSizeLimit;
+					var bodySizeFeature = context.Features.Get<IHttpMaxRequestBodySizeFeature>();
+					if (bodySizeFeature != null) {
+						bodySizeFeature.MaxRequestBodySize = options.Value.UploadSizeLimit;
+					}
 					return next();
 				});
 			});
