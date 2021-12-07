@@ -15,7 +15,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		private static readonly Gauge lastRegistrationTime = Metrics.CreateGauge("sgla_last_registration_time_seconds", "Unix timestamp of the last user registration for the labeled app (in UTC).", "app");
 		private static readonly Counter errorCounter = Metrics.CreateCounter("sgla_errors_total", "Number of service-level errors encountered by SGL Analytics, labeled by error type and app.", "type", "app");
 		private const string ERROR_NONEXISTENT_USERNAME = "Nonexistent username";
-		private const string ERROR_NONEXISTENT_USERID = "Nonexistent username";
+		private const string ERROR_NONEXISTENT_USERID = "Nonexistent userid";
 		private const string ERROR_INCORRECT_USER_SECRET = "Incorrect user secret";
 		private const string ERROR_UNKNOWN_APP = "Unknown app";
 		private const string ERROR_INCORRECT_APP_API_TOKEN = "Incorrect app API token";
