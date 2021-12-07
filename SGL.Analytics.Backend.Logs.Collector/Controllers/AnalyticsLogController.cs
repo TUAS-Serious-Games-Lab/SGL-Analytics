@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Prometheus;
+using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.AspNetCore;
@@ -12,6 +16,56 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
+
+	/// <summary>
+	/// Encapsulates configuration options for <see cref="AnalyticsLogController"/>.
+	/// </summary>
+	public class AnalyticsLogOptions {
+		/// <summary>
+		/// Provides the name of the config section as a constant with the value <c>AnalyticsLog</c>;
+		/// </summary>
+		public const string AnalyticsLog = "AnalyticsLog";
+		/// <summary>
+		/// Specifies the size limit for uploaded log files in bytes. Defaults to 200 MiB.
+		/// </summary>
+		public long UploadSizeLimit { get; set; } = 200 * 1024 * 1024;
+	}
+
+	/// <summary>
+	/// Provides extension methods used to add and configure services and middlewares required for the configurable size limit for uploaded log files.
+	/// </summary>
+	public static class AnalyticsLogUploadLimitExtensions {
+		/// <summary>
+		/// Adds the <see cref="IOptions{AnalyticsLogOptions}"/> config object to the dependency injection container.
+		/// </summary>
+		/// <param name="services">The service collection for the DI container.</param>
+		/// <param name="config">The root config object too lookup the config section under.</param>
+		/// <returns>A reference to <paramref name="services"/> for chaining.</returns>
+		public static IServiceCollection UseAnalyticsLogUploadLimit(this IServiceCollection services, IConfiguration config) {
+			services.Configure<AnalyticsLogOptions>(config.GetSection(AnalyticsLogOptions.AnalyticsLog));
+			return services;
+		}
+
+		/// <summary>
+		/// Adds a conditional middleware that sets the configured log file upload size limit for the relevant requests.
+		/// </summary>
+		/// <param name="app">The builder object for the app to configure.</param>
+		/// <returns>A reference to <paramref name="app"/> for chaining.</returns>
+		public static IApplicationBuilder UseAnalyticsLogUploadLimit(this IApplicationBuilder app) {
+			app.UseWhen(context => context.Request.Path.StartsWithSegments("/api/analytics/log"), appBuild => {
+				appBuild.Use((context, next) => {
+					var options = context.RequestServices.GetRequiredService<IOptions<AnalyticsLogOptions>>();
+					var bodySizeFeature = context.Features.Get<IHttpMaxRequestBodySizeFeature>();
+					if (bodySizeFeature != null) {
+						bodySizeFeature.MaxRequestBodySize = options.Value.UploadSizeLimit;
+					}
+					return next();
+				});
+			});
+			return app;
+		}
+	}
+
 	/// <summary>
 	/// The controller class serving the <c>api/analytics/log</c> route that accepts uploads of analytics log files for SGL Analytics.
 	/// </summary>
@@ -48,7 +102,6 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		/// <param name="appApiToken">The API token of the client application, provided by the HTTP header <c>App-API-Token</c>.</param>
 		/// <param name="logMetadata">The metadata of the uploaded log file, provided as HTTP headers with the names of the properties of <see cref="LogMetadataDTO"/>.</param>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
-		[RequestSizeLimit(200 * 1024 * 1024)]
 		[Consumes("application/octet-stream")]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -77,7 +130,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to an unexpected exception when fetching application metadata.", userId);
-				metrics.HandleUnexpectedError(appName,ex);
+				metrics.HandleUnexpectedError(appName, ex);
 				throw;
 			}
 			if (app is null) {
@@ -104,12 +157,30 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 				logger.LogCritical("IngestLog POST request from user {userId} failed because the log file was too large for the server's limit. " +
 					"The Content-Length given by the client was {size}.", userId, HttpContext.Request.ContentLength);
 				metrics.HandleLogFileTooLargeError(appName);
-				return StatusCode(ex.StatusCode, "The log file's size exceeds the limit.");
+				return AbortWithErrorObject(ex.StatusCode, "The log file's size exceeds the limit.");
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to unexpected exception during log ingest.", userId);
 				metrics.HandleUnexpectedError(appName, ex);
 				throw;
+			}
+		}
+
+		private AbortWithErrorObjectResult AbortWithErrorObject(int statusCode, object value) => new AbortWithErrorObjectResult(statusCode, value);
+
+		private class AbortWithErrorObjectResult : ObjectResult {
+			public AbortWithErrorObjectResult(int statusCode, object value) : base(value) {
+				StatusCode = statusCode;
+			}
+
+			public override async Task ExecuteResultAsync(ActionContext context) {
+				try {
+					await base.ExecuteResultAsync(context);
+					await context.HttpContext.Response.CompleteAsync();
+				}
+				finally {
+					context.HttpContext.Abort();
+				}
 			}
 		}
 	}

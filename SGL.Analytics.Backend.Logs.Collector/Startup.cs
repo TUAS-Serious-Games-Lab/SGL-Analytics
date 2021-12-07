@@ -3,16 +3,17 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Prometheus;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
-using System;
-using SGL.Utilities.Logging.FileLogging;
-using SGL.Utilities.Backend.AspNetCore;
+using SGL.Analytics.Backend.Logs.Collector.Controllers;
 using SGL.Analytics.Backend.Logs.Infrastructure;
-using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
-using Prometheus;
+using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Backend.AspNetCore;
+using SGL.Utilities.Logging.FileLogging;
+using System;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	/// <summary>
@@ -39,6 +40,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 				config.Constants.TryAdd("ServiceName", "SGL.Analytics.LogCollector");
 			});
 
+			services.UseAnalyticsLogUploadLimit(Configuration);
 			services.AddControllers();
 
 			services.UseJwtBearerAuthentication(Configuration);
@@ -71,6 +73,8 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			}
 
 			app.UseHttpsRedirection();
+
+			app.UseAnalyticsLogUploadLimit();
 
 			app.UseRouting();
 
