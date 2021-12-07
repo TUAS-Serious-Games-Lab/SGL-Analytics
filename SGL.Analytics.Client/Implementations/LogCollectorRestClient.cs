@@ -55,6 +55,7 @@ namespace SGL.Analytics.Client {
 					var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);
 					request.Content = content;
 					request.Headers.Authorization = authToken.ToHttpHeaderValue();
+					request.Version = HttpVersion.Version20;
 					var response = await httpClient.SendAsync(request);
 					if (response.StatusCode == HttpStatusCode.Unauthorized && response.Headers.WwwAuthenticate.Count > 0) {
 						throw new LoginRequiredException();
