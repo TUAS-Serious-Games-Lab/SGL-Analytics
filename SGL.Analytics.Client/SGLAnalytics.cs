@@ -134,6 +134,9 @@ namespace SGL.Analytics.Client {
 		/// <remarks>
 		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
 		/// </remarks>
+		/// <exception cref="UsernameAlreadyTakenException">If <paramref name="userData"/> had the optional <see cref="BaseUserData.Username"/> property set and the given username is already taken for this application. If this happens, the user needs to pick a different name.</exception>
+		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
+		/// <exception cref="HttpRequestException">Indicates either a network problem (if <see cref="HttpRequestException.StatusCode"/> is <see langword="null"/>) or a server-side error (if <see cref="HttpRequestException.StatusCode"/> has a value).</exception>
 		public async Task RegisterAsync(BaseUserData userData) {
 			try {
 				if (IsRegistered()) {
@@ -154,6 +157,9 @@ namespace SGL.Analytics.Client {
 				await rootDataStore.SaveAsync();
 				logger.LogInformation("Successfully registered user.");
 				startUploadingExistingLogs();
+			}
+			catch (UsernameAlreadyTakenException ex) {
+				logger.LogError("Registration failed because the specified username is already in use.", ex);
 			}
 			catch (UserRegistrationResponseException ex) {
 				logger.LogError("Registration failed due to error with the registration response.", ex);

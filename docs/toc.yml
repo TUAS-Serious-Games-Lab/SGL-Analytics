@@ -1,2 +1,6 @@
 - name: Introduction
   href: Introduction.md
+- name: Architecture
+  href: Architecture.md
+- name: Tutorial
+  href: Tutorial.md
