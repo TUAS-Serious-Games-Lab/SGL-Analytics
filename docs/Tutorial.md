@@ -146,7 +146,67 @@ In many cases, the event object is created specifically for the call. In this ca
 As the events are written to disk asynchronously with the calling code, later modification would interfere with the writing process.
 To prevent this problem, `RecordEvent` copies the passed object before applying the same logic as `RecordEventUnshared` and thus requires the object to implement `ICloneable` as a deep copy of all mutable subobjects.
 
-The event type can be specified using one of the following ways:
-...
+The event type field of the recorded entry can be specified using one of the following ways:
+- If an overload of `RecordEvent` and `RecordEventUnshared` that takes an `eventType` parameter is called, the value of the parameter is used.
+- If the dynamic type of the event object has an `[EventType]` attribute, its `EventTypeName` property is used.
+- Otherwise, the type name of the dynamic type of the event object is used.
+
+A sketch for a snippet of gameplay code that defines and then records events could for example look like this:
+- The relevant definition:
+```csharp
+enum Suit { Diamonds, Clubs, Hearts, Spades };
+enum Rank { Ace = 1, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King };
+
+[EventType("CardDrawn")]
+class CardDrawnEvent {
+	public Suit Suit {get; set;}
+	public Rank Rank {get; set;}
+}
+
+[EventType("CardPlayed")]
+class CardPlayedEvent {
+	public Suit Suit {get; set;}
+	public Rank Rank {get; set;}
+}
+
+[EventType("Won")]
+class WonEvent {
+	public int Points {get; set;}
+}
+
+[EventType("Lost")]
+class LostEvent {
+	public int Points {get; set;}
+	public int WinnersPoints {get; set;}
+}
+
+[EventType("Tie")]
+class TieEvent {
+	public int Points {get; set;}
+}
+```
+- The game logic code:
+```csharp
+var drawn_card = gameCore.DrawCardFromStack();
+playerHand.Add(drawn_card);
+analytics.RecordEventUnshared("DrawnCards",new CardDrawnEvent(){ Suit = drawn_card.Suit, Rank = drawn_card.Rank });
+
+// player selects card to play
+var played_card = ui.GetPlayerSelection();
+analytics.RecordEventUnshared("PlayedCards", new CardPlayedEvent(){ Suit = played_card.Suit, Rank = played_card.Rank });
+var outcome = gameCore.PlayCardAndFinishRound(played_card);
+if(outcome == Outcome.Won){
+	analytics.RecordEventUnshared("Outcomes", new WonEvent(){Points = GetMyPoints()});
+	DisplayWonScreen();
+}
+else if (outcome == Outcome.Lost){
+	analytics.RecordEventUnshared("Outcomes", new LostEvent(){ Points = GetMyPoints(), WinnersPoints = gameCore.GetWinner().Points });
+	DisplayLostScreen();
+}
+else if (outcome == Outcome.Tie){
+	analytics.RecordEventUnshared("Outcomes", new TieEvent(){ Points = GetMyPoints() });
+	DisplayTieScreen();
+}
+```
 
 ### State Snapshots
