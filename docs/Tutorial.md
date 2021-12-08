@@ -187,14 +187,14 @@ class TieEvent {
 ```
 - The game logic code:
 ```csharp
-var drawn_card = gameCore.DrawCardFromStack();
-playerHand.Add(drawn_card);
-analytics.RecordEventUnshared("DrawnCards",new CardDrawnEvent(){ Suit = drawn_card.Suit, Rank = drawn_card.Rank });
+var drawnCard = gameCore.DrawCardFromStack();
+playerHand.Add(drawnCard);
+analytics.RecordEventUnshared("DrawnCards",new CardDrawnEvent(){ Suit = drawnCard.Suit, Rank = drawnCard.Rank });
 
 // player selects card to play
-var played_card = ui.GetPlayerSelection();
-analytics.RecordEventUnshared("PlayedCards", new CardPlayedEvent(){ Suit = played_card.Suit, Rank = played_card.Rank });
-var outcome = gameCore.PlayCardAndFinishRound(played_card);
+var playedCard = ui.GetPlayerSelection();
+analytics.RecordEventUnshared("PlayedCards", new CardPlayedEvent(){ Suit = playedCard.Suit, Rank = playedCard.Rank });
+var outcome = gameCore.PlayCardAndFinishRound(playedCard);
 if(outcome == Outcome.Won){
 	analytics.RecordEventUnshared("Outcomes", new WonEvent(){Points = GetMyPoints()});
 	DisplayWonScreen();
@@ -210,3 +210,31 @@ else if (outcome == Outcome.Tie){
 ```
 
 ### State Snapshots
+
+Addtionally to events, SGL Analytics also supports recording snapshots of the states of important game objects, usually periodically.
+When recording a snapshot, in addition to the channel name, there is an object id, which is of type `object` to allow different id types like string, numbers or GUIDs.
+This id can be used to differentiate between the snapshots of multiple object's state recorded to the same channel.
+A snapshot also has a payload `object` like an event, to pass the state data to log entry.
+Typical examples for snapshots are:
+- Recording the position, camera viewing direction and hitpoints of the player character every few seconds
+- Recording the contents of the player's inventory every few minute
+- Recording the cards in the player's hand and on the table for every round, here the hand and the table could have different object ids, be recorded to different channels, or both
+
+For the method use to record snapshots, there is only `RecordSnapshotUnshared` and no version that provides cloning of the object automatically, as it is assumed, that the snapshots are always created specifically for the call anyways.
+However the calling code needs to still take care, that the snapshot object doesn't reference objects that may be mutated later.
+If this can't be ensured, those referenced objects need to be deep-copied when creating the snapshot.
+
+A sketch for code for recording the states in the example given above for events could look like the following. This code should be in some kind of background task such as a timed coroutine.
+```csharp
+// Assuming that playerHand contains card objects, where cards my be added or removed but the card object are not modified, we can just put the current objects in an array and hand that to the recording method:
+analytics.RecordSnapshotUnshared("Hands", "Player_0", playerHand.ToArray());
+
+// If the card objects themselves can also change and are not value types, we can simply deep-copy them as shown here:
+analytics.RecordSnapshotUnshared("PlayedCards", 0, playerHand.Select(card => new Card(card.Suit, card.Rank)).ToArray());
+```
+
+For more structured states, either custom types or dictionaries can be used:
+```
+// We assume here, that player.Position and player.Camera.Orientation are value types for a vector and a matrix or quaternion that are automatically copied.
+analytics.RecordSnapshotUnshared("Trails", "Player", new Dictionary<string, object>(){["Position"] = player.Position, ["Camera"] = player.Camera.Orientation });
+```
