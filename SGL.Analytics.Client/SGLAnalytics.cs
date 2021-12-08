@@ -283,6 +283,47 @@ namespace SGL.Analytics.Client {
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			RecordEventUnshared(channel, eventObject.Clone());
 		}
+
+		/// <summary>
+		/// Record the given event object to the current analytics log file, tagged with the given channel for categorization and with the current time according to the client's local clock.
+		/// </summary>
+		/// <param name="channel">A channel name that is used to categorize analytics log entries into multiple logical data streams.</param>
+		/// <param name="eventObject">The event payload data to write to the log in JSON form. The object needs to be clonable to obtain an unshared copy because the log recording to disk is done asynchronously and the object content otherwise might have changed when it is read leater. If the object is created specifically for this call, or will not be modified after the call, call RecordEventUnshared instead to avoid this copy.</param>
+		/// <param name="eventType">The name to use for the event type field of the recorded log entry.</param>
+		/// <remarks>
+		/// The recorded entry has a field containing the event type as a string.
+		/// This overload simply sets the value given in <paramref name="eventType"/> as the entry's event type field,
+		/// which allows common types such as collection objects to be used for <paramref name="eventObject"/>,
+		/// as they don't have an <see cref="EventTypeAttribute"/> and their type name is also not suitable for usage in the log entry.
+		/// For custom event object types, it is usually recommended to use <see cref="RecordEvent(string, ICloneable)"/> instead.
+		///
+		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
+		/// </remarks>
+		public void RecordEvent(string channel, ICloneable eventObject, string eventType) {
+			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
+			RecordEventUnshared(channel, eventObject.Clone(), eventType);
+		}
+
+		/// <summary>
+		/// Record the given event object to the current analytics log file, tagged with the given channel for categorization and with the current time according to the client's local clock.
+		/// </summary>
+		/// <param name="channel">A channel name that is used to categorize analytics log entries into multiple logical data streams.</param>
+		/// <param name="eventObject">The event payload data to write to the log in JSON form. As the log recording to disk is done asynchronously, the ownership of the given object is transferred to the analytics client and must not be changed by the caller afterwards. The easiest way to ensure this is by creating the event object inside the call and not holding other references to it.</param>
+		/// <param name="eventType">The name to use for the event type field of the recorded log entry.</param>
+		/// <remarks>
+		/// The recorded entry has a field containing the event type as a string.
+		/// This overload simply sets the value given in <paramref name="eventType"/> as the entry's event type field,
+		/// which allows common types such as collection objects to be used for <paramref name="eventObject"/>,
+		/// as they don't have an <see cref="EventTypeAttribute"/> and their type name is also not suitable for usage in the log entry.
+		/// For custom event object types, it is usually recommended to use <see cref="RecordEventUnshared(string, object)"/> instead.
+		///
+		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
+		/// </remarks>
+		public void RecordEventUnshared(string channel, object eventObject, string eventType) {
+			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
+			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewEventEntry(channel, DateTime.Now, eventType), eventObject));
+		}
+
 		/// <summary>
 		/// Record the given event object to the current analytics log file, tagged with the given channel for categorization and with the current time according to the client's local clock.
 		/// </summary>
@@ -298,8 +339,9 @@ namespace SGL.Analytics.Client {
 			var eventType = eventObject.GetType();
 			var attributes = eventType.GetCustomAttributes(typeof(EventTypeAttribute), false);
 			var eventTypeName = attributes.Cast<EventTypeAttribute>().SingleOrDefault()?.EventTypeName ?? eventType.Name;
-			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewEventEntry(channel, DateTime.Now, eventTypeName), eventObject));
+			RecordEventUnshared(channel, eventObject, eventTypeName);
 		}
+
 		/// <summary>
 		/// Record the given snapshot data for an application object to the current analytics log file, tagged with the given channel for categorization, with the id of the object, and with the current time according to the client's local clock.
 		/// </summary>
