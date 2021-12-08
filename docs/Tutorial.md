@@ -63,6 +63,8 @@ An example for such a file is given below.
 }
 ```
 
+The valid options for the `Type` field are defined in `SGL.Analytics.Backend.Domain.Entity.UserPropertyType`.
+
 ## SGL Analytics Lifecycle
 
 There are a few places in the game lifecycle where the application needs to perform operations with SGL Analytics.
@@ -113,6 +115,38 @@ The application should however **not** frequently trigger retries as this would 
 
 ## Recording Entries
 
+During normal gameplay, entries are recorded to the currently active log by calling the appropriate `Record`... methods from the gameplay code.
+The data associated with the entries are provided by the gameplay code as objects.
+The method parameters for this are specified as `object` to allow a broad range of types.
+However, there is one central requirement for these objects: They need to be convertable to JSON using the `System.Text.Json` serialization.
+This includes [collections like dictionaries](https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-supported-collection-types), but custom classes are also supported by serializing the public non-static properties of the class.
+For more complex data objects, the classes of the provided objects can also specify the `[JsonConverter(typeof(SomeCustomConverter))]` attribute to define their [own conversion logic](https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-converters-how-to) in `SomeCustomConverter`.
+See [the `System.Text.Json` manual](https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-overview) for details.
+
+The entries are categorized into named channels to later allow easier filtering of the file contents.
+All entries also automatically include the timestamp of when the recording method was called, which allows mesauring time between events and associates snapshots with their recording time.
+
 ### Game Logic Events
+
+Examples for game logic events are:
+- Starting a game
+- Completing a level / stage
+- Losing a level / stage
+- Picking up an item
+- Buying / selling an item from / to another player / to an NPC vendor
+- Using certain abilities
+- Consuming items
+- Rolling a dice and then making a game move
+- Drawing or playing a card
+- Starting or completing a puzzle / minigame
+
+Such events are recorded by calling the methods `RecordEvent` and `RecordEventUnshared` on the `analytics` object.
+In many cases, the event object is created specifically for the call. In this case, `RecordEventUnshared` should be used.
+`RecordEvent` is required for cases where the event object is kept by the calling code and may be modified later.
+As the events are written to disk asynchronously with the calling code, later modification would interfere with the writing process.
+To prevent this problem, `RecordEvent` copies the passed object before applying the same logic as `RecordEventUnshared` and thus requires the object to implement `ICloneable` as a deep copy of all mutable subobjects.
+
+The event type can be specified using one of the following ways:
+...
 
 ### State Snapshots
