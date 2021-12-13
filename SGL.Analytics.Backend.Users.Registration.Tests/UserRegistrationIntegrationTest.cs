@@ -141,7 +141,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				var content = JsonContent.Create(userRegDTO);
 				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
 				request.Content = content;
-				request.Headers.Add("App-API-Token", "Wrong");
+				request.Headers.Add("App-API-Token", "WrongToken");
 				var response = await client.SendAsync(request);
 				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 			}
@@ -267,7 +267,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		[Fact]
 		public async Task LoginWithIdAndIncorrectSecretFailsWithExpectedError() {
 			var (userId, secret) = await createTestUserAsync("Testuser10");
-			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, "Wrong");
+			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, "WrongSecret");
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
 				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
@@ -289,7 +289,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		[Fact]
 		public async Task LoginWithIncorrectAppApiTokenFailsWithExpectedError() {
 			var (userId, secret) = await createTestUserAsync("Testuser12");
-			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, "Wrong", userId, secret);
+			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, "WrongToken", userId, secret);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
 				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
@@ -331,7 +331,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		[Fact]
 		public async Task LoginWithUsernameAndIncorrectPasswordFailsWithExpectedError() {
 			var (userId, secret) = await createTestUserAsync("Testuser15");
-			var loginReqDTO = new UsernameBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, "Testuser15", "Wrong");
+			var loginReqDTO = new UsernameBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, "Testuser15", "WrongSecret");
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
 				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);

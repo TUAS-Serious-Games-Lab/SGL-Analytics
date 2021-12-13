@@ -9,6 +9,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -56,7 +57,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
 		[HttpPost]
-		public async Task<ActionResult<UserRegistrationResultDTO>> RegisterUser([FromHeader(Name = "App-API-Token")] string appApiToken,
+		public async Task<ActionResult<UserRegistrationResultDTO>> RegisterUser([FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken,
 			[FromBody] UserRegistrationDTO userRegistration, CancellationToken ct = default) {
 			using var appScope = logger.BeginApplicationScope(userRegistration.AppName);
 			ApplicationWithUserProperties? app = null;
