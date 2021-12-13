@@ -1,6 +1,7 @@
 using SGL.Analytics.DTO;
 using SGL.Utilities;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -49,7 +50,9 @@ namespace SGL.Analytics.Client {
 			try {
 				using (var stream = logFile.OpenReadRaw()) {
 					var content = new StreamContent(stream);
-					content.Headers.MapDtoProperties(new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding));
+					LogMetadataDTO dto = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding);
+					Validator.ValidateObject(dto, new ValidationContext(dto));
+					content.Headers.MapDtoProperties(dto);
 					content.Headers.Add("App-API-Token", appAPIToken);
 					content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 					var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);
