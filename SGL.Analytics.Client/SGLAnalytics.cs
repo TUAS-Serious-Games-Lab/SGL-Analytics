@@ -159,22 +159,22 @@ namespace SGL.Analytics.Client {
 				startUploadingExistingLogs();
 			}
 			catch (UsernameAlreadyTakenException ex) {
-				logger.LogError("Registration failed because the specified username is already in use.", ex);
+				logger.LogError(ex, "Registration failed because the specified username is already in use.");
 			}
 			catch (UserRegistrationResponseException ex) {
-				logger.LogError("Registration failed due to error with the registration response.", ex);
+				logger.LogError(ex, "Registration failed due to error with the registration response.");
 				throw;
 			}
 			catch (HttpRequestException ex) when (ex.StatusCode is not null) {
-				logger.LogError("Registration failed due to error from server.", ex);
+				logger.LogError(ex, "Registration failed due to error from server.");
 				throw;
 			}
 			catch (HttpRequestException ex) {
-				logger.LogError("Registration failed due to communication problem with the backend server.", ex);
+				logger.LogError(ex, "Registration failed due to communication problem with the backend server.");
 				throw;
 			}
 			catch (Exception ex) {
-				logger.LogError("Registration failed due to unexpected error.", ex);
+				logger.LogError(ex, "Registration failed due to unexpected error.");
 				throw;
 			}
 		}
