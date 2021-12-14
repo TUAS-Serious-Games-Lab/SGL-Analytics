@@ -31,7 +31,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
     <PackageReference Include="prometheus-net.AspNetCore" Version="5.0.2" />
     <PackageReference Include="prometheus-net.AspNetCore.HealthChecks" Version="5.0.2" />
-    <PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.1.4" />
+    <PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.1.4-3-g5c8b16e-main" />
     <PackageReference Include="SGL.Utilities.Backend.Security" Version="0.1.4" />
     <PackageReference Include="SGL.Utilities.Logging" Version="0.1.4" />
     <PackageReference Include="SGL.Utilities.PrometheusNet" Version="0.1.4" />

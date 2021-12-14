@@ -24,6 +24,14 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		private const string ERROR_CONCURRENCY_CONFLICT = "Concurrency conflict";
 		private const string ERROR_UNIQUENESS_CONFLICT = "Uniqueness conflict";
 		private const string ERROR_USERNAME_ALREADY_TAKEN = "Username is already taken";
+		private const string ERROR_MODEL_STATE_VALIDATION_FAILED = "Model state validation failed";
+
+		/// <summary>
+		/// Initializes counter objects not associated with a specific app.
+		/// </summary>
+		public MetricsManager() {
+			errorCounter.WithLabels(ERROR_MODEL_STATE_VALIDATION_FAILED, "");
+		}
 
 		/// <inheritdoc/>
 		public void EnsureMetricsExist(string appName) {
@@ -108,6 +116,11 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		/// <inheritdoc/>
 		public void UpdateRegisteredUsers(IDictionary<string, int> perAppCounts) {
 			registeredUsers.UpdateLabeledValues(perAppCounts);
+		}
+
+		/// <inheritdoc/>
+		public void HandleModelStateValidationError(string errorMessage) {
+			errorCounter.WithLabels(ERROR_MODEL_STATE_VALIDATION_FAILED, "").Inc();
 		}
 	}
 }

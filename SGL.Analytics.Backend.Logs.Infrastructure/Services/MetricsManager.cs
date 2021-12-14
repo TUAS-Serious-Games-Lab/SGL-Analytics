@@ -17,6 +17,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		private const string ERROR_UNKNOWN_APP = "Unknown app";
 		private const string ERROR_INCORRECT_APP_API_TOKEN = "Incorrect app API token";
 		private const string ERROR_INCORRECT_SECURITY_TOKEN_CLAIMS = "Incorrect security token claims";
+		private const string ERROR_MODEL_STATE_VALIDATION_FAILED = "Model state validation failed";
 		private const string WARNING_LOG_ID_CONFLICT = "Conflicting log id";
 		private const string WARNING_LOG_UPLOAD_RETRY = "Retrying failed log upload";
 		private const string WARNING_RETRYING_COMPLETED_UPLOAD = "Retrying completed log upload";
@@ -28,6 +29,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		/// </summary>
 		public MetricsManager() {
 			errorCounter.WithLabels(ERROR_INCORRECT_SECURITY_TOKEN_CLAIMS, "");
+			errorCounter.WithLabels(ERROR_MODEL_STATE_VALIDATION_FAILED, "");
 		}
 
 		/// <inheritdoc/>
@@ -100,6 +102,11 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		/// <inheritdoc/>
 		public void HandleUploadRetryChangedEncodingWarning(string appName) {
 			warningCounter.WithLabels(WARNING_UPLOAD_RETRY_CHANGED_ENCODING, appName).Inc();
+		}
+
+		/// <inheritdoc/>
+		public void HandleModelStateValidationError(string errorMessage) {
+			errorCounter.WithLabels(ERROR_MODEL_STATE_VALIDATION_FAILED, "").Inc();
 		}
 	}
 }

@@ -69,6 +69,12 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
 		void HandleUsernameAlreadyTakenError(string appName);
 		/// <summary>
+		/// Called when an error is caused during model state validation due to incorrect request parameters.
+		/// No <c>appName</c> parameter is taken, as the appName is part of the model state that was not valid.
+		/// Instead, the error message is given to allow implementations to use per error type counters if desired.
+		/// </summary>
+		void HandleModelStateValidationError(string errorMessage);
+		/// <summary>
 		/// Called when an unexpected error is caused, i.e. one that is not known ahead of time and thus doesn't have a separate <c>Handle</c>... method.
 		/// </summary>
 		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
@@ -102,6 +108,8 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		public void HandleIncorrectAppApiTokenError(string appName) { }
 		/// <inheritdoc/>
 		public void HandleIncorrectUserSecretError(string appName) { }
+		/// <inheritdoc/>
+		public void HandleModelStateValidationError(string errorMessage) { }
 		/// <inheritdoc/>
 		public void HandleNonexistentUserIdError(string appName) { }
 		/// <inheritdoc/>

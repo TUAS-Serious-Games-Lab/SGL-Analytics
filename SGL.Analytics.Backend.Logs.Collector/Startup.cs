@@ -52,6 +52,10 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			services.UseLogsBackendInfrastructure(Configuration);
 			services.AddScoped<ILogManager, LogManager>();
 
+			services.AddModelStateValidationErrorLogging((err, ctx) =>
+				ctx.HttpContext.RequestServices.GetService<IMetricsManager>()?
+				.HandleModelStateValidationError(err.ErrorMessage));
+
 			services.AddHealthChecks()
 				.AddCheck<LogFileRepositoryHealthCheck>("log_file_repository_health_check")
 				.AddDbContextCheck<LogsContext>("db_health_check")
