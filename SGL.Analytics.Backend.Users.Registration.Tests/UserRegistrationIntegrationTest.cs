@@ -117,6 +117,22 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			}
 		}
 		[Fact]
+		public async Task UserRegistrationWithPresentButEmptyUsernameFailsWithBadRequestError() {
+			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = "Hello" };
+			var userRegDTO = new UserRegistrationDTO(fixture.AppName, "",
+				StringGenerator.GenerateRandomWord(16),// Not cryptographic, but ok for test
+				props);
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(userRegDTO);
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				request.Content = content;
+				request.Headers.Add("App-API-Token", fixture.AppApiToken);
+				var response = await client.SendAsync(request);
+				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+				output.WriteStreamContents(response.Content.ReadAsStream());
+			}
+		}
+		[Fact]
 		public async Task UserRegistrationWithNonExistentAppFailsWithExpectedError() {
 			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = "Hello" };
 			var userRegDTO = new UserRegistrationDTO("DoesNotExist", "Testuser2",
