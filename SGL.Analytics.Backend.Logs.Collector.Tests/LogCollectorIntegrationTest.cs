@@ -451,5 +451,16 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				output.WriteStreamContents(response.Content.ReadAsStream());
 			}
 		}
+		[Fact]
+		public async Task AtemptToInjectPathInSuffixFailsWithBadRequestError() {
+			var logId = Guid.NewGuid();
+			using (var client = fixture.CreateClient()) {
+				Guid userId = Guid.NewGuid();
+				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45), "/../test", LogContentEncoding.GZipCompressed), userId, fixture.AppName);
+				var response = await client.SendAsync(request);
+				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+				output.WriteStreamContents(response.Content.ReadAsStream());
+			}
+		}
 	}
 }
