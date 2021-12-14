@@ -382,5 +382,15 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Empty(response.Headers.WwwAuthenticate);
 			}
 		}
+		[Fact]
+		public async Task LoginWithEmptyUsernameFailsWithExpectedError() {
+			var (userId, secret) = await createTestUserAsync("Testuser16");
+			var loginReqDTO = new UsernameBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, "", secret);
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+			}
+		}
 	}
 }
