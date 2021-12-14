@@ -8,16 +8,16 @@ namespace SGL.Analytics.DTO {
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user.
 	/// </summary>
 	[JsonConverter(typeof(LoginRequestDTOJsonConverter))]
-	public abstract record LoginRequestDTO([PlainName][StringLength(128)] string AppName, [StringLength(64, MinimumLength = 8)] string AppApiToken, [StringLength(128, MinimumLength = 8)] string UserSecret);
+	public abstract record LoginRequestDTO([PlainName][StringLength(128, MinimumLength = 1)] string AppName, [StringLength(64, MinimumLength = 8)] string AppApiToken, [StringLength(128, MinimumLength = 8)] string UserSecret);
 
 	/// <summary>
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user by specifying a user id.
 	/// </summary>
-	public record IdBasedLoginRequestDTO([PlainName][StringLength(128)] string AppName, [StringLength(64, MinimumLength = 8)] string AppApiToken, Guid UserId, [StringLength(128, MinimumLength = 8)] string UserSecret) : LoginRequestDTO(AppName, AppApiToken, UserSecret);
+	public record IdBasedLoginRequestDTO([PlainName][StringLength(128, MinimumLength = 1)] string AppName, [StringLength(64, MinimumLength = 8)] string AppApiToken, Guid UserId, [StringLength(128, MinimumLength = 8)] string UserSecret) : LoginRequestDTO(AppName, AppApiToken, UserSecret);
 	/// <summary>
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user by specifying a username.
 	/// </summary>
-	public record UsernameBasedLoginRequestDTO([PlainName][StringLength(128)] string AppName, [StringLength(64, MinimumLength = 8)] string AppApiToken, [PlainName][StringLength(64)] string Username, [StringLength(128, MinimumLength = 8)] string UserSecret) : LoginRequestDTO(AppName, AppApiToken, UserSecret);
+	public record UsernameBasedLoginRequestDTO([PlainName][StringLength(128, MinimumLength = 1)] string AppName, [StringLength(64, MinimumLength = 8)] string AppApiToken, [PlainName][StringLength(64, MinimumLength = 1)] string Username, [StringLength(128, MinimumLength = 8)] string UserSecret) : LoginRequestDTO(AppName, AppApiToken, UserSecret);
 
 	/// <summary>
 	/// Provides the <see cref="GetUserIdentifier(LoginRequestDTO)"/> extension method.
