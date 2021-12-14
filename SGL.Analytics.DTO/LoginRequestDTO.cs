@@ -17,7 +17,7 @@ namespace SGL.Analytics.DTO {
 	/// <summary>
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user by specifying a username.
 	/// </summary>
-	public record UsernameBasedLoginRequestDTO([PlainName][StringLength(128, MinimumLength = 1)] string AppName, [StringLength(64, MinimumLength = 8)] string AppApiToken, [PlainName][StringLength(64, MinimumLength = 1)] string Username, [StringLength(128, MinimumLength = 8)] string UserSecret) : LoginRequestDTO(AppName, AppApiToken, UserSecret);
+	public record UsernameBasedLoginRequestDTO([PlainName][StringLength(128, MinimumLength = 1)] string AppName, [StringLength(64, MinimumLength = 8)] string AppApiToken, [PlainName(allowBrackets: true)][StringLength(64, MinimumLength = 1)] string Username, [StringLength(128, MinimumLength = 8)] string UserSecret) : LoginRequestDTO(AppName, AppApiToken, UserSecret);
 
 	/// <summary>
 	/// Provides the <see cref="GetUserIdentifier(LoginRequestDTO)"/> extension method.
