@@ -6,6 +6,9 @@ namespace SGL.Analytics.DTO {
 	/// Specifies that the property carrying this attribute must be a string, must not contain special characters outside of letters, digits, brackets (round, square, curly), '-', '.', or '_', and must not contain multiple adjacent '.'s.
 	/// </summary>
 	public class PlainNameAttribute : ValidationAttribute {
+		/// <summary>
+		/// Wheter brackets (round, square, curly) are allowed in the name.
+		/// </summary>
 		public bool AllowBrackets { get; }
 
 		/// <summary>
