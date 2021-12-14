@@ -402,5 +402,15 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 			}
 		}
+		[Fact]
+		public async Task LoginWithUserIdAndTooShortSecretFailsWithExpectedError() {
+			var (userId, secret) = await createTestUserAsync("Testuser18");
+			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, secret.Substring(0, 7));
+			using (var client = fixture.CreateClient()) {
+				var content = JsonContent.Create(loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+			}
+		}
 	}
 }
