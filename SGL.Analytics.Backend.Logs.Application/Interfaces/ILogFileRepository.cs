@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -82,8 +81,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <param name="suffix">The file suffix for the file name.</param>
 		/// <param name="content">A <see cref="Stream"/> with the desired content. The stream will be read to completion, copying all read data into the target file.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the store operation.</param>
-		/// <returns>A task object representing the store operation.</returns>
-		Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default);
+		/// <returns>A task object representing the store operation, that contains the size of stored log content.</returns>
+		Task<long> StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously opens the analytics log file under the logical path given in <paramref name="logPath"/> for reading.
 		/// </summary>

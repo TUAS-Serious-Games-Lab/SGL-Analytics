@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -75,10 +74,11 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			}
 		}
 
-		public async Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
+		public async Task<long> StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
 			var stream = new MemoryStream();
 			files[new LogPath() { AppName = appName, UserId = userId, LogId = logId, Suffix = suffix }] = stream;
 			await content.CopyToAsync(stream, ct);
+			return stream.Length;
 		}
 
 		public Task CheckHealthAsync(CancellationToken ct = default) => Task.CompletedTask;

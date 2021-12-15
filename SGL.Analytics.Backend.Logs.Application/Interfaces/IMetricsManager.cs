@@ -79,10 +79,21 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
 		void HandleLogUploadedSuccessfully(string appName);
 		/// <summary>
+		/// Called when a log file was successfully uploaded, specifying its size.
+		/// </summary>
+		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
+		/// <param name="size">The size of the uploaded log file content.</param>
+		void ObserveIngestedLogFileSize(string appName, long size);
+		/// <summary>
 		/// Periodically called with the number of log files for each application in the database.
 		/// </summary>
 		/// <param name="perAppCounts">A dictionary mapping the application names to corresponding numbers of log files.</param>
 		void UpdateCollectedLogs(IDictionary<string, int> perAppCounts);
+		/// <summary>
+		/// Periodically called with the average size of the log files for each application in the database.
+		/// </summary>
+		/// <param name="perAppSizes">A dictionary mapping the application names to corresponding average size.</param>
+		void UpdateAvgLogSize(IDictionary<string, double> perAppSizes);
 	}
 
 	/// <summary>
@@ -115,6 +126,10 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		public void HandleUploadRetryChangedEncodingWarning(string appName) { }
 		/// <inheritdoc/>
 		public void HandleUploadRetryChangedSuffixWarning(string appName) { }
+		/// <inheritdoc/>
+		public void ObserveIngestedLogFileSize(string appName, long size) { }
+		/// <inheritdoc/>
+		public void UpdateAvgLogSize(IDictionary<string, double> perAppSizes) { }
 		/// <inheritdoc/>
 		public void UpdateCollectedLogs(IDictionary<string, int> perAppCounts) { }
 	}

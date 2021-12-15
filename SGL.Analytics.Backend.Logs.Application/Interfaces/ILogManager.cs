@@ -1,11 +1,7 @@
-﻿using SGL.Analytics.Backend.Domain.Entity;
-using SGL.Analytics.Backend.Logs.Application.Model;
+﻿using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,8 +18,9 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <param name="appName">The technical name to identify the application with which the user and the log are associated.</param>
 		/// <param name="logMetaDTO">A data transfer object containing the metadata of the log.</param>
 		/// <param name="logContent">A stream containing the log contents to store.</param>
+		/// <param name="contentSize">The size of the content of the log file.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the ingest operation, providing a <see cref="LogFile"/> for the log upon success.</returns>
-		Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent, CancellationToken ct = default);
+		Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent, long? contentSize, CancellationToken ct = default);
 	}
 }

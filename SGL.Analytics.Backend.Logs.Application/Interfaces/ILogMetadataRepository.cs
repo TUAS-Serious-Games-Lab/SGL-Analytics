@@ -1,8 +1,6 @@
 ﻿using SGL.Analytics.Backend.Domain.Entity;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,6 +45,12 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// </summary>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing an application name -> log count dictionary as its result.</returns>
-		Task<IDictionary<string,int>> GetLogsCountPerAppAsync(CancellationToken ct = default);
+		Task<IDictionary<string, int>> GetLogsCountPerAppAsync(CancellationToken ct = default);
+		/// <summary>
+		/// Asynchronously obtains the per-application averages of the sizes of the log files in the database.
+		/// </summary>
+		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
+		/// <returns>A task object representing the operation, providing an application name -> average size dictionary as its result.</returns>
+		Task<IDictionary<string, double>> GetLogSizeAvgPerAppAsync(CancellationToken ct = default);
 	}
 }

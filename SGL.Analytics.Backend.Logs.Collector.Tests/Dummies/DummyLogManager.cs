@@ -29,7 +29,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		public List<IngestOperation> Ingests { get; } = new();
 
-		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent, CancellationToken ct = default) {
+		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent, long? contentSize, CancellationToken ct = default) {
+			long size = 0;
 			if (!Apps.TryGetValue(appName, out var app)) {
 				throw new ApplicationDoesNotExistException(appName);
 			}
@@ -38,7 +39,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			content.Position = 0;
 			var logMd = new LogMetadata(logMetaDTO.LogFileId, app.Id, userId, logMetaDTO.LogFileId,
 				logMetaDTO.CreationTime.ToUniversalTime(), logMetaDTO.EndTime.ToUniversalTime(), DateTime.Now.ToUniversalTime(),
-				logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, true);
+				logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, size, true);
 			logMd.App = app;
 			ct.ThrowIfCancellationRequested();
 			Ingests.Add(new IngestOperation(logMetaDTO, logMd, content));
@@ -136,7 +137,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				return new StreamWrapper(content);
 			}
 
-			public Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
+			public Task<long> StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
 				throw new NotImplementedException();
 			}
 

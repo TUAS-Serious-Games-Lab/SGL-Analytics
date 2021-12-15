@@ -146,7 +146,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 
 			try {
-				await logManager.IngestLogAsync(userId, appName, logMetadata, Request.Body, ct);
+				await logManager.IngestLogAsync(userId, appName, logMetadata, Request.Body, Request.ContentLength, ct);
 				metrics.HandleLogUploadedSuccessfully(appName);
 				return StatusCode(StatusCodes.Status201Created);
 			}

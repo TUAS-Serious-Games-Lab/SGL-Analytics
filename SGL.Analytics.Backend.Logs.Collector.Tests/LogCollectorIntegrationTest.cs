@@ -131,6 +131,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					Assert.Equal(logMDTO.NameSuffix, logMd?.FilenameSuffix);
 					Assert.Equal(logMDTO.LogContentEncoding, logMd?.Encoding);
 					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
+					Assert.Equal(logContent.Length, logMd?.Size);
 					Assert.True(logMd?.Complete);
 				}
 			}
@@ -299,6 +300,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					Assert.Equal(logMDTO.NameSuffix, logMd?.FilenameSuffix);
 					Assert.Equal(logMDTO.LogContentEncoding, logMd?.Encoding);
 					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
+					Assert.Equal(logContent.Length, logMd?.Size);
 					Assert.False(logMd?.Complete);
 				}
 				// Reattempt normally...
@@ -325,6 +327,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					Assert.Equal(logMDTO.NameSuffix, logMd?.FilenameSuffix);
 					Assert.Equal(logMDTO.LogContentEncoding, logMd?.Encoding);
 					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
+					Assert.Equal(logContent.Length, logMd?.Size);
 					Assert.True(logMd?.Complete);
 				}
 			}
@@ -373,6 +376,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					Assert.Equal(logMDTO.NameSuffix, logMd?.FilenameSuffix);
 					Assert.Equal(logMDTO.LogContentEncoding, logMd?.Encoding);
 					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
+					Assert.Equal(logContent.Length, logMd?.Size);
 					Assert.True(logMd?.Complete);
 					var fileRepo = scope.ServiceProvider.GetRequiredService<ILogFileRepository>();
 					using (var readStream = await fileRepo.ReadLogAsync(fixture.AppName, userId, logMd?.Id ?? Guid.Empty, ".log.gz")) {
@@ -431,6 +435,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					Assert.Equal(logMDTO.NameSuffix, logMd?.FilenameSuffix);
 					Assert.Equal(logMDTO.LogContentEncoding, logMd?.Encoding);
 					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
+					Assert.Equal(logContent.Length, logMd?.Size);
 					Assert.True(logMd?.Complete);
 					var fileRepo = scope.ServiceProvider.GetRequiredService<ILogFileRepository>();
 					using (var readStream = await fileRepo.ReadLogAsync(fixture.AppName, userId, logMd?.Id ?? Guid.Empty, ".log.gz")) {

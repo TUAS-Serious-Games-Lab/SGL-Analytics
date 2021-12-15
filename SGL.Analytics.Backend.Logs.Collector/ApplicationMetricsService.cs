@@ -30,8 +30,10 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 		/// It also calls <see cref="IMetricsManager.EnsureMetricsExist(string)"/> for all registered apps.
 		/// </summary>
 		protected override async Task UpdateMetrics(CancellationToken ct) {
-			var stats = await logRepo.GetLogsCountPerAppAsync(ct);
-			metrics.UpdateCollectedLogs(stats);
+			var logsCounts = await logRepo.GetLogsCountPerAppAsync(ct);
+			metrics.UpdateCollectedLogs(logsCounts);
+			var avgLogSizes = await logRepo.GetLogSizeAvgPerAppAsync(ct);
+			metrics.UpdateAvgLogSize(avgLogSizes);
 			var apps = await appRepo.ListApplicationsAsync(ct);
 			foreach (var app in apps) {
 				metrics.EnsureMetricsExist(app.Name);

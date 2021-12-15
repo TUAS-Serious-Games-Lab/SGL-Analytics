@@ -53,9 +53,9 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 		}
 
 		/// <summary>
-		/// Ingests the log file with the given metadata and content as described by <see cref="ILogManager.IngestLogAsync(Guid, string, LogMetadataDTO, Stream, CancellationToken)"/>.
+		/// Ingests the log file with the given metadata and content as described by <see cref="ILogManager.IngestLogAsync(Guid, string, LogMetadataDTO, Stream, long?, CancellationToken)"/>.
 		/// </summary>
-		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent, CancellationToken ct = default) {
+		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent, long? contentSize, CancellationToken ct = default) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, ct);
 			if (app is null) {
 				logger.LogError("Attempt to ingest a log file with id {logId} for non-existent application {appName} from user {user}.", logMetaDTO.LogFileId, appName, userId);
@@ -65,7 +65,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				var logMetadata = await logMetaRepo.GetLogMetadataByIdAsync(logMetaDTO.LogFileId, ct);
 				if (logMetadata is null) {
 					logMetadata = new(logMetaDTO.LogFileId, app.Id, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now,
-						logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, false);
+						logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, contentSize, false);
 					logMetadata.App = app;
 					logger.LogInformation("Ingesting new log file {logId} from user {userId}.", logMetaDTO.LogFileId, userId);
 					logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata, ct);
@@ -75,7 +75,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					var oldLogMetadata = await logMetaRepo.GetLogMetadataByUserLocalIdAsync(app.Id, userId, logMetaDTO.LogFileId);
 					if (oldLogMetadata is null) {
 						logMetadata = new(Guid.NewGuid(), app.Id, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now,
-							logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, false);
+							logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, contentSize, false);
 						logMetadata.App = app;
 						logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. " +
 							"Resolving this conflict by assigning a new log id {newLogId} for the new log file.",
@@ -104,6 +104,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 							metrics.HandleLogUploadRetryWarning(appName);
 							updateContentEncodingAndSuffix(logMetaDTO, logMetadata, appName);
 							logMetadata.UploadTime = DateTime.Now;
+							logMetadata.Size = contentSize;
 							logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 						}
 					}
@@ -121,10 +122,12 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					metrics.HandleLogUploadRetryWarning(appName);
 					updateContentEncodingAndSuffix(logMetaDTO, logMetadata, appName);
 					logMetadata.UploadTime = DateTime.Now;
+					logMetadata.Size = contentSize;
 					logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 				}
+				long storedSize = 0;
 				try {
-					await logFileRepo.StoreLogAsync(appName, logMetadata.UserId, logMetadata.Id, logMetadata.FilenameSuffix, logContent, ct);
+					storedSize = await logFileRepo.StoreLogAsync(appName, logMetadata.UserId, logMetadata.Id, logMetadata.FilenameSuffix, logContent, ct);
 				}
 				catch (IOException ex) {
 					logger.LogError(ex, "Log transfer of logfile {logId} from user {userId} failed due to I/O error.", logMetadata.Id, logMetadata.UserId);
@@ -135,8 +138,10 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				}
 				logMetadata.Complete = true;
 				logMetadata.UploadTime = DateTime.Now;
+				logMetadata.Size = storedSize;
 				logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 				logger.LogInformation("Successfully finished ingest of logfile {logId} from user {userId}.", logMetadata.Id, logMetadata.UserId);
+				metrics.ObserveIngestedLogFileSize(appName, storedSize);
 				return new LogFile(logMetadata, logFileRepo);
 			}
 			catch (OperationCanceledException) {
