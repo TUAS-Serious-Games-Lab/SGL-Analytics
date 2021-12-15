@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -46,6 +45,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 						group lm by lm.App.Id into a
 						select new { AppName = a.First().App.Name, LogsCount = a.Count() };
 			return query.ToDictionary(e => e.AppName, e => e.LogsCount);
+		}
+
+		public async Task<IDictionary<string, double>> GetLogSizeAvgPerAppAsync(CancellationToken ct = default) {
+			await Task.CompletedTask;
+			var query = from lm in logs.Values
+						group lm.Size by lm.App.Name into a
+						select new { AppName = a.Key, LogSizeAvg = a.Average() };
+			return query.ToDictionary(e => e.AppName, e => e.LogSizeAvg ?? 0);
 		}
 
 		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default) {

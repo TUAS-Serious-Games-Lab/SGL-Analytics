@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -61,9 +60,17 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		/// <inheritdoc/>
 		public async Task<IDictionary<string, int>> GetLogsCountPerAppAsync(CancellationToken ct = default) {
 			var query = from lm in context.LogMetadata.Include(lmd => lmd.App)
-			group lm by lm.App.Name into a
-			select new { AppName=a.Key, LogsCount=a.Count() };
-			return await query.ToDictionaryAsync(e=>e.AppName, e=>e.LogsCount,ct);
+						group lm by lm.App.Name into a
+						select new { AppName = a.Key, LogsCount = a.Count() };
+			return await query.ToDictionaryAsync(e => e.AppName, e => e.LogsCount, ct);
+		}
+
+		/// <inheritdoc/>
+		public async Task<IDictionary<string, double>> GetLogSizeAvgPerAppAsync(CancellationToken ct = default) {
+			var query = from lm in context.LogMetadata.Include(lmd => lmd.App)
+						group lm.Size by lm.App.Name into a
+						select new { AppName = a.Key, LogSizeAvg = a.Average() };
+			return await query.ToDictionaryAsync(e => e.AppName, e => e.LogSizeAvg ?? 0, ct);
 		}
 
 		/// <inheritdoc/>
