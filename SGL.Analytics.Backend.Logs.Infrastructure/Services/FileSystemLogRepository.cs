@@ -255,8 +255,9 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		/// Instead the temporary file is removed if transfer fails.
 		/// Furthermore, this strategy provides a last-writer wins resolution for concurrent uploads of the same log, where 'last' refers to the operation the finishes last.
 		/// </remarks>
-		public Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
+		public Task<long> StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
 			return Task.Run(async () => {
+				long size = 0;
 				ct.ThrowIfCancellationRequested();
 				ensureDirectoryExists(appName, userId);
 				// Create target file with temporary name to not make it visible to other operations while it is still being written.
@@ -266,6 +267,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 					using (var writeStream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
 						ct.ThrowIfCancellationRequested();
 						await content.CopyToAsync(writeStream, ct);
+						size = writeStream.Length;
 					}
 					ct.ThrowIfCancellationRequested();
 				}
@@ -281,6 +283,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 				}
 				// Rename to final file name to make it visible to other operations.
 				File.Move(filePath, makeFilePath(appName, userId, logId, suffix), overwrite: true);
+				return size;
 			}, ct);
 		}
 
@@ -303,14 +306,14 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			var probe_file = Path.Combine(health_check_dir, "probe.file");
 			using (var writeStream = new FileStream(probe_file, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
 				ct.ThrowIfCancellationRequested();
-				await writeStream.WriteAsync(probe_data,ct);
+				await writeStream.WriteAsync(probe_data, ct);
 			}
 			ct.ThrowIfCancellationRequested();
 			using (var readStream = new FileStream(probe_file, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true)) {
 				ct.ThrowIfCancellationRequested();
 				byte[] read_probe = new byte[4096];
 				var read_amt = await readStream.ReadAsync(read_probe, ct);
-				if(read_amt != probe_data.Length) {
+				if (read_amt != probe_data.Length) {
 					throw new Exception("Read probe data length did not match written probe data length.");
 				}
 				if (!Enumerable.SequenceEqual(probe_data, read_probe.Take(read_amt))) {

@@ -137,7 +137,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				return new StreamWrapper(content);
 			}
 
-			public Task StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
+			public Task<long> StoreLogAsync(string appName, Guid userId, Guid logId, string suffix, Stream content, CancellationToken ct = default) {
 				throw new NotImplementedException();
 			}
 
