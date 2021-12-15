@@ -121,7 +121,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		/// <inheritdoc/>
-		public void UpdateAvgLogSize(IDictionary<string, int> perAppSizes) {
+		public void UpdateAvgLogSize(IDictionary<string, double> perAppSizes) {
 			logsAvgSize.UpdateLabeledValues(perAppSizes);
 		}
 	}

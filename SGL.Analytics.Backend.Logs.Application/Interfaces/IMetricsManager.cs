@@ -93,7 +93,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// Periodically called with the average size of the log files for each application in the database.
 		/// </summary>
 		/// <param name="perAppSizes">A dictionary mapping the application names to corresponding average size.</param>
-		void UpdateAvgLogSize(IDictionary<string, int> perAppSizes);
+		void UpdateAvgLogSize(IDictionary<string, double> perAppSizes);
 	}
 
 	/// <summary>
@@ -129,7 +129,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <inheritdoc/>
 		public void ObserveIngestedLogFileSize(string appName, long size) { }
 		/// <inheritdoc/>
-		public void UpdateAvgLogSize(IDictionary<string, int> perAppSizes) { }
+		public void UpdateAvgLogSize(IDictionary<string, double> perAppSizes) { }
 		/// <inheritdoc/>
 		public void UpdateCollectedLogs(IDictionary<string, int> perAppCounts) { }
 	}
