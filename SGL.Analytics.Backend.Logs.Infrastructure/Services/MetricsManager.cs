@@ -16,7 +16,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		private static readonly Gauge logsAvgSize = Metrics.CreateGauge("sgla_logs_collected_avg_size_bytes", "The average size of the log files already collected by SGL Analytics Log Collector service according to its database.", "app");
 		private static readonly Histogram logSizes = Metrics.CreateHistogram("sgla_logs_uploaded_size_bytes",
 			"A histogram of the sizes of log files ingested by this SGL Analytics Log Collector service process.",
-			new HistogramConfiguration { Buckets = Histogram.ExponentialBuckets(512, 2, 21), LabelNames = new[] { "app" } });
+			new HistogramConfiguration { Buckets = Histogram.ExponentialBuckets(512, 2, 20), LabelNames = new[] { "app" } });
 		private const string ERROR_LOG_FILE_TOO_LARGE = "Log file too large";
 		private const string ERROR_UNKNOWN_APP = "Unknown app";
 		private const string ERROR_INCORRECT_APP_API_TOKEN = "Incorrect app API token";
