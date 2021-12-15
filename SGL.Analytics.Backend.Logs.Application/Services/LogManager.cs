@@ -125,8 +125,9 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					logMetadata.Size = contentSize;
 					logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 				}
+				long storedSize = 0;
 				try {
-					await logFileRepo.StoreLogAsync(appName, logMetadata.UserId, logMetadata.Id, logMetadata.FilenameSuffix, logContent, ct);
+					storedSize = await logFileRepo.StoreLogAsync(appName, logMetadata.UserId, logMetadata.Id, logMetadata.FilenameSuffix, logContent, ct);
 				}
 				catch (IOException ex) {
 					logger.LogError(ex, "Log transfer of logfile {logId} from user {userId} failed due to I/O error.", logMetadata.Id, logMetadata.UserId);
@@ -137,6 +138,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				}
 				logMetadata.Complete = true;
 				logMetadata.UploadTime = DateTime.Now;
+				logMetadata.Size = storedSize;
 				logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 				logger.LogInformation("Successfully finished ingest of logfile {logId} from user {userId}.", logMetadata.Id, logMetadata.UserId);
 				return new LogFile(logMetadata, logFileRepo);
