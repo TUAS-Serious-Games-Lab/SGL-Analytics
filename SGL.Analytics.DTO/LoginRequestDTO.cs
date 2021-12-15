@@ -8,16 +8,67 @@ namespace SGL.Analytics.DTO {
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user.
 	/// </summary>
 	[JsonConverter(typeof(LoginRequestDTOJsonConverter))]
-	public abstract record LoginRequestDTO([PlainName][StringLength(128, MinimumLength = 1)] string AppName, [StringLength(64, MinimumLength = 8)] string AppApiToken, [StringLength(128, MinimumLength = 8)] string UserSecret);
+	public abstract record LoginRequestDTO {
+		[PlainName]
+		[StringLength(128, MinimumLength = 1)]
+		public string AppName { get; init; }
+		[StringLength(64, MinimumLength = 8)]
+		public string AppApiToken { get; init; }
+		[StringLength(128, MinimumLength = 8)]
+		public string UserSecret { get; init; }
+
+		public LoginRequestDTO([PlainName][StringLength(128, MinimumLength = 1)] string appName,
+			[StringLength(64, MinimumLength = 8)] string appApiToken, [StringLength(128, MinimumLength = 8)] string userSecret) =>
+			(AppName, AppApiToken, UserSecret) = (appName, appApiToken, userSecret);
+		public void Deconstruct(out string appName, out string appApiToken, out string userSecret) {
+			appName = AppName;
+			appApiToken = AppApiToken;
+			userSecret = UserSecret;
+		}
+	}
 
 	/// <summary>
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user by specifying a user id.
 	/// </summary>
-	public record IdBasedLoginRequestDTO([PlainName][StringLength(128, MinimumLength = 1)] string AppName, [StringLength(64, MinimumLength = 8)] string AppApiToken, Guid UserId, [StringLength(128, MinimumLength = 8)] string UserSecret) : LoginRequestDTO(AppName, AppApiToken, UserSecret);
+	public record IdBasedLoginRequestDTO : LoginRequestDTO {
+		public Guid UserId { get; init; }
+		public IdBasedLoginRequestDTO(
+			[PlainName][StringLength(128, MinimumLength = 1)] string appName,
+			[StringLength(64, MinimumLength = 8)] string appApiToken,
+			Guid userId,
+			[StringLength(128, MinimumLength = 8)] string userSecret) :
+			base(appName, appApiToken, userSecret) {
+			UserId = userId;
+		}
+		public void Deconstruct(out string appName, out string appApiToken, out string userSecret, out Guid userId) {
+			appName = AppName;
+			appApiToken = AppApiToken;
+			userSecret = UserSecret;
+			userId = UserId;
+		}
+	}
 	/// <summary>
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user by specifying a username.
 	/// </summary>
-	public record UsernameBasedLoginRequestDTO([PlainName][StringLength(128, MinimumLength = 1)] string AppName, [StringLength(64, MinimumLength = 8)] string AppApiToken, [PlainName(allowBrackets: true)][StringLength(64, MinimumLength = 1)] string Username, [StringLength(128, MinimumLength = 8)] string UserSecret) : LoginRequestDTO(AppName, AppApiToken, UserSecret);
+	public record UsernameBasedLoginRequestDTO : LoginRequestDTO {
+		[PlainName(allowBrackets: true)]
+		[StringLength(64, MinimumLength = 1)]
+		public string Username { get; init; }
+		public UsernameBasedLoginRequestDTO(
+			[PlainName][StringLength(128, MinimumLength = 1)] string appName,
+			[StringLength(64, MinimumLength = 8)] string appApiToken,
+			[PlainName(allowBrackets: true)][StringLength(64, MinimumLength = 1)] string username,
+			[StringLength(128, MinimumLength = 8)] string userSecret) :
+			base(appName, appApiToken, userSecret) {
+			Username = username;
+		}
+		public void Deconstruct(out string appName, out string appApiToken, out string userSecret, out string username) {
+			appName = AppName;
+			appApiToken = AppApiToken;
+			userSecret = UserSecret;
+			username = Username;
+		}
+	}
 
 	/// <summary>
 	/// Provides the <see cref="GetUserIdentifier(LoginRequestDTO)"/> extension method.
