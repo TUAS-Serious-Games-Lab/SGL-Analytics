@@ -3,6 +3,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -129,6 +130,7 @@ namespace SGL.Analytics.Client {
 					else {
 						throw new Exception("UserId and Username are both missing although one of them was present before switching to main context.");
 					}
+					Validator.ValidateObject(loginDTO, new ValidationContext(loginDTO), true);
 					tcs.SetResult(await userRegistrationClient.LoginUserAsync(loginDTO));
 				}
 				catch (Exception ex) {

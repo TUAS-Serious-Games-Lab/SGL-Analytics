@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Utilities;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -145,6 +146,7 @@ namespace SGL.Analytics.Client {
 				logger.LogInformation("Starting user registration process...");
 				var secret = SecretGenerator.Instance.GenerateSecret(UserRegistrationSecretLength);
 				var userDTO = userData.MakeDTO(appName, secret);
+				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
 				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
 				lock (lockObject) {
@@ -159,22 +161,25 @@ namespace SGL.Analytics.Client {
 				startUploadingExistingLogs();
 			}
 			catch (UsernameAlreadyTakenException ex) {
-				logger.LogError("Registration failed because the specified username is already in use.", ex);
+				logger.LogError(ex, "Registration failed because the specified username is already in use.");
 			}
 			catch (UserRegistrationResponseException ex) {
-				logger.LogError("Registration failed due to error with the registration response.", ex);
+				logger.LogError(ex, "Registration failed due to error with the registration response.");
 				throw;
 			}
 			catch (HttpRequestException ex) when (ex.StatusCode is not null) {
-				logger.LogError("Registration failed due to error from server.", ex);
+				logger.LogError(ex, "Registration failed due to error from server.");
 				throw;
 			}
 			catch (HttpRequestException ex) {
-				logger.LogError("Registration failed due to communication problem with the backend server.", ex);
+				logger.LogError(ex, "Registration failed due to communication problem with the backend server.");
 				throw;
 			}
+			catch (ValidationException ex) {
+				logger.LogError(ex, "Registration failed due to violating validation constraints.");
+			}
 			catch (Exception ex) {
-				logger.LogError("Registration failed due to unexpected error.", ex);
+				logger.LogError(ex, "Registration failed due to unexpected error.");
 				throw;
 			}
 		}

@@ -12,6 +12,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -108,7 +109,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		[ProducesResponseType(StatusCodes.Status413RequestEntityTooLarge)]
 		[HttpPost]
 		[Authorize]
-		public async Task<ActionResult> IngestLog([FromHeader(Name = "App-API-Token")] string appApiToken, [DtoFromHeaderModelBinder] LogMetadataDTO logMetadata, CancellationToken ct = default) {
+		public async Task<ActionResult> IngestLog([FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, [DtoFromHeaderModelBinder] LogMetadataDTO logMetadata, CancellationToken ct = default) {
 			Guid userId;
 			string appName;
 			try {

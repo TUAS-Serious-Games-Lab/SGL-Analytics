@@ -1,26 +1,17 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using SGL.Analytics.Backend.Users.Infrastructure.Data;
-using SGL.Utilities.Backend.Security;
+using Prometheus;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Services;
-using SGL.Analytics.Backend.Users.Infrastructure.Services;
-using SGL.Utilities.Logging.FileLogging;
-using SGL.Utilities.Backend.AspNetCore;
 using SGL.Analytics.Backend.Users.Infrastructure;
-using Prometheus;
+using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Backend.AspNetCore;
+using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Logging.FileLogging;
 
 namespace SGL.Analytics.Backend.Users.Registration {
 	/// <summary>
@@ -53,6 +44,10 @@ namespace SGL.Analytics.Backend.Users.Registration {
 
 			services.AddScoped<IUserManager, UserManager>();
 			services.UseJwtLoginService(Configuration);
+
+			services.AddModelStateValidationErrorLogging((err, ctx) =>
+				ctx.HttpContext.RequestServices.GetService<IMetricsManager>()?
+				.HandleModelStateValidationError(err.ErrorMessage));
 
 			services.AddHealthChecks()
 				.AddDbContextCheck<UsersContext>("db_health_check")

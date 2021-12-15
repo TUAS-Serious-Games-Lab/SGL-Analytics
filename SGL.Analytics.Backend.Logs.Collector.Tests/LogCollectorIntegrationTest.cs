@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,11 +8,11 @@ using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
+using SGL.Analytics.DTO;
+using SGL.Utilities;
 using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Backend.TestUtilities;
-using SGL.Analytics.DTO;
 using SGL.Utilities.TestUtilities.XUnit;
-using SGL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -93,10 +92,10 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			return stream;
 		}
 
-		private HttpRequestMessage buildUploadRequest(Stream logContent, LogMetadataDTO logMDTO, Guid userId, string appName) {
+		private HttpRequestMessage buildUploadRequest(Stream logContent, LogMetadataDTO logMDTO, Guid userId, string appName, string? appApiToken = null) {
 			var content = new StreamContent(logContent);
 			content.Headers.MapDtoProperties(logMDTO);
-			content.Headers.Add("App-API-Token", fixture.AppApiToken);
+			content.Headers.Add("App-API-Token", appApiToken ?? fixture.AppApiToken);
 			content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 			var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
@@ -439,6 +438,28 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 						StreamUtils.AssertEqualContent(logContent, readStream);
 					}
 				}
+			}
+		}
+		[Fact]
+		public async Task LogIngestWithTooShortAppApiTokenFailsWithBadRequestError() {
+			var logId = Guid.NewGuid();
+			using (var client = fixture.CreateClient()) {
+				Guid userId = Guid.NewGuid();
+				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45), ".log.gz", LogContentEncoding.GZipCompressed), userId, fixture.AppName, "x");
+				var response = await client.SendAsync(request);
+				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+				output.WriteStreamContents(response.Content.ReadAsStream());
+			}
+		}
+		[Fact]
+		public async Task AtemptToInjectPathInSuffixFailsWithBadRequestError() {
+			var logId = Guid.NewGuid();
+			using (var client = fixture.CreateClient()) {
+				Guid userId = Guid.NewGuid();
+				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45), "/../test", LogContentEncoding.GZipCompressed), userId, fixture.AppName);
+				var response = await client.SendAsync(request);
+				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+				output.WriteStreamContents(response.Content.ReadAsStream());
 			}
 		}
 	}

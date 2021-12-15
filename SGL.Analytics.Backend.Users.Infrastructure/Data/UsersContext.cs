@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Utilities.Backend;
@@ -27,7 +23,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 			var app = modelBuilder.Entity<ApplicationWithUserProperties>();
 			app.HasIndex(a => a.Name).IsUnique();
 			app.Property(a => a.Name).HasMaxLength(128);
-			app.Property(a => a.ApiToken).HasMaxLength(50);
+			app.Property(a => a.ApiToken).HasMaxLength(64);
 
 			var propDef = modelBuilder.Entity<ApplicationUserPropertyDefinition>();
 			propDef.HasIndex(pd => (new { pd.AppId, pd.Name })).IsUnique();

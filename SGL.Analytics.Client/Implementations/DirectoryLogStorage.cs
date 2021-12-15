@@ -1,6 +1,7 @@
 using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -18,6 +19,7 @@ namespace SGL.Analytics.Client {
 		private string directory;
 		private bool useCompressedFiles = true;
 		private List<Guid> logFilesOpenForWriting = new();
+		private string fileSuffix = ".log.gz";
 
 		/// <summary>
 		/// Specifies whether the log files should be compressed.
@@ -36,8 +38,15 @@ namespace SGL.Analytics.Client {
 		/// This property must not be changed during normal operation but only when no <see cref="SGLAnalytics"/> object uses this object.
 		/// Changing it while a <see cref="SGLAnalytics"/> is using it can cause problems with files not being found or listed correctly, depending on when the change happens.
 		/// </summary>
-		public string FileSuffix { get; set; } = ".log.gz";
-
+		public string FileSuffix {
+			get => fileSuffix;
+			set {
+				var vc = new ValidationContext(this);
+				vc.DisplayName = vc.MemberName = nameof(FileSuffix);
+				Validator.ValidateValue(value, vc, new ValidationAttribute[] { new PlainNameAttribute(), new StringLengthAttribute(16) });
+				fileSuffix = value;
+			}
+		}
 		/// <summary>
 		/// Specifies whether removed files are archived in an <c>archive</c> subdirectory, otherwise they are actually deleted.
 		/// </summary>
