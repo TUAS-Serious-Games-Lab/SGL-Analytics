@@ -52,7 +52,9 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// The encoding used for the file content.
 		/// </summary>
 		public LogContentEncoding Encoding { get; set; }
-
+		/// <summary>
+		/// The size of the content of the log file.
+		/// </summary>
 		public long? Size { get; set; }
 		/// <summary>
 		/// Indicates whether the log was uploaded completely.

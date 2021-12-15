@@ -13,6 +13,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
     [Migration("20211215163822_AddLogContentSize")]
     partial class AddLogContentSize
     {
+        /// <inheritdoc/>
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
