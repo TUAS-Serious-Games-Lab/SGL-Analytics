@@ -5,9 +5,6 @@ using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Utilities.Backend.TestUtilities;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Sdk;
@@ -23,7 +20,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 		[Fact]
 		public async Task AddedMetadataEntryCanBeRetrievedThroughDb() {
 			var logId = Guid.NewGuid();
-			var logMd = new LogMetadata(logId, Guid.Empty, Guid.NewGuid(), logId, DateTime.Now.AddMinutes(-15), DateTime.Now.AddMinutes(-1), DateTime.Now, ".log.gz", DTO.LogContentEncoding.GZipCompressed);
+			var logMd = new LogMetadata(logId, Guid.Empty, Guid.NewGuid(), logId, DateTime.Now.AddMinutes(-15), DateTime.Now.AddMinutes(-1), DateTime.Now, ".log.gz", DTO.LogContentEncoding.GZipCompressed, 42);
 			var app = new Domain.Entity.Application(Guid.NewGuid(), "DbLogMetadataRepositoryUnitTest", "FakeApiToken");
 			await using (var context = createContext()) {
 				context.Applications.Add(app);
@@ -45,12 +42,13 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			Assert.Equal(logMd.CreationTime.ToUniversalTime(), logMdRead?.CreationTime);
 			Assert.Equal(logMd.EndTime.ToUniversalTime(), logMdRead?.EndTime);
 			Assert.Equal(logMd.UploadTime.ToUniversalTime(), logMdRead?.UploadTime);
+			Assert.Equal(logMd.Size, logMdRead?.Size);
 		}
 
 		[Fact]
 		public async Task MetadataEntryIsCorrectlyUpdatedInDb() {
 			var logId = Guid.NewGuid();
-			var logMd = new LogMetadata(logId, Guid.Empty, Guid.NewGuid(), logId, DateTime.Now.AddMinutes(-15), DateTime.Now.AddMinutes(-1), DateTime.Now.AddSeconds(-30), ".log.gz", DTO.LogContentEncoding.GZipCompressed);
+			var logMd = new LogMetadata(logId, Guid.Empty, Guid.NewGuid(), logId, DateTime.Now.AddMinutes(-15), DateTime.Now.AddMinutes(-1), DateTime.Now.AddSeconds(-30), ".log.gz", DTO.LogContentEncoding.GZipCompressed, 42);
 			var app = new Domain.Entity.Application(Guid.NewGuid(), "DbLogMetadataRepositoryUnitTest", "FakeApiToken");
 			await using (var context = createContext()) {
 				context.Applications.Add(app);
@@ -82,6 +80,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			Assert.Equal(logMd2.CreationTime.ToUniversalTime(), logMdRead?.CreationTime);
 			Assert.Equal(logMd2.EndTime.ToUniversalTime(), logMdRead?.EndTime);
 			Assert.Equal(logMd2.UploadTime.ToUniversalTime(), logMdRead?.UploadTime);
+			Assert.Equal(logMd.Size, logMdRead?.Size);
 		}
 
 		[Fact]
@@ -96,21 +95,21 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 		}
 
 		[Fact]
-		public async Task AttemptingToCreateApplicationWithDuplicateIdThrowsCorrectException() {
+		public async Task AttemptingToCreateMetadataEntryWithDuplicateIdThrowsCorrectException() {
 			var id = Guid.NewGuid();
 			var app = new Domain.Entity.Application(Guid.NewGuid(), "DbLogMetadataRepositoryUnitTest", "FakeApiToken");
 			await using (var context = createContext()) {
 				context.Applications.Add(app);
 				await context.SaveChangesAsync();
 				var repo = new DbLogMetadataRepository(context);
-				var logMd = new LogMetadata(id, app.Id, Guid.NewGuid(), id, DateTime.Now, DateTime.Now, DateTime.Now, ".log.gz", DTO.LogContentEncoding.GZipCompressed);
+				var logMd = new LogMetadata(id, app.Id, Guid.NewGuid(), id, DateTime.Now, DateTime.Now, DateTime.Now, ".log.gz", DTO.LogContentEncoding.GZipCompressed, 42);
 				logMd.App = app;
 				await repo.AddLogMetadataAsync(logMd);
 			}
 			await using (var context = createContext()) {
 				app = await context.Applications.SingleOrDefaultAsync(a => a.Id == app.Id);
 				var repo = new DbLogMetadataRepository(context);
-				var logMd = new LogMetadata(id, app.Id, Guid.NewGuid(), id, DateTime.Now, DateTime.Now, DateTime.Now, ".log.gz", DTO.LogContentEncoding.GZipCompressed);
+				var logMd = new LogMetadata(id, app.Id, Guid.NewGuid(), id, DateTime.Now, DateTime.Now, DateTime.Now, ".log.gz", DTO.LogContentEncoding.GZipCompressed, 42);
 				logMd.App = app;
 				await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.AddLogMetadataAsync(logMd));
 			}
