@@ -51,7 +51,7 @@ namespace SGL.Analytics.Client {
 				using (var stream = logFile.OpenReadRaw()) {
 					var content = new StreamContent(stream);
 					LogMetadataDTO dto = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding);
-					Validator.ValidateObject(dto, new ValidationContext(dto));
+					Validator.ValidateObject(dto, new ValidationContext(dto), true);
 					content.Headers.MapDtoProperties(dto);
 					content.Headers.Add("App-API-Token", appAPIToken);
 					content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");

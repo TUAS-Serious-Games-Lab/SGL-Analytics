@@ -130,7 +130,7 @@ namespace SGL.Analytics.Client {
 					else {
 						throw new Exception("UserId and Username are both missing although one of them was present before switching to main context.");
 					}
-					Validator.ValidateObject(loginDTO, new ValidationContext(loginDTO));
+					Validator.ValidateObject(loginDTO, new ValidationContext(loginDTO), true);
 					tcs.SetResult(await userRegistrationClient.LoginUserAsync(loginDTO));
 				}
 				catch (Exception ex) {
