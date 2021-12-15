@@ -9,17 +9,40 @@ namespace SGL.Analytics.DTO {
 	/// </summary>
 	[JsonConverter(typeof(LoginRequestDTOJsonConverter))]
 	public abstract record LoginRequestDTO {
+		/// <summary>
+		/// The unique technical name of the client application performing the login.
+		/// </summary>
 		[PlainName]
 		[StringLength(128, MinimumLength = 1)]
 		public string AppName { get; init; }
+		/// <summary>
+		/// The application authentication token of the client application performing the login.
+		/// </summary>
 		[StringLength(64, MinimumLength = 8)]
 		public string AppApiToken { get; init; }
+		/// <summary>
+		/// The secret string to authenticate the user.
+		/// This can be an auto-generated random string or a user-specified password, depending on the application.
+		/// </summary>
 		[StringLength(128, MinimumLength = 8)]
 		public string UserSecret { get; init; }
 
+		/// <summary>
+		/// Creates a new DTO with the given data.
+		/// </summary>
+		/// <param name="appName">The unique technical name of the client application performing the login.</param>
+		/// <param name="appApiToken">The application authentication token of the client application performing the login.</param>
+		/// <param name="userSecret">The secret string to authenticate the user.</param>
 		public LoginRequestDTO([PlainName][StringLength(128, MinimumLength = 1)] string appName,
 			[StringLength(64, MinimumLength = 8)] string appApiToken, [StringLength(128, MinimumLength = 8)] string userSecret) =>
 			(AppName, AppApiToken, UserSecret) = (appName, appApiToken, userSecret);
+
+		/// <summary>
+		/// Deconstructs the DTO into the contained data.
+		/// </summary>
+		/// <param name="appName">The unique technical name of the client application performing the login.</param>
+		/// <param name="appApiToken">The application authentication token of the client application performing the login.</param>
+		/// <param name="userSecret">The secret string to authenticate the user.</param>
 		public void Deconstruct(out string appName, out string appApiToken, out string userSecret) {
 			appName = AppName;
 			appApiToken = AppApiToken;
@@ -31,7 +54,17 @@ namespace SGL.Analytics.DTO {
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user by specifying a user id.
 	/// </summary>
 	public record IdBasedLoginRequestDTO : LoginRequestDTO {
+		/// <summary>
+		/// The user id to identify the user attempting to log-in.
+		/// </summary>
 		public Guid UserId { get; init; }
+		/// <summary>
+		/// Creates a new DTO with the given data.
+		/// </summary>
+		/// <param name="appName">The unique technical name of the client application performing the login.</param>
+		/// <param name="appApiToken">The application authentication token of the client application performing the login.</param>
+		/// <param name="userSecret">The secret string to authenticate the user.</param>
+		/// <param name="userId">The user id to identify the user attempting to log-in.</param>
 		public IdBasedLoginRequestDTO(
 			[PlainName][StringLength(128, MinimumLength = 1)] string appName,
 			[StringLength(64, MinimumLength = 8)] string appApiToken,
@@ -40,6 +73,13 @@ namespace SGL.Analytics.DTO {
 			base(appName, appApiToken, userSecret) {
 			UserId = userId;
 		}
+		/// <summary>
+		/// Deconstructs the DTO into the contained data.
+		/// </summary>
+		/// <param name="appName">The unique technical name of the client application performing the login.</param>
+		/// <param name="appApiToken">The application authentication token of the client application performing the login.</param>
+		/// <param name="userSecret">The secret string to authenticate the user.</param>
+		/// <param name="userId">The user id to identify the user attempting to log-in.</param>
 		public void Deconstruct(out string appName, out string appApiToken, out string userSecret, out Guid userId) {
 			appName = AppName;
 			appApiToken = AppApiToken;
@@ -51,9 +91,19 @@ namespace SGL.Analytics.DTO {
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user by specifying a username.
 	/// </summary>
 	public record UsernameBasedLoginRequestDTO : LoginRequestDTO {
+		/// <summary>
+		/// The username to identify the user attempting to log-in.
+		/// </summary>
 		[PlainName(allowBrackets: true)]
 		[StringLength(64, MinimumLength = 1)]
 		public string Username { get; init; }
+		/// <summary>
+		/// Creates a new DTO with the given data.
+		/// </summary>
+		/// <param name="appName">The unique technical name of the client application performing the login.</param>
+		/// <param name="appApiToken">The application authentication token of the client application performing the login.</param>
+		/// <param name="userSecret">The secret string to authenticate the user.</param>
+		/// <param name="username">The username to identify the user attempting to log-in.</param>
 		public UsernameBasedLoginRequestDTO(
 			[PlainName][StringLength(128, MinimumLength = 1)] string appName,
 			[StringLength(64, MinimumLength = 8)] string appApiToken,
@@ -62,6 +112,13 @@ namespace SGL.Analytics.DTO {
 			base(appName, appApiToken, userSecret) {
 			Username = username;
 		}
+		/// <summary>
+		/// Deconstructs the DTO into the contained data.
+		/// </summary>
+		/// <param name="appName">The unique technical name of the client application performing the login.</param>
+		/// <param name="appApiToken">The application authentication token of the client application performing the login.</param>
+		/// <param name="userSecret">The secret string to authenticate the user.</param>
+		/// <param name="username">The username to identify the user attempting to log-in.</param>
 		public void Deconstruct(out string appName, out string appApiToken, out string userSecret, out string username) {
 			appName = AppName;
 			appApiToken = AppApiToken;
