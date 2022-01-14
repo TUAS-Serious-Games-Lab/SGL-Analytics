@@ -27,6 +27,8 @@ services:
     environment:
       USERREG_PW:
       LOGS_PW:
+      USERREG_ADM_PW:
+      LOGS_ADM_PW:
       POSTGRES_PASSWORD:
     networks:
     - backend
@@ -50,11 +52,11 @@ services:
 
   logs-collector-migrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/logs-collector:${DOCKER_TAG-latest}
-    entrypoint: ["wait-for", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_logs", "-f", "/DbMigrations.sql"]
+    entrypoint: ["wait-for", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_logs_admin", "-d", "sgla_logs", "-f", "/DbMigrations.sql"]
     healthcheck:
       disable: true
     environment:
-      PGPASSWORD: $LOGS_PW
+      PGPASSWORD: $LOGS_ADM_PW
     depends_on:
     - db
     networks:
@@ -62,11 +64,11 @@ services:
 
   users-registration-migrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/users-registration:${DOCKER_TAG-latest}
-    entrypoint: ["wait-for", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_users", "-f", "/DbMigrations.sql"]
+    entrypoint: ["wait-for", "-t", "120", "db:5432", "--", "psql", "-h", "db", "-U", "sgla_users_admin", "-d", "sgla_users", "-f", "/DbMigrations.sql"]
     healthcheck:
       disable: true
     environment:
-      PGPASSWORD: $USERREG_PW
+      PGPASSWORD: $USERREG_ADM_PW
     depends_on:
     - db
     networks:
