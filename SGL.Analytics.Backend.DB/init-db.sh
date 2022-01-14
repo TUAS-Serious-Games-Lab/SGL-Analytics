@@ -55,6 +55,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"<<-EO
 	GRANT ALL ON SCHEMA public TO sgla_users_admin;
 	ALTER DEFAULT PRIVILEGES FOR USER sgla_users_admin IN SCHEMA public GRANT SELECT, INSERT, UPDATE ON TABLES TO sgla_users;
 	ALTER DEFAULT PRIVILEGES FOR USER sgla_users_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO sgla_users;
+	REASSIGN OWNED BY sgla_users TO sgla_users_admin;
 
 	\c sgla_logs
 	REVOKE ALL ON SCHEMA public FROM public;
@@ -63,4 +64,5 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"<<-EO
 	GRANT ALL ON SCHEMA public TO sgla_logs_admin;
 	ALTER DEFAULT PRIVILEGES FOR USER sgla_logs_admin IN SCHEMA public GRANT SELECT, INSERT, UPDATE ON TABLES TO sgla_logs;
 	ALTER DEFAULT PRIVILEGES FOR USER sgla_logs_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO sgla_logs;
+	REASSIGN OWNED BY sgla_logs TO sgla_logs_admin;
 EOSQL
