@@ -4,13 +4,47 @@ set -e
 sed -i 's/host all all all md5/host all all all scram-sha-256/' /var/lib/postgresql/data/pg_hba.conf
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"<<-EOSQL
-	CREATE USER sgla_users WITH ENCRYPTED PASSWORD '${USERREG_PW}';
-	CREATE USER sgla_users_admin WITH ENCRYPTED PASSWORD '${USERREG_ADM_PW}';
-	CREATE USER sgla_logs WITH ENCRYPTED PASSWORD '${LOGS_PW}';
-	CREATE USER sgla_logs_admin WITH ENCRYPTED PASSWORD '${LOGS_ADM_PW}';
+	-- Create users that don't exist yet
+	DO
+	\$do\$
+	BEGIN
+		IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE  rolname = 'sgla_users') THEN
+			CREATE USER sgla_users WITH ENCRYPTED PASSWORD '${USERREG_PW}';
+		END IF;
+	END
+	\$do\$;
 
-	CREATE DATABASE sgla_users;
-	CREATE DATABASE sgla_logs;
+	DO
+	\$do\$
+	BEGIN
+		IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE  rolname = 'sgla_users_admin') THEN
+			CREATE USER sgla_users_admin WITH ENCRYPTED PASSWORD '${USERREG_ADM_PW}';
+		END IF;
+	END
+	\$do\$;
+
+	DO
+	\$do\$
+	BEGIN
+		IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE  rolname = 'sgla_logs') THEN
+			CREATE USER sgla_logs WITH ENCRYPTED PASSWORD '${LOGS_PW}';
+		END IF;
+	END
+	\$do\$;
+
+	DO
+	\$do\$
+	BEGIN
+		IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE  rolname = 'sgla_logs_admin') THEN
+			CREATE USER sgla_logs_admin WITH ENCRYPTED PASSWORD '${LOGS_ADM_PW}';
+		END IF;
+	END
+	\$do\$;
+
+	-- Create databases that don't exist yet
+	SELECT 'CREATE DATABASE sgla_users' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'sgla_users')\gexec
+	SELECT 'CREATE DATABASE sgla_logs' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'sgla_logs')\gexec
+
 	REVOKE ALL ON DATABASE sgla_users FROM public;
 	REVOKE ALL ON DATABASE sgla_logs FROM public;
 
