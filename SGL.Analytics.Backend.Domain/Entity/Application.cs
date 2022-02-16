@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
 	/// <summary>
@@ -23,6 +20,8 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// </summary>
 		public string ApiToken { get; set; }
 
+		public ICollection<Recipient> DataRecipients { get; set; } = null!;
+
 		/// <summary>
 		/// Constructs an <see cref="Application"/> object with the given data values.
 		/// </summary>
@@ -38,7 +37,10 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// </summary>
 		/// <returns>The created object.</returns>
 		public static Application Create(string name, string apiToken) {
-			return new Application(Guid.NewGuid(), name, apiToken);
+			var app = new Application(Guid.NewGuid(), name, apiToken);
+			app.DataRecipients = new List<Recipient>();
+			return app;
 		}
+
 	}
 }
