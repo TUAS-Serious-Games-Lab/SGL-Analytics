@@ -10,6 +10,16 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		public KeyId PublicKeyId { get; init; }
 		public string Label { get; set; }
 		public string CertificatePem { get; set; }
+		private Certificate? certificate = null;
+		public Certificate Certificate {
+			get {
+				if (certificate == null) {
+					using var strReader = new StringReader(CertificatePem);
+					certificate = Certificate.LoadOneFromPem(strReader);
+				}
+				return certificate;
+			}
+		}
 
 		public Recipient(Guid appId, string label, string certificatePem) {
 			AppId = appId;
