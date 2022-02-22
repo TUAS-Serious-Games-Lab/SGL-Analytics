@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Crypto.EntityFrameworkCore;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 	/// <summary>
@@ -39,6 +36,13 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 			application.Property(a => a.Name).HasMaxLength(128);
 			application.HasIndex(a => a.Name).IsUnique();
 			application.Property(a => a.ApiToken).HasMaxLength(64);
+
+			application.OwnsMany(app => app.DataRecipients, r => {
+				r.WithOwner(r => r.App);
+				r.HasKey(r => new { r.AppId, r.PublicKeyId });
+				r.Property(r => r.PublicKeyId).IsStoredAsByteArray().HasMaxLength(33);
+				r.Property(r => r.Label).HasMaxLength(128);
+			});
 		}
 
 		/// <summary>

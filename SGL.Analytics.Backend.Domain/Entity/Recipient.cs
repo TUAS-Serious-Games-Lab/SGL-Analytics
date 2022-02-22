@@ -1,6 +1,5 @@
-﻿using Org.BouncyCastle.OpenSsl;
-using Org.BouncyCastle.X509;
-using SGL.Utilities.Crypto;
+﻿using SGL.Utilities.Crypto.Certificates;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.IO;
 
@@ -8,19 +7,18 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 	public class Recipient {
 		public Guid AppId { get; set; }
 		public Application App { get; set; } = null!;
-		public KeyId PublicKeyId { get; set; }
+		public KeyId PublicKeyId { get; init; }
 		public string Label { get; set; }
 		public string CertificatePem { get; set; }
 
-		public Recipient(Guid appId, KeyId publicKeyId, string label, string certificatePem) {
+		public Recipient(Guid appId, string label, string certificatePem) {
 			AppId = appId;
-			PublicKeyId = publicKeyId;
 			Label = label;
 			CertificatePem = certificatePem;
 		}
 
 		public static Recipient Create(Application app, KeyId publicKeyId, string label, string certificatePem) {
-			var r = new Recipient(app.Id, publicKeyId, label, certificatePem);
+			var r = new Recipient(app.Id, label, certificatePem) { PublicKeyId = publicKeyId };
 			r.App = app;
 			return r;
 		}
