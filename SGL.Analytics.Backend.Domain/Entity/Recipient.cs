@@ -27,9 +27,8 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 
 		public static Recipient Create(Application app, string label, string certificatePem) {
 			using var strReader = new StringReader(certificatePem);
-			var pemReader = new PemReader(strReader);
-			var cert = (X509Certificate)pemReader.ReadObject();
-			var keyId = KeyId.CalculateId(cert.GetPublicKey());
+			var cert = Certificate.LoadOneFromPem(strReader);
+			var keyId = KeyId.CalculateId(cert.PublicKey);
 			return Create(app, keyId, label, certificatePem);
 		}
 	}
