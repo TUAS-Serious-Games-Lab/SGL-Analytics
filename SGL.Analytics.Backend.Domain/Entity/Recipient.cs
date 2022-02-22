@@ -20,7 +20,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <summary>
 		/// The Id derived from the recipient's public key, used to identify the recipient within the app using their key pair.
 		/// </summary>
-		public KeyId PublicKeyId { get; init; }
+		public KeyId PublicKeyId { get; }
 		/// <summary>
 		/// A human-readable label providing an easy means of identification for the recipient entry.
 		/// This can, e.g. be the role or name of the receiving person.
@@ -49,9 +49,10 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <summary>
 		/// Instantiates a <see cref="Recipient"/> object with the given data.
 		/// </summary>
-		public Recipient(Guid appId, string label, string certificatePem) {
+		public Recipient(Guid appId, KeyId publicKeyId, string label, string certificatePem) {
 			AppId = appId;
 			Label = label;
+			PublicKeyId = publicKeyId;
 			CertificatePem = certificatePem;
 		}
 
@@ -64,7 +65,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <param name="certificatePem">The certificate authorizing the recipient's public key, in PEM-encoded form.</param>
 		/// <returns>The created object.</returns>
 		public static Recipient Create(Application app, KeyId publicKeyId, string label, string certificatePem) {
-			var r = new Recipient(app.Id, label, certificatePem) { PublicKeyId = publicKeyId };
+			var r = new Recipient(app.Id, publicKeyId, label, certificatePem);
 			r.App = app;
 			return r;
 		}
