@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Crypto.EntityFrameworkCore;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 	/// <summary>
@@ -20,10 +21,18 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 		/// </summary>
 		/// <param name="modelBuilder">The builder to use for configuring the model.</param>
 		protected override void OnModelCreating(ModelBuilder modelBuilder) {
+			modelBuilder.Ignore<SGL.Analytics.Backend.Domain.Entity.Application>();
 			var app = modelBuilder.Entity<ApplicationWithUserProperties>();
 			app.HasIndex(a => a.Name).IsUnique();
 			app.Property(a => a.Name).HasMaxLength(128);
 			app.Property(a => a.ApiToken).HasMaxLength(64);
+
+			app.OwnsMany(app => app.DataRecipients, r => {
+				r.WithOwner(r => (ApplicationWithUserProperties)r.App);
+				r.HasKey(r => new { r.AppId, r.PublicKeyId });
+				r.Property(r => r.PublicKeyId).IsStoredAsByteArray().HasMaxLength(33);
+				r.Property(r => r.Label).HasMaxLength(128);
+			});
 
 			var propDef = modelBuilder.Entity<ApplicationUserPropertyDefinition>();
 			propDef.HasIndex(pd => (new { pd.AppId, pd.Name })).IsUnique();
