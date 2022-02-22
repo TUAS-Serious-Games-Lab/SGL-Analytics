@@ -20,6 +20,10 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// </summary>
 		public string ApiToken { get; set; }
 
+		/// <summary>
+		/// The collection of the recipients that are authorized to receive the collected data.
+		/// This is used by clients to determine for whom to encrypt data keys for the files under end-to-end encryption.
+		/// </summary>
 		public ICollection<Recipient> DataRecipients { get; set; } = null!;
 
 		/// <summary>

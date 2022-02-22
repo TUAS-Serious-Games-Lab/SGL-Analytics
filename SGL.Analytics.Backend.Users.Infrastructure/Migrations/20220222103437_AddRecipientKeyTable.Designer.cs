@@ -13,7 +13,8 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
     [Migration("20220222103437_AddRecipientKeyTable")]
     partial class AddRecipientKeyTable
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+		/// <inheritdoc/>
+		protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
