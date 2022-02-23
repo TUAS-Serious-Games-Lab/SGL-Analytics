@@ -34,7 +34,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			metrics.UpdateCollectedLogs(logsCounts);
 			var avgLogSizes = await logRepo.GetLogSizeAvgPerAppAsync(ct);
 			metrics.UpdateAvgLogSize(avgLogSizes);
-			var apps = await appRepo.ListApplicationsAsync(ct);
+			var apps = await appRepo.ListApplicationsAsync(ct: ct);
 			foreach (var app in apps) {
 				metrics.EnsureMetricsExist(app.Name);
 			}

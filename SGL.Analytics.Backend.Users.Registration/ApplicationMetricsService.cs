@@ -31,7 +31,7 @@ namespace SGL.Analytics.Backend.Users.Registration {
 		protected async override Task UpdateMetrics(CancellationToken ct) {
 			var stats = await userRepo.GetUsersCountPerAppAsync(ct);
 			metrics.UpdateRegisteredUsers(stats);
-			var apps = await appRepo.ListApplicationsAsync(ct);
+			var apps = await appRepo.ListApplicationsAsync(ct: ct);
 			foreach (var app in apps) {
 				metrics.EnsureMetricsExist(app.Name);
 			}

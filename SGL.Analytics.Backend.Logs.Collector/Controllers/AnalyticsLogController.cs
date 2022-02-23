@@ -123,7 +123,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 			Domain.Entity.Application? app = null;
 			try {
-				app = await appRepo.GetApplicationByNameAsync(appName, ct);
+				app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
 			}
 			catch (OperationCanceledException) {
 				logger.LogDebug("IngestLog POST request from user {userId} was cancelled while fetching application metadata.", userId);

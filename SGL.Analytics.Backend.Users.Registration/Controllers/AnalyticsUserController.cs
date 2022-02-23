@@ -62,7 +62,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			using var appScope = logger.BeginApplicationScope(userRegistration.AppName);
 			ApplicationWithUserProperties? app = null;
 			try {
-				app = await appRepo.GetApplicationByNameAsync(userRegistration.AppName, ct);
+				app = await appRepo.GetApplicationByNameAsync(userRegistration.AppName, ct: ct);
 			}
 			catch (OperationCanceledException) {
 				logger.LogDebug("RegisterUser POST request for user {username} was cancelled while fetching application metadata.", userRegistration.Username);
@@ -152,7 +152,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			using var appScope = logger.BeginApplicationScope(loginRequest.AppName);
 			try {
 				using var userScope = logger.BeginUserScope(loginRequest.GetUserIdentifier());
-				var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName, ct);
+				var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName, ct: ct);
 				var fixedFailureDelay = loginService.StartFixedFailureDelay(ct);
 				User? user = null; // stash a reference to user to check app association later, and for username-based login between id-lookup and actual login.
 				Guid userid;

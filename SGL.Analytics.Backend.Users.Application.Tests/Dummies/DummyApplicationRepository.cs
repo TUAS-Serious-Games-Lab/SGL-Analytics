@@ -24,7 +24,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			return app;
 		}
 
-		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, CancellationToken ct = default) {
+		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, bool fetchRecipients = false, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			if (apps.TryGetValue(appName, out var app)) {
@@ -35,7 +35,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			}
 		}
 
-		public async Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(CancellationToken ct = default) {
+		public async Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(bool fetchRecipients = false, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			return apps.Values.ToList();

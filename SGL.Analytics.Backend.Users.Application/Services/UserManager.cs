@@ -46,7 +46,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 
 		/// <inheritdoc/>
 		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO, CancellationToken ct = default) {
-			var app = await appRepo.GetApplicationByNameAsync(userRegDTO.AppName, ct);
+			var app = await appRepo.GetApplicationByNameAsync(userRegDTO.AppName, ct: ct);
 			if (app is null) {
 				logger.LogError("Attempt to register user {username} for non-existent application {appName}.", userRegDTO.Username, userRegDTO.AppName);
 				throw new ApplicationDoesNotExistException(userRegDTO.AppName);

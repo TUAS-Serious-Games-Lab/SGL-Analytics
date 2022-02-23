@@ -3,7 +3,6 @@ using SGL.Analytics.Backend.Domain.Entity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -66,7 +65,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 
 		private async Task<PushResult> PushLogsApplication(Application application, CancellationToken ct = default) {
 			try {
-				var existingApp = await logsAppRepo.GetApplicationByNameAsync(application.Name, ct);
+				var existingApp = await logsAppRepo.GetApplicationByNameAsync(application.Name, ct: ct);
 				if (existingApp != null) {
 					if (existingApp.ApiToken != application.ApiToken) {
 						logger.LogInformation("Application {appName} is already registered in LogsAPI, but with a different API token. Updating the token ...", application.Name);
@@ -92,7 +91,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		}
 		private async Task<PushResult> PushUsersApplication(ApplicationWithUserProperties application, CancellationToken ct = default) {
 			try {
-				var existingApp = await usersAppRepo.GetApplicationByNameAsync(application.Name, ct);
+				var existingApp = await usersAppRepo.GetApplicationByNameAsync(application.Name, ct: ct);
 				if (existingApp != null) {
 					bool changed = false;
 					if (existingApp.ApiToken != application.ApiToken) {

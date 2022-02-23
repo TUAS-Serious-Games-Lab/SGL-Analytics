@@ -49,13 +49,21 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		}
 
 		/// <inheritdoc/>
-		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, CancellationToken ct = default) {
-			return await context.Applications.Include(a => a.UserProperties).Where(a => a.Name == appName).SingleOrDefaultAsync(ct);
+		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, bool fetchRecipients = false, CancellationToken ct = default) {
+			IQueryable<ApplicationWithUserProperties> query = context.Applications.Include(a => a.UserProperties).Where(a => a.Name == appName);
+			if (fetchRecipients) {
+				query = query.Include(a => a.DataRecipients);
+			}
+			return await query.SingleOrDefaultAsync(ct);
 		}
 
 		/// <inheritdoc/>
-		public async Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(CancellationToken ct = default) {
-			return await context.Applications.Include(a => a.UserProperties).ToListAsync(ct);
+		public async Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(bool fetchRecipients = false, CancellationToken ct = default) {
+			IQueryable<ApplicationWithUserProperties> query = context.Applications.Include(a => a.UserProperties);
+			if (fetchRecipients) {
+				query = query.Include(a => a.DataRecipients);
+			}
+			return await query.ToListAsync(ct);
 		}
 
 		/// <inheritdoc/>
