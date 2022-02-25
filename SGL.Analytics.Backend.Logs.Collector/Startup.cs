@@ -41,7 +41,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			});
 
 			services.UseAnalyticsLogUploadLimit(Configuration);
-			services.AddControllers();
+			services.AddControllers(options => options.OutputFormatters.Insert(0, new PemOutputFormatter()));
 
 			services.UseJwtBearerAuthentication(Configuration);
 			services.AddAuthorization(options => {
