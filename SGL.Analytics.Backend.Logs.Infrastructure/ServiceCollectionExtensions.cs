@@ -17,7 +17,8 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure {
 		/// <param name="config">The root config object to obtain configuration entries from.</param>
 		/// <returns>A reference to <paramref name="services"/> for chaining.</returns>
 		public static IServiceCollection UseLogsBackendInfrastructure(this IServiceCollection services, IConfiguration config) {
-			services.AddDbContext<LogsContext>(options => options.UseNpgsql(config.GetConnectionString("LogsContext")));
+			services.AddDbContext<LogsContext>(options => options.UseNpgsql(config.GetConnectionString("LogsContext"),
+				o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery)));
 
 			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
 			services.AddScoped<ILogMetadataRepository, DbLogMetadataRepository>();

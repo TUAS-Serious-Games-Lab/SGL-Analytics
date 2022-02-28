@@ -9,7 +9,9 @@ using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -62,7 +64,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			using var appScope = logger.BeginApplicationScope(userRegistration.AppName);
 			ApplicationWithUserProperties? app = null;
 			try {
-				app = await appRepo.GetApplicationByNameAsync(userRegistration.AppName, ct);
+				app = await appRepo.GetApplicationByNameAsync(userRegistration.AppName, ct: ct);
 			}
 			catch (OperationCanceledException) {
 				logger.LogDebug("RegisterUser POST request for user {username} was cancelled while fetching application metadata.", userRegistration.Username);
@@ -152,7 +154,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			using var appScope = logger.BeginApplicationScope(loginRequest.AppName);
 			try {
 				using var userScope = logger.BeginUserScope(loginRequest.GetUserIdentifier());
-				var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName, ct);
+				var app = await appRepo.GetApplicationByNameAsync(loginRequest.AppName, ct: ct);
 				var fixedFailureDelay = loginService.StartFixedFailureDelay(ct);
 				User? user = null; // stash a reference to user to check app association later, and for username-based login between id-lookup and actual login.
 				Guid userid;
@@ -242,5 +244,20 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				throw;
 			}
 		}
+
+		[HttpGet("recipient-certificates")]
+		[Produces("application/x-pem-file")]
+		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+		public async Task<ActionResult<IEnumerable<string>>> GetRecipientCertificates([FromQuery] string appName, [FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, fetchRecipients: true, ct: ct);
+			if (app == null) {
+				return Unauthorized();
+			}
+			if (app.ApiToken != appApiToken) {
+				return Unauthorized();
+			}
+			return Ok(app.DataRecipients.Select(r => r.CertificatePem));
+		}
+
 	}
 }

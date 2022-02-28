@@ -24,8 +24,12 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		/// <inheritdoc/>
-		public Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName, CancellationToken ct = default) {
-			return context.Applications.Where(a => a.Name == appName).SingleOrDefaultAsync<Domain.Entity.Application?>(ct);
+		public Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName, bool fetchRecipients = false, CancellationToken ct = default) {
+			IQueryable<Domain.Entity.Application> query = context.Applications.Where(a => a.Name == appName);
+			if (fetchRecipients) {
+				query = query.Include(a => a.DataRecipients);
+			}
+			return query.SingleOrDefaultAsync<Domain.Entity.Application?>(ct);
 		}
 
 		/// <inheritdoc/>
@@ -60,8 +64,12 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		/// <inheritdoc/>
-		public async Task<IList<Domain.Entity.Application>> ListApplicationsAsync(CancellationToken ct = default) {
-			return await context.Applications.ToListAsync(ct);
+		public async Task<IList<Domain.Entity.Application>> ListApplicationsAsync(bool fetchRecipients = false, CancellationToken ct = default) {
+			IQueryable<Domain.Entity.Application> query = context.Applications;
+			if (fetchRecipients) {
+				query = query.Include(a => a.DataRecipients);
+			}
+			return await query.ToListAsync(ct);
 		}
 	}
 }

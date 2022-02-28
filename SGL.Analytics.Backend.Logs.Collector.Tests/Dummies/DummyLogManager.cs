@@ -50,7 +50,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			Ingests.ForEach(i => i.LogContent.Dispose());
 		}
 
-		public async Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName, CancellationToken ct = default) {
+		public async Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName, bool fetchRecipients = false, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			if (Apps.TryGetValue(appName, out var app)) {
@@ -78,7 +78,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			return app;
 		}
 
-		public async Task<IList<Domain.Entity.Application>> ListApplicationsAsync(CancellationToken ct = default) {
+		public async Task<IList<Domain.Entity.Application>> ListApplicationsAsync(bool fetchRecipients = false, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			return Apps.Values.ToList();

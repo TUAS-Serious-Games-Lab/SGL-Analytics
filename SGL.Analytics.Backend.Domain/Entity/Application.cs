@@ -46,5 +46,10 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			return app;
 		}
 
+		public Recipient AddRecipient(string label, string certificatePem) {
+			var recipient = Recipient.Create(this, label, certificatePem);
+			DataRecipients.Add(recipient);
+			return recipient;
+		}
 	}
 }

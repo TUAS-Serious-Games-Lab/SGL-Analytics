@@ -12,7 +12,9 @@ using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -89,6 +91,20 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			this.metrics = metrics;
 		}
 
+		[HttpGet("recipient-certificates")]
+		[Produces("application/x-pem-file")]
+		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+		public async Task<ActionResult<IEnumerable<string>>> GetRecipientCertificates([FromQuery] string appName, [FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, fetchRecipients: true, ct: ct);
+			if (app == null) {
+				return Unauthorized();
+			}
+			if (app.ApiToken != appApiToken) {
+				return Unauthorized();
+			}
+			return Ok(app.DataRecipients.Select(r => r.CertificatePem));
+		}
+
 		// POST: api/analytics/log
 		/// <summary>
 		/// Handles POST requests to <c>api/analytics/log</c> for analytics log files with the log contents and associated metadata.
@@ -123,7 +139,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 			Domain.Entity.Application? app = null;
 			try {
-				app = await appRepo.GetApplicationByNameAsync(appName, ct);
+				app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
 			}
 			catch (OperationCanceledException) {
 				logger.LogDebug("IngestLog POST request from user {userId} was cancelled while fetching application metadata.", userId);

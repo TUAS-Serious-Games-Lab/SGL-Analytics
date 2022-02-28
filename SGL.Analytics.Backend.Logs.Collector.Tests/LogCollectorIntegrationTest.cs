@@ -12,6 +12,9 @@ using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Backend.TestUtilities;
+using SGL.Utilities.Crypto;
+using SGL.Utilities.Crypto.Certificates;
+using SGL.Utilities.Crypto.Keys;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.Collections.Generic;
@@ -39,6 +42,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		public ITestOutputHelper? Output { get; set; } = null;
 		public JwtTokenGenerator TokenGenerator { get; }
+		public RandomGenerator Random { get; } = new RandomGenerator();
+		public PublicKey SignerPublicKey => signerKeyPair.Public;
+		private KeyPair signerKeyPair;
+		public List<Certificate> Certificates = new List<Certificate>();
+		public DistinguishedName SignerIdentity { get; } = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Utility"), new("ou", "Tests"), new("cn", "Test Signer") });
 
 		public LogCollectorIntegrationTestFixture() {
 			JwtConfig = new() {
@@ -54,10 +62,30 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				["Logging:File:Sinks:3:FilenameFormat"] = "{Time:yyyy-MM}/users/{UserId}/{Time:yyyy-MM-dd}_{ServiceName}_{UserId}.log",
 			};
 			TokenGenerator = new JwtTokenGenerator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
+
+			signerKeyPair = KeyPair.GenerateEllipticCurves(Random, 521);
+		}
+
+		private string createCertificatePem(string cn, List<Certificate>? certificateList) {
+			var keyPair = KeyPair.GenerateEllipticCurves(Random, 521);
+			var identity = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Utility"), new("ou", "Tests"), new("cn", cn) });
+			var certificate = Certificate.Generate(SignerIdentity, signerKeyPair.Private, identity, keyPair.Public, TimeSpan.FromHours(1), Random, 128);
+			using var writer = new StringWriter();
+			certificate.StoreToPem(writer);
+			certificateList?.Add(certificate);
+			return writer.ToString();
 		}
 
 		protected override void SeedDatabase(LogsContext context) {
-			context.Applications.Add(new Domain.Entity.Application(Guid.NewGuid(), AppName, AppApiToken));
+			Domain.Entity.Application app = Domain.Entity.Application.Create(AppName, AppApiToken);
+			app.AddRecipient("test recipient 1", createCertificatePem("Test 1", Certificates));
+			app.AddRecipient("test recipient 2", createCertificatePem("Test 2", Certificates));
+			app.AddRecipient("test recipient 3", createCertificatePem("Test 3", Certificates));
+			context.Applications.Add(app);
+			Domain.Entity.Application otherApp = Domain.Entity.Application.Create("SomeOtherApp", StringGenerator.GenerateRandomWord(32));
+			otherApp.AddRecipient("other test recipient 1", createCertificatePem("Other Test 1", null));
+			otherApp.AddRecipient("other test recipient 2", createCertificatePem("Other Test 2", null));
+			context.Applications.Add(otherApp);
 			context.SaveChanges();
 		}
 
@@ -79,6 +107,22 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			this.fixture = fixture;
 			this.output = output;
 			fixture.Output = output;
+		}
+
+		[Fact]
+		public async Task RecipientCertificateListContainsExpectedEntries() {
+			using (var client = fixture.CreateClient()) {
+				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/analytics/log/recipient-certificates?appName={fixture.AppName}");
+				request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/x-pem-file"));
+				request.Headers.Add("App-API-Token", fixture.AppApiToken);
+				var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
+				response.EnsureSuccessStatusCode();
+				using var reader = new StreamReader(await response.Content.ReadAsStreamAsync());
+				var readCerts = Certificate.LoadAllFromPem(reader).ToList();
+				Assert.Equal(3, readCerts.Count);
+				Assert.All(readCerts, cert => Assert.Contains(cert, fixture.Certificates));
+				Assert.All(fixture.Certificates, cert => Assert.Contains(cert, readCerts));
+			}
 		}
 
 		private Stream generateRandomGZippedTestData() {

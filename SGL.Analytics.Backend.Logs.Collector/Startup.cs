@@ -12,6 +12,7 @@ using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Utilities.Backend;
 using SGL.Utilities.Backend.AspNetCore;
+using SGL.Utilities.Crypto.AspNetCore;
 using SGL.Utilities.Logging.FileLogging;
 using System;
 
@@ -41,7 +42,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			});
 
 			services.UseAnalyticsLogUploadLimit(Configuration);
-			services.AddControllers();
+			services.AddControllers(options => options.AddPemFormatters());
 
 			services.UseJwtBearerAuthentication(Configuration);
 			services.AddAuthorization(options => {

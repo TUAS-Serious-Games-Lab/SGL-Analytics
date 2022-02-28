@@ -11,6 +11,7 @@ using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Utilities.Backend;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Crypto.AspNetCore;
 using SGL.Utilities.Logging.FileLogging;
 
 namespace SGL.Analytics.Backend.Users.Registration {
@@ -38,7 +39,7 @@ namespace SGL.Analytics.Backend.Users.Registration {
 				config.Constants.TryAdd("ServiceName", "SGL.Analytics.UserRegistration");
 			});
 
-			services.AddControllers();
+			services.AddControllers(options => options.AddPemFormatters());
 
 			services.UseUsersBackendInfrastructure(Configuration);
 

@@ -14,7 +14,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <param name="appName">The unique technical name of the application.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The application object if the application exists, or <see langword="null"/> otherwise.</returns>
-		Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, CancellationToken ct = default);
+		Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, bool fetchRecipients = false, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously creates the given application object in the repository.
 		/// </summary>
@@ -35,6 +35,6 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// </summary>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the list as its result.</returns>
-		Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(CancellationToken ct = default);
+		Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(bool fetchRecipients = false, CancellationToken ct = default);
 	}
 }
