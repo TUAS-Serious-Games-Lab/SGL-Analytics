@@ -2,8 +2,6 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
 	/// <summary>
@@ -36,6 +34,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		public static ApplicationWithUserProperties Create(Guid id, string name, string apiToken) {
 			var app = new ApplicationWithUserProperties(id, name, apiToken);
 			app.UserProperties = new List<ApplicationUserPropertyDefinition>();
+			app.DataRecipients = new List<Recipient>();
 			return app;
 		}
 
