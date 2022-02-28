@@ -17,7 +17,8 @@ namespace SGL.Analytics.Backend.Users.Infrastructure {
 		/// <param name="config">The root config object to obtain configuration entries from.</param>
 		/// <returns>A reference to <paramref name="services"/> for chaining.</returns>
 		public static IServiceCollection UseUsersBackendInfrastructure(this IServiceCollection services, IConfiguration config) {
-			services.AddDbContext<UsersContext>(options => options.UseNpgsql(config.GetConnectionString("UsersContext")));
+			services.AddDbContext<UsersContext>(options => options.UseNpgsql(config.GetConnectionString("UsersContext"),
+				o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery)));
 
 			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
 			services.AddScoped<IUserRepository, DbUserRepository>();
