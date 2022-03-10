@@ -19,7 +19,7 @@ using Xunit.Abstractions;
 namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 	public class AnalyticsLogControllerUnitTest {
 		private readonly ITestOutputHelper output;
-		private Utilities.Backend.TestUtilities.Applications.DummyApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appManager = new();
+		private Utilities.Backend.TestUtilities.Applications.DummyApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo = new();
 		private DummyLogManager logManager;
 		private ILoggerFactory loggerFactory;
 		private AnalyticsLogController controller;
@@ -28,9 +28,9 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		public AnalyticsLogControllerUnitTest(ITestOutputHelper output) {
 			this.output = output;
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
-			logManager = new DummyLogManager(appManager);
-			appManager.AddApplicationAsync(new Domain.Entity.Application(Guid.NewGuid(), nameof(AnalyticsLogControllerUnitTest), apiToken)).Wait();
-			controller = new AnalyticsLogController(logManager, appManager, loggerFactory.CreateLogger<AnalyticsLogController>(), new NullMetricsManager());
+			logManager = new DummyLogManager(appRepo);
+			appRepo.AddApplicationAsync(new Domain.Entity.Application(Guid.NewGuid(), nameof(AnalyticsLogControllerUnitTest), apiToken)).Wait();
+			controller = new AnalyticsLogController(logManager, appRepo, loggerFactory.CreateLogger<AnalyticsLogController>(), new NullMetricsManager());
 		}
 
 		private ControllerContext createControllerContext(string appNameClaim, Guid userIdClaim) {

@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Backend.Applications;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,14 +13,14 @@ namespace SGL.Analytics.Backend.Users.Registration {
 	/// </summary>
 	public class ApplicationMetricsService : ApplicationMetricsServiceBase {
 		private readonly IUserRepository userRepo;
-		private readonly IApplicationRepository appRepo;
+		private readonly IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo;
 		private readonly IMetricsManager metrics;
 
 		/// <summary>
 		/// Instantiates the service, injecting the given dependencies.
 		/// </summary>
 		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger, IUserRepository userRepo,
-			IApplicationRepository appRepo, IMetricsManager metrics) : base(options, logger) {
+			IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IMetricsManager metrics) : base(options, logger) {
 			this.userRepo = userRepo;
 			this.appRepo = appRepo;
 			this.metrics = metrics;

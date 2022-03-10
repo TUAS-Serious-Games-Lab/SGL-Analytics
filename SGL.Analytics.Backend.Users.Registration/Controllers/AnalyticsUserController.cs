@@ -7,6 +7,7 @@ using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
 using System;
@@ -24,7 +25,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	[ApiController]
 	public class AnalyticsUserController : ControllerBase {
 		private readonly IUserManager userManager;
-		private readonly IApplicationRepository appRepo;
+		private readonly IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo;
 		private readonly ILogger<AnalyticsUserController> logger;
 		private readonly ILoginService loginService;
 		private readonly IMetricsManager metrics;
@@ -32,7 +33,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		/// <summary>
 		/// Instantiates the controller, injecting the required dependency objects.
 		/// </summary>
-		public AnalyticsUserController(IUserManager userManager, ILoginService loginService, IApplicationRepository appRepo, ILogger<AnalyticsUserController> logger, IMetricsManager metrics) {
+		public AnalyticsUserController(IUserManager userManager, ILoginService loginService, IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, ILogger<AnalyticsUserController> logger, IMetricsManager metrics) {
 			this.userManager = userManager;
 			this.loginService = loginService;
 			this.appRepo = appRepo;
@@ -250,7 +251,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[Produces("application/x-pem-file")]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 		public async Task<ActionResult<IEnumerable<string>>> GetRecipientCertificates([FromQuery] string appName, [FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, CancellationToken ct = default) {
-			var app = await appRepo.GetApplicationByNameAsync(appName, fetchRecipients: true, ct: ct);
+			var app = await appRepo.GetApplicationByNameAsync(appName, new ApplicationQueryOptions { FetchRecipients = true }, ct: ct);
 			if (app == null) {
 				return Unauthorized();
 			}
