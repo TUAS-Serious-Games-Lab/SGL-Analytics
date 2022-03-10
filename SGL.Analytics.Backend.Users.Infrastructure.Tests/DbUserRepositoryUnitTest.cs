@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using SGL.Utilities.Backend;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 	public class DbUserRepositoryUnitTest : IDisposable {
