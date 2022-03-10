@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
 using System;
@@ -77,14 +78,14 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 	public class AnalyticsLogController : ControllerBase {
 
 		private readonly ILogManager logManager;
-		private readonly IApplicationRepository appRepo;
+		private readonly IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo;
 		private readonly ILogger<AnalyticsLogController> logger;
 		private readonly IMetricsManager metrics;
 
 		/// <summary>
 		/// Instantiates the controller, injecting the required dependency objects.
 		/// </summary>
-		public AnalyticsLogController(ILogManager logManager, IApplicationRepository appRepo, ILogger<AnalyticsLogController> logger, IMetricsManager metrics) {
+		public AnalyticsLogController(ILogManager logManager, IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo, ILogger<AnalyticsLogController> logger, IMetricsManager metrics) {
 			this.logManager = logManager;
 			this.appRepo = appRepo;
 			this.logger = logger;
@@ -95,7 +96,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		[Produces("application/x-pem-file")]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 		public async Task<ActionResult<IEnumerable<string>>> GetRecipientCertificates([FromQuery] string appName, [FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, CancellationToken ct = default) {
-			var app = await appRepo.GetApplicationByNameAsync(appName, fetchRecipients: true, ct: ct);
+			var app = await appRepo.GetApplicationByNameAsync(appName, new ApplicationQueryOptions { FetchRecipients = true }, ct: ct);
 			if (app == null) {
 				return Unauthorized();
 			}

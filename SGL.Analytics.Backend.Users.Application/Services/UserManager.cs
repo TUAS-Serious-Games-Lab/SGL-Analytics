@@ -4,6 +4,7 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.Security;
 using System;
 using System.Threading;
@@ -14,7 +15,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 	/// Implements the functionality required by <see cref="IUserManager"/>.
 	/// </summary>
 	public class UserManager : IUserManager {
-		private IApplicationRepository appRepo;
+		private IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo;
 		private IUserRepository userRepo;
 		private ILogger<UserManager> logger;
 
@@ -24,7 +25,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <param name="appRepo">The application repository to use.</param>
 		/// <param name="userRepo">The user registration repository to use.</param>
 		/// <param name="logger">A logger to log status, warning and error messages to.</param>
-		public UserManager(IApplicationRepository appRepo, IUserRepository userRepo, ILogger<UserManager> logger) {
+		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger) {
 			this.appRepo = appRepo;
 			this.userRepo = userRepo;
 			this.logger = logger;

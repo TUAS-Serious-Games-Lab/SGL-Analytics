@@ -5,6 +5,8 @@ using SGL.Analytics.Backend.Logs.Application.Services;
 using SGL.Analytics.Backend.Logs.Application.Tests.Dummies;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Backend.Applications;
+using SGL.Utilities.Backend.TestUtilities.Applications;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.IO;
@@ -17,7 +19,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 	public class LogManagerUnitTest {
 		private const string appName = "LogManagerUnitTest";
 		private readonly string appApiToken = StringGenerator.GenerateRandomWord(32);
-		private IApplicationRepository appRepo = new DummyApplicationRepository();
+		private IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo = new DummyApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions>();
 		private ILogFileRepository logFileRepo = new DummyLogFileRepository();
 		private DummyLogMetadataRepository logMetadataRepo = new DummyLogMetadataRepository();
 		private ITestOutputHelper output;

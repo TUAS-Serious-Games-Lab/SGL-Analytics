@@ -4,6 +4,7 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Backend.Applications;
 using System;
 using System.IO;
 using System.Threading;
@@ -15,7 +16,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 	/// Implements the management logic for analytics log files and their metadata.
 	/// </summary>
 	public class LogManager : ILogManager {
-		private IApplicationRepository appRepo;
+		private IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo;
 		private ILogMetadataRepository logMetaRepo;
 		private ILogFileRepository logFileRepo;
 		private ILogger<LogManager> logger;
@@ -29,7 +30,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 		/// <param name="logFileRepo">the log file repository to use.</param>
 		/// <param name="logger">A logger to log status, warning and error messages to.</param>
 		/// <param name="metrics">A metrics manager to which metrics-relevant events are reported.</param>
-		public LogManager(IApplicationRepository appRepo, ILogMetadataRepository logMetaRepo, ILogFileRepository logFileRepo, ILogger<LogManager> logger, IMetricsManager metrics) {
+		public LogManager(IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo, ILogMetadataRepository logMetaRepo, ILogFileRepository logFileRepo, ILogger<LogManager> logger, IMetricsManager metrics) {
 			this.appRepo = appRepo;
 			this.logMetaRepo = logMetaRepo;
 			this.logFileRepo = logFileRepo;

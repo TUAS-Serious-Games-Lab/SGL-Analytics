@@ -3,6 +3,8 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Backend;
+using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.Security;
 using System;
 using System.Collections.Generic;
@@ -12,9 +14,9 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
-	public class DummyUserManager : IUserManager, IApplicationRepository {
+	public class DummyUserManager : IUserManager {
+		private IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo;
 		private Dictionary<Guid, User> users = new();
-		public Dictionary<string, ApplicationWithUserProperties> Apps { get; } = new();
 		private int nextPropDefId = 1;
 
 		private void assignPropDefIds(ApplicationWithUserProperties app) {
@@ -23,32 +25,12 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			}
 		}
 
-		public DummyUserManager(IEnumerable<ApplicationWithUserProperties> apps) {
+		public DummyUserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IEnumerable<ApplicationWithUserProperties> apps) {
+			this.appRepo = appRepo;
 			foreach (var app in apps) {
 				assignPropDefIds(app);
-				Apps[app.Name] = app;
+				appRepo.AddApplicationAsync(app).Wait();
 			}
-		}
-
-		public async Task<ApplicationWithUserProperties?> GetApplicationByNameAsync(string appName, bool fetchRecipients = false, CancellationToken ct = default) {
-			await Task.CompletedTask;
-			ct.ThrowIfCancellationRequested();
-			if (Apps.TryGetValue(appName, out var app)) {
-				return app;
-			}
-			else {
-				return null;
-			}
-		}
-
-		public async Task<ApplicationWithUserProperties> AddApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default) {
-			if (Apps.ContainsKey(app.Name)) throw new EntityUniquenessConflictException("Application", "Name", app.Name);
-			if (app.Id == Guid.Empty) app.Id = Guid.NewGuid();
-			assignPropDefIds(app);
-			ct.ThrowIfCancellationRequested();
-			Apps.Add(app.Name, app);
-			await Task.CompletedTask;
-			return app;
 		}
 
 		public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default) {
@@ -72,7 +54,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			if (userRegistrationData.Username != null && users.Values.Count(u => u.Username == userRegistrationData.Username) > 0) {
 				throw new EntityUniquenessConflictException("User", "Username", userRegistrationData.Username);
 			}
-			if (!Apps.TryGetValue(userRegistrationData.AppName, out var app)) {
+			var app = await appRepo.GetApplicationByNameAsync(userRegistrationData.AppName);
+			if (app == null) {
 				throw new ApplicationDoesNotExistException(userRegistrationData.AppName);
 			}
 
@@ -104,21 +87,6 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			users[user.Id] = user;
 			userWrap.LoadAppPropertiesFromUnderlying();
 			return user;
-		}
-
-		public async Task<ApplicationWithUserProperties> UpdateApplicationAsync(ApplicationWithUserProperties app, CancellationToken ct = default) {
-			await Task.CompletedTask;
-			Debug.Assert(Apps.ContainsKey(app.Name));
-			assignPropDefIds(app);
-			ct.ThrowIfCancellationRequested();
-			Apps[app.Name] = app;
-			return app;
-		}
-
-		public async Task<IList<ApplicationWithUserProperties>> ListApplicationsAsync(bool fetchRecipients = false, CancellationToken ct = default) {
-			await Task.CompletedTask;
-			ct.ThrowIfCancellationRequested();
-			return Apps.Values.ToList();
 		}
 	}
 }

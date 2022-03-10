@@ -1,9 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure.Services;
+using SGL.Utilities.Backend.Applications;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure {
 	/// <summary>
@@ -20,7 +22,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure {
 			services.AddDbContext<UsersContext>(options => options.UseNpgsql(config.GetConnectionString("UsersContext"),
 				o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery)));
 
-			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
+			services.AddScoped<IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions>, DbApplicationRepository>();
 			services.AddScoped<IUserRepository, DbUserRepository>();
 			services.AddSingleton<IMetricsManager, MetricsManager>();
 

@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
+using SGL.Utilities.Backend.Applications;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure {
 	/// <summary>
@@ -20,7 +21,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure {
 			services.AddDbContext<LogsContext>(options => options.UseNpgsql(config.GetConnectionString("LogsContext"),
 				o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery)));
 
-			services.AddScoped<IApplicationRepository, DbApplicationRepository>();
+			services.AddScoped<IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions>, DbApplicationRepository>();
 			services.AddScoped<ILogMetadataRepository, DbLogMetadataRepository>();
 			services.UseFileSystemCollectorLogStorage(config);
 			services.AddSingleton<IMetricsManager, MetricsManager>();

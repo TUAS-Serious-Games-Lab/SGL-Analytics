@@ -23,6 +23,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		private const string appName = "AnalyticsUserControllerUnitTest";
 		private string appApiToken = StringGenerator.GenerateRandomWord(32);
 		private ITestOutputHelper output;
+		private Utilities.Backend.TestUtilities.Applications.DummyApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo = new();
 		private DummyUserManager userManager;
 		private ILoggerFactory loggerFactory;
 		private JwtOptions jwtOptions;
@@ -35,7 +36,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var app = ApplicationWithUserProperties.Create(appName, appApiToken);
 			app.AddProperty("Foo", UserPropertyType.String, true);
 			app.AddProperty("Bar", UserPropertyType.String);
-			userManager = new DummyUserManager(new List<ApplicationWithUserProperties>() { app });
+			userManager = new DummyUserManager(appRepo, new List<ApplicationWithUserProperties>() { app });
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
 			jwtOptions = new JwtOptions() {
 				Audience = "AnalyticsUserControllerUnitTest",
@@ -48,7 +49,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			};
 			tokenValidator = new JwtTokenValidator(jwtOptions.Issuer, jwtOptions.Audience, jwtOptions.SymmetricKey);
 			loginService = new JwtLoginService(loggerFactory.CreateLogger<JwtLoginService>(), Options.Create(jwtOptions));
-			controller = new AnalyticsUserController(userManager, loginService, userManager, loggerFactory.CreateLogger<AnalyticsUserController>(), new NullMetricsManager());
+			controller = new AnalyticsUserController(userManager, loginService, appRepo, loggerFactory.CreateLogger<AnalyticsUserController>(), new NullMetricsManager());
 		}
 
 		[Fact]
@@ -194,7 +195,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		public async Task LoginWithUnmatchingAppAndUserFailsWithExpectedError() {
 			var appName2 = "AnalyticsUserControllerUnitTest_2";
 			var appApiToken2 = StringGenerator.GenerateRandomWord(32);
-			await userManager.AddApplicationAsync(ApplicationWithUserProperties.Create(appName2, appApiToken2));
+			await appRepo.AddApplicationAsync(ApplicationWithUserProperties.Create(appName2, appApiToken2));
 			var secret = StringGenerator.GenerateRandomWord(16);// Not cryptographic, but ok for test
 			Dictionary<string, object?> props = new Dictionary<string, object?> { ["Foo"] = "Test", ["Bar"] = "Hello" };
 			var userRegDTO = new UserRegistrationDTO(appName, "Testuser", secret, props);

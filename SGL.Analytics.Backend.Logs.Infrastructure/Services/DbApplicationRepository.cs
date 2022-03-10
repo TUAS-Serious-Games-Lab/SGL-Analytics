@@ -10,66 +10,21 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 	/// <summary>
-	/// Provides a persistent implementation of <see cref="IApplicationRepository"/> using Entity Framework Core to map the objects into a relational database.
+	/// Adapts <see cref="Utilities.Backend.Applications.DbApplicationRepository{TApp, TQueryOptions, TContext}"/> for the log collector backend
+	/// to implement <see cref="Utilities.Backend.Applications.IApplicationRepository{TApp, TQueryOptions}"/> for <see cref="Domain.Entity.Application"/>.
 	/// </summary>
-	public class DbApplicationRepository : IApplicationRepository {
-		private LogsContext context;
-
+	public class DbApplicationRepository : Utilities.Backend.Applications.DbApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions, LogsContext> {
 		/// <summary>
 		/// Creates a repository object using the given database context object for data access.
 		/// </summary>
 		/// <param name="context">The <see cref="DbContext"/> implementation for the database.</param>
-		public DbApplicationRepository(LogsContext context) {
-			this.context = context;
-		}
+		public DbApplicationRepository(LogsContext context) : base(context) { }
 
-		/// <inheritdoc/>
-		public Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName, bool fetchRecipients = false, CancellationToken ct = default) {
-			IQueryable<Domain.Entity.Application> query = context.Applications.Where(a => a.Name == appName);
-			if (fetchRecipients) {
+		protected override IQueryable<Domain.Entity.Application> OnPrepareQuery(IQueryable<Domain.Entity.Application> query, ApplicationQueryOptions? options) {
+			if (options?.FetchRecipients ?? false) {
 				query = query.Include(a => a.DataRecipients);
 			}
-			return query.SingleOrDefaultAsync<Domain.Entity.Application?>(ct);
-		}
-
-		/// <inheritdoc/>
-		public async Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {
-			context.Applications.Add(app);
-			try {
-				await context.SaveChangesAsync(ct);
-			}
-			catch (DbUpdateConcurrencyException ex) {
-				throw new ConcurrencyConflictException(ex);
-			}
-			catch (DbUpdateException ex) {
-				// Should happen rarely and unfortunately, at the time of writing, there is no portable way (between databases) of further classifying the error.
-				// To check if ex is a unique constraint violation, we would need to inspect its inner exception and switch over exception types for all supported providers and their internal error classifications.
-				// To avoid this coupling, rather pay the perf cost of querrying again in this rare case.
-				if (await context.Applications.CountAsync(a => a.Name == app.Name, ct) > 0) {
-					throw new EntityUniquenessConflictException("Application", "Name", app.Name, ex);
-				}
-				else if (await context.Applications.CountAsync(a => a.Id == app.Id, ct) > 0) {
-					throw new EntityUniquenessConflictException("Application", "Id", app.Id, ex);
-				}
-				else throw;
-			}
-			return app;
-		}
-
-		/// <inheritdoc/>
-		public async Task<Domain.Entity.Application> UpdateApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {
-			Debug.Assert(context.Entry(app).State is EntityState.Modified or EntityState.Unchanged);
-			await context.SaveChangesAsync(ct);
-			return app;
-		}
-
-		/// <inheritdoc/>
-		public async Task<IList<Domain.Entity.Application>> ListApplicationsAsync(bool fetchRecipients = false, CancellationToken ct = default) {
-			IQueryable<Domain.Entity.Application> query = context.Applications;
-			if (fetchRecipients) {
-				query = query.Include(a => a.DataRecipients);
-			}
-			return await query.ToListAsync(ct);
+			return query;
 		}
 	}
 }

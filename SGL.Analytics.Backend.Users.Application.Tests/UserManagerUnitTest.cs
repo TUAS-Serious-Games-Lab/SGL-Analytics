@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
-using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.Backend.Users.Application.Services;
@@ -13,6 +12,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using SGL.Utilities.Backend.TestUtilities.Applications;
+using SGL.Analytics.Backend.Domain.Exceptions;
 
 namespace SGL.Analytics.Backend.Users.Application.Tests {
 	public class UserManagerUnitTest {

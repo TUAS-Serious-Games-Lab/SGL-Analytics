@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
-using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
+using SGL.Utilities.Backend;
 using SGL.Utilities.Backend.TestUtilities;
 using System;
 using System.Threading.Tasks;
