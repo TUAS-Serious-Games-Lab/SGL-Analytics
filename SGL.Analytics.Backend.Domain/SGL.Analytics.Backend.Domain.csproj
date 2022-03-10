@@ -18,6 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SGL.Utilities" Version="0.1.11" />
+    <PackageReference Include="SGL.Utilities.Backend.Abstractions" Version="0.1.11-27-g6253d61-main" />
     <PackageReference Include="SGL.Utilities.Crypto" Version="0.1.11" />
   </ItemGroup>
   <ItemGroup>

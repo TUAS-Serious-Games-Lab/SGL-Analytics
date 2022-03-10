@@ -1,4 +1,3 @@
-using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Utilities.Backend.TestUtilities;
@@ -9,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using SGL.Utilities.Backend;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 	public class DbApplicationRepositoryUnitTest : IDisposable {

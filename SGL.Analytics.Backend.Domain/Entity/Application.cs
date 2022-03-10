@@ -1,3 +1,4 @@
+using SGL.Utilities.Backend.Applications;
 using System;
 using System.Collections.Generic;
 
@@ -5,7 +6,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 	/// <summary>
 	/// Represents a registered application that uses SGL Analytics.
 	/// </summary>
-	public class Application {
+	public class Application : IApplication {
 		/// <summary>
 		/// A unique id of the application in the database.
 		/// This is usually different between services, as they use different databases.

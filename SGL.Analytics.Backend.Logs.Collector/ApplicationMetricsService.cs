@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Backend.Applications;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,14 +13,14 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 	/// </summary>
 	public class ApplicationMetricsService : ApplicationMetricsServiceBase {
 		private readonly ILogMetadataRepository logRepo;
-		private readonly IApplicationRepository appRepo;
+		private readonly IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo;
 		private readonly IMetricsManager metrics;
 
 		/// <summary>
 		/// Instantiates the service, injecting the given dependencies.
 		/// </summary>
 		public ApplicationMetricsService(IOptions<ApplicationMetricsServiceOptions> options, ILogger<ApplicationMetricsService> logger,
-			ILogMetadataRepository logRepo, IApplicationRepository appRepo, IMetricsManager metrics) : base(options, logger) {
+			ILogMetadataRepository logRepo, IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo, IMetricsManager metrics) : base(options, logger) {
 			this.logRepo = logRepo;
 			this.appRepo = appRepo;
 			this.metrics = metrics;

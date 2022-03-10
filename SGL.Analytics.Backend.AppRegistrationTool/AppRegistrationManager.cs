@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Logs.Application.Interfaces;
+using SGL.Utilities.Backend.Applications;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +14,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 	/// Provides functionality to manage application registrations in the databases of both, the logs collector service database and the user registration service database.
 	/// </summary>
 	public class AppRegistrationManager {
-		private Logs.Application.Interfaces.IApplicationRepository logsAppRepo;
+		private IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> logsAppRepo;
 		private Users.Application.Interfaces.IApplicationRepository usersAppRepo;
 		private ILogger<AppRegistrationManager> logger;
 
@@ -23,7 +25,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		/// <param name="usersAppRepo">The application repository object for the user registration service.</param>
 		/// <param name="logger">A logger to log diagnostig messages to.</param>
 		public AppRegistrationManager(
-			Logs.Application.Interfaces.IApplicationRepository logsAppRepo,
+			IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> logsAppRepo,
 			Users.Application.Interfaces.IApplicationRepository usersAppRepo,
 			ILogger<AppRegistrationManager> logger) {
 			this.logsAppRepo = logsAppRepo;

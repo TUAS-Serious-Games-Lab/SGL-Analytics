@@ -3,6 +3,7 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Backend.Applications;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Collector.Tests {
-	internal class DummyLogManager : ILogManager, IDisposable, IApplicationRepository {
+	internal class DummyLogManager : ILogManager, IDisposable {
 		public class IngestOperation {
 			public LogMetadataDTO LogMetaDTO { get; set; }
 			public LogMetadata LogMetadata { get; set; }
@@ -25,13 +26,17 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			}
 		}
 
-		public Dictionary<string, Domain.Entity.Application> Apps { get; } = new();
-
+		private IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo;
 		public List<IngestOperation> Ingests { get; } = new();
+
+		public DummyLogManager(IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo) {
+			this.appRepo = appRepo;
+		}
 
 		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent, long? contentSize, CancellationToken ct = default) {
 			long size = 0;
-			if (!Apps.TryGetValue(appName, out var app)) {
+			var app = await appRepo.GetApplicationByNameAsync(appName);
+			if (app == null) {
 				throw new ApplicationDoesNotExistException(appName);
 			}
 			var content = new MemoryStream();
@@ -48,41 +53,6 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		public void Dispose() {
 			Ingests.ForEach(i => i.LogContent.Dispose());
-		}
-
-		public async Task<Domain.Entity.Application?> GetApplicationByNameAsync(string appName, bool fetchRecipients = false, CancellationToken ct = default) {
-			await Task.CompletedTask;
-			ct.ThrowIfCancellationRequested();
-			if (Apps.TryGetValue(appName, out var app)) {
-				return app;
-			}
-			else {
-				return null;
-			}
-		}
-
-		public async Task<Domain.Entity.Application> AddApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {
-			if (Apps.ContainsKey(app.Name)) throw new EntityUniquenessConflictException("Application", "Name", app.Name);
-			if (app.Id == Guid.Empty) app.Id = Guid.NewGuid();
-			ct.ThrowIfCancellationRequested();
-			Apps.Add(app.Name, app);
-			await Task.CompletedTask;
-			return app;
-		}
-
-		public async Task<Domain.Entity.Application> UpdateApplicationAsync(Domain.Entity.Application app, CancellationToken ct = default) {
-			await Task.CompletedTask;
-			Debug.Assert(Apps.ContainsKey(app.Name));
-			ct.ThrowIfCancellationRequested();
-			Apps[app.Name] = app;
-			return app;
-		}
-
-		public async Task<IList<Domain.Entity.Application>> ListApplicationsAsync(bool fetchRecipients = false, CancellationToken ct = default) {
-			await Task.CompletedTask;
-			ct.ThrowIfCancellationRequested();
-			return Apps.Values.ToList();
-
 		}
 
 		class SingleLogFileRepository : ILogFileRepository, IDisposable {
