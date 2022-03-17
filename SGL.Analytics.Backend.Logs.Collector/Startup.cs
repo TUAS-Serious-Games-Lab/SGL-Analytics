@@ -6,7 +6,6 @@ using Microsoft.Extensions.Hosting;
 using Prometheus;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
-using SGL.Analytics.Backend.Logs.Collector.Controllers;
 using SGL.Analytics.Backend.Logs.Infrastructure;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
@@ -41,7 +40,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 				config.Constants.TryAdd("ServiceName", "SGL.Analytics.LogCollector");
 			});
 
-			services.UseAnalyticsLogUploadLimit(Configuration);
+			services.UseConfigurableUploadLimit(Configuration, "AnalyticsLog");
 			services.AddControllers(options => options.AddPemFormatters());
 
 			services.UseJwtBearerAuthentication(Configuration);
@@ -79,9 +78,9 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 
 			app.UseHttpsRedirection();
 
-			app.UseAnalyticsLogUploadLimit();
-
 			app.UseRouting();
+
+			app.UseConfigurableUploadLimit();
 
 			app.UseHttpMetrics();
 
