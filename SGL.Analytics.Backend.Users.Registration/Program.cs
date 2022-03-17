@@ -1,17 +1,14 @@
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
+using SGL.Utilities.Backend;
+using SGL.Utilities.Backend.AspNetCore;
+using SGL.Utilities.Logging.FileLogging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using SGL.Utilities.Logging.FileLogging;
-using SGL.Utilities.Backend.AspNetCore;
-using SGL.Utilities.Backend;
 
 namespace SGL.Analytics.Backend.Users.Registration {
 	/// <summary>
