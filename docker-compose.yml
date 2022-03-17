@@ -57,6 +57,7 @@ services:
       disable: true
     environment:
       PGPASSWORD: $LOGS_ADM_PW
+      SGLA_MIGRATION_ONLY: 1
     depends_on:
     - db
     networks:
@@ -69,6 +70,7 @@ services:
       disable: true
     environment:
       PGPASSWORD: $USERREG_ADM_PW
+      SGLA_MIGRATION_ONLY: 1
     depends_on:
     - db
     networks:

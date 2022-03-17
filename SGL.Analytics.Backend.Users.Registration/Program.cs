@@ -22,6 +22,10 @@ namespace SGL.Analytics.Backend.Users.Registration {
 		/// The entry point to the service executable.
 		/// </summary>
 		public static async Task Main(string[] args) {
+			if (Environment.GetEnvironmentVariable("SGLA_MIGRATION_ONLY") != null) {
+				await Console.Error.WriteLineAsync("Service started in environment marked as SGLA_MIGRATION_ONLY, shutting down ...");
+				return;
+			}
 			IHost host = CreateHostBuilder(args).Build();
 			await host.WaitForDbReadyAsync<UsersContext>(pollingInterval: TimeSpan.FromMilliseconds(500));
 			await host.WaitForConfigValueSetAsync("Jwt:SymmetricKey", TimeSpan.FromMilliseconds(500));
