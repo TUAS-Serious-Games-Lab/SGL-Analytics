@@ -134,8 +134,11 @@ namespace SGL.Analytics.Client {
 				DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
 			};
 			var content = JsonContent.Create(userDTO, new MediaTypeHeaderValue("application/json"), options);
-			content.Headers.Add("App-API-Token", appAPIToken);
-			var response = await httpClient.PostAsync(userRegistrationApiRoute, content);
+			var request = new HttpRequestMessage(HttpMethod.Post, userRegistrationApiRoute);
+			request.Content = content;
+			request.Headers.Add("App-API-Token", appAPIToken);
+			request.Version = HttpVersion.Version20;
+			var response = await httpClient.SendAsync(request);
 			if (response is null) throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
 			if (response.StatusCode == HttpStatusCode.Conflict && userDTO.Username != null) throw new UsernameAlreadyTakenException(userDTO.Username);
 			response.EnsureSuccessStatusCode();

@@ -53,10 +53,10 @@ namespace SGL.Analytics.Client {
 					LogMetadataDTO dto = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding);
 					Validator.ValidateObject(dto, new ValidationContext(dto), true);
 					content.Headers.MapDtoProperties(dto);
-					content.Headers.Add("App-API-Token", appAPIToken);
 					content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 					var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);
 					request.Content = content;
+					request.Headers.Add("App-API-Token", appAPIToken);
 					request.Headers.Authorization = authToken.ToHttpHeaderValue();
 					request.Version = HttpVersion.Version20;
 					var response = await httpClient.SendAsync(request);
