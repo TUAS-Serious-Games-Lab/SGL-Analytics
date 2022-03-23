@@ -1,4 +1,4 @@
-using SGL.Analytics.DTO;
+using SGL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Net;

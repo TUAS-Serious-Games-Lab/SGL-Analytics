@@ -6,6 +6,7 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
+using SGL.Utilities;
 using SGL.Utilities.Backend;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.AspNetCore;

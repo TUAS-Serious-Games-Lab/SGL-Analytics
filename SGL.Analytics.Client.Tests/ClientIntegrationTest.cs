@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.DTO;
+using SGL.Utilities;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.Collections.Generic;
@@ -7,13 +8,11 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WireMock.Matchers;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
-using WireMock.Server;
 using Xunit;
 using Xunit.Abstractions;
 

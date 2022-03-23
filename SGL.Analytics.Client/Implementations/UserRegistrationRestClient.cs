@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SGL.Analytics.DTO;
+using SGL.Utilities;
 using System;
 using System.Net;
 using System.Net.Http;

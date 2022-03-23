@@ -1,4 +1,5 @@
 using SGL.Analytics.DTO;
+using SGL.Utilities.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
