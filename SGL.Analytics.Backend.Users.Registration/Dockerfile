@@ -25,10 +25,10 @@ RUN echo 'dotnet nuget update source SGL --username ${SGL_PKG_USER} --password $
 	dotnet nuget remove source SGL && rm pkg-login.sh
 COPY . .
 WORKDIR "/src/SGL.Analytics.Backend.Users.Registration"
-RUN dotnet build "SGL.Analytics.Backend.Users.Registration.csproj" -c Release -o /app/build
+RUN dotnet build --no-restore "SGL.Analytics.Backend.Users.Registration.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "SGL.Analytics.Backend.Users.Registration.csproj" -c Release -o /app/publish
+RUN dotnet publish --no-restore "SGL.Analytics.Backend.Users.Registration.csproj" -c Release -o /app/publish
 RUN cd ../SGL.Analytics.Backend.Users.Infrastructure && \
 	dotnet ef migrations script --startup-project ../SGL.Analytics.Backend.Users.Registration --idempotent --output /app/DbMigrations.sql &&\
 	../remove_BOM.sh /app/DbMigrations.sql

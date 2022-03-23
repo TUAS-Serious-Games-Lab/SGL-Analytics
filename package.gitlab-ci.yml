@@ -12,7 +12,7 @@ nuget-package:
   script:
     - VERSION="$(./get_version_from_git.sh)${CI_COMMIT_BRANCH:+-${CI_COMMIT_BRANCH:0:63}}"
     - 'cd ${PACKAGE_NAME}'
-    - 'dotnet pack -c Release -p:Version="${VERSION}"'
+    - 'dotnet pack --no-restore -c Release -p:Version="${VERSION}"'
     - 'dotnet nuget update source SGL --username gitlab-ci-token --password $CI_JOB_TOKEN --store-password-in-clear-text'
     - 'dotnet nuget push "bin/Release/${PACKAGE_NAME}.${VERSION}.nupkg" --source SGL --symbol-source SGL'
   parallel:
@@ -37,7 +37,7 @@ package-client-example:
   script:
     - dotnet nuget update source SGL --username ${SGL_PKG_USER} --password ${SGL_PKG_TOKEN} --store-password-in-clear-text
     - cd SGL.Analytics.Client.Example
-    - dotnet publish -c Release -o ../example_client
+    - dotnet publish --no-restore -c Release -o ../example_client
     - cp TestSession.txt ExampleSession.txt ../example_client/
   artifacts:
     expire_in: 14 days
