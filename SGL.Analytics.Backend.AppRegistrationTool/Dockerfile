@@ -21,10 +21,10 @@ RUN echo 'dotnet nuget update source SGL --username ${SGL_PKG_USER} --password $
 	dotnet nuget remove source SGL && rm pkg-login.sh
 COPY . .
 WORKDIR "/src/SGL.Analytics.Backend.AppRegistrationTool"
-RUN dotnet build "SGL.Analytics.Backend.AppRegistrationTool.csproj" -c Release -o /app/build
+RUN dotnet build --no-restore "SGL.Analytics.Backend.AppRegistrationTool.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "SGL.Analytics.Backend.AppRegistrationTool.csproj" -c Release -o /app/publish
+RUN dotnet publish --no-restore "SGL.Analytics.Backend.AppRegistrationTool.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
