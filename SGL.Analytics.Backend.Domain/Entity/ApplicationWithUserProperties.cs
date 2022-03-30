@@ -39,7 +39,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		}
 
 		/// <summary>
-		/// Creates an application object with the given id and data values.
+		/// Creates an application object with the given data values and a generated id.
 		/// The <see cref="UserProperties"/> are initialized with an empty collection object, that can be filled with <see cref="AddProperty(string, UserPropertyType, bool)"/>.
 		/// </summary>
 		/// <returns>The created object.</returns>
