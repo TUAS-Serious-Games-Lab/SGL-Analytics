@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace SGL.Analytics.DTO {
 	/// <summary>
-	/// Specifies the data transferred from the client to the server when a client attempts to registers a user.
+	/// Specifies the data transferred from the client to the server when a client attempts to register a user.
 	/// </summary>
 	public record UserRegistrationDTO {
 		/// <summary>
