@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SGL.Analytics.Backend.Users.Application.Interfaces {
+﻿namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 	public class ApplicationQueryOptions {
-		public bool FetchRecipients { get; set; }
+		public bool FetchUserProperties { get; set; } = true;
+		public bool FetchRecipients { get; set; } = false;
 	}
 }
