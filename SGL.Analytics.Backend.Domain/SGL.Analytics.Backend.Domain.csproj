@@ -17,9 +17,9 @@
     <DebugType>None</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="SGL.Utilities" Version="0.1.22" />
-    <PackageReference Include="SGL.Utilities.Backend.Abstractions" Version="0.1.22" />
-    <PackageReference Include="SGL.Utilities.Crypto" Version="0.1.22" />
+    <PackageReference Include="SGL.Utilities" Version="0.2.2" />
+    <PackageReference Include="SGL.Utilities.Backend.Abstractions" Version="0.2.2" />
+    <PackageReference Include="SGL.Utilities.Crypto" Version="0.2.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
