@@ -3,6 +3,7 @@ using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend;
 using SGL.Utilities.Crypto.EntityFrameworkCore;
+using SGL.Utilities.EntityFrameworkCore;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 	/// <summary>

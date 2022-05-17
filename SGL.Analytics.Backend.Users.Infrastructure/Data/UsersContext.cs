@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Utilities.Backend;
 using SGL.Utilities.Crypto.EntityFrameworkCore;
+using SGL.Utilities.EntityFrameworkCore;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 	/// <summary>
