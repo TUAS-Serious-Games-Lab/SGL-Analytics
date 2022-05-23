@@ -59,8 +59,9 @@ test:
     reports:
       junit:
        - ./TestResults/*.xml
-      cobertura:
-       - '*/TestResults/*/coverage.cobertura.xml'
+      coverage_report:
+        coverage_format: cobertura
+        path: '*/TestResults/*/coverage.cobertura.xml'
 
 docs:
   stage: build
