@@ -1,41 +1,41 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <AnalysisLevel>Preview</AnalysisLevel>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<AnalysisLevel>Preview</AnalysisLevel>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <PackageId>SGL.Analytics.Client</PackageId>
-    <Version>0.0.0-dev</Version>
-    <Authors>Serious Games Lab Team at Hochschule Trier</Authors>
-    <Company>Hochschule Trier, Serious Games Lab</Company>
-    <Description>The engine-neutral .NET Core client library for the SGL Analytics service.</Description>
-  </PropertyGroup>
+	<PropertyGroup>
+		<PackageId>SGL.Analytics.Client</PackageId>
+		<Version>0.0.0-dev</Version>
+		<Authors>Serious Games Lab Team at Hochschule Trier</Authors>
+		<Company>Hochschule Trier, Serious Games Lab</Company>
+		<Description>The engine-neutral .NET Core client library for the SGL Analytics service.</Description>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="bin\$(Configuration)\$(TargetFramework)\SGL.Analytics.DTO.dll">
-      <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      <Pack>true</Pack>
-    </Content>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
+	<ItemGroup>
+		<Content Include="bin\$(Configuration)\$(TargetFramework)\SGL.Analytics.DTO.dll">
+			<PackagePath>lib\$(TargetFramework)\</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
 
-    <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj">
-      <PrivateAssets>all</PrivateAssets>
-    </ProjectReference>
-  </ItemGroup>
+		<ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj">
+			<PrivateAssets>all</PrivateAssets>
+		</ProjectReference>
+	</ItemGroup>
 
-  <ItemGroup>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>SGL.Analytics.Client.Tests</_Parameter1>
-    </AssemblyAttribute>
-  </ItemGroup>
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>SGL.Analytics.Client.Tests</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
 
 </Project>
