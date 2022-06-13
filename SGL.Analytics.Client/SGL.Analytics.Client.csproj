@@ -19,7 +19,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="bin\$(Configuration)\$(TargetFramework)\SGL.Analytics.DTO.dll">
+		<Content Include="bin\$(Configuration)\$(TargetFramework)\SGL.Analytics.DTO.dll;bin\$(Configuration)\$(TargetFramework)\SGL.Analytics.DTO.xml">
 			<PackagePath>lib\$(TargetFramework)\</PackagePath>
 			<Pack>true</Pack>
 		</Content>
