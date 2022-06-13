@@ -72,6 +72,7 @@ docs:
   script:
     - docfx docfx_project/docfx.json
   artifacts:
+    name: "SGL.Analytics.Docs"
     expire_in: 14 days
     paths:
       - docfx_output
@@ -85,6 +86,7 @@ pages:
     - rm -rf public
     - mv docfx_output public
   artifacts:
+    expire_in: 1 day
     paths:
       - public
   rules:
