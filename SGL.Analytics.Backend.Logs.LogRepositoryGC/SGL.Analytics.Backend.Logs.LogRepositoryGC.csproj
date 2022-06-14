@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
@@ -8,7 +8,7 @@
 		<Version>0.0.1-dev</Version>
 		<Company>Hochschule Trier, Serious Games Lab</Company>
 		<Product>SGL Analytics</Product>
-		<Authors>Stefan Bodenschatz</Authors>
+		<Authors>Serious Games Lab Team at Hochschule Trier</Authors>
 	</PropertyGroup>
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
