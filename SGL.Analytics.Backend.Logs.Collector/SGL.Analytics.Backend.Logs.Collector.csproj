@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 		<UserSecretsId>fb10d495-0e38-4cea-b398-a7dd25f58472</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 		<DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
@@ -22,21 +22,21 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.12">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.5">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="5.0.12" />
-		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
-		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
-		<PackageReference Include="NSwag.AspNetCore" Version="13.15.10" />
-		<PackageReference Include="prometheus-net.AspNetCore" Version="5.0.2" />
-		<PackageReference Include="prometheus-net.AspNetCore.HealthChecks" Version="5.0.2" />
-		<PackageReference Include="SGL.Utilities" Version="0.5.1" />
-		<PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.5.1" />
-		<PackageReference Include="SGL.Utilities.Backend.Security" Version="0.5.1" />
-		<PackageReference Include="SGL.Utilities.Crypto.AspNetCore" Version="0.5.1" />
-		<PackageReference Include="SGL.Utilities.Logging" Version="0.5.1" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="6.0.5" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.15.1" />
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.5" />
+		<PackageReference Include="NSwag.AspNetCore" Version="13.16.1" />
+		<PackageReference Include="prometheus-net.AspNetCore" Version="6.0.0" />
+		<PackageReference Include="prometheus-net.AspNetCore.HealthChecks" Version="6.0.0" />
+		<PackageReference Include="SGL.Utilities" Version="0.6.0" />
+		<PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.6.0" />
+		<PackageReference Include="SGL.Utilities.Backend.Security" Version="0.6.0" />
+		<PackageReference Include="SGL.Utilities.Crypto.AspNetCore" Version="0.6.0" />
+		<PackageReference Include="SGL.Utilities.Logging" Version="0.6.0" />
 	</ItemGroup>
 
 	<ItemGroup>

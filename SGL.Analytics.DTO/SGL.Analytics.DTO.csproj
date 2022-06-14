@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<AnalysisLevel>Preview</AnalysisLevel>
 	</PropertyGroup>
@@ -17,7 +17,7 @@
 		<DebugType>None</DebugType>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="SGL.Utilities" Version="0.5.1" />
+		<PackageReference Include="SGL.Utilities" Version="0.6.0" />
 	</ItemGroup>
 
 </Project>

@@ -3,7 +3,7 @@ version: '3.4'
 services:
   app-registrations:
     labels:
-      com.microsoft.visualstudio.debuggee.arguments: "--additionalProbingPath /root/.nuget/packages --additionalProbingPath /root/.nuget/fallbackpackages  \"/app/bin/Debug/net5.0/SGL.Analytics.Backend.AppRegistrationTool.dll\" push /app/definitions"
+      com.microsoft.visualstudio.debuggee.arguments: "--additionalProbingPath /root/.nuget/packages --additionalProbingPath /root/.nuget/fallbackpackages  \"/app/bin/Debug/net6.0/SGL.Analytics.Backend.AppRegistrationTool.dll\" push /app/definitions"
   logs-collector-migrations:
     container_name: SGL.Analytics.Backend.Logs.Collector-Migrations
     entrypoint: ["/bin/sh","-c","wait-for -t 120 db:5432 -- psql -h db -U sgla_logs_admin -d sgla_logs -f /DbMigrations.sql && tail -f /dev/null"]
