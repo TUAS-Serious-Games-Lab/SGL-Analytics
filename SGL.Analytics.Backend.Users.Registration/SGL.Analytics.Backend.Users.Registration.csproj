@@ -31,11 +31,11 @@
 		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.5" />
 		<PackageReference Include="prometheus-net.AspNetCore" Version="6.0.0" />
 		<PackageReference Include="prometheus-net.AspNetCore.HealthChecks" Version="6.0.0" />
-		<PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.5.1" />
-		<PackageReference Include="SGL.Utilities.Backend.Security" Version="0.5.1" />
-		<PackageReference Include="SGL.Utilities.Crypto.AspNetCore" Version="0.5.1" />
-		<PackageReference Include="SGL.Utilities.Logging" Version="0.5.1" />
-		<PackageReference Include="SGL.Utilities.PrometheusNet" Version="0.5.1" />
+		<PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.5.14-8-gb9c30c8-1-dotnet-6" />
+		<PackageReference Include="SGL.Utilities.Backend.Security" Version="0.5.14-8-gb9c30c8-1-dotnet-6" />
+		<PackageReference Include="SGL.Utilities.Crypto.AspNetCore" Version="0.5.14-8-gb9c30c8-1-dotnet-6" />
+		<PackageReference Include="SGL.Utilities.Logging" Version="0.5.14-8-gb9c30c8-1-dotnet-6" />
+		<PackageReference Include="SGL.Utilities.PrometheusNet" Version="0.5.14-8-gb9c30c8-1-dotnet-6" />
 	</ItemGroup>
 
 	<ItemGroup>
