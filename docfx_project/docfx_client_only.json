@@ -1,0 +1,83 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": [
+            "SGL.Analytics.Client/bin/Debug/*/SGL.Analytics.Client.dll",
+            "SGL.Analytics.DTO/bin/Debug/*/SGL.Analytics.DTO.dll"
+          ],
+          "src": ".."
+        }
+      ],
+      "dest": "api",
+      "disableGitFeatures": false,
+      "disableDefaultFilter": false
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": [
+          "docs/**.md",
+          "docs/**/toc.yml",
+          "SGL.Analytics.*/toc.yml",
+          "SGL.Analytics.*/index.md",
+          "index.md"
+        ],
+        "src": ".."
+      },
+      {
+        "files": [
+          "restapi/*.swagger.json",
+          "restapi/toc.yml"
+        ]
+      },
+      {
+        "files": [
+          "api/**.yml",
+          "api/index.md"
+        ]
+      },
+      {
+        "files": [
+          "toc.yml",
+          "tools/toc.yml",
+          "tools/index.md"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "files": [
+          "images/**"
+        ]
+      }
+    ],
+    "overwrite": [
+      {
+        "files": [
+          "apidoc/**.md"
+        ],
+        "exclude": [
+          "obj/**",
+          "_site/**"
+        ]
+      }
+    ],
+    "dest": "../docfx_output",
+    "globalMetadataFiles": [],
+    "fileMetadataFiles": [],
+    "template": [
+      "default",
+      "statictoc",
+      "templates/darkfx"
+    ],
+    "postProcessors": [],
+    "markdownEngineName": "markdig",
+    "noLangKeyword": false,
+    "keepFileLink": false,
+    "cleanupCacheHistory": false,
+    "disableGitFeatures": false
+  }
+}

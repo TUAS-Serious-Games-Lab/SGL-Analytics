@@ -77,6 +77,22 @@ docs:
     paths:
       - docfx_output
 
+client-docs:
+  stage: build
+  needs:
+  - build-debug
+  image: ${CI_REGISTRY}/serious-games-lab/docfx-ci-build-image
+  before_script: []
+  script:
+    - docfx docfx_project/docfx_client_only.json
+  artifacts:
+    name: "SGL.Analytics.ClientDocs"
+    expire_in: 14 days
+    paths:
+      - docfx_output
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
 pages:
   stage: deploy
   needs:
