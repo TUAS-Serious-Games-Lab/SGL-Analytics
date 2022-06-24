@@ -111,6 +111,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DocFx", "DocFx", "{0B25318D-BFA3-4E53-A36F-89071951B747}"
 	ProjectSection(SolutionItems) = preProject
 		docfx_project\docfx.json = docfx_project\docfx.json
+		docfx_project\docfx_client_only.json = docfx_project\docfx_client_only.json
 		docfx_project\toc.yml = docfx_project\toc.yml
 	EndProjectSection
 EndProject
