@@ -51,10 +51,10 @@ namespace SGL.Analytics.Client.Tests {
 			var logEntry = serverFixture.Server.LogEntries.Single();
 			Assert.Equal(content, logEntry.RequestMessage.Body);
 			var headers = logEntry.RequestMessage.Headers;
-			Assert.Equal(appAPIToken, headers["App-API-Token"].Single());
-			Assert.Equal(logFile.ID, Guid.Parse(headers["LogFileId"].Single()));
-			Assert.Equal(logFile.CreationTime, DateTime.Parse(headers["CreationTime"].Single()));
-			Assert.Equal(logFile.EndTime, DateTime.Parse(headers["EndTime"].Single()));
+			Assert.Equal(appAPIToken, headers?["App-API-Token"]?.Single());
+			Assert.Equal(logFile.ID, Guid.Parse(headers?["LogFileId"]?.Single() ?? ""));
+			Assert.Equal(logFile.CreationTime, DateTime.Parse(headers?["CreationTime"]?.Single() ?? ""));
+			Assert.Equal(logFile.EndTime, DateTime.Parse(headers?["EndTime"]?.Single() ?? ""));
 		}
 		[Fact]
 		public async Task ServerErrorsAreCorrectlyReportedByException() {

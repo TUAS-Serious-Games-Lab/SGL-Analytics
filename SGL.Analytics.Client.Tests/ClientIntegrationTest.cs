@@ -167,7 +167,7 @@ namespace SGL.Analytics.Client.Tests {
 			foreach (var req in successfulLogRequests) {
 				using (var stream = new GZipStream(new MemoryStream(req.BodyAsBytes), CompressionMode.Decompress)) {
 					output.WriteLine("");
-					output.WriteLine($"{req.Headers["LogFileId"].Single()}");
+					output.WriteLine($"{req.Headers?["LogFileId"]?.Single() ?? "null"}");
 					output.WriteStreamContents(stream);
 				}
 			}
