@@ -17,7 +17,7 @@
 		<DebugType>None</DebugType>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="SGL.Utilities" Version="0.6.0" />
+		<PackageReference Include="SGL.Utilities" Version="0.8.0" />
 	</ItemGroup>
 
 </Project>
