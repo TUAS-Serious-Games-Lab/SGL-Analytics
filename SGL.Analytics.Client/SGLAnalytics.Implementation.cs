@@ -236,9 +236,11 @@ namespace SGL.Analytics.Client {
 					logger.LogError("Uploading data log {logId} failed because it was too large, it will be removed, because retrying a too large file would waste bandwidth, just to fail again.", logFile.ID);
 					logFile.Remove();
 				}
+#if NET5_0_OR_GREATER
 				catch (HttpRequestException ex) when (ex.StatusCode is not null) {
 					logger.LogError("Uploading data log {logId} failed with status code {statusCode}. It will be retried at next startup or on explicit retry.", logFile.ID, ex.StatusCode);
 				}
+#endif
 				catch (HttpRequestException ex) {
 					logger.LogError("Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup on explicit retry.", logFile.ID, ex.Message);
 				}

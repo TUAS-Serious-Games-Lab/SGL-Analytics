@@ -47,33 +47,33 @@ namespace SGL.Analytics.Client {
 
 		/// <inheritdoc/>
 		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile) {
-			try {
-				using (var stream = logFile.OpenReadRaw()) {
-					var content = new StreamContent(stream);
-					LogMetadataDTO dto = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding);
-					Validator.ValidateObject(dto, new ValidationContext(dto), true);
-					content.Headers.MapDtoProperties(dto);
-					content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-					var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);
-					request.Content = content;
-					request.Headers.Add("App-API-Token", appAPIToken);
-					request.Headers.Authorization = authToken.ToHttpHeaderValue();
-					request.Version = HttpVersion.Version20;
-					var response = await httpClient.SendAsync(request);
-					if (response.StatusCode == HttpStatusCode.Unauthorized && response.Headers.WwwAuthenticate.Count > 0) {
-						throw new LoginRequiredException();
-					}
+			using (var stream = logFile.OpenReadRaw()) {
+				var content = new StreamContent(stream);
+				LogMetadataDTO dto = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding);
+				Validator.ValidateObject(dto, new ValidationContext(dto), true);
+				content.Headers.MapDtoProperties(dto);
+				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+				var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);
+				request.Content = content;
+				request.Headers.Add("App-API-Token", appAPIToken);
+				request.Headers.Authorization = authToken.ToHttpHeaderValue();
+				request.Version = HttpVersion.Version20;
+				var response = await httpClient.SendAsync(request);
+				if (response.StatusCode == HttpStatusCode.Unauthorized && response.Headers.WwwAuthenticate.Count > 0) {
+					throw new LoginRequiredException();
+				}
+				try {
 					response.EnsureSuccessStatusCode();
 				}
-			}
-			catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
-				throw new UnauthorizedException(ex);
-			}
-			catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.RequestEntityTooLarge) {
-				throw new FileTooLargeException(ex);
-			}
-			catch {
-				throw;
+				catch (HttpRequestException ex) when (response?.StatusCode == HttpStatusCode.Unauthorized) {
+					throw new UnauthorizedException(ex);
+				}
+				catch (HttpRequestException ex) when (response?.StatusCode == HttpStatusCode.RequestEntityTooLarge) {
+					throw new FileTooLargeException(ex);
+				}
+				catch {
+					throw;
+				}
 			}
 		}
 	}

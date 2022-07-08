@@ -167,6 +167,7 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "Registration failed due to error with the registration response.");
 				throw;
 			}
+#if NET5_0_OR_GREATER
 			catch (HttpRequestException ex) when (ex.StatusCode is not null) {
 				logger.LogError(ex, "Registration failed due to error from server.");
 				throw;
@@ -175,6 +176,12 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "Registration failed due to communication problem with the backend server.");
 				throw;
 			}
+#else
+			catch (HttpRequestException ex) {
+				logger.LogError(ex, "Registration failed due to a backend server error.");
+				throw;
+			}
+#endif
 			catch (ValidationException ex) {
 				logger.LogError(ex, "Registration failed due to violating validation constraints.");
 			}
