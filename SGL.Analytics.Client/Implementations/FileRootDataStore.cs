@@ -59,7 +59,18 @@ namespace SGL.Analytics.Client {
 				}
 			}
 			catch (JsonException) {
-				File.Move(file, Path.ChangeExtension(file, ".invalid.json"), overwrite: true);
+				string backupFileName = Path.ChangeExtension(file, ".invalid.json");
+				try {
+#if NETCOREAPP3_0_OR_GREATER
+					File.Move(file, backupFileName, overwrite: true);
+#else
+					File.Delete(backupFileName);
+					File.Move(file, backupFileName);
+#endif
+				}
+				catch (Exception) {
+					File.Delete(file);
+				}
 			}
 		}
 
