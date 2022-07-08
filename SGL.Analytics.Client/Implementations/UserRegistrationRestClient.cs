@@ -106,7 +106,9 @@ namespace SGL.Analytics.Client {
 			httpClient.BaseAddress = backendServerBaseUri;
 			this.userRegistrationApiRoute = userRegistrationApiRoute;
 			this.loginApiRoute = loginApiRoute;
+#if NETCOREAPP3_0_OR_GREATER
 			httpClient.DefaultRequestVersion = HttpVersion.Version20;
+#endif
 		}
 
 		/// <inheritdoc/>
