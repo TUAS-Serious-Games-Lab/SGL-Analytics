@@ -8,13 +8,13 @@ namespace SGL.Analytics.DTO {
 	/// <summary>
 	/// Specifies the data transferred from the client to the server when a client attempts to register a user.
 	/// </summary>
-	public record UserRegistrationDTO {
+	public class UserRegistrationDTO {
 		/// <summary>
 		/// The unique technical name of the client application performing the registration.
 		/// </summary>
 		[PlainName]
 		[StringLength(128, MinimumLength = 1)]
-		public string AppName { get; init; }
+		public string AppName { get; private set; }
 		/// <summary>
 		/// A username that can optionally be used by the client application.
 		/// If it is left out, the application should perform logins using the user id obtained from the <see cref="UserRegistrationResultDTO"/> returned from the registration API call.
@@ -22,20 +22,20 @@ namespace SGL.Analytics.DTO {
 		/// </summary>
 		[PlainName(allowBrackets: true)]
 		[StringLength(64, MinimumLength = 1)]
-		public string? Username { get; init; }
+		public string? Username { get; private set; }
 		/// <summary>
 		/// A secret string for the user, used to authenticate them later, when logging-in.
 		/// This can be an auto-generated random string or a user-specified password, depending on the application.
 		/// </summary>
 		[StringLength(128, MinimumLength = 8)]
-		public string Secret { get; init; }
+		public string Secret { get; private set; }
 		/// <summary>
 		/// A dictionary containing application-/study-specific properties that should be stored with the user registration.
 		/// Although the DTO can store quite arbitrary data, as the entry values can again be dictionaries or lists, the properties are validated by the backend against the defined properties for the application (as indicated by <see cref="AppName"/>).
 		/// Only those registrations are accepted where all submitted properties are defined in the backend with a matching type for the value and all required properties in the backend are present in the submitted DTO.
 		/// </summary>
 		[JsonConverter(typeof(ObjectDictionaryJsonConverter))]
-		public Dictionary<string, object?> StudySpecificProperties { get; init; }
+		public Dictionary<string, object?> StudySpecificProperties { get; private set; }
 
 		/// <summary>
 		/// Creates a new DTO with the given data.

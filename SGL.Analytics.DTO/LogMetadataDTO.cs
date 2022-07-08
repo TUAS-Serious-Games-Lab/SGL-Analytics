@@ -21,29 +21,29 @@ namespace SGL.Analytics.DTO {
 	/// Specifies the metadata transferred along whith the contents when a client upload a game log file to the server.
 	/// These properties are passed by custom headers, as the request body is already taken by the file content.
 	/// </summary>
-	public record LogMetadataDTO {
+	public class LogMetadataDTO {
 		/// <summary>
 		/// The id of the uploaded log file on the client device.
 		/// </summary>
-		public Guid LogFileId { get; init; }
+		public Guid LogFileId { get; private set; }
 		/// <summary>
 		/// The time when recording of the log file was started.
 		/// </summary>
-		public DateTime CreationTime { get; init; }
+		public DateTime CreationTime { get; private set; }
 		/// <summary>
 		/// The time when recording of the log file was ended.
 		/// </summary>
-		public DateTime EndTime { get; init; }
+		public DateTime EndTime { get; private set; }
 		/// <summary>
 		/// The file name suffix for the log file as specified by the client application.
 		/// </summary>
 		[PlainName]
 		[StringLength(16)]
-		public string NameSuffix { get; init; }
+		public string NameSuffix { get; private set; }
 		/// <summary>
 		/// The encoding of the log file content as specified by the client application.
 		/// </summary>
-		public LogContentEncoding LogContentEncoding { get; init; }
+		public LogContentEncoding LogContentEncoding { get; private set; }
 
 		/// <summary>
 		/// Creates a new DTO with the given data.

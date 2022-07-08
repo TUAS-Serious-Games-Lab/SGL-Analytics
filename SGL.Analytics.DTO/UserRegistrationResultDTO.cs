@@ -8,5 +8,11 @@ namespace SGL.Analytics.DTO {
 	/// <summary>
 	/// Specifies the data transferred from the server to the client after a successful user registration.
 	/// </summary>
-	public record UserRegistrationResultDTO(Guid UserId);
+	public class UserRegistrationResultDTO {
+		public Guid UserId { get; private set; }
+
+		public UserRegistrationResultDTO(Guid userId) {
+			UserId = userId;
+		}
+	}
 }

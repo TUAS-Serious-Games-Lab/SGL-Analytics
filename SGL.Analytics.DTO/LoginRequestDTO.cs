@@ -9,24 +9,24 @@ namespace SGL.Analytics.DTO {
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user.
 	/// </summary>
 	[JsonConverter(typeof(LoginRequestDTOJsonConverter))]
-	public abstract record LoginRequestDTO {
+	public abstract class LoginRequestDTO {
 		/// <summary>
 		/// The unique technical name of the client application performing the login.
 		/// </summary>
 		[PlainName]
 		[StringLength(128, MinimumLength = 1)]
-		public string AppName { get; init; }
+		public string AppName { get; private set; }
 		/// <summary>
 		/// The application authentication token of the client application performing the login.
 		/// </summary>
 		[StringLength(64, MinimumLength = 8)]
-		public string AppApiToken { get; init; }
+		public string AppApiToken { get; private set; }
 		/// <summary>
 		/// The secret string to authenticate the user.
 		/// This can be an auto-generated random string or a user-specified password, depending on the application.
 		/// </summary>
 		[StringLength(128, MinimumLength = 8)]
-		public string UserSecret { get; init; }
+		public string UserSecret { get; private set; }
 
 		/// <summary>
 		/// Creates a new DTO with the given data.
@@ -54,11 +54,11 @@ namespace SGL.Analytics.DTO {
 	/// <summary>
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user by specifying a user id.
 	/// </summary>
-	public record IdBasedLoginRequestDTO : LoginRequestDTO {
+	public class IdBasedLoginRequestDTO : LoginRequestDTO {
 		/// <summary>
 		/// The user id to identify the user attempting to log-in.
 		/// </summary>
-		public Guid UserId { get; init; }
+		public Guid UserId { get; private set; }
 		/// <summary>
 		/// Creates a new DTO with the given data.
 		/// </summary>
@@ -91,13 +91,13 @@ namespace SGL.Analytics.DTO {
 	/// <summary>
 	/// Specifies the data transferred from the client to the server when the client attempts to login a user by specifying a username.
 	/// </summary>
-	public record UsernameBasedLoginRequestDTO : LoginRequestDTO {
+	public class UsernameBasedLoginRequestDTO : LoginRequestDTO {
 		/// <summary>
 		/// The username to identify the user attempting to log-in.
 		/// </summary>
 		[PlainName(allowBrackets: true)]
 		[StringLength(64, MinimumLength = 1)]
-		public string Username { get; init; }
+		public string Username { get; private set; }
 		/// <summary>
 		/// Creates a new DTO with the given data.
 		/// </summary>
