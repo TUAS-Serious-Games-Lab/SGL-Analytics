@@ -20,10 +20,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="bin\$(Configuration)\$(TargetFramework)\SGL.Analytics.DTO.dll;bin\$(Configuration)\$(TargetFramework)\SGL.Analytics.DTO.xml">
-			<PackagePath>lib\$(TargetFramework)\</PackagePath>
-			<Pack>true</Pack>
-		</Content>
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
@@ -35,7 +31,20 @@
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
 		<PackageReference Include="System.Net.Http.Json" Version="6.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="bin\$(Configuration)\netstandard2.1\SGL.Analytics.DTO.dll;bin\$(Configuration)\netstandard2.1\SGL.Analytics.DTO.xml">
+			<PackagePath>lib\netstandard2.1</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+		<Content Include="bin\$(Configuration)\net6.0\SGL.Analytics.DTO.dll;bin\$(Configuration)\net6.0\SGL.Analytics.DTO.xml">
+			<PackagePath>lib\net6.0</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+		<!-- Dependencies from bundled support assemblies above: -->
 		<PackageReference Include="System.Text.Json" Version="6.0.5" />
+		<PackageReference Include="SGL.Utilities" Version="0.8.0" />
 	</ItemGroup>
 
 	<ItemGroup>
