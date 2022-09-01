@@ -83,7 +83,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				changed = true;
 				foreach (var ar in addedRecipients) {
 					logger.LogInformation("Adding new data recipient {keyId} (with label \"{label}\") to application {appName} in {apiName}.", ar.PublicKeyId, ar.Label, appName, apiName);
-					oldApplication.DataRecipients.Add(ar);
+					oldApplication.AddRecipient(ar.Label, ar.CertificatePem);
 				}
 			}
 			if (changedRecipients.Any()) {
