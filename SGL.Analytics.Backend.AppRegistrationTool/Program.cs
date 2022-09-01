@@ -9,10 +9,13 @@ using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Infrastructure;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
+using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Infrastructure;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Utilities;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Backend.Applications;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,7 +29,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 	/// <summary>
 	/// The main class for the AppRegistrationTool program.
 	/// </summary>
-	public class Program {
+	public partial class Program {
 		/// <summary>
 		/// Represents the common command-line options for all verbs supported by the tool.
 		/// </summary>
@@ -71,15 +74,43 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		[Verb("apply-migrations", HelpText = "Applies the database migrations to the target database. This is usually intended for local development use as the production environment has automation for this.", Hidden = true)]
 		public class ApplyMigrationsOptions : BaseOptions { }
 
+		[Verb("list-recipients", HelpText = "Lists the currently registered recipients for a registered application.")]
+		public class ListRecipientsOptions : BaseOptions {
+			[Value(0, MetaName = "APP_NAME", HelpText = "The application of which to list the recipients.", Required = true)]
+			public string AppName { get; set; }
+		}
+
+		[Verb("remove-recipient", HelpText = "Remove a given data recipient key from a registered application.")]
+		public class RemoveRecipientOptions : BaseOptions {
+			[Value(0, MetaName = "APP_NAME", HelpText = "The application from which to remove the recipient from.", Required = true)]
+			public string AppName { get; set; }
+			[Value(1, MetaName = "KEYID", HelpText = "The keyid of the recipient to remove.", Required = true)]
+			public string KeyId { get; set; }
+		}
+
+		[Verb("relabel-recipient", HelpText = "Assign a new label to the given data recipient key in a registered application.")]
+		public class RelabelRecipientOptions : BaseOptions {
+			[Value(0, MetaName = "APP_NAME", HelpText = "The application in which to relabel the recipient.", Required = true)]
+			public string AppName { get; set; }
+			[Value(1, MetaName = "KEYID", HelpText = "The keyid of the recipient to change the label of.", Required = true)]
+			public string KeyId { get; set; }
+			[Value(2, MetaName = "NEW_LABEL", HelpText = "The new label text.", Required = true)]
+			public string Label { get; set; }
+		}
+
 		async static Task<int> Main(string[] args) => await ((Func<ParserResult<object>, Task<int>>)(res => res.MapResult(
 			async (PushOptions opts) => await PushMain(opts),
 			async (GenerateApiTokenOptions opts) => await GenerateApiTokenMain(opts),
 			async (RemovePropertyOptions opts) => await RemovePropertyMain(opts),
 			async (RemoveApplicationOptions opts) => await RemoveApplicationMain(opts),
 			async (ApplyMigrationsOptions opts) => await ApplyMigrationsMain(opts),
+			async (RemoveRecipientOptions opts) => await RemoveRecipientMain(opts),
+			async (ListRecipientsOptions opts) => await ListRecipientsMain(opts),
+			async (RelabelRecipientOptions opts) => await RelabelRecipientMain(opts),
 			async errs => await DisplayHelp(res, errs)
 			)))(new Parser(c => c.HelpWriter = null).
-			ParseArguments<PushOptions, GenerateApiTokenOptions, RemovePropertyOptions, RemoveApplicationOptions, ApplyMigrationsOptions>(args));
+			ParseArguments<PushOptions, GenerateApiTokenOptions, RemovePropertyOptions, RemoveApplicationOptions, ApplyMigrationsOptions,
+				RemoveRecipientOptions, ListRecipientsOptions, RelabelRecipientOptions>(args));
 
 		async static Task<int> DisplayHelp(ParserResult<object> result, IEnumerable<Error> errs) {
 			await Console.Out.WriteLineAsync(HelpText.AutoBuild(result, h => {
@@ -136,24 +167,6 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		async static Task<int> RemoveApplicationMain(RemoveApplicationOptions opts) {
 			await Console.Out.WriteLineAsync("This verb is not yet implemented.");
 			return 1;
-		}
-
-		async static Task<int> ApplyMigrationsMain(ApplyMigrationsOptions opts) {
-			using var host = CreateHostBuilder(opts, services => { }).Build();
-			using var scope = host.Services.CreateScope();
-			var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-			try {
-				logger.LogInformation("Applying migrations for {ctx}...", nameof(UsersContext));
-				await scope.ServiceProvider.GetRequiredService<UsersContext>().Database.MigrateAsync();
-				logger.LogInformation("Applying migrations for {ctx}...", nameof(LogsContext));
-				await scope.ServiceProvider.GetRequiredService<LogsContext>().Database.MigrateAsync();
-				logger.LogInformation("... done!");
-				return 0;
-			}
-			catch (Exception ex) {
-				logger.LogError(ex, "Applying migrations failed.");
-				return 2;
-			}
 		}
 	}
 }

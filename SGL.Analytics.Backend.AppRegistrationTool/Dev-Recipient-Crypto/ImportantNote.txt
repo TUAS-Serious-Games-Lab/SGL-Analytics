@@ -1,0 +1,3 @@
+These PEM files contain the private keys and associated signer objects for the EXAMPLE CERTIFICATES in ../Dev-Definitions.
+As the private keys are present here, it is CRITICALLY IMPORTANT, that those certificates are ONLY USED FOR LOCAL DEVELOPMENT AND TESTING PURPOSES and MUST NEVER BE DEPLOYED TO PRODUCTION!!!
+The passphrase for all these test files is "ThisIsATest".

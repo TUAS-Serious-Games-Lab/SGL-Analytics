@@ -30,8 +30,16 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// The certificate for the recipient's public key, authorizing them as a valid recipient, encoded in the PEM format.
 		/// The authorization of the recipient is achieved by it being present in the recipient list and the certificate being singed by a signer key pair trusted by the client.
 		/// </summary>
-		public string CertificatePem { get; set; }
+		public string CertificatePem {
+			get => certificatePem;
+			set {
+				certificatePem = value;
+				certificate = null;
+			}
+		}
+		private string certificatePem;
 		private Certificate? certificate = null;
+
 		/// <summary>
 		/// The certificate for the recipient's public key, authorizing them as a valid recipient.
 		/// The authorization of the recipient is achieved by it being present in the recipient list and the certificate being singed by a signer key pair trusted by the client.
