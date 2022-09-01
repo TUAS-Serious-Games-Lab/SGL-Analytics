@@ -139,7 +139,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		private Task<IEnumerable<Certificate>> readPemCertFileAsync(string file, CancellationToken ct) {
 			return Task.Run(() => {
 				using var fileReader = File.OpenText(file);
-				return Certificate.LoadAllFromPem(fileReader);
+				return Certificate.LoadAllFromPem(fileReader).ToList().AsEnumerable();
 			});
 		}
 
