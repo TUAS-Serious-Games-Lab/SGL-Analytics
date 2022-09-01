@@ -71,15 +71,21 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		[Verb("apply-migrations", HelpText = "Applies the database migrations to the target database. This is usually intended for local development use as the production environment has automation for this.", Hidden = true)]
 		public class ApplyMigrationsOptions : BaseOptions { }
 
+		[Verb("remove-recipient", HelpText = "Remove a given data recipient key from a registered application.")]
+		public class RemoveRecipientOptions : BaseOptions {
+			// Not implemented
+		}
+
 		async static Task<int> Main(string[] args) => await ((Func<ParserResult<object>, Task<int>>)(res => res.MapResult(
 			async (PushOptions opts) => await PushMain(opts),
 			async (GenerateApiTokenOptions opts) => await GenerateApiTokenMain(opts),
 			async (RemovePropertyOptions opts) => await RemovePropertyMain(opts),
 			async (RemoveApplicationOptions opts) => await RemoveApplicationMain(opts),
 			async (ApplyMigrationsOptions opts) => await ApplyMigrationsMain(opts),
+			async (RemoveRecipientOptions opts) => await RemoveRecipientMain(opts),
 			async errs => await DisplayHelp(res, errs)
 			)))(new Parser(c => c.HelpWriter = null).
-			ParseArguments<PushOptions, GenerateApiTokenOptions, RemovePropertyOptions, RemoveApplicationOptions, ApplyMigrationsOptions>(args));
+			ParseArguments<PushOptions, GenerateApiTokenOptions, RemovePropertyOptions, RemoveApplicationOptions, ApplyMigrationsOptions, RemoveRecipientOptions>(args));
 
 		async static Task<int> DisplayHelp(ParserResult<object> result, IEnumerable<Error> errs) {
 			await Console.Out.WriteLineAsync(HelpText.AutoBuild(result, h => {
@@ -154,6 +160,11 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				logger.LogError(ex, "Applying migrations failed.");
 				return 2;
 			}
+		}
+
+		async static Task<int> RemoveRecipientMain(RemoveRecipientOptions opts) {
+			await Console.Out.WriteLineAsync("This verb is not yet implemented.");
+			return 1;
 		}
 	}
 }
