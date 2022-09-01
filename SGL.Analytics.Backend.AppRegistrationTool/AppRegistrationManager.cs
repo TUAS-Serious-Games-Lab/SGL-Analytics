@@ -64,13 +64,60 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			return await Task.WhenAll(PushLogsApplication(application, ct), PushUsersApplication(application, ct));
 		}
 
-		private async Task<PushResult> PushLogsApplication(Application application, CancellationToken ct = default) {
+		public bool PushRecipients(string apiName, Domain.Entity.Application newApplication, Domain.Entity.Application oldApplication) {
+			var appName = oldApplication.Name;
+			var missingRecipients = oldApplication.DataRecipients.Where(r1 => !newApplication.DataRecipients.Any(r2 => r1.PublicKeyId == r2.PublicKeyId)).ToList();
+			var addedRecipients = newApplication.DataRecipients.Where(r1 => !oldApplication.DataRecipients.Any(r2 => r1.PublicKeyId == r2.PublicKeyId)).ToList();
+			var commonRecipients = oldApplication.DataRecipients.Join(newApplication.DataRecipients, r => r.PublicKeyId, r => r.PublicKeyId, (or, nr) => (Old: or, New: nr));
+			var changedRecipients = commonRecipients.Where(pair => pair.Old.Label != pair.New.Label || pair.Old.CertificatePem != pair.New.CertificatePem).ToList();
+			bool changed = false;
+			if (missingRecipients.Any()) {
+				foreach (var mr in missingRecipients) {
+					logger.LogWarning("Application {appName} is already registered in {apiName} with a data recipient list containing the key {keyid} (labeled as \"{label}\"), " +
+						"which is no longer present in the current application definition. The key will however not be automatically removed to prevent data loss." +
+						"To remove a no longer needed key, use the remove-recipient command verb of the app registration tool.",
+						appName, apiName, mr.PublicKeyId, mr.Label);
+				}
+			}
+			if (addedRecipients.Any()) {
+				changed = true;
+				foreach (var ar in addedRecipients) {
+					logger.LogInformation("Adding new data recipient {keyId} (with label \"{label}\") to application {appName} in {apiName}.", ar.PublicKeyId, ar.Label, appName, apiName);
+					oldApplication.DataRecipients.Add(ar);
+				}
+			}
+			if (changedRecipients.Any()) {
+				changed = true;
+				foreach (var pair in changedRecipients) {
+					if (pair.Old.Label != pair.New.Label) {
+						logger.LogInformation("Changing label for recipient {keyid} in application {appName} in {apiName} from \"{old}\" to \"{new}\".",
+							pair.Old.PublicKeyId, appName, apiName, pair.Old.Label, pair.New.Label);
+						pair.Old.Label = pair.New.Label;
+					}
+					if (pair.Old.CertificatePem != pair.New.CertificatePem) {
+						logger.LogInformation("Updating certificate PEM for recipient {keyid} in application {appName} in {apiName}.", pair.Old.PublicKeyId, appName, apiName);
+						pair.Old.CertificatePem = pair.New.CertificatePem;
+					}
+				}
+			}
+			return changed;
+		}
+
+		private async Task<PushResult> PushLogsApplication(Domain.Entity.Application application, CancellationToken ct = default) {
+			var queryOpts = new Logs.Application.Interfaces.ApplicationQueryOptions { FetchRecipients = true };
 			try {
-				var existingApp = await logsAppRepo.GetApplicationByNameAsync(application.Name, ct: ct);
+				var existingApp = await logsAppRepo.GetApplicationByNameAsync(application.Name, queryOpts, ct: ct);
 				if (existingApp != null) {
+					bool changed = false;
 					if (existingApp.ApiToken != application.ApiToken) {
 						logger.LogInformation("Application {appName} is already registered in LogsAPI, but with a different API token. Updating the token ...", application.Name);
 						existingApp.ApiToken = application.ApiToken;
+						changed = true;
+					}
+					if (PushRecipients("LogsAPI", application, existingApp)) {
+						changed = true;
+					}
+					if (changed) {
 						await logsAppRepo.UpdateApplicationAsync(existingApp, ct);
 						return PushResult.Updated;
 					}
@@ -99,6 +146,9 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 						changed = true;
 						logger.LogInformation("Application {appName} is already registered in UsersAPI, but with a different API token. Updating the token ...", application.Name);
 						existingApp.ApiToken = application.ApiToken;
+					}
+					if (PushRecipients("UsersAPI", application, existingApp)) {
+						changed = true;
 					}
 					var newProperties = application.UserProperties.Where(prop => existingApp.UserProperties.Count(exProp => exProp.Name == prop.Name) == 0);
 					if (newProperties.Any()) {
