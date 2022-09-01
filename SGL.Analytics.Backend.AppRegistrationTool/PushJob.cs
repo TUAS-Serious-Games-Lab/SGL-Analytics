@@ -5,8 +5,9 @@ using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
-using SGL.Utilities.Backend;
 using SGL.Utilities;
+using SGL.Utilities.Backend;
+using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -52,7 +53,9 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		/// <returns>A task representing the operation, providing an exit code as a result upon termination.</returns>
 		protected override async Task<int> RunAsync(CancellationToken ct) {
 			try {
-				var files = Directory.EnumerateFiles(opts.AppDefinitionsDirectory).Where(fn => !Path.GetFileName(fn).StartsWith("appsettings.", StringComparison.OrdinalIgnoreCase));
+				var files = Directory.EnumerateFiles(opts.AppDefinitionsDirectory)
+					.Where(fn => Path.GetFileName(fn).EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+					.Where(fn => !Path.GetFileName(fn).StartsWith("appsettings.", StringComparison.OrdinalIgnoreCase));
 				var definitions = await files.BatchAsync(64, batch => batch.Select(file => readDefinitionAsync(file, ct)), ct).ToListAsync(ct);
 
 				await host.WaitForDbsReadyAsync<LogsContext, UsersContext>(pollingInterval: TimeSpan.FromMilliseconds(100), ct);
@@ -98,8 +101,8 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			Converters = { new JsonStringEnumConverter(new EnumNamingPolicy()) }
 		};
 
-		private Task<ApplicationWithUserProperties?> readDefinitionAsync(string filename, CancellationToken ct = default) {
-			return Task.Run(async () => {
+		private async Task<ApplicationWithUserProperties?> readDefinitionAsync(string filename, CancellationToken ct = default) {
+			var definition = await Task.Run(async () => {
 				logger.LogDebug("Loading application definition file '{file}' ...", Path.GetFileName(filename));
 				using var stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
 				var def = await JsonSerializer.DeserializeAsync<ApplicationWithUserProperties>(stream, jsonSerializerOptions, ct).AsTask();
@@ -107,6 +110,43 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				else logger.LogDebug("Successfully loaded application definition file '{file}'.", Path.GetFileName(filename));
 				return def;
 			}, ct);
+			if (definition != null) {
+				definition.DataRecipients = (await loadCertificates(filename, definition, ct)).ToList();
+				if (!definition.DataRecipients.Any()) {
+					logger.LogWarning("No associated data recipient certificates found for app {app} from definition file '{definitionFile}'.", definition.Name, filename);
+				}
+			}
+			return definition;
+		}
+
+		private async Task<IEnumerable<Recipient>> loadCertificates(string filename, ApplicationWithUserProperties? definition, CancellationToken ct) {
+			string dir = Path.GetDirectoryName(filename) ?? throw new ArgumentException("Filename has no valid directory.");
+			string fileBaseName = Path.GetFileNameWithoutExtension(filename);
+			EnumerationOptions enumOpts = new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive };
+			var siblingPemFile = Directory.EnumerateFiles(dir, fileBaseName + ".pem", enumOpts);
+			var pemDirName = Path.Combine(dir, fileBaseName);
+			var dirPemFiles = Directory.Exists(pemDirName) ? Directory.EnumerateFiles(pemDirName, "*.pem", enumOpts) : Enumerable.Empty<string>();
+			var siblingPemTask = siblingPemFile.Select(file => readPemCertFileAsync(file, ct));
+			var dirPemTasks = siblingPemFile.Select(async file => (file: file, certs: await readPemCertFileAsync(file, ct)));
+			var dirCerts = await Task.WhenAll(dirPemTasks);
+			var siblingCerts = await Task.WhenAll(siblingPemTask);
+			var siblingRecipients = siblingCerts.SelectMany(item => item).Select(cert => createRecipient(cert, cert.SubjectDN.ToString() ?? ""));
+			var dirRecipients = dirCerts.SelectMany(item => item.certs.Select(c => (file: item.file, cert: c)))
+				.Select(item => createRecipient(item.cert, (item.cert.SubjectDN.ToString() ?? "") + " # " + Path.GetFileNameWithoutExtension(item.file)));
+			return dirRecipients.Concat(siblingRecipients);
+		}
+
+		private Task<IEnumerable<Certificate>> readPemCertFileAsync(string file, CancellationToken ct) {
+			return Task.Run(() => {
+				using var fileReader = File.OpenText(file);
+				return Certificate.LoadAllFromPem(fileReader);
+			});
+		}
+
+		private Recipient createRecipient(Certificate cert, string label) {
+			using var strWriter = new StringWriter();
+			cert.StoreToPem(strWriter);
+			return new Recipient(Guid.Empty, cert.PublicKey.CalculateId(), label, strWriter.ToString());
 		}
 
 		/// <summary>
