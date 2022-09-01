@@ -8,6 +8,14 @@
         "DOTNET_ENVIRONMENT": "Development"
       }
     },
+    "SGL.Analytics.Backend.AppRegistrationTool list-recipients": {
+      "commandName": "Project",
+      "commandLineArgs": "list-recipients TestApp1",
+      "workingDirectory": "$(ProjectDir)",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
     "SGL.Analytics.Backend.AppRegistrationTool apply-migrations": {
       "commandName": "Project",
       "commandLineArgs": "apply-migrations",

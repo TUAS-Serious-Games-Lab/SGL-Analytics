@@ -13,6 +13,8 @@ using SGL.Analytics.Backend.Users.Infrastructure;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Utilities;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Backend.Applications;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -71,6 +73,12 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		[Verb("apply-migrations", HelpText = "Applies the database migrations to the target database. This is usually intended for local development use as the production environment has automation for this.", Hidden = true)]
 		public class ApplyMigrationsOptions : BaseOptions { }
 
+		[Verb("list-recipients", HelpText = "Lists the currently registered recipients for a registered application.")]
+		public class ListRecipientsOptions : BaseOptions {
+			[Value(0, MetaName = "APP_NAME", HelpText = "The application of which to list the recipients.", Required = true)]
+			public string AppName { get; set; }
+		}
+
 		[Verb("remove-recipient", HelpText = "Remove a given data recipient key from a registered application.")]
 		public class RemoveRecipientOptions : BaseOptions {
 			// Not implemented
@@ -83,9 +91,10 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			async (RemoveApplicationOptions opts) => await RemoveApplicationMain(opts),
 			async (ApplyMigrationsOptions opts) => await ApplyMigrationsMain(opts),
 			async (RemoveRecipientOptions opts) => await RemoveRecipientMain(opts),
+			async (ListRecipientsOptions opts) => await ListRecipientsMain(opts),
 			async errs => await DisplayHelp(res, errs)
 			)))(new Parser(c => c.HelpWriter = null).
-			ParseArguments<PushOptions, GenerateApiTokenOptions, RemovePropertyOptions, RemoveApplicationOptions, ApplyMigrationsOptions, RemoveRecipientOptions>(args));
+			ParseArguments<PushOptions, GenerateApiTokenOptions, RemovePropertyOptions, RemoveApplicationOptions, ApplyMigrationsOptions, RemoveRecipientOptions, ListRecipientsOptions>(args));
 
 		async static Task<int> DisplayHelp(ParserResult<object> result, IEnumerable<Error> errs) {
 			await Console.Out.WriteLineAsync(HelpText.AutoBuild(result, h => {
@@ -159,6 +168,50 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			catch (Exception ex) {
 				logger.LogError(ex, "Applying migrations failed.");
 				return 2;
+			}
+		}
+
+		async static Task<int> ListRecipientsMain(ListRecipientsOptions opts) {
+			using var host = CreateHostBuilder(opts, services => { }).Build();
+			using var scope = host.Services.CreateScope();
+			var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+			try {
+				var usersApps = scope.ServiceProvider.GetRequiredService<IApplicationRepository<ApplicationWithUserProperties, Users.Application.Interfaces.ApplicationQueryOptions>>();
+				var usersApp = await usersApps.GetApplicationByNameAsync(opts.AppName, new Users.Application.Interfaces.ApplicationQueryOptions { FetchRecipients = true });
+				if (usersApp != null) {
+					await Console.Out.WriteLineAsync("Recipients in UsersAPI:");
+					await PrintRecipients(usersApp);
+				}
+				else {
+					await Console.Out.WriteLineAsync("Not present in UsersAPI.");
+				}
+				var logsApps = scope.ServiceProvider.GetRequiredService<IApplicationRepository<Domain.Entity.Application, Logs.Application.Interfaces.ApplicationQueryOptions>>();
+				var logsApp = await logsApps.GetApplicationByNameAsync(opts.AppName, new Logs.Application.Interfaces.ApplicationQueryOptions { FetchRecipients = true });
+				if (logsApp != null) {
+					await Console.Out.WriteLineAsync("Recipients in LogsAPI:");
+					await PrintRecipients(logsApp);
+				}
+				else {
+					await Console.Out.WriteLineAsync("Not present in LogsAPI.");
+				}
+				return 0;
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "Failed to list recipients.");
+				return 2;
+			}
+		}
+
+		private static async Task PrintRecipients(Application app) {
+			await Console.Out.WriteLineAsync("\tPublic Key Id\t| Label\t| Subject\t| Issuer\t| Not Valid Before\t| Not Valid After\t| Serial Number");
+			foreach (var r in app.DataRecipients) {
+				try {
+					var cert = r.Certificate;
+					await Console.Out.WriteLineAsync($"\t{r.PublicKeyId}\t{r.Label}\t{cert.SubjectDN}\t{cert.IssuerDN}\t{cert.NotBefore}\t{cert.NotAfter}\t{Convert.ToHexString(cert.SerialNumber)}");
+				}
+				catch {
+					await Console.Out.WriteLineAsync($"\t{r.PublicKeyId}\t{r.Label}\t[couldn't load certificate]");
+				}
 			}
 		}
 
