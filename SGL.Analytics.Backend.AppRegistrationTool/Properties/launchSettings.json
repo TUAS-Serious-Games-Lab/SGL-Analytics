@@ -8,9 +8,25 @@
         "DOTNET_ENVIRONMENT": "Development"
       }
     },
+    "SGL.Analytics.Backend.AppRegistrationTool apply-migrations": {
+      "commandName": "Project",
+      "commandLineArgs": "apply-migrations",
+      "workingDirectory": "$(ProjectDir)",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
     "SGL.Analytics.Backend.AppRegistrationTool generate-api-token": {
       "commandName": "Project",
       "commandLineArgs": "generate-api-token",
+      "workingDirectory": "$(ProjectDir)",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    "SGL.Analytics.Backend.AppRegistrationTool --help": {
+      "commandName": "Project",
+      "commandLineArgs": "--help",
       "workingDirectory": "$(ProjectDir)",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"

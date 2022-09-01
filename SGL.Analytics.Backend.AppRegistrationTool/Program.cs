@@ -11,8 +11,8 @@ using SGL.Analytics.Backend.Logs.Infrastructure;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
-using SGL.Utilities.Backend;
 using SGL.Utilities;
+using SGL.Utilities.Backend;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -67,14 +67,19 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		public class RemoveApplicationOptions : BaseOptions {
 			// Not implemented
 		}
+
+		[Verb("apply-migrations", HelpText = "Applies the database migrations to the target database. This is usually intended for local development use as the production environment has automation for this.", Hidden = true)]
+		public class ApplyMigrationsOptions : BaseOptions { }
+
 		async static Task<int> Main(string[] args) => await ((Func<ParserResult<object>, Task<int>>)(res => res.MapResult(
 			async (PushOptions opts) => await PushMain(opts),
 			async (GenerateApiTokenOptions opts) => await GenerateApiTokenMain(opts),
 			async (RemovePropertyOptions opts) => await RemovePropertyMain(opts),
 			async (RemoveApplicationOptions opts) => await RemoveApplicationMain(opts),
+			async (ApplyMigrationsOptions opts) => await ApplyMigrationsMain(opts),
 			async errs => await DisplayHelp(res, errs)
 			)))(new Parser(c => c.HelpWriter = null).
-			ParseArguments<PushOptions, GenerateApiTokenOptions, RemovePropertyOptions, RemoveApplicationOptions>(args));
+			ParseArguments<PushOptions, GenerateApiTokenOptions, RemovePropertyOptions, RemoveApplicationOptions, ApplyMigrationsOptions>(args));
 
 		async static Task<int> DisplayHelp(ParserResult<object> result, IEnumerable<Error> errs) {
 			await Console.Out.WriteLineAsync(HelpText.AutoBuild(result, h => {
@@ -86,7 +91,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			return 1;
 		}
 
-		static IHostBuilder CreateHostBuilder(PushOptions opts, ServiceResultWrapper<PushJob, int> exitCodeWrapper) =>
+		static IHostBuilder CreateHostBuilder(BaseOptions opts, Action<IServiceCollection> confServices) =>
 			 Host.CreateDefaultBuilder()
 					.UseConsoleLifetime(options => options.SuppressStatusMessages = true)
 					.ConfigureAppConfiguration(config => {
@@ -105,14 +110,16 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 						services.UseUsersBackendInfrastructure(context.Configuration);
 						services.UseLogsBackendInfrastructure(context.Configuration);
 						services.AddScoped<AppRegistrationManager>();
-						services.AddSingleton(opts);
-						services.AddSingleton(exitCodeWrapper);
-						services.AddScopedBackgroundService<PushJob>();
+						confServices(services);
 					});
 
 		async static Task<int> PushMain(PushOptions opts) {
 			ServiceResultWrapper<PushJob, int> exitCodeWrapper = new(0);
-			using var host = CreateHostBuilder(opts, exitCodeWrapper).Build();
+			using var host = CreateHostBuilder(opts, services => {
+				services.AddSingleton(opts);
+				services.AddSingleton(exitCodeWrapper);
+				services.AddScopedBackgroundService<PushJob>();
+			}).Build();
 			await host.RunAsync();
 			return exitCodeWrapper.Result;
 		}
@@ -129,6 +136,20 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		async static Task<int> RemoveApplicationMain(RemoveApplicationOptions opts) {
 			await Console.Out.WriteLineAsync("This verb is not yet implemented.");
 			return 1;
+		}
+
+		async static Task<int> ApplyMigrationsMain(ApplyMigrationsOptions opts) {
+			try {
+				using var host = CreateHostBuilder(opts, services => { }).Build();
+				using var scope = host.Services.CreateScope();
+				await scope.ServiceProvider.GetRequiredService<UsersContext>().Database.MigrateAsync();
+				await scope.ServiceProvider.GetRequiredService<LogsContext>().Database.MigrateAsync();
+				return 0;
+			}
+			catch (Exception ex) {
+				await Console.Error.WriteLineAsync(ex.ToString());
+				return 2;
+			}
 		}
 	}
 }
