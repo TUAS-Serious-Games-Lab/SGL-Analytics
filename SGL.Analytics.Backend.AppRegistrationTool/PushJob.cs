@@ -127,7 +127,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			var pemDirName = Path.Combine(dir, fileBaseName);
 			var dirPemFiles = Directory.Exists(pemDirName) ? Directory.EnumerateFiles(pemDirName, "*.pem", enumOpts) : Enumerable.Empty<string>();
 			var siblingPemTask = siblingPemFile.Select(file => readPemCertFileAsync(file, ct));
-			var dirPemTasks = siblingPemFile.Select(async file => (file: file, certs: await readPemCertFileAsync(file, ct)));
+			var dirPemTasks = dirPemFiles.Select(async file => (file: file, certs: await readPemCertFileAsync(file, ct)));
 			var dirCerts = await Task.WhenAll(dirPemTasks);
 			var siblingCerts = await Task.WhenAll(siblingPemTask);
 			var siblingRecipients = siblingCerts.SelectMany(item => item).Select(cert => createRecipient(cert, cert.SubjectDN.ToString() ?? ""));
