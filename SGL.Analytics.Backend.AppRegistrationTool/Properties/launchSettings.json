@@ -16,6 +16,14 @@
         "DOTNET_ENVIRONMENT": "Development"
       }
     },
+    "SGL.Analytics.Backend.AppRegistrationTool remove-recipient": {
+      "commandName": "Project",
+      "commandLineArgs": "remove-recipient TestApp1 02:5EE47AF3:A1469653:D03C019D:BDFBCC98:CA97A427:AF6FD702:47B70BCB:D4F86BEA",
+      "workingDirectory": "$(ProjectDir)",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
     "SGL.Analytics.Backend.AppRegistrationTool apply-migrations": {
       "commandName": "Project",
       "commandLineArgs": "apply-migrations",
