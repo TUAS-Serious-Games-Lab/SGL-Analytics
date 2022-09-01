@@ -139,7 +139,8 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		}
 		private async Task<PushResult> PushUsersApplication(ApplicationWithUserProperties application, CancellationToken ct = default) {
 			try {
-				var existingApp = await usersAppRepo.GetApplicationByNameAsync(application.Name, ct: ct);
+				var queryOpts = new Users.Application.Interfaces.ApplicationQueryOptions { FetchRecipients = true, FetchUserProperties = true };
+				var existingApp = await usersAppRepo.GetApplicationByNameAsync(application.Name, queryOpts, ct: ct);
 				if (existingApp != null) {
 					bool changed = false;
 					if (existingApp.ApiToken != application.ApiToken) {
