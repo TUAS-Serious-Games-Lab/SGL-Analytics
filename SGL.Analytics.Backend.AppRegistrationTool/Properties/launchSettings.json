@@ -24,6 +24,14 @@
         "DOTNET_ENVIRONMENT": "Development"
       }
     },
+    "SGL.Analytics.Backend.AppRegistrationTool relabel-recipient": {
+      "commandName": "Project",
+      "commandLineArgs": "relabel-recipient TestApp1 02:5EE47AF3:A1469653:D03C019D:BDFBCC98:CA97A427:AF6FD702:47B70BCB:D4F86BEA \"Some test certificate\"",
+      "workingDirectory": "$(ProjectDir)",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
     "SGL.Analytics.Backend.AppRegistrationTool apply-migrations": {
       "commandName": "Project",
       "commandLineArgs": "apply-migrations",
