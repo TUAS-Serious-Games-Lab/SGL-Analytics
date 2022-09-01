@@ -139,15 +139,19 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		}
 
 		async static Task<int> ApplyMigrationsMain(ApplyMigrationsOptions opts) {
+			using var host = CreateHostBuilder(opts, services => { }).Build();
+			using var scope = host.Services.CreateScope();
+			var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 			try {
-				using var host = CreateHostBuilder(opts, services => { }).Build();
-				using var scope = host.Services.CreateScope();
+				logger.LogInformation("Applying migrations for {ctx}...", nameof(UsersContext));
 				await scope.ServiceProvider.GetRequiredService<UsersContext>().Database.MigrateAsync();
+				logger.LogInformation("Applying migrations for {ctx}...", nameof(LogsContext));
 				await scope.ServiceProvider.GetRequiredService<LogsContext>().Database.MigrateAsync();
+				logger.LogInformation("... done!");
 				return 0;
 			}
 			catch (Exception ex) {
-				await Console.Error.WriteLineAsync(ex.ToString());
+				logger.LogError(ex, "Applying migrations failed.");
 				return 2;
 			}
 		}
