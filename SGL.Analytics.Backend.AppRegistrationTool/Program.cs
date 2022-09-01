@@ -201,6 +201,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				else {
 					await Console.Out.WriteLineAsync("Not present in UsersAPI.");
 				}
+				await Console.Out.WriteLineAsync();
 				var logsApps = scope.ServiceProvider.GetRequiredService<IApplicationRepository<Domain.Entity.Application, Logs.Application.Interfaces.ApplicationQueryOptions>>();
 				var logsApp = await logsApps.GetApplicationByNameAsync(opts.AppName, new Logs.Application.Interfaces.ApplicationQueryOptions { FetchRecipients = true });
 				if (logsApp != null) {
