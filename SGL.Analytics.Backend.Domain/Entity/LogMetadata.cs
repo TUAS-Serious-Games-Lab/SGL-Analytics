@@ -1,5 +1,6 @@
 using SGL.Analytics.DTO;
 using System;
+using System.Collections.Generic;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
 	/// <summary>
@@ -63,10 +64,24 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		public bool Complete { get; set; }
 
 		/// <summary>
+		/// Contains the initialization vector for the encryption if the log is encrypted, otherwise null.
+		/// </summary>
+		public byte[]? InitializationVector { get; set; }
+		/// <summary>
+		/// If the log is encrypted and uses a shared per-log public key for ECDH, stores this key, otherwise null.
+		/// </summary>
+		public byte[]? SharedLogPublicKey { get; set; }
+		/// <summary>
+		/// If the log is encrypted, contains recipient key objects storing the copies of the data key encrypted for each recipient.
+		/// </summary>
+		public ICollection<LogRecipientKey> RecipientKeys { get; set; } = null!;
+
+		/// <summary>
 		/// Constructs a LogMetadata with the given data values.
 		/// </summary>
 		public LogMetadata(Guid id, Guid appId, Guid userId, Guid localLogId,
-			DateTime creationTime, DateTime endTime, DateTime uploadTime, string filenameSuffix, LogContentEncoding encoding, long? size, bool complete = false) {
+			DateTime creationTime, DateTime endTime, DateTime uploadTime, string filenameSuffix, LogContentEncoding encoding, long? size, bool complete = false,
+			byte[]? initializationVector = null, byte[]? sharedLogPublicKey = null) {
 			Id = id;
 			AppId = appId;
 			UserId = userId;
@@ -78,6 +93,8 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			Encoding = encoding;
 			Size = size;
 			Complete = complete;
+			InitializationVector = initializationVector;
+			SharedLogPublicKey = sharedLogPublicKey;
 		}
 	}
 }
