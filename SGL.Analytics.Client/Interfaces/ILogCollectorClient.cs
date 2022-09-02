@@ -1,5 +1,6 @@
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.Threading.Tasks;
 
@@ -71,5 +72,7 @@ namespace SGL.Analytics.Client {
 		/// Thrown when the server rejected the upload request because the given file is too large for the size limit of the server and thus can't be uploaded.
 		/// </exception>
 		Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile);
+
+		Task LoadRecipientCertificates(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore);
 	}
 }

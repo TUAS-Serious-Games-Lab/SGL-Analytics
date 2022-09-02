@@ -1,5 +1,6 @@
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
@@ -43,6 +44,10 @@ namespace SGL.Analytics.Client {
 			this.backendServerBaseUri = backendServerBaseUri;
 			this.logCollectorApiEndpoint = logCollectorApiEndpoint;
 			this.logCollectorApiFullUri = new Uri(backendServerBaseUri, logCollectorApiEndpoint);
+		}
+
+		public Task LoadRecipientCertificates(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore) {
+			throw new NotImplementedException();
 		}
 
 		/// <inheritdoc/>

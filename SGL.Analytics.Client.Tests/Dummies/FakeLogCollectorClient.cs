@@ -1,4 +1,5 @@
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -16,6 +17,10 @@ namespace SGL.Analytics.Client.Tests {
 		/// </summary>
 		/// <remarks>Thread-safety is achieved by only allowing to set the value at the beginning of the object lifetime.</remarks>
 		public bool IsActive { get; init; } = true;
+
+		public Task LoadRecipientCertificates(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore) {
+			throw new NotImplementedException();
+		}
 
 		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile) {
 			await Task.CompletedTask;
