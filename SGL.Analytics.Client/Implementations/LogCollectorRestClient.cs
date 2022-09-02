@@ -54,7 +54,7 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <inheritdoc/>
-		public async Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore) {
+		public async Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore) {
 			var query = HttpUtility.ParseQueryString(recipientsFullApiUri.Query);
 			query.Add("appName", appName);
 			var uriBuilder = new UriBuilder(recipientsFullApiUri);

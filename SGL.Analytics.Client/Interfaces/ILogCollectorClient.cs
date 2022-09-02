@@ -73,6 +73,6 @@ namespace SGL.Analytics.Client {
 		/// </exception>
 		Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile);
 
-		Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore);
+		Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore);
 	}
 }
