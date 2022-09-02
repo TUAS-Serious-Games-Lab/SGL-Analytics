@@ -74,8 +74,14 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
 
+                    b.Property<byte[]>("InitializationVector")
+                        .HasColumnType("bytea");
+
                     b.Property<Guid>("LocalLogId")
                         .HasColumnType("uuid");
+
+                    b.Property<byte[]>("SharedLogPublicKey")
+                        .HasColumnType("bytea");
 
                     b.Property<long?>("Size")
                         .HasColumnType("bigint");
@@ -136,7 +142,36 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsMany("SGL.Analytics.Backend.Domain.Entity.LogRecipientKey", "RecipientKeys", b1 =>
+                        {
+                            b1.Property<Guid>("LogId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<byte[]>("RecipientKeyId")
+                                .HasMaxLength(34)
+                                .HasColumnType("bytea");
+
+                            b1.Property<byte[]>("EncryptedKey")
+                                .IsRequired()
+                                .HasColumnType("bytea");
+
+                            b1.Property<int>("EncryptionMode")
+                                .HasColumnType("integer");
+
+                            b1.Property<byte[]>("LogPublicKey")
+                                .HasColumnType("bytea");
+
+                            b1.HasKey("LogId", "RecipientKeyId");
+
+                            b1.ToTable("LogRecipientKey");
+
+                            b1.WithOwner()
+                                .HasForeignKey("LogId");
+                        });
+
                     b.Navigation("App");
+
+                    b.Navigation("RecipientKeys");
                 });
 #pragma warning restore 612, 618
         }

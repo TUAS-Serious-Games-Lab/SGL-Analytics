@@ -1,9 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend;
 using SGL.Utilities.Crypto.EntityFrameworkCore;
 using SGL.Utilities.EntityFrameworkCore;
+using System;
+using System.Linq;
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 	/// <summary>
@@ -32,6 +35,12 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 			logMetadata.Property(lm => lm.UploadTime).IsStoredInUtc();
 			logMetadata.Property(lm => lm.FilenameSuffix).HasMaxLength(16);
 			logMetadata.Property(lm => lm.Encoding).HasDefaultValue(LogContentEncoding.GZipCompressed);
+			logMetadata.OwnsMany(lm => lm.RecipientKeys, rk => {
+				rk.WithOwner().HasForeignKey(mrk => mrk.LogId).HasPrincipalKey(m => m.Id);
+				rk.Property(mrk => mrk.RecipientKeyId).IsStoredAsByteArray().HasMaxLength(34);
+				rk.HasKey(mrk => new { mrk.LogId, mrk.RecipientKeyId });
+			});
+			logMetadata.Navigation(m => m.RecipientKeys).AutoInclude(false);
 
 			var application = modelBuilder.Entity<Domain.Entity.Application>();
 			application.Property(a => a.Name).HasMaxLength(128);

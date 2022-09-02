@@ -10,11 +10,19 @@ namespace SGL.Analytics.DTO {
 		/// <summary>
 		/// The log file content is uploaded as plain text JSON.
 		/// </summary>
-		Plain,
+		Plain = 0,
 		/// <summary>
 		/// The content as it would be for <see cref="Plain"/>, but compressed using the gzip algorithm.
 		/// </summary>
-		GZipCompressed
+		GZipCompressed = 1,
+
+		// 2 would theoretically be E2E_Encrypted_AES_256_CCM without compression, which does not make much sense when the files are not plainly readable anyway.
+
+		/// <summary>
+		/// The JSON content is gzip compressed and then encrypted using AES-256-CCM data encryption.
+		/// The data key is in turn encrypted for each recipient.
+		/// </summary>
+		GZipCompressed_E2E_Encrypted_AES_256_CCM = 3
 	}
 
 	/// <summary>
