@@ -15,8 +15,10 @@ namespace SGL.Analytics.Client {
 	public class LogCollectorRestClient : ILogCollectorClient {
 		private readonly static HttpClient httpClient = new();
 		private Uri backendServerBaseUri;
-		private Uri logCollectorApiEndpoint;
-		private Uri logCollectorApiFullUri;
+		private Uri logApiRoute;
+		private Uri recipientApiRoute;
+		private Uri logFullApiUri;
+		private Uri recipientFullApiUri;
 
 		static LogCollectorRestClient() {
 			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SGL.Analytics.Client", null));
@@ -33,17 +35,21 @@ namespace SGL.Analytics.Client {
 		/// Creates a client object that uses the given base URI of the backend server and the standard API URI <c>api/analytics/log/v1</c>.
 		/// </summary>
 		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
-		public LogCollectorRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/analytics/log/v1", UriKind.Relative)) { }
+		public LogCollectorRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/analytics/log/v1", UriKind.Relative),
+			new Uri("api/analytics/log/v1/recipient-certificates", UriKind.Relative)) { }
 
 		/// <summary>
 		/// Creates a client object that uses the given base URI of the backend server and the given relative API endpoint below it as the target for the requests.
 		/// </summary>
 		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
-		/// <param name="logCollectorApiEndpoint">The relative URI under <paramref name="backendServerBaseUri"/> to the API endpoint, e.g. <c>api/analytics/log</c>.</param>
-		public LogCollectorRestClient(Uri backendServerBaseUri, Uri logCollectorApiEndpoint) {
+		/// <param name="logApiRoute">The relative URI under <paramref name="backendServerBaseUri"/> to the API endpoint, e.g. <c>api/analytics/log</c>.</param>
+		/// <param name="recipientApiRoute"></param>
+		public LogCollectorRestClient(Uri backendServerBaseUri, Uri logApiRoute, Uri recipientApiRoute) {
 			this.backendServerBaseUri = backendServerBaseUri;
-			this.logCollectorApiEndpoint = logCollectorApiEndpoint;
-			this.logCollectorApiFullUri = new Uri(backendServerBaseUri, logCollectorApiEndpoint);
+			this.logApiRoute = logApiRoute;
+			this.recipientApiRoute = recipientApiRoute;
+			this.logFullApiUri = new Uri(backendServerBaseUri, logApiRoute);
+			this.recipientFullApiUri = new Uri(backendServerBaseUri, recipientApiRoute);
 		}
 
 		public Task LoadRecipientCertificates(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore) {
@@ -58,7 +64,7 @@ namespace SGL.Analytics.Client {
 				Validator.ValidateObject(dto, new ValidationContext(dto), true);
 				content.Headers.MapDtoProperties(dto);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);
+				var request = new HttpRequestMessage(HttpMethod.Post, logFullApiUri);
 				request.Content = content;
 				request.Headers.Add("App-API-Token", appAPIToken);
 				request.Headers.Authorization = authToken.ToHttpHeaderValue();
