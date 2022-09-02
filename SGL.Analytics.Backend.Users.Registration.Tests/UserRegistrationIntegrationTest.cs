@@ -110,7 +110,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		[Fact]
 		public async Task RecipientCertificateListContainsExpectedEntries() {
 			using (var client = fixture.CreateClient()) {
-				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/analytics/user/recipient-certificates?appName={fixture.AppName}");
+				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/analytics/user/v1/recipient-certificates?appName={fixture.AppName}");
 				request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/x-pem-file"));
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
@@ -131,7 +131,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				props);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request);
@@ -150,7 +150,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				props);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request);
@@ -169,7 +169,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				props);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request);
@@ -185,7 +185,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				props);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request);
@@ -201,7 +201,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				props);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request);
@@ -216,7 +216,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				props);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", "WrongToken");
 				var response = await client.SendAsync(request);
@@ -231,7 +231,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				props);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request);
@@ -244,7 +244,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			// Attempt to register same username again...
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request);
@@ -259,7 +259,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				props);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request);
@@ -274,7 +274,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				props);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request);
@@ -289,7 +289,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				props);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request);
@@ -303,7 +303,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var userRegDTO = new UserRegistrationDTO(fixture.AppName, username, secret, props);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(userRegDTO);
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/user/v1");
 				request.Content = content;
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request);
@@ -318,7 +318,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, secret);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				response.EnsureSuccessStatusCode();
 				Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 				var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(jsonOptions);
@@ -336,7 +336,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, secret);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 				Assert.Empty(response.Headers.WwwAuthenticate);
 			}
@@ -347,7 +347,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, "WrongSecret");
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 				Assert.Empty(response.Headers.WwwAuthenticate);
 			}
@@ -358,7 +358,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new IdBasedLoginRequestDTO("DoesNotExist", fixture.AppApiToken, userId, secret);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 				Assert.Empty(response.Headers.WwwAuthenticate);
 			}
@@ -369,7 +369,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, "WrongToken", userId, secret);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 				Assert.Empty(response.Headers.WwwAuthenticate);
 			}
@@ -382,7 +382,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName + "_2", fixture.AppApiToken + "_2", userId, secret);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 				Assert.Empty(response.Headers.WwwAuthenticate);
 			}
@@ -394,7 +394,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new UsernameBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, "Testuser14", secret);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				response.EnsureSuccessStatusCode();
 				Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 				var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(jsonOptions);
@@ -411,7 +411,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new UsernameBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, "Testuser15", "WrongSecret");
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 				Assert.Empty(response.Headers.WwwAuthenticate);
 			}
@@ -422,7 +422,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new UsernameBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, "DoesNotExist", secret);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 				Assert.Empty(response.Headers.WwwAuthenticate);
 			}
@@ -433,7 +433,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new UsernameBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, "", secret);
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 			}
 		}
@@ -443,7 +443,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new UsernameBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, "Testuser17", secret.Substring(0, 7));
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 			}
 		}
@@ -453,7 +453,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var loginReqDTO = new IdBasedLoginRequestDTO(fixture.AppName, fixture.AppApiToken, userId, secret.Substring(0, 7));
 			using (var client = fixture.CreateClient()) {
 				var content = JsonContent.Create(loginReqDTO);
-				var response = await client.PostAsJsonAsync("/api/analytics/user/login", loginReqDTO);
+				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 			}
 		}

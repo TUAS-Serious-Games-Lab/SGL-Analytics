@@ -69,19 +69,19 @@ namespace SGL.Analytics.Client.Tests {
 		[InlineData(null)]
 		public async Task LogEventsAreRecordedAndUploadedAsLogFilesWithCorrectContentAfterRegistration(string? username) {
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v1").UsingPost()
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
 						.WithHeader("LogFileId", guidMatcher)
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
 			Guid userId = Guid.NewGuid();
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1").UsingPost()
 					.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
 					.WithHeader("Content-Type", new ExactMatcher("application/json"))
 					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.Created)
 					.WithBodyAsJson(new UserRegistrationResultDTO(userId), true));
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/login").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1/login").UsingPost()
 					.WithHeader("Content-Type", new ExactMatcher("application/json"))
 					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
@@ -145,7 +145,7 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var successfulRegRequests = serverFixture.Server.LogEntries
-				.Where(le => (int)(le.ResponseMessage.StatusCode) < 300 && le.RequestMessage.Path == "/api/analytics/user")
+				.Where(le => (int)(le.ResponseMessage.StatusCode) < 300 && le.RequestMessage.Path == "/api/analytics/user/v1")
 				.Select(le => le.RequestMessage);
 			Assert.Single(successfulRegRequests);
 			await using (var stream = new MemoryStream(successfulRegRequests.Single().BodyAsBytes)) {
@@ -162,7 +162,7 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var successfulLogRequests = serverFixture.Server.LogEntries
-				.Where(le => (int)(le.ResponseMessage.StatusCode) < 300 && le.RequestMessage.Path == "/api/analytics/log")
+				.Where(le => (int)(le.ResponseMessage.StatusCode) < 300 && le.RequestMessage.Path == "/api/analytics/log/v1")
 				.Select(le => le.RequestMessage);
 			foreach (var req in successfulLogRequests) {
 				using (var stream = new GZipStream(new MemoryStream(req.BodyAsBytes), CompressionMode.Decompress)) {

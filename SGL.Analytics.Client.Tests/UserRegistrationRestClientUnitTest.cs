@@ -1,6 +1,6 @@
 using SGL.Analytics.DTO;
-using SGL.Utilities.TestUtilities.XUnit;
 using SGL.Utilities;
+using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,7 +36,7 @@ namespace SGL.Analytics.Client.Tests {
 		[Fact]
 		public async Task PerformingAUserRegistrationProducesTheExpectedRequest() {
 			Guid userId = Guid.NewGuid();
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1").UsingPost()
 					.WithHeader("App-API-Token", new ExactMatcher(appApiToken))
 					.WithHeader("Content-Type", new ExactMatcher("application/json"))
 					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
@@ -64,7 +64,7 @@ namespace SGL.Analytics.Client.Tests {
 		[Fact]
 		public async Task HttpErrorInUserRegistrationIsCorrectlyReportedAsException() {
 			Guid userId = Guid.NewGuid();
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1").UsingPost()
 					.WithHeader("App-API-Token", new WildcardMatcher("*")))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
 
@@ -78,7 +78,7 @@ namespace SGL.Analytics.Client.Tests {
 		[Fact]
 		public async Task ConflictInUserRegistrationIsCorrectlyReportedAsUsernameAlreadyTakenException() {
 			Guid userId = Guid.NewGuid();
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1").UsingPost()
 					.WithHeader("App-API-Token", new WildcardMatcher("*")))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.Conflict)
 					.WithBody("The requested username is already taken."));

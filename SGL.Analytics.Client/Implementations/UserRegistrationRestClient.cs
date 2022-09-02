@@ -42,11 +42,11 @@ namespace SGL.Analytics.Client {
 		/// <summary>
 		/// The default relative API route for the user registration, <c>api/analytics/user</c>.
 		/// </summary>
-		public const string UserRegistrationApiRouteDefault = "api/analytics/user";
+		public const string UserRegistrationApiRouteDefault = "api/analytics/user/v1";
 		/// <summary>
 		/// The default relative API route for the login, <c>api/analytics/user/login</c>.
 		/// </summary>
-		public const string LoginApiRouteDefault = "api/analytics/user/login";
+		public const string LoginApiRouteDefault = "api/analytics/user/v1/login";
 
 		/// <summary>
 		/// The base URI of the backend server to use, defaults to <see cref="SGLAnalytics.DefaultBackendBaseUri"/>.
@@ -75,7 +75,7 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		public UserRegistrationRestClient() : this(SGLAnalytics.DefaultBackendBaseUri) { }
 		/// <summary>
-		/// Creates a client object that uses the given base URI of the backend server and the standard API URIs, <c>api/analytics/user</c> for registration, and <c>api/analytics/user/login</c> for login.
+		/// Creates a client object that uses the given base URI of the backend server and the standard API URIs, <c>api/analytics/user/v1</c> for registration, and <c>api/analytics/user/v1/login</c> for login.
 		/// </summary>
 		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
 		public UserRegistrationRestClient(Uri backendServerBaseUri) :
@@ -98,8 +98,8 @@ namespace SGL.Analytics.Client {
 		/// Creates a client object that uses the given base URI of the backend server and the given relative API endpoints below it as the targets for the requests.
 		/// </summary>
 		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
-		/// <param name="userRegistrationApiRoute">The relative URI under <paramref name="backendServerBaseUri"/> to the user registration API endpoint, e.g. <c>api/analytics/user</c>.</param>
-		/// <param name="loginApiRoute">The relative URI under <paramref name="backendServerBaseUri"/> to the login API endpoint, e.g. <c>api/analytics/user/login</c>.</param>
+		/// <param name="userRegistrationApiRoute">The relative URI under <paramref name="backendServerBaseUri"/> to the user registration API endpoint, e.g. <c>api/analytics/user/v1</c>.</param>
+		/// <param name="loginApiRoute">The relative URI under <paramref name="backendServerBaseUri"/> to the login API endpoint, e.g. <c>api/analytics/user/v1/login</c>.</param>
 		public UserRegistrationRestClient(Uri backendServerBaseUri, Uri userRegistrationApiRoute, Uri loginApiRoute) {
 			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SGL.Analytics.Client", null));
 			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
