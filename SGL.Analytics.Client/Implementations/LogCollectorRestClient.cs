@@ -52,7 +52,7 @@ namespace SGL.Analytics.Client {
 			this.recipientFullApiUri = new Uri(backendServerBaseUri, recipientApiRoute);
 		}
 
-		public Task LoadRecipientCertificates(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore) {
+		public Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore) {
 			throw new NotImplementedException();
 		}
 
