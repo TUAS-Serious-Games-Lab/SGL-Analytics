@@ -328,7 +328,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					await PollWaitForLogMetadata(logId);
 					// After it has appeared, inject the error into the body transfer and cancel the request:
 					streamWrapper.TriggerReadError(new IOException("Generic I/O error"));
-					cts.Cancel();
+					cts.CancelAfter(TimeSpan.FromSeconds(2));
 					// Awaiting the task here does not only wait for the client, but also for the server-side request handling (because of WebApplicationFactory not actually going over network).
 					await Assert.ThrowsAnyAsync<Exception>(async () => await task);
 				}
