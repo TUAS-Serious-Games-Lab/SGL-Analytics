@@ -29,10 +29,10 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		public LogCollectorRestClient() : this(SGLAnalytics.DefaultBackendBaseUri) { }
 		/// <summary>
-		/// Creates a client object that uses the given base URI of the backend server and the standard API URI <c>api/analytics/log</c>.
+		/// Creates a client object that uses the given base URI of the backend server and the standard API URI <c>api/analytics/log/v1</c>.
 		/// </summary>
 		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
-		public LogCollectorRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/analytics/log", UriKind.Relative)) { }
+		public LogCollectorRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/analytics/log/v1", UriKind.Relative)) { }
 
 		/// <summary>
 		/// Creates a client object that uses the given base URI of the backend server and the given relative API endpoint below it as the target for the requests.

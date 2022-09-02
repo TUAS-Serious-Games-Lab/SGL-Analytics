@@ -112,7 +112,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		[Fact]
 		public async Task RecipientCertificateListContainsExpectedEntries() {
 			using (var client = fixture.CreateClient()) {
-				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/analytics/log/recipient-certificates?appName={fixture.AppName}");
+				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/analytics/log/v1/recipient-certificates?appName={fixture.AppName}");
 				request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/x-pem-file"));
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
@@ -140,7 +140,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			var content = new StreamContent(logContent);
 			content.Headers.MapDtoProperties(logMDTO);
 			content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-			var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
+			var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
 			request.Headers.Add("App-API-Token", appApiToken ?? fixture.AppApiToken);
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 				fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", appName)));
@@ -203,7 +203,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var content = new StreamContent(logContent);
 				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed));
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
 				request.Headers.Add("App-API-Token", "IncorrectToken");
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 					fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
@@ -223,7 +223,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var content = new StreamContent(logContent);
 				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed));
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				request.Content = content;
 				var response = await client.SendAsync(request);
@@ -242,7 +242,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var content = new StreamContent(logContent);
 				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed));
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 									new JwtTokenGenerator(fixture.JwtOptions.Issuer, fixture.JwtOptions.Audience, "InvalidKeyInvalidKeyInvalidKeyInvalidKeyInvalidKey")
@@ -264,7 +264,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var content = new StreamContent(logContent);
 				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed));
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 									new JwtTokenGenerator("InvalidIssuer", fixture.JwtOptions.Audience, fixture.JwtOptions.SymmetricKey!)
@@ -286,7 +286,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var content = new StreamContent(logContent);
 				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed));
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 									new JwtTokenGenerator(fixture.JwtOptions.Issuer, "InvalidAudience", fixture.JwtOptions.SymmetricKey!)

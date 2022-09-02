@@ -19,7 +19,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 	/// <summary>
 	/// The controller class serving the <c>api/analytics/log</c> route that accepts uploads of analytics log files for SGL Analytics.
 	/// </summary>
-	[Route("api/analytics/log")]
+	[Route("api/analytics/log/v1")]
 	[ApiController]
 	public class AnalyticsLogController : ControllerBase {
 

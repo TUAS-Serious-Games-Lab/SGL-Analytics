@@ -22,7 +22,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	/// <summary>
 	/// The controller class serving the <c>api/analytics/user</c> and <c>api/analytics/user/login</c> routes that manage user registrations for SGL Analytics and perform logins for user sessions.
 	/// </summary>
-	[Route("api/analytics/user")]
+	[Route("api/analytics/user/v1")]
 	[ApiController]
 	public class AnalyticsUserController : ControllerBase {
 		private readonly IUserManager userManager;
