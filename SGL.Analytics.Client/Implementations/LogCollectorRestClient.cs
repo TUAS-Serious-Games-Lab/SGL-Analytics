@@ -16,9 +16,9 @@ namespace SGL.Analytics.Client {
 		private readonly static HttpClient httpClient = new();
 		private Uri backendServerBaseUri;
 		private Uri logApiRoute;
-		private Uri recipientApiRoute;
+		private Uri recipientsApiRoute;
 		private Uri logFullApiUri;
-		private Uri recipientFullApiUri;
+		private Uri recipientsFullApiUri;
 
 		static LogCollectorRestClient() {
 			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SGL.Analytics.Client", null));
@@ -43,13 +43,13 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
 		/// <param name="logApiRoute">The relative URI under <paramref name="backendServerBaseUri"/> to the API endpoint, e.g. <c>api/analytics/log</c>.</param>
-		/// <param name="recipientApiRoute"></param>
-		public LogCollectorRestClient(Uri backendServerBaseUri, Uri logApiRoute, Uri recipientApiRoute) {
+		/// <param name="recipientsApiRoute"></param>
+		public LogCollectorRestClient(Uri backendServerBaseUri, Uri logApiRoute, Uri recipientsApiRoute) {
 			this.backendServerBaseUri = backendServerBaseUri;
 			this.logApiRoute = logApiRoute;
-			this.recipientApiRoute = recipientApiRoute;
+			this.recipientsApiRoute = recipientsApiRoute;
 			this.logFullApiUri = new Uri(backendServerBaseUri, logApiRoute);
-			this.recipientFullApiUri = new Uri(backendServerBaseUri, recipientApiRoute);
+			this.recipientsFullApiUri = new Uri(backendServerBaseUri, recipientsApiRoute);
 		}
 
 		public Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore) {
