@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace SGL.Analytics.Client {
 	/// <summary>
@@ -52,8 +53,16 @@ namespace SGL.Analytics.Client {
 			this.recipientsFullApiUri = new Uri(backendServerBaseUri, recipientsApiRoute);
 		}
 
-		public Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore) {
-			throw new NotImplementedException();
+		/// <inheritdoc/>
+		public async Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore) {
+			var query = HttpUtility.ParseQueryString(recipientsFullApiUri.Query);
+			query.Add("appName", appName);
+			var uriBuilder = new UriBuilder(recipientsFullApiUri);
+			uriBuilder.Query = query.ToString();
+			using var request = new HttpRequestMessage(HttpMethod.Get, uriBuilder.Uri);
+			request.Headers.Add("App-API-Token", appAPIToken);
+			request.Version = HttpVersion.Version20;
+			await targetCertificateStore.LoadCertificatesFromHttpAsync(httpClient, request);
 		}
 
 		/// <inheritdoc/>
@@ -64,12 +73,12 @@ namespace SGL.Analytics.Client {
 				Validator.ValidateObject(dto, new ValidationContext(dto), true);
 				content.Headers.MapDtoProperties(dto);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, logFullApiUri);
+				using var request = new HttpRequestMessage(HttpMethod.Post, logFullApiUri);
 				request.Content = content;
 				request.Headers.Add("App-API-Token", appAPIToken);
 				request.Headers.Authorization = authToken.ToHttpHeaderValue();
 				request.Version = HttpVersion.Version20;
-				var response = await httpClient.SendAsync(request);
+				using var response = await httpClient.SendAsync(request);
 				if (response.StatusCode == HttpStatusCode.Unauthorized && response.Headers.WwwAuthenticate.Count > 0) {
 					throw new LoginRequiredException();
 				}

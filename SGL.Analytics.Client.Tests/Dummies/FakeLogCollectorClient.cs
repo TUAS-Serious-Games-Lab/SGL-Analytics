@@ -10,6 +10,7 @@ namespace SGL.Analytics.Client.Tests {
 	public class FakeLogCollectorClient : ILogCollectorClient {
 		public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.NoContent;
 		public List<Guid> UploadedLogFileIds { get; set; } = new();
+		public List<Certificate> RecipientCertificates { get; set; } = new List<Certificate> { };
 
 		/// <summary>
 		/// Allows diabling the upload process completely instead of faking it or faking errors.
@@ -19,7 +20,8 @@ namespace SGL.Analytics.Client.Tests {
 		public bool IsActive { get; init; } = true;
 
 		public Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, AuthorizationToken authToken, CertificateStore targetCertificateStore) {
-			throw new NotImplementedException();
+			targetCertificateStore.AddCertificatesWithValidation(RecipientCertificates, nameof(FakeLogCollectorClient));
+			return Task.CompletedTask;
 		}
 
 		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile) {
