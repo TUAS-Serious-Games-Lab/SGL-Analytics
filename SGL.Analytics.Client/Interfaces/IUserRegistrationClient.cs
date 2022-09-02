@@ -1,5 +1,6 @@
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.Threading.Tasks;
 
@@ -76,11 +77,22 @@ namespace SGL.Analytics.Client {
 		/// <param name="appAPIToken">The API token to authenticate the application.</param>
 		/// <returns>A task representing the registration operation, providing the response from the server as its result upon completion.</returns>
 		Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken);
+
 		/// <summary>
 		/// Asynchronously performs a login operation for a user and, if successful, obtains an authorization token that can be used to make other requests as the user.
 		/// </summary>
 		/// <param name="loginDTO">A data transfer object, bundling the application and user credentials to use for the login request.</param>
 		/// <returns>A task representing the login operation, providing the response from the server, containing an authorization token (if successful), as its result upon completion.</returns>
 		Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO);
+
+		/// <summary>
+		/// Asynchronously obtains the certificates for the authorized recipients from the backend and adds them to <paramref name="targetCertificateStore"/>.
+		/// Note that addition methods of <see cref="CertificateStore"/> filter out certificates that don't pass validation.
+		/// </summary>
+		/// <param name="appName">The technical name of the application used to identify it in the backend.</param>
+		/// <param name="appAPIToken">The API token for the application to authenticate it with the backend.</param>
+		/// <param name="targetCertificateStore">The certificate store to which the downloaded certificate shall be added.</param>
+		/// <returns>A task representing the operation.</returns>
+		Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore);
 	}
 }

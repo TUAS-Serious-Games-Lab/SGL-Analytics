@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.Net;
 using System.Net.Http;
@@ -10,6 +11,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace SGL.Analytics.Client {
 
@@ -40,13 +42,17 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		public const string UserRegistrationRestClient = "UserRegistrationRestClient";
 		/// <summary>
-		/// The default relative API route for the user registration, <c>api/analytics/user</c>.
+		/// The default relative API route for the user registration, <c>api/analytics/user/v1</c>.
 		/// </summary>
 		public const string UserRegistrationApiRouteDefault = "api/analytics/user/v1";
 		/// <summary>
-		/// The default relative API route for the login, <c>api/analytics/user/login</c>.
+		/// The default relative API route for the login, <c>api/analytics/user/v1/login</c>.
 		/// </summary>
 		public const string LoginApiRouteDefault = "api/analytics/user/v1/login";
+		/// <summary>
+		/// The default relative API route for the recipients, <c>api/analytics/user/v1/recipient-certificates</c>.
+		/// </summary>
+		public const string RecipientsApiRouteDefault = "api/analytics/user/v1/recipient-certificates";
 
 		/// <summary>
 		/// The base URI of the backend server to use, defaults to <see cref="SGLAnalytics.DefaultBackendBaseUri"/>.
@@ -60,6 +66,10 @@ namespace SGL.Analytics.Client {
 		/// The relative API route to user for login, defaults to <see cref="LoginApiRouteDefault"/>.
 		/// </summary>
 		public Uri LoginApiRoute { get; set; } = new Uri(LoginApiRouteDefault, UriKind.Relative);
+		/// <summary>
+		/// The relative API route to user for login, defaults to <see cref="LoginApiRouteDefault"/>.
+		/// </summary>
+		public Uri RecipientsApiRoute { get; set; } = new Uri(RecipientsApiRouteDefault, UriKind.Relative);
 	}
 
 	/// <summary>
@@ -69,6 +79,7 @@ namespace SGL.Analytics.Client {
 		private readonly HttpClient httpClient = new();
 		private Uri userRegistrationApiRoute;
 		private Uri loginApiRoute;
+		private Uri recipientsApiRoute;
 
 		/// <summary>
 		/// Creates a client object that uses <see cref="SGLAnalytics.DefaultBackendBaseUri"/> as the backend server URI.
@@ -81,6 +92,7 @@ namespace SGL.Analytics.Client {
 		public UserRegistrationRestClient(Uri backendServerBaseUri) :
 			this(backendServerBaseUri,
 				new Uri(UserRegistrationRestClientOptions.UserRegistrationApiRouteDefault, UriKind.Relative),
+				new Uri(UserRegistrationRestClientOptions.LoginApiRouteDefault, UriKind.Relative),
 				new Uri(UserRegistrationRestClientOptions.LoginApiRouteDefault, UriKind.Relative)
 				) { }
 		/// <summary>
@@ -88,7 +100,7 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="options">The configuration options to use.</param>
 		public UserRegistrationRestClient(UserRegistrationRestClientOptions options) :
-			this(options.BackendServerBaseUri, options.UserRegistrationApiRoute, options.LoginApiRoute) { }
+			this(options.BackendServerBaseUri, options.UserRegistrationApiRoute, options.LoginApiRoute, options.RecipientsApiRoute) { }
 		/// <summary>
 		/// Creates a client object with the given configuration options.
 		/// </summary>
@@ -100,15 +112,29 @@ namespace SGL.Analytics.Client {
 		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
 		/// <param name="userRegistrationApiRoute">The relative URI under <paramref name="backendServerBaseUri"/> to the user registration API endpoint, e.g. <c>api/analytics/user/v1</c>.</param>
 		/// <param name="loginApiRoute">The relative URI under <paramref name="backendServerBaseUri"/> to the login API endpoint, e.g. <c>api/analytics/user/v1/login</c>.</param>
-		public UserRegistrationRestClient(Uri backendServerBaseUri, Uri userRegistrationApiRoute, Uri loginApiRoute) {
+		/// <param name="recipientsApiRoute">The relative URI under <paramref name="backendServerBaseUri"/> to the recipients API endpoint, e.g. <c>api/analytics/user/v1/recipient-certificates</c>.</param>
+		public UserRegistrationRestClient(Uri backendServerBaseUri, Uri userRegistrationApiRoute, Uri loginApiRoute, Uri recipientsApiRoute) {
 			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SGL.Analytics.Client", null));
 			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			httpClient.BaseAddress = backendServerBaseUri;
 			this.userRegistrationApiRoute = userRegistrationApiRoute;
 			this.loginApiRoute = loginApiRoute;
+			this.recipientsApiRoute = recipientsApiRoute;
 #if NETCOREAPP3_0_OR_GREATER
 			httpClient.DefaultRequestVersion = HttpVersion.Version20;
 #endif
+		}
+
+		/// <inheritdoc/>
+		public async Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore) {
+			var query = HttpUtility.ParseQueryString(recipientsApiRoute.Query);
+			query.Add("appName", appName);
+			var uriBuilder = new UriBuilder(recipientsApiRoute);
+			uriBuilder.Query = query.ToString();
+			using var request = new HttpRequestMessage(HttpMethod.Get, uriBuilder.Uri);
+			request.Headers.Add("App-API-Token", appAPIToken);
+			request.Version = HttpVersion.Version20;
+			await targetCertificateStore.LoadCertificatesFromHttpAsync(httpClient, request);
 		}
 
 		/// <inheritdoc/>
