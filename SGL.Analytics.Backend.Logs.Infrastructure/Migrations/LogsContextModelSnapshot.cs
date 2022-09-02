@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 
+#nullable disable
+
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
 {
     [DbContext(typeof(LogsContext))]
@@ -15,9 +17,10 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("Relational:MaxIdentifierLength", 63)
-                .HasAnnotation("ProductVersion", "5.0.12")
-                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                .HasAnnotation("ProductVersion", "6.0.6")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("SGL.Analytics.Backend.Domain.Entity.Application", b =>
                 {
@@ -56,7 +59,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Encoding")
                         .ValueGeneratedOnAdd()
@@ -64,7 +67,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
                         .HasDefaultValue(1);
 
                     b.Property<DateTime>("EndTime")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FilenameSuffix")
                         .IsRequired()
@@ -78,7 +81,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("UploadTime")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
