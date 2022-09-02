@@ -69,7 +69,7 @@ namespace SGL.Analytics.Client {
 	/// <summary>
 	/// The interface that clients for the user registration backend need to implement.
 	/// </summary>
-	public interface IUserRegistrationClient {
+	public interface IUserRegistrationClient : IRecipientCertificatesClient {
 		/// <summary>
 		/// Asynchronously registers a new user with the given user data and the given application API token.
 		/// </summary>
@@ -84,15 +84,5 @@ namespace SGL.Analytics.Client {
 		/// <param name="loginDTO">A data transfer object, bundling the application and user credentials to use for the login request.</param>
 		/// <returns>A task representing the login operation, providing the response from the server, containing an authorization token (if successful), as its result upon completion.</returns>
 		Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO);
-
-		/// <summary>
-		/// Asynchronously obtains the certificates for the authorized recipients from the backend and adds them to <paramref name="targetCertificateStore"/>.
-		/// Note that addition methods of <see cref="CertificateStore"/> filter out certificates that don't pass validation.
-		/// </summary>
-		/// <param name="appName">The technical name of the application used to identify it in the backend.</param>
-		/// <param name="appAPIToken">The API token for the application to authenticate it with the backend.</param>
-		/// <param name="targetCertificateStore">The certificate store to which the downloaded certificate shall be added.</param>
-		/// <returns>A task representing the operation.</returns>
-		Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore);
 	}
 }

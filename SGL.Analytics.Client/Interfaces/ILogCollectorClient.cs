@@ -38,7 +38,7 @@ namespace SGL.Analytics.Client {
 	/// <summary>
 	/// The interface that clients for the log collector backend need to implement.
 	/// </summary>
-	public interface ILogCollectorClient {
+	public interface ILogCollectorClient : IRecipientCertificatesClient {
 		/// <summary>
 		/// Indicates whether the log collection is active.
 		/// This property should usually return true for real implementations (as the default implementation always does).
@@ -72,15 +72,5 @@ namespace SGL.Analytics.Client {
 		/// Thrown when the server rejected the upload request because the given file is too large for the size limit of the server and thus can't be uploaded.
 		/// </exception>
 		Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile);
-
-		/// <summary>
-		/// Asynchronously obtains the certificates for the authorized recipients from the backend and adds them to <paramref name="targetCertificateStore"/>.
-		/// Note that addition methods of <see cref="CertificateStore"/> filter out certificates that don't pass validation.
-		/// </summary>
-		/// <param name="appName">The technical name of the application used to identify it in the backend.</param>
-		/// <param name="appAPIToken">The API token for the application to authenticate it with the backend.</param>
-		/// <param name="targetCertificateStore">The certificate store to which the downloaded certificate shall be added.</param>
-		/// <returns>A task representing the operation.</returns>
-		Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore);
 	}
 }
