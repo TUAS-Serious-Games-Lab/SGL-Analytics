@@ -187,13 +187,13 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var successfulRegRequests = serverFixture.Server.LogEntries
-				.Where(le => (int)(le.ResponseMessage.StatusCode) < 300 && le.RequestMessage.Path == "/api/analytics/user/v1")
+				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/user/v1")
 				.Select(le => le.RequestMessage);
 			Assert.Single(successfulRegRequests);
 			await using (var stream = new MemoryStream(successfulRegRequests.Single().BodyAsBytes)) {
 				var userReg = await JsonSerializer.DeserializeAsync<UserRegistrationDTO>(stream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 				Assert.Equal(user.Username, userReg?.Username);
-				var studyAttr = userReg?.StudySpecificProperties as IDictionary<string, object?>;
+				var studyAttr = userReg?.StudySpecificProperties as IDictionary<string, object?> ?? new Dictionary<string, object?> { };
 				Assert.Equal(user.Label, Assert.Contains("Label", studyAttr));
 				Assert.Equal(user.RegistrationTime, Assert.Contains("RegistrationTime", studyAttr));
 				Assert.Equal(user.SomeNumber, Assert.Contains("SomeNumber", studyAttr));
@@ -204,7 +204,7 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var successfulLogRequests = serverFixture.Server.LogEntries
-				.Where(le => (int)(le.ResponseMessage.StatusCode) < 300 && le.RequestMessage.Path == "/api/analytics/log/v1")
+				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/log/v1")
 				.Select(le => le.RequestMessage);
 			foreach (var req in successfulLogRequests) {
 				using (var stream = new GZipStream(new MemoryStream(req.BodyAsBytes), CompressionMode.Decompress)) {

@@ -54,7 +54,7 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.NotNull(requestBodyObj);
 				Assert.Equal(registration.AppName, requestBodyObj?.AppName);
 				Assert.Equal(registration.Username, requestBodyObj?.Username);
-				Assert.All(registration.StudySpecificProperties, kvp => Assert.Equal(kvp.Value, Assert.Contains(kvp.Key, requestBodyObj?.StudySpecificProperties as IDictionary<string, object?>)));
+				Assert.All(registration.StudySpecificProperties, kvp => Assert.Equal(kvp.Value, Assert.Contains(kvp.Key, requestBodyObj?.StudySpecificProperties as IDictionary<string, object?> ?? new Dictionary<string, object?> { })));
 				bodyStream.Position = 0;
 				output.WriteStreamContents(bodyStream);
 			}
