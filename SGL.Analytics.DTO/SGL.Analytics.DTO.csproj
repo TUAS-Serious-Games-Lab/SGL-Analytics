@@ -19,7 +19,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="System.Text.Json" Version="6.0.5" />
-		<PackageReference Include="SGL.Utilities" Version="0.8.0" />
+		<PackageReference Include="SGL.Utilities" Version="0.8.3" />
 	</ItemGroup>
 
 </Project>

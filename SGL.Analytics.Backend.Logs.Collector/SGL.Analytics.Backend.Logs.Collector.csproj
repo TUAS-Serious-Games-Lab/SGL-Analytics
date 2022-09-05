@@ -22,21 +22,21 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.6">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.8">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="6.0.6" />
-		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.16.1" />
-		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.6" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="6.0.8" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.8" />
 		<PackageReference Include="NSwag.AspNetCore" Version="13.16.1" />
 		<PackageReference Include="prometheus-net.AspNetCore" Version="6.0.0" />
 		<PackageReference Include="prometheus-net.AspNetCore.HealthChecks" Version="6.0.0" />
-		<PackageReference Include="SGL.Utilities" Version="0.8.0" />
-		<PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.8.0" />
-		<PackageReference Include="SGL.Utilities.Backend.Security" Version="0.8.0" />
-		<PackageReference Include="SGL.Utilities.Crypto.AspNetCore" Version="0.8.0" />
-		<PackageReference Include="SGL.Utilities.Logging" Version="0.8.0" />
+		<PackageReference Include="SGL.Utilities" Version="0.8.3" />
+		<PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.8.3" />
+		<PackageReference Include="SGL.Utilities.Backend.Security" Version="0.8.3" />
+		<PackageReference Include="SGL.Utilities.Crypto.AspNetCore" Version="0.8.3" />
+		<PackageReference Include="SGL.Utilities.Logging" Version="0.8.3" />
 	</ItemGroup>
 
 	<ItemGroup>
