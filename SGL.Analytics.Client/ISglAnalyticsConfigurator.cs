@@ -12,7 +12,7 @@ namespace SGL.Analytics.Client {
 	public class SglAnalyticsConfiguratorDataDirectorySourceArguments {
 		public string AppName { get; }
 
-		public SglAnalyticsConfiguratorDataDirectorySourceArguments(string appName) {
+		internal SglAnalyticsConfiguratorDataDirectorySourceArguments(string appName) {
 			AppName = appName;
 		}
 	}
@@ -30,7 +30,7 @@ namespace SGL.Analytics.Client {
 			return customArgumentFactories.GetCustomArgument<T>(this);
 		}
 
-		public SglAnalyticsConfiguratorFactoryArguments(string appName, string appApiToken, HttpClient httpClient, string dataDirectory, ILoggerFactory loggerFactory, RandomGenerator random,
+		internal SglAnalyticsConfiguratorFactoryArguments(string appName, string appApiToken, HttpClient httpClient, string dataDirectory, ILoggerFactory loggerFactory, RandomGenerator random,
 			ConfiguratorCustomArgumentFactoryContainer<SglAnalyticsConfiguratorFactoryArguments, SglAnalyticsConfiguratorAuthenticatedFactoryArguments> customArgumentFactories) {
 			AppName = appName;
 			AppApiToken = appApiToken;
@@ -46,7 +46,7 @@ namespace SGL.Analytics.Client {
 	public class SglAnalyticsConfiguratorAuthenticatedFactoryArguments : SglAnalyticsConfiguratorFactoryArguments {
 		public AuthorizationData Authorization { get; }
 
-		public SglAnalyticsConfiguratorAuthenticatedFactoryArguments(string appName, string appApiToken, HttpClient httpClient, string neutralDataDirectory, ILoggerFactory loggerFactory, RandomGenerator random,
+		internal SglAnalyticsConfiguratorAuthenticatedFactoryArguments(string appName, string appApiToken, HttpClient httpClient, string neutralDataDirectory, ILoggerFactory loggerFactory, RandomGenerator random,
 			ConfiguratorCustomArgumentFactoryContainer<SglAnalyticsConfiguratorFactoryArguments, SglAnalyticsConfiguratorAuthenticatedFactoryArguments> customArgumentFactories, AuthorizationData authorization) : base(appName, appApiToken, httpClient, neutralDataDirectory, loggerFactory, random, customArgumentFactories) {
 			Authorization = authorization;
 		}
