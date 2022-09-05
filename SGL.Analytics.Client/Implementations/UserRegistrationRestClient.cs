@@ -93,7 +93,7 @@ namespace SGL.Analytics.Client {
 			this(backendServerBaseUri,
 				new Uri(UserRegistrationRestClientOptions.UserRegistrationApiRouteDefault, UriKind.Relative),
 				new Uri(UserRegistrationRestClientOptions.LoginApiRouteDefault, UriKind.Relative),
-				new Uri(UserRegistrationRestClientOptions.LoginApiRouteDefault, UriKind.Relative)
+				new Uri(UserRegistrationRestClientOptions.RecipientsApiRouteDefault, UriKind.Relative)
 				) { }
 		/// <summary>
 		/// Creates a client object with the given configuration options.
