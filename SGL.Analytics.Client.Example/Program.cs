@@ -92,7 +92,7 @@ namespace SGL.Analytics.Client.Example {
 			var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(rootDS.DataDirectory, "DataLogs"));
 			logStorage.Archiving = opts.KeepFiles;
 			var recipientCertificateValidator = GetRecipientCertificateValidator(opts, loggerFactory);
-			SglAnalytics analytics = new SglAnalytics(opts.AppName, opts.AppApiToken, recipientCertificateValidator,
+			await using SglAnalytics analytics = new SglAnalytics(opts.AppName, opts.AppApiToken, recipientCertificateValidator,
 				rootDataStore: rootDS,
 				logStorage: logStorage,
 				logCollectorClient: new LogCollectorRestClient(opts.Backend),

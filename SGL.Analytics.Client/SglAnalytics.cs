@@ -43,7 +43,7 @@ namespace SGL.Analytics.Client {
 	/// The public methods allow registering the user, beginning a new analytics log file, recording events and snapshots into the current analytics log file,
 	/// and finishing the analytics log operations by finishing the current file, waiting for it to be written and ensuring all pending uploads are complete.
 	/// </summary>
-	public partial class SglAnalytics {
+	public partial class SglAnalytics : IAsyncDisposable {
 		/// <summary>
 		/// Acts as the default value for the <c>backendBaseUri</c> parameter of the constructor and can be set before instantiating the object.
 		/// It defaults to localhost for testing. Thus, released applications need to either set this property before instantiating SGL Analytics or pass a <c>backendBaseUri</c> to the constructor.

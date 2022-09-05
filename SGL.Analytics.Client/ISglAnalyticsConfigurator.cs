@@ -134,42 +134,42 @@ namespace SGL.Analytics.Client {
 		/// Sets the factory for the <see cref="ILoggerFactory"/> object to use for diagnostics logging.
 		/// </summary>
 		/// <param name="loggerFactoryFactory">The factory function to use.</param>
-		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/>.)</param>
+		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsConfigurator UseLoggerFactory(Func<SglAnalyticsConfiguratorFactoryArguments, ILoggerFactory> loggerFactoryFactory, bool dispose = true);
 		/// <summary>
 		/// Sets the factory used to obtain the <see cref="IUserRegistrationClient"/> implementation.
 		/// </summary>
 		/// <param name="userRegistrationClientFactory">The factory function to use.</param>
-		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/>.)</param>
+		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsConfigurator UseUserRegistrationClient(Func<SglAnalyticsConfiguratorFactoryArguments, IUserRegistrationClient> userRegistrationClientFactory, bool dispose = true);
 		/// <summary>
 		/// Sets the factory used to obtain the <see cref="ILogCollectorClient"/> implementation.
 		/// </summary>
 		/// <param name="logCollectorClientFactory">The factory function to use.</param>
-		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/>.)</param>
+		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsConfigurator UseLogCollectorClient(Func<SglAnalyticsConfiguratorFactoryArguments, ILogCollectorClient> logCollectorClientFactory, bool dispose = true);
 		/// <summary>
 		/// Sets the factory used to obtain the <see cref="IRootDataStore"/> implementation.
 		/// </summary>
 		/// <param name="rootDataStoreFactory">The factory function to use.</param>
-		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/>.)</param>
+		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsConfigurator UseRootDataStore(Func<SglAnalyticsConfiguratorFactoryArguments, IRootDataStore> rootDataStoreFactory, bool dispose = true);
 		/// <summary>
 		/// Sets the factory used to obtain the <see cref="ILogStorage"/> implementation.
 		/// </summary>
 		/// <param name="logStorageFactory">The factory function to use.</param>
-		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/>.)</param>
+		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsConfigurator UseLogStorage(Func<SglAnalyticsConfiguratorFactoryArguments, ILogStorage> logStorageFactory, bool dispose = true);
 		/// <summary>
 		/// Sets the factory for the validator object that checks the certificates of data recipients to determine the authorized recipients for end-to-end encrypted data.
 		/// </summary>
 		/// <param name="recipientCertificateValidatorFactory">The factory function to use.</param>
-		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/>.)</param>
+		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsConfigurator UseRecipientCertificateValidator(Func<SglAnalyticsConfiguratorFactoryArguments, ICertificateValidator> recipientCertificateValidatorFactory, bool dispose = true);
 

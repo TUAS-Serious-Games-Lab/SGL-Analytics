@@ -61,6 +61,7 @@ namespace SGL.Analytics.Client.Tests {
 		}
 
 		public void Dispose() {
+			analytics.DisposeAsync().AsTask().Wait();
 			storage.Dispose();
 		}
 

@@ -256,6 +256,7 @@ namespace SGL.Analytics.Client.Tests {
 
 		public void Dispose() {
 			if (!finished) analytics.FinishAsync().Wait();
+			analytics.DisposeAsync().AsTask().Wait();
 			storage.Archiving = false;
 			foreach (var log in storage.EnumerateLogs()) {
 				log.Remove();

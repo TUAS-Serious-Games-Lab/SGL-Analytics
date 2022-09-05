@@ -44,6 +44,32 @@ namespace SGL.Analytics.Client {
 		private ILogger<SglAnalytics> logger;
 		private CryptoConfig cryptoConfig;
 
+		public async ValueTask DisposeAsync() {
+			try {
+				await FinishAsync();
+			}
+			catch (OperationCanceledException) { }
+			catch (Exception ex) {
+				logger.LogError(ex, "Caught error from FinishAsync during disposal.");
+			}
+			if (configurator.RecipientCertificateValidatorFactory.Dispose) await disposeIfDisposable(recipientCertificateValidator);
+			if (configurator.UserRegistrationClientFactory.Dispose) await disposeIfDisposable(userRegistrationClient);
+			if (configurator.LogCollectorClientFactory.Dispose) await disposeIfDisposable(logCollectorClient);
+			if (configurator.LogStorageFactory.Dispose) await disposeIfDisposable(logStorage);
+			if (configurator.RootDataStoreFactory.Dispose) await disposeIfDisposable(rootDataStore);
+			configurator.CustomArgumentFactories.Dispose();
+			if (configurator.LoggerFactory.Dispose) await disposeIfDisposable(LoggerFactory);
+		}
+
+		private async Task disposeIfDisposable(object obj) {
+			if (obj is IAsyncDisposable ad) {
+				await ad.DisposeAsync().AsTask();
+			}
+			if (obj is IDisposable d) {
+				d.Dispose();
+			}
+		}
+
 		private class EnumNamingPolicy : JsonNamingPolicy {
 			public override string ConvertName(string name) => name;
 		}
