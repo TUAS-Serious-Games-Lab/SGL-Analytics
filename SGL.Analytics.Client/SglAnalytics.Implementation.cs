@@ -22,13 +22,14 @@ namespace SGL.Analytics.Client {
 		private readonly object lockObject = new object();
 		private string appName;
 		private string appAPIToken;
+		private HttpClient httpClient;
+		private SglAnalyticsConfigurator configurator = new SglAnalyticsConfigurator();
 		private ICertificateValidator recipientCertificateValidator;
 		private RandomGenerator randomGenerator = new RandomGenerator();
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
 		private ILogCollectorClient logCollectorClient;
 		private IUserRegistrationClient userRegistrationClient;
-		private bool allowSharedMessageKeyPair = true; // TODO: Make configurable
 
 		private LogQueue? currentLogQueue;
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
@@ -37,10 +38,11 @@ namespace SGL.Analytics.Client {
 
 		private AuthorizationToken? authToken;
 		private SynchronizationContext mainSyncContext;
-
+		private string dataDirectory;
 		private Task? logUploader = null;
 
 		private ILogger<SglAnalytics> logger;
+		private CryptoConfig cryptoConfig;
 
 		private class EnumNamingPolicy : JsonNamingPolicy {
 			public override string ConvertName(string name) => name;
@@ -189,7 +191,7 @@ namespace SGL.Analytics.Client {
 				logger.LogError("Can't upload log files because no authorized recipients were found.");
 				return;
 			}
-			var keyEncryptor = new KeyEncryptor(certList, randomGenerator, allowSharedMessageKeyPair);
+			var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
 				// If we already completed this file, it has been added to the queue twice,
 				// e.g. once by the writer worker and once by startUploadingExistingLogs.

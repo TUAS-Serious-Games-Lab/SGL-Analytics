@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Utilities;
+using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.EndToEnd;
 using System;
@@ -43,7 +44,6 @@ namespace SGL.Analytics.Client {
 	/// and finishing the analytics log operations by finishing the current file, waiting for it to be written and ensuring all pending uploads are complete.
 	/// </summary>
 	public partial class SglAnalytics {
-
 		/// <summary>
 		/// Acts as the default value for the <c>backendBaseUri</c> parameter of the constructor and can be set before instantiating the object.
 		/// It defaults to localhost for testing. Thus, released applications need to either set this property before instantiating SGL Analytics or pass a <c>backendBaseUri</c> to the constructor.
@@ -93,6 +93,7 @@ namespace SGL.Analytics.Client {
 			mainSyncContext = SynchronizationContext.Current ?? new SynchronizationContext();
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
+			cryptoConfig = new CryptoConfig();
 			this.recipientCertificateValidator = recipientCertificateValidator;
 			if (backendBaseUri is null) backendBaseUri = DefaultBackendBaseUri;
 			if (diagnosticsLogger is null) diagnosticsLogger = NullLogger<SglAnalytics>.Instance;
@@ -110,6 +111,31 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		public SglAnalytics(string appName, string appAPIToken, HttpClient httpClient, Action<ISglAnalyticsConfigurator> configuration) {
+			this.appName = appName;
+			this.appAPIToken = appAPIToken;
+			this.httpClient = httpClient;
+			configuration(configurator);
+			mainSyncContext = configurator.SynchronizationContextGetter();
+			dataDirectory = configurator.DataDirectorySource(new SglAnalyticsConfiguratorDataDirectorySourceArguments(appName));
+			Directory.CreateDirectory(dataDirectory);
+			var loggerFactoryBootstrapArgs = new SglAnalyticsConfiguratorFactoryArguments(appName, appAPIToken, httpClient, dataDirectory,
+				NullLoggerFactory.Instance, randomGenerator, configurator.CustomArgumentFactories);
+			LoggerFactory = configurator.LoggerFactory.Factory(loggerFactoryBootstrapArgs);
+			var factoryArgs = new SglAnalyticsConfiguratorFactoryArguments(appName, appAPIToken, httpClient, dataDirectory, LoggerFactory,
+				randomGenerator, configurator.CustomArgumentFactories);
+			logger = LoggerFactory.CreateLogger<SglAnalytics>();
+			cryptoConfig = configurator.CryptoConfig();
+			recipientCertificateValidator = configurator.RecipientCertificateValidatorFactory.Factory(factoryArgs);
+			rootDataStore = configurator.RootDataStoreFactory.Factory(factoryArgs);
+			logStorage = configurator.LogStorageFactory.Factory(factoryArgs);
+			userRegistrationClient = configurator.UserRegistrationClientFactory.Factory(factoryArgs);
+			logCollectorClient = configurator.LogCollectorClientFactory.Factory(factoryArgs);
+			if (IsRegistered()) {
+				startUploadingExistingLogs();
+			}
+		}
+
 		/// <summary>
 		/// Specifies the strength of the secret that is generated upon user registration.
 		/// The secret is created by generating the given number of bytes and then base64-encoding them.
@@ -121,6 +147,7 @@ namespace SGL.Analytics.Client {
 		/// Gets the technical name of the application that uses this SGL Analytics instance, as specified in the constructor.
 		/// </summary>
 		public string AppName { get => appName; }
+		public ILoggerFactory LoggerFactory { get; }
 
 		/// <summary>
 		/// Checks if the user registration for this client was already done.
@@ -160,7 +187,7 @@ namespace SGL.Analytics.Client {
 					logger.LogError(msg);
 					throw new InvalidOperationException(msg);
 				}
-				var keyEncryptor = new KeyEncryptor(certList, randomGenerator, allowSharedMessageKeyPair);
+				var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
 				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
