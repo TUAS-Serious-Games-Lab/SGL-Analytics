@@ -153,6 +153,14 @@ namespace SGL.Analytics.Client {
 				logger.LogInformation("Starting user registration process...");
 				var secret = SecretGenerator.Instance.GenerateSecret(UserRegistrationSecretLength);
 				var userDTO = userData.MakeDTO(appName, secret);
+				var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(userRegistrationClient);
+				var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
+				if (!certList.Any() && userDTO.StudySpecificProperties.Any()) {
+					const string msg = "Can't send registration because no authorized recipients for study-specific properties were found.";
+					logger.LogError(msg);
+					throw new InvalidOperationException(msg);
+				}
+				var keyEncryptor = new KeyEncryptor(certList, randomGenerator, allowSharedMessageKeyPair);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
 				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);

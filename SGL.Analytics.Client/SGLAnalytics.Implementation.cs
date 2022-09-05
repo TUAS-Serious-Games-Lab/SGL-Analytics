@@ -23,10 +23,12 @@ namespace SGL.Analytics.Client {
 		private string appName;
 		private string appAPIToken;
 		private ICertificateValidator recipientCertificateValidator;
+		private RandomGenerator randomGenerator = new RandomGenerator();
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
 		private ILogCollectorClient logCollectorClient;
 		private IUserRegistrationClient userRegistrationClient;
+		private bool allowSharedMessageKeyPair = true; // TODO: Make configurable
 
 		private LogQueue? currentLogQueue;
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
@@ -60,6 +62,11 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		private async Task<CertificateStore> loadAuthorizedRecipientCertificatesAsync(IRecipientCertificatesClient client) {
+			var store = new CertificateStore(recipientCertificateValidator, NullLogger<CertificateStore>.Instance);
+			await client.LoadRecipientCertificatesAsync(appName, appAPIToken, store);
+			return store;
+		}
 
 		private async Task writePendingLogsAsync() {
 			logger.LogDebug("Started log writer to asynchronously flush log entries to disk.");
@@ -176,6 +183,13 @@ namespace SGL.Analytics.Client {
 			}
 			logger.LogDebug("Started log uploader to asynchronously upload finished data logs to the backend.");
 			var completedLogFiles = new HashSet<Guid>();
+			var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(logCollectorClient);
+			var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
+			if (!certList.Any()) {
+				logger.LogError("Can't upload log files because no authorized recipients were found.");
+				return;
+			}
+			var keyEncryptor = new KeyEncryptor(certList, randomGenerator, allowSharedMessageKeyPair);
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
 				// If we already completed this file, it has been added to the queue twice,
 				// e.g. once by the writer worker and once by startUploadingExistingLogs.
