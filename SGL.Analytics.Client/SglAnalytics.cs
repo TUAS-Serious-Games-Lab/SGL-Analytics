@@ -163,6 +163,11 @@ namespace SGL.Analytics.Client {
 		public ILoggerFactory LoggerFactory { get; }
 
 		/// <summary>
+		/// The id of the registered user, or null if not registered.
+		/// </summary>
+		public Guid? UserID => rootDataStore.UserID;
+
+		/// <summary>
 		/// Checks if the user registration for this client was already done.
 		/// If this returns false, call RegisterAsync and ensure the registration before relying on logs being uploaded.
 		/// When logs are recorded on an unregistered client, they are stored locally and are not uploaded until the registration is completed and a user id is obtained.
