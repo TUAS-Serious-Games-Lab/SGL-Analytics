@@ -1,5 +1,6 @@
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -12,6 +13,12 @@ namespace SGL.Analytics.Client.Tests {
 		public Dictionary<Guid, UserRegistrationDTO> RegistrationData { get; } = new();
 		public List<UserRegistrationResultDTO> RegistrationResults { get; } = new();
 		public List<LoginRequestDTO> LoginRequests { get; } = new();
+		public List<Certificate> RecipientCertificates { get; set; } = new List<Certificate> { };
+
+		public Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore) {
+			targetCertificateStore.AddCertificatesWithValidation(RecipientCertificates, nameof(FakeUserRegistrationClient));
+			return Task.CompletedTask;
+		}
 
 		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO) {
 			await Task.CompletedTask;

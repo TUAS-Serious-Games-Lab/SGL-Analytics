@@ -1,11 +1,13 @@
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace SGL.Analytics.Client {
 	/// <summary>
@@ -14,8 +16,10 @@ namespace SGL.Analytics.Client {
 	public class LogCollectorRestClient : ILogCollectorClient {
 		private readonly static HttpClient httpClient = new();
 		private Uri backendServerBaseUri;
-		private Uri logCollectorApiEndpoint;
-		private Uri logCollectorApiFullUri;
+		private Uri logApiRoute;
+		private Uri recipientsApiRoute;
+		private Uri logFullApiUri;
+		private Uri recipientsFullApiUri;
 
 		static LogCollectorRestClient() {
 			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SGL.Analytics.Client", null));
@@ -32,17 +36,33 @@ namespace SGL.Analytics.Client {
 		/// Creates a client object that uses the given base URI of the backend server and the standard API URI <c>api/analytics/log/v1</c>.
 		/// </summary>
 		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
-		public LogCollectorRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/analytics/log/v1", UriKind.Relative)) { }
+		public LogCollectorRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/analytics/log/v1", UriKind.Relative),
+			new Uri("api/analytics/log/v1/recipient-certificates", UriKind.Relative)) { }
 
 		/// <summary>
 		/// Creates a client object that uses the given base URI of the backend server and the given relative API endpoint below it as the target for the requests.
 		/// </summary>
 		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
-		/// <param name="logCollectorApiEndpoint">The relative URI under <paramref name="backendServerBaseUri"/> to the API endpoint, e.g. <c>api/analytics/log</c>.</param>
-		public LogCollectorRestClient(Uri backendServerBaseUri, Uri logCollectorApiEndpoint) {
+		/// <param name="logApiRoute">The relative URI under <paramref name="backendServerBaseUri"/> to the API endpoint, e.g. <c>api/analytics/log</c>.</param>
+		/// <param name="recipientsApiRoute"></param>
+		public LogCollectorRestClient(Uri backendServerBaseUri, Uri logApiRoute, Uri recipientsApiRoute) {
 			this.backendServerBaseUri = backendServerBaseUri;
-			this.logCollectorApiEndpoint = logCollectorApiEndpoint;
-			this.logCollectorApiFullUri = new Uri(backendServerBaseUri, logCollectorApiEndpoint);
+			this.logApiRoute = logApiRoute;
+			this.recipientsApiRoute = recipientsApiRoute;
+			this.logFullApiUri = new Uri(backendServerBaseUri, logApiRoute);
+			this.recipientsFullApiUri = new Uri(backendServerBaseUri, recipientsApiRoute);
+		}
+
+		/// <inheritdoc/>
+		public async Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore) {
+			var query = HttpUtility.ParseQueryString(recipientsFullApiUri.Query);
+			query.Add("appName", appName);
+			var uriBuilder = new UriBuilder(recipientsFullApiUri);
+			uriBuilder.Query = query.ToString();
+			using var request = new HttpRequestMessage(HttpMethod.Get, uriBuilder.Uri);
+			request.Headers.Add("App-API-Token", appAPIToken);
+			request.Version = HttpVersion.Version20;
+			await targetCertificateStore.LoadCertificatesFromHttpAsync(httpClient, request);
 		}
 
 		/// <inheritdoc/>
@@ -53,12 +73,12 @@ namespace SGL.Analytics.Client {
 				Validator.ValidateObject(dto, new ValidationContext(dto), true);
 				content.Headers.MapDtoProperties(dto);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, logCollectorApiFullUri);
+				using var request = new HttpRequestMessage(HttpMethod.Post, logFullApiUri);
 				request.Content = content;
 				request.Headers.Add("App-API-Token", appAPIToken);
 				request.Headers.Authorization = authToken.ToHttpHeaderValue();
 				request.Version = HttpVersion.Version20;
-				var response = await httpClient.SendAsync(request);
+				using var response = await httpClient.SendAsync(request);
 				if (response.StatusCode == HttpStatusCode.Unauthorized && response.Headers.WwwAuthenticate.Count > 0) {
 					throw new LoginRequiredException();
 				}

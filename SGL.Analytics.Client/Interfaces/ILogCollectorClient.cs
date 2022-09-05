@@ -1,5 +1,6 @@
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.Threading.Tasks;
 
@@ -37,7 +38,7 @@ namespace SGL.Analytics.Client {
 	/// <summary>
 	/// The interface that clients for the log collector backend need to implement.
 	/// </summary>
-	public interface ILogCollectorClient {
+	public interface ILogCollectorClient : IRecipientCertificatesClient {
 		/// <summary>
 		/// Indicates whether the log collection is active.
 		/// This property should usually return true for real implementations (as the default implementation always does).

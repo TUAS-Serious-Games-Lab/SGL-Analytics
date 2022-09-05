@@ -1,5 +1,8 @@
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Crypto;
+using SGL.Utilities.Crypto.Certificates;
+using SGL.Utilities.Crypto.Keys;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.Collections.Generic;
@@ -18,13 +21,37 @@ namespace SGL.Analytics.Client.Tests {
 		private FakeRootDataStore ds = new FakeRootDataStore();
 		private FakeLogCollectorClient logCollectorClient = new FakeLogCollectorClient() { IsActive = false };
 		private FakeUserRegistrationClient userRegClient = new FakeUserRegistrationClient();
+		private KeyPair signerKeyPair;
+		private KeyPair recipient1KeyPair;
+		private KeyPair recipient2KeyPair;
+		private Certificate signerCert;
+		private Certificate recipient1Cert;
+		private Certificate recipient2Cert;
+		private ICertificateValidator recipientCertificateValidator;
 		private SGLAnalytics analytics;
 		private ITestOutputHelper output;
 		private ILoggerFactory loggerFactory;
 
 		public ClientMainUnitTest(ITestOutputHelper output) {
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			var random = new RandomGenerator();
+			var signerDN = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Analytics"), new("ou", "Tests"), new("cn", "Test Signer") });
+			var recipient1DN = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Analytics"), new("ou", "Tests"), new("cn", "Test 1") });
+			var recipient2DN = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Analytics"), new("ou", "Tests"), new("cn", "Test 2") });
+			signerKeyPair = KeyPair.GenerateEllipticCurves(random, 521);
+			recipient1KeyPair = KeyPair.GenerateEllipticCurves(random, 521);
+			recipient2KeyPair = KeyPair.GenerateEllipticCurves(random, 521);
+			signerCert = Certificate.Generate(signerDN, signerKeyPair.Private, signerDN, signerKeyPair.Public, TimeSpan.FromHours(2), random, 128);
+			recipient1Cert = Certificate.Generate(signerDN, signerKeyPair.Private, recipient1DN, recipient1KeyPair.Public, TimeSpan.FromHours(1), random, 128);
+			recipient2Cert = Certificate.Generate(signerDN, signerKeyPair.Private, recipient2DN, recipient2KeyPair.Public, TimeSpan.FromHours(1), random, 128);
+			using var signerCertPemBuffer = new StringWriter();
+			signerCert.StoreToPem(signerCertPemBuffer);
+
+			recipientCertificateValidator = new CACertTrustValidator(signerCertPemBuffer.ToString(), ignoreValidityPeriod: false,
+				loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
+			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
+			userRegClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
@@ -465,7 +492,8 @@ namespace SGL.Analytics.Client.Tests {
 
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
@@ -484,8 +512,9 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
+			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
 			collectorClient.StatusCode = HttpStatusCode.InternalServerError;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
@@ -499,7 +528,7 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Empty(collectorClient.UploadedLogFileIds);
 
 			collectorClient.StatusCode = HttpStatusCode.NoContent;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
@@ -514,7 +543,8 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
@@ -591,7 +621,7 @@ namespace SGL.Analytics.Client.Tests {
 		public async Task PendingUploadsAreRetriedOnSuccessfulRegistration() {
 			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
 			ds.UserID = null;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
@@ -607,7 +637,8 @@ namespace SGL.Analytics.Client.Tests {
 			output.WriteLine("");
 
 			var collectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
@@ -625,8 +656,9 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
+			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
 			collectorClient.StatusCode = HttpStatusCode.InternalServerError;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
@@ -651,7 +683,8 @@ namespace SGL.Analytics.Client.Tests {
 			ds.UserID = userid;
 			ds.Username = "Testuser";
 			logCollectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
@@ -673,7 +706,8 @@ namespace SGL.Analytics.Client.Tests {
 			ds.UserID = userid;
 			ds.Username = null;
 			logCollectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
@@ -694,7 +728,8 @@ namespace SGL.Analytics.Client.Tests {
 			ds.UserID = null;
 			ds.Username = "Testuser";
 			logCollectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
@@ -715,7 +750,8 @@ namespace SGL.Analytics.Client.Tests {
 			ds.UserID = null;
 			ds.Username = null;
 			logCollectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
@@ -737,7 +773,8 @@ namespace SGL.Analytics.Client.Tests {
 			ds.UserID = null;
 			ds.Username = null;
 			logCollectorClient = new FakeLogCollectorClient();
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey",
+			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
+			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,

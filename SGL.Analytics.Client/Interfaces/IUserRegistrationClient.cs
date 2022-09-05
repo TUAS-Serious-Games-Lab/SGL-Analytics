@@ -1,5 +1,6 @@
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.Threading.Tasks;
 
@@ -68,7 +69,7 @@ namespace SGL.Analytics.Client {
 	/// <summary>
 	/// The interface that clients for the user registration backend need to implement.
 	/// </summary>
-	public interface IUserRegistrationClient {
+	public interface IUserRegistrationClient : IRecipientCertificatesClient {
 		/// <summary>
 		/// Asynchronously registers a new user with the given user data and the given application API token.
 		/// </summary>
@@ -76,6 +77,7 @@ namespace SGL.Analytics.Client {
 		/// <param name="appAPIToken">The API token to authenticate the application.</param>
 		/// <returns>A task representing the registration operation, providing the response from the server as its result upon completion.</returns>
 		Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken);
+
 		/// <summary>
 		/// Asynchronously performs a login operation for a user and, if successful, obtains an authorization token that can be used to make other requests as the user.
 		/// </summary>

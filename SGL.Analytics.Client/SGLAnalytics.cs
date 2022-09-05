@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
+using SGL.Utilities.Crypto.EndToEnd;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
@@ -41,6 +43,7 @@ namespace SGL.Analytics.Client {
 	/// and finishing the analytics log operations by finishing the current file, waiting for it to be written and ensuring all pending uploads are complete.
 	/// </summary>
 	public partial class SGLAnalytics {
+
 		/// <summary>
 		/// Acts as the default value for the <c>backendBaseUri</c> parameter of the constructor and can be set before instantiating the object.
 		/// It defaults to localhost for testing. Thus, released applications need to either set this property before instantiating SGL Analytics or pass a <c>backendBaseUri</c> to the constructor.
@@ -55,6 +58,9 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="appName">The technical name of the application for which analytics logs are recorded. This is used for identifying the application in the backend and the application must be registered there for log collection and user registration to work properly.</param>
 		/// <param name="appAPIToken">The API token assigned to the application in the backend. This is used as an additional security layer in the communication with the backend.</param>
+		/// <param name="recipientCertificateValidator">
+		/// Validates the certificates of recipients to determine the authorized recipients for end-to-end encrypted data.
+		/// </param>
 		/// <param name="backendBaseUri">
 		/// The base URI of the REST API backend. The API routes are prefixed with this and it needs to be an absolute URI to specify the domain name of the server.
 		/// It defaults to the value specified in <see cref="DefaultBackendBaseUri"/>.
@@ -82,11 +88,12 @@ namespace SGL.Analytics.Client {
 		/// Note that this does not affect the analytics logs, which log data about the application, but it is used to log data about SGL Analytics itself.
 		/// It defaults to <see cref="NullLogger{SGLAnalytics}.Instance"/> so that log messages are ignored.
 		/// </param>
-		public SGLAnalytics(string appName, string appAPIToken, Uri? backendBaseUri = null, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
+		public SGLAnalytics(string appName, string appAPIToken, ICertificateValidator recipientCertificateValidator, Uri? backendBaseUri = null, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
 			// Capture the SynchronizationContext of the 'main' thread, so we can perform tasks that need to run there by Post()ing to the context.
 			mainSyncContext = SynchronizationContext.Current ?? new SynchronizationContext();
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
+			this.recipientCertificateValidator = recipientCertificateValidator;
 			if (backendBaseUri is null) backendBaseUri = DefaultBackendBaseUri;
 			if (diagnosticsLogger is null) diagnosticsLogger = NullLogger<SGLAnalytics>.Instance;
 			logger = diagnosticsLogger;
@@ -146,6 +153,14 @@ namespace SGL.Analytics.Client {
 				logger.LogInformation("Starting user registration process...");
 				var secret = SecretGenerator.Instance.GenerateSecret(UserRegistrationSecretLength);
 				var userDTO = userData.MakeDTO(appName, secret);
+				var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(userRegistrationClient);
+				var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
+				if (!certList.Any() && userDTO.StudySpecificProperties.Any()) {
+					const string msg = "Can't send registration because no authorized recipients for study-specific properties were found.";
+					logger.LogError(msg);
+					throw new InvalidOperationException(msg);
+				}
+				var keyEncryptor = new KeyEncryptor(certList, randomGenerator, allowSharedMessageKeyPair);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
 				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
