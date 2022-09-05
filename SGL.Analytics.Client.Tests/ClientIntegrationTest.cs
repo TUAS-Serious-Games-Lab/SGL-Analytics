@@ -115,12 +115,12 @@ namespace SGL.Analytics.Client.Tests {
 			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1").UsingPost()
 					.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
 					.WithHeader("Content-Type", new ExactMatcher("application/json"))
-					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
+					.WithBody(b => b?.DetectedBodyType == WireMock.Types.BodyType.Json))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.Created)
 					.WithBodyAsJson(new UserRegistrationResultDTO(userId), true));
 			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1/login").UsingPost()
 					.WithHeader("Content-Type", new ExactMatcher("application/json"))
-					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
+					.WithBody(b => b?.DetectedBodyType == WireMock.Types.BodyType.Json))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
 					.WithBodyAsJson(new LoginResponseDTO(new AuthorizationToken("OK"))));
 			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1/recipient-certificates").UsingGet()
