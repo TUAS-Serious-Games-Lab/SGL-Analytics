@@ -3,6 +3,7 @@ using CommandLine.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,20 +22,22 @@ namespace SGL.Analytics.Client.Example {
 			public string AppApiToken { get; set; } = "FUfq7iwB43fCkIXLlRSiSy2CKrm6FWmAt/L3kzAqELU=";
 			[Option('u', "username", HelpText = "Username to use for the registration if not already registered.\nIf not specified, an alphanumeric random string is used.\nUse --no-username to register with empty username.")]
 			public string Username { get; set; } = StringGenerator.GenerateRandomWord(8);
-			[Option("no-username", HelpText = "Register without username field.") ]
+			[Option("no-username", HelpText = "Register without username field.")]
 			public bool NoUsername { get; set; } = false;
 			[Option('v', "verbose", HelpText = "Produce extra output. (Draws the board after each move.)")]
 			public bool Verbose { get; set; } = false;
 			[Option('l', "log-level", HelpText = "Diagnostics logging level for SGL Analytics.")]
 			public LogLevel LoggingLevel { get; set; } = LogLevel.None;
-			[Option('i',"user-id-file", HelpText ="Write registered user id to the given file.")]
+			[Option('i', "user-id-file", HelpText = "Write registered user id to the given file.")]
 			public string? UserIdFile { get; set; } = null;
-			[Option('o',"logs-list", HelpText = "Write the list of IDs of the recorded game logs.")]
+			[Option('o', "logs-list", HelpText = "Write the list of IDs of the recorded game logs.")]
 			public string? LogsListFile { get; set; } = null;
-			[Option('k',"keep", HelpText = "Keep the recorded files in the archive/ subdirectory under the log storage directory after upload.")]
+			[Option('k', "keep", HelpText = "Keep the recorded files in the archive/ subdirectory under the log storage directory after upload.")]
 			public bool KeepFiles { get; set; } = false;
 			[Option('d', "logs-directory", HelpText = "Override the storage directory to use for log storage.")]
 			public string? LogsDirectory { get; set; } = null;
+			[Option('s', "recipient-signer-pem", HelpText = "The PEM file containing the trusted signer certificates for authorized recipients. Must be specified, unless the local dev demo certificate shall be used.")]
+			public string? RecipientSignerPemFile { get; set; } = null;
 
 			[Value(0, MetaName = "MOVES_FILES", HelpText = "The name(s) / path(s) of one or more files containing the moves to make in the simulated TicTacToe game in order. " +
 				"Each line in these files should consist of two numbers in range 1-3, separated by a comma, that indicate the column and row position to mark. " +
@@ -49,7 +52,8 @@ namespace SGL.Analytics.Client.Example {
 					new Options() {
 						AppApiToken = StringGenerator.GenerateRandomWord(32),
 						Username = "demouser",
-						MovesFiles = new []{ "moves.txt" }
+						MovesFiles = new []{ "moves.txt" },
+						RecipientSignerPemFile = "Signers.pem"
 					}),
 			};
 		}
@@ -64,15 +68,31 @@ namespace SGL.Analytics.Client.Example {
 			}));
 		}
 
-		async static Task RealMain(Options opts) {
-			ILogger<SGLAnalytics> logger = NullLogger<SGLAnalytics>.Instance;
-			if (opts.LoggingLevel < LogLevel.None) {
-				logger = LoggerFactory.Create(config => config.ClearProviders().AddConsole().SetMinimumLevel(opts.LoggingLevel)).CreateLogger<SGLAnalytics>();
+
+		private static ICertificateValidator GetRecipientCertificateValidator(Options opts, ILoggerFactory loggerFactory) {
+			if (opts.RecipientSignerPemFile == null) {
+				return new CACertTrustValidator(localDevDemoSignerCertificatesPem, ignoreValidityPeriod: true,
+					loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
 			}
+			else {
+				using var reader = File.OpenText(opts.RecipientSignerPemFile);
+				return new CACertTrustValidator(reader, opts.RecipientSignerPemFile, ignoreValidityPeriod: true,
+					loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
+			}
+		}
+
+		async static Task RealMain(Options opts) {
+			ILoggerFactory loggerFactory = NullLoggerFactory.Instance;
+			if (opts.LoggingLevel < LogLevel.None) {
+				loggerFactory = LoggerFactory.Create(config => config.ClearProviders().AddConsole().SetMinimumLevel(opts.LoggingLevel));
+			}
+			var logger = loggerFactory.CreateLogger<SGLAnalytics>();
+
 			var rootDS = new FileRootDataStore(opts.AppName);
 			var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(rootDS.DataDirectory, "DataLogs"));
 			logStorage.Archiving = opts.KeepFiles;
-			SGLAnalytics analytics = new SGLAnalytics(opts.AppName, opts.AppApiToken,
+			var recipientCertificateValidator = GetRecipientCertificateValidator(opts, loggerFactory);
+			SGLAnalytics analytics = new SGLAnalytics(opts.AppName, opts.AppApiToken, recipientCertificateValidator,
 				rootDataStore: rootDS,
 				logStorage: logStorage,
 				logCollectorClient: new LogCollectorRestClient(opts.Backend),
@@ -80,7 +100,7 @@ namespace SGL.Analytics.Client.Example {
 				diagnosticsLogger: logger);
 			if (!analytics.IsRegistered()) {
 				try {
-					await analytics.RegisterAsync(new BaseUserData(opts.NoUsername ? null: opts.Username));
+					await analytics.RegisterAsync(new BaseUserData(opts.NoUsername ? null : opts.Username));
 				}
 				catch (Exception ex) {
 					await Console.Error.WriteLineAsync($"Registration Error: {ex.Message}");
@@ -88,7 +108,7 @@ namespace SGL.Analytics.Client.Example {
 				}
 			}
 			if (opts.UserIdFile != null) {
-				await File.WriteAllLinesAsync(opts.UserIdFile,Enumerable.Repeat(rootDS.UserID.ToString() ?? "<null>",1));
+				await File.WriteAllLinesAsync(opts.UserIdFile, Enumerable.Repeat(rootDS.UserID.ToString() ?? "<null>", 1));
 			}
 			TicTacToeController gameController = new TicTacToeController(analytics, opts.Verbose, Console.Out);
 			if (opts.MovesFiles.Any()) {
@@ -114,5 +134,40 @@ namespace SGL.Analytics.Client.Example {
 				await File.WriteAllLinesAsync(opts.LogsListFile, logIds);
 			}
 		}
+		private const string localDevDemoSignerCertificatesPem = @"
+-----BEGIN CERTIFICATE-----
+MIIFqTCCA5GgAwIBAgIUaWo9dqppcoIxmTaCl/cdEIyiiRIwDQYJKoZIhvcNAQEL
+BQAwZDELMAkGA1UEBhMCREUxGTAXBgNVBAoMEEhvY2hzY2h1bGUgVHJpZXIxJDAi
+BgNVBAsMG1NlbmlvciBIZWFsdGggR2FtZXMgUHJvamVjdDEUMBIGA1UEAwwLVGVz
+dCBTaWduZXIwHhcNMjIwOTAxMTIwODQ1WhcNMzIwODMxMTIwODQ1WjBkMQswCQYD
+VQQGEwJERTEZMBcGA1UECgwQSG9jaHNjaHVsZSBUcmllcjEkMCIGA1UECwwbU2Vu
+aW9yIEhlYWx0aCBHYW1lcyBQcm9qZWN0MRQwEgYDVQQDDAtUZXN0IFNpZ25lcjCC
+AiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAJqMM9IVEFEGTI4h6zxIiZBd
+11vosyI6juQ+V6j+QlCIJUrh0y1AmePDZKHfymNMd3vj3plUsVquQo3LyEbzfH6R
+QyZUZGEiqFfsXhGbtmPYYSx+9uwQKn7xOiYWtdDJx1ZRdX0wYO8T0QxYBX3r4Ead
+uymHz4yXmJUShnuSzwWNF8BA1RTmfZD4r9u4u2MqEn6FzLJu9BOCWG8BFBO3cAsM
+UfmFAnrTKWm8pTW7xUu6D6aJc7dn3SbpNmqJPNSfWJLGmtWpJThYKH22CAlbrD98
+tN1Yr6cibG3P4O8mJLN/Mz3SREDQPjOwNiH91CxZq2GE2rdcMArKaPZ3hecGGagM
+eCLjRqcPTlpxT81xBidw4acQQhwhJl9HjVwNrdDWadIkmwUKXWU2qjU4EziZ01O1
+7HQz3ApjdvBd+gckhak071ac/pHt9aT6aeN3dk21hqOLMEYtvSsfFf4cnQE5zSxp
+Y2Q1MpE3B5GyBwWso0vlLu7KrUNqGwa0puEgv+j0qcckkEJJZuaqkoTEZ+WTC7Bf
+UYojxXun2MHecF1hIqw/k7YIcmNXuLYq5OQrpuMOTF+KB2kjeP8mHYbvah19DVJg
+r9xKMlj+fSZ5iHrvL9kTfb6f4WLm5kptyW3XH+1/jaJ48M5j1jjiKcXLl+grOsLc
+fGucytaPJ4mcBo4p/uwtAgMBAAGjUzBRMB0GA1UdDgQWBBThPtKWdjOLXIQtvX2X
+IIk75e95UjAfBgNVHSMEGDAWgBThPtKWdjOLXIQtvX2XIIk75e95UjAPBgNVHRMB
+Af8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4ICAQCRZ/3/OCeDsqJ/jGfgOqiv1Ddo
+lQo5jiDCrHt8JDC0Y2yNlGuKUHQUGfIYcg7Rr+Q3p1LEGIbuJv9eLo4pVjRSDrqR
+LE2Fli3Jtz1+vTcZONjN6mfrOZ2IdRrfBdHkYXTzjl0mdGbHaRQYPQfN3xGRM6jv
+4WLmnN4iY6heh+007V+R3qtK8rxp9kuEsEK7ogDkJd9LNzW1+QmbmcQ7CL4snFev
+O0CWjKs4qD368gcq3ixJOqwSOrov+D5HZuPidUvu4e/PCfMybI+cSnRQygkSwU+z
+IrwlKcUiDJ1r6N6VcwoKH6oWXx7JXP0tB+WJSazgtemWFPfEscXvRTKpwX9O2e5/
+NCzVXonK4w006wPLKbNsUDJHOkvXh5zfgqVsjP6+KtrPbmLA4QwtPIMmlVxl9PXh
+wOD/kKktnbpU1A1JrNzIXB/xmWymU3UKkqLVKZjKYxP2PzBoqrGQl1edXBiZ1Lyz
+/g7t0dtcdr7HHGxfejLLPvKNClW7+rfeTfdVflU/0Jb5rF7ieosYqpxISUwsBpz/
+keh1QP5E/JsWzYWs4vJ4XhHOWQVVZbYJAJ59afYTIohS9XDzNwoLmqYCdVbYycDj
+aW0gChzvmtJMOQOMtRC2NFrF4tUlZ1GVaRIcEdm+wZpO5ossN5A9EOGRO7myP5XD
+k49uzqcMO7dHMTSH0Q==
+-----END CERTIFICATE-----
+";
 	}
 }

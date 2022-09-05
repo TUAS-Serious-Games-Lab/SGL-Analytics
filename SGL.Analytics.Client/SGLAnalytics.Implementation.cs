@@ -1,6 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto;
+using SGL.Utilities.Crypto.Certificates;
+using SGL.Utilities.Crypto.EndToEnd;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -18,6 +22,7 @@ namespace SGL.Analytics.Client {
 		private readonly object lockObject = new object();
 		private string appName;
 		private string appAPIToken;
+		private ICertificateValidator recipientCertificateValidator;
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
 		private ILogCollectorClient logCollectorClient;
@@ -54,6 +59,7 @@ namespace SGL.Analytics.Client {
 				this.logFile = logFile;
 			}
 		}
+
 
 		private async Task writePendingLogsAsync() {
 			logger.LogDebug("Started log writer to asynchronously flush log entries to disk.");

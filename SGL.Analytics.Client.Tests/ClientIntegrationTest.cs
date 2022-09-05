@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto;
+using SGL.Utilities.Crypto.Certificates;
+using SGL.Utilities.Crypto.Keys;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.Collections.Generic;
@@ -31,6 +34,15 @@ namespace SGL.Analytics.Client.Tests {
 		private SGLAnalytics analytics;
 		private bool finished = false;
 
+		private KeyPair signerKeyPair;
+		private KeyPair recipient1KeyPair;
+		private KeyPair recipient2KeyPair;
+		private Certificate signerCert;
+		private Certificate recipient1Cert;
+		private Certificate recipient2Cert;
+		private ICertificateValidator recipientCertificateValidator;
+		private string recipientCertsPem;
+
 		public ClientIntegrationTest(ITestOutputHelper output, MockServerFixture serverFixture) {
 			this.output = output;
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
@@ -45,7 +57,27 @@ namespace SGL.Analytics.Client.Tests {
 			}
 			logCollectorClient = new LogCollectorRestClient(new Uri(serverFixture.Server.Urls.First()));
 			userRegClient = new UserRegistrationRestClient(new Uri(serverFixture.Server.Urls.First()));
-			analytics = new SGLAnalytics(appName, appAPIToken,
+
+			var random = new RandomGenerator();
+			var signerDN = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Analytics"), new("ou", "Tests"), new("cn", "Test Signer") });
+			var recipient1DN = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Analytics"), new("ou", "Tests"), new("cn", "Test 1") });
+			var recipient2DN = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Analytics"), new("ou", "Tests"), new("cn", "Test 2") });
+			signerKeyPair = KeyPair.GenerateEllipticCurves(random, 521);
+			recipient1KeyPair = KeyPair.GenerateEllipticCurves(random, 521);
+			recipient2KeyPair = KeyPair.GenerateEllipticCurves(random, 521);
+			signerCert = Certificate.Generate(signerDN, signerKeyPair.Private, signerDN, signerKeyPair.Public, TimeSpan.FromHours(2), random, 128);
+			recipient1Cert = Certificate.Generate(signerDN, signerKeyPair.Private, recipient1DN, recipient1KeyPair.Public, TimeSpan.FromHours(1), random, 128);
+			recipient2Cert = Certificate.Generate(signerDN, signerKeyPair.Private, recipient2DN, recipient2KeyPair.Public, TimeSpan.FromHours(1), random, 128);
+			using var signerCertPemBuffer = new StringWriter();
+			signerCert.StoreToPem(signerCertPemBuffer);
+			using var recipientCertsPemBuffer = new StringWriter();
+			recipient1Cert.StoreToPem(recipientCertsPemBuffer);
+			recipient2Cert.StoreToPem(recipientCertsPemBuffer);
+			recipientCertsPem = recipientCertsPemBuffer.ToString();
+			recipientCertificateValidator = new CACertTrustValidator(signerCertPemBuffer.ToString(), ignoreValidityPeriod: false,
+				loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
+
+			analytics = new SGLAnalytics(appName, appAPIToken, recipientCertificateValidator,
 				rootDataStore: rootDS,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
@@ -74,6 +106,11 @@ namespace SGL.Analytics.Client.Tests {
 						.WithHeader("LogFileId", guidMatcher)
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v1/recipient-certificates").UsingGet()
+						.WithParam("appName", appName)
+						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken)))
+					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
+						.WithBody(recipientCertsPem));
 			Guid userId = Guid.NewGuid();
 			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1").UsingPost()
 					.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
@@ -86,6 +123,11 @@ namespace SGL.Analytics.Client.Tests {
 					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
 					.WithBodyAsJson(new LoginResponseDTO(new AuthorizationToken("OK"))));
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1/recipient-certificates").UsingGet()
+					.WithParam("appName", appName)
+					.WithHeader("App-API-Token", new ExactMatcher(appAPIToken)))
+				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
+					.WithBody(recipientCertsPem));
 
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test A" });
