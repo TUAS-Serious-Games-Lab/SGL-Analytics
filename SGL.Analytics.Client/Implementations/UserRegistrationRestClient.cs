@@ -55,9 +55,9 @@ namespace SGL.Analytics.Client {
 		public const string RecipientsApiRouteDefault = "api/analytics/user/v1/recipient-certificates";
 
 		/// <summary>
-		/// The base URI of the backend server to use, defaults to <see cref="SGLAnalytics.DefaultBackendBaseUri"/>.
+		/// The base URI of the backend server to use, defaults to <see cref="SglAnalytics.DefaultBackendBaseUri"/>.
 		/// </summary>
-		public Uri BackendServerBaseUri { get; set; } = SGLAnalytics.DefaultBackendBaseUri;
+		public Uri BackendServerBaseUri { get; set; } = SglAnalytics.DefaultBackendBaseUri;
 		/// <summary>
 		/// The relative API route to use for user registration, defaults to <see cref="UserRegistrationApiRouteDefault"/>.
 		/// </summary>
@@ -82,9 +82,9 @@ namespace SGL.Analytics.Client {
 		private Uri recipientsApiRoute;
 
 		/// <summary>
-		/// Creates a client object that uses <see cref="SGLAnalytics.DefaultBackendBaseUri"/> as the backend server URI.
+		/// Creates a client object that uses <see cref="SglAnalytics.DefaultBackendBaseUri"/> as the backend server URI.
 		/// </summary>
-		public UserRegistrationRestClient() : this(SGLAnalytics.DefaultBackendBaseUri) { }
+		public UserRegistrationRestClient() : this(SglAnalytics.DefaultBackendBaseUri) { }
 		/// <summary>
 		/// Creates a client object that uses the given base URI of the backend server and the standard API URIs, <c>api/analytics/user/v1</c> for registration, and <c>api/analytics/user/v1/login</c> for login.
 		/// </summary>

@@ -14,8 +14,8 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Client {
 
 	/// <summary>
-	/// Can be used to annotate types used as event representations for <see cref="SGLAnalytics.RecordEvent(string, ICloneable)"/> or
-	/// <see cref="SGLAnalytics.RecordEventUnshared(string, object)"/> to use an event type name that differs from the types name.
+	/// Can be used to annotate types used as event representations for <see cref="SglAnalytics.RecordEvent(string, ICloneable)"/> or
+	/// <see cref="SglAnalytics.RecordEventUnshared(string, object)"/> to use an event type name that differs from the types name.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Class)]
 	public class EventTypeAttribute : Attribute {
@@ -42,7 +42,7 @@ namespace SGL.Analytics.Client {
 	/// The public methods allow registering the user, beginning a new analytics log file, recording events and snapshots into the current analytics log file,
 	/// and finishing the analytics log operations by finishing the current file, waiting for it to be written and ensuring all pending uploads are complete.
 	/// </summary>
-	public partial class SGLAnalytics {
+	public partial class SglAnalytics {
 
 		/// <summary>
 		/// Acts as the default value for the <c>backendBaseUri</c> parameter of the constructor and can be set before instantiating the object.
@@ -88,14 +88,14 @@ namespace SGL.Analytics.Client {
 		/// Note that this does not affect the analytics logs, which log data about the application, but it is used to log data about SGL Analytics itself.
 		/// It defaults to <see cref="NullLogger{SGLAnalytics}.Instance"/> so that log messages are ignored.
 		/// </param>
-		public SGLAnalytics(string appName, string appAPIToken, ICertificateValidator recipientCertificateValidator, Uri? backendBaseUri = null, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
+		public SglAnalytics(string appName, string appAPIToken, ICertificateValidator recipientCertificateValidator, Uri? backendBaseUri = null, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SglAnalytics>? diagnosticsLogger = null) {
 			// Capture the SynchronizationContext of the 'main' thread, so we can perform tasks that need to run there by Post()ing to the context.
 			mainSyncContext = SynchronizationContext.Current ?? new SynchronizationContext();
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
 			this.recipientCertificateValidator = recipientCertificateValidator;
 			if (backendBaseUri is null) backendBaseUri = DefaultBackendBaseUri;
-			if (diagnosticsLogger is null) diagnosticsLogger = NullLogger<SGLAnalytics>.Instance;
+			if (diagnosticsLogger is null) diagnosticsLogger = NullLogger<SglAnalytics>.Instance;
 			logger = diagnosticsLogger;
 			if (rootDataStore is null) rootDataStore = new FileRootDataStore(appName);
 			this.rootDataStore = rootDataStore;

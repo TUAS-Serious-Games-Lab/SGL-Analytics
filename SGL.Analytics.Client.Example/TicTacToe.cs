@@ -146,12 +146,12 @@ namespace SGL.Analytics.Client.Example {
 
 	public class TicTacToeController {
 		private TicTacToe board = new TicTacToe();
-		private SGLAnalytics analytics;
+		private SglAnalytics analytics;
 		private bool verbose;
 		private TextWriter output;
 		public List<Guid> LogIds { get; } = new List<Guid>();
 
-		public TicTacToeController(SGLAnalytics analytics, bool verbose, TextWriter output) {
+		public TicTacToeController(SglAnalytics analytics, bool verbose, TextWriter output) {
 			this.analytics = analytics;
 			this.verbose = verbose;
 			this.output = output;

@@ -18,7 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
-	public partial class SGLAnalytics {
+	public partial class SglAnalytics {
 		private readonly object lockObject = new object();
 		private string appName;
 		private string appAPIToken;
@@ -40,7 +40,7 @@ namespace SGL.Analytics.Client {
 
 		private Task? logUploader = null;
 
-		private ILogger<SGLAnalytics> logger;
+		private ILogger<SglAnalytics> logger;
 
 		private class EnumNamingPolicy : JsonNamingPolicy {
 			public override string ConvertName(string name) => name;

@@ -29,9 +29,9 @@ namespace SGL.Analytics.Client {
 		// TODO: Support configuration of URIs through general configuration system.
 
 		/// <summary>
-		/// Creates a client object that uses <see cref="SGLAnalytics.DefaultBackendBaseUri"/> as the backend server URI.
+		/// Creates a client object that uses <see cref="SglAnalytics.DefaultBackendBaseUri"/> as the backend server URI.
 		/// </summary>
-		public LogCollectorRestClient() : this(SGLAnalytics.DefaultBackendBaseUri) { }
+		public LogCollectorRestClient() : this(SglAnalytics.DefaultBackendBaseUri) { }
 		/// <summary>
 		/// Creates a client object that uses the given base URI of the backend server and the standard API URI <c>api/analytics/log/v1</c>.
 		/// </summary>

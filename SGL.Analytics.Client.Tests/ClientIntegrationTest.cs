@@ -31,7 +31,7 @@ namespace SGL.Analytics.Client.Tests {
 		private FileRootDataStore rootDS;
 		private LogCollectorRestClient logCollectorClient;
 		private UserRegistrationRestClient userRegClient;
-		private SGLAnalytics analytics;
+		private SglAnalytics analytics;
 		private bool finished = false;
 
 		private KeyPair signerKeyPair;
@@ -77,12 +77,12 @@ namespace SGL.Analytics.Client.Tests {
 			recipientCertificateValidator = new CACertTrustValidator(signerCertPemBuffer.ToString(), ignoreValidityPeriod: false,
 				loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
 
-			analytics = new SGLAnalytics(appName, appAPIToken, recipientCertificateValidator,
+			analytics = new SglAnalytics(appName, appAPIToken, recipientCertificateValidator,
 				rootDataStore: rootDS,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 		}
 
 		public class SimpleTestEvent {

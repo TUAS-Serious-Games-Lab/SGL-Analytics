@@ -86,13 +86,13 @@ namespace SGL.Analytics.Client.Example {
 			if (opts.LoggingLevel < LogLevel.None) {
 				loggerFactory = LoggerFactory.Create(config => config.ClearProviders().AddConsole().SetMinimumLevel(opts.LoggingLevel));
 			}
-			var logger = loggerFactory.CreateLogger<SGLAnalytics>();
+			var logger = loggerFactory.CreateLogger<SglAnalytics>();
 
 			var rootDS = new FileRootDataStore(opts.AppName);
 			var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(rootDS.DataDirectory, "DataLogs"));
 			logStorage.Archiving = opts.KeepFiles;
 			var recipientCertificateValidator = GetRecipientCertificateValidator(opts, loggerFactory);
-			SGLAnalytics analytics = new SGLAnalytics(opts.AppName, opts.AppApiToken, recipientCertificateValidator,
+			SglAnalytics analytics = new SglAnalytics(opts.AppName, opts.AppApiToken, recipientCertificateValidator,
 				rootDataStore: rootDS,
 				logStorage: logStorage,
 				logCollectorClient: new LogCollectorRestClient(opts.Backend),

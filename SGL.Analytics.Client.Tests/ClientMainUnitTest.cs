@@ -28,7 +28,7 @@ namespace SGL.Analytics.Client.Tests {
 		private Certificate recipient1Cert;
 		private Certificate recipient2Cert;
 		private ICertificateValidator recipientCertificateValidator;
-		private SGLAnalytics analytics;
+		private SglAnalytics analytics;
 		private ITestOutputHelper output;
 		private ILoggerFactory loggerFactory;
 
@@ -51,12 +51,12 @@ namespace SGL.Analytics.Client.Tests {
 				loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
 			userRegClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			this.output = output;
 		}
 
@@ -493,12 +493,12 @@ namespace SGL.Analytics.Client.Tests {
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			await analytics.FinishAsync();
 
 			Assert.Equal(5, collectorClient.UploadedLogFileIds.Count);
@@ -514,12 +514,12 @@ namespace SGL.Analytics.Client.Tests {
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
 			collectorClient.StatusCode = HttpStatusCode.InternalServerError;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			List<Guid> logIds = new();
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
@@ -528,12 +528,12 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Empty(collectorClient.UploadedLogFileIds);
 
 			collectorClient.StatusCode = HttpStatusCode.NoContent;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			await analytics.FinishAsync();
 			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
 		}
@@ -544,12 +544,12 @@ namespace SGL.Analytics.Client.Tests {
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			List<Guid> logIds = new();
 
 			logIds.Add(analytics.StartNewLog());
@@ -621,12 +621,12 @@ namespace SGL.Analytics.Client.Tests {
 		public async Task PendingUploadsAreRetriedOnSuccessfulRegistration() {
 			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
 			ds.UserID = null;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			List<Guid> logIds = new();
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
@@ -638,12 +638,12 @@ namespace SGL.Analytics.Client.Tests {
 
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			var user = new TestUserData("Testuser") { Label = "This is a test!", SomeNumber = 42 };
 			Assert.Empty(collectorClient.UploadedLogFileIds);
 			await analytics.RegisterAsync(user);
@@ -658,12 +658,12 @@ namespace SGL.Analytics.Client.Tests {
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
 			collectorClient.StatusCode = HttpStatusCode.InternalServerError;
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: collectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			List<Guid> logIds = new();
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
@@ -684,19 +684,19 @@ namespace SGL.Analytics.Client.Tests {
 			ds.Username = "Testuser";
 			logCollectorClient = new FakeLogCollectorClient();
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
 			await analytics.FinishAsync();
 			var loginReq = Assert.IsAssignableFrom<IdBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
 			Assert.Equal(userid, loginReq.UserId);
-			Assert.Equal("SGLAnalyticsUnitTests", loginReq.AppName);
+			Assert.Equal("SglAnalyticsUnitTests", loginReq.AppName);
 			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
 		}
 		[Fact]
@@ -707,19 +707,19 @@ namespace SGL.Analytics.Client.Tests {
 			ds.Username = null;
 			logCollectorClient = new FakeLogCollectorClient();
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
 			await analytics.FinishAsync();
 			var loginReq = Assert.IsAssignableFrom<IdBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
 			Assert.Equal(userid, loginReq.UserId);
-			Assert.Equal("SGLAnalyticsUnitTests", loginReq.AppName);
+			Assert.Equal("SglAnalyticsUnitTests", loginReq.AppName);
 			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
 		}
 		[Fact]
@@ -729,19 +729,19 @@ namespace SGL.Analytics.Client.Tests {
 			ds.Username = "Testuser";
 			logCollectorClient = new FakeLogCollectorClient();
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
 			await analytics.FinishAsync();
 			var loginReq = Assert.IsAssignableFrom<UsernameBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
 			Assert.Equal("Testuser", loginReq.Username);
-			Assert.Equal("SGLAnalyticsUnitTests", loginReq.AppName);
+			Assert.Equal("SglAnalyticsUnitTests", loginReq.AppName);
 			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
 		}
 		[Fact]
@@ -751,12 +751,12 @@ namespace SGL.Analytics.Client.Tests {
 			ds.Username = null;
 			logCollectorClient = new FakeLogCollectorClient();
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			await analytics.RegisterAsync(new BaseUserData("Testuser"));
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
@@ -764,7 +764,7 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync();
 			var loginReq = Assert.IsAssignableFrom<IdBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
 			Assert.Equal(ds.UserID, loginReq.UserId);
-			Assert.Equal("SGLAnalyticsUnitTests", loginReq.AppName);
+			Assert.Equal("SglAnalyticsUnitTests", loginReq.AppName);
 			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
 		}
 		[Fact]
@@ -774,12 +774,12 @@ namespace SGL.Analytics.Client.Tests {
 			ds.Username = null;
 			logCollectorClient = new FakeLogCollectorClient();
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SGLAnalytics("SGLAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
 				rootDataStore: ds,
 				logStorage: storage,
 				logCollectorClient: logCollectorClient,
 				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
 			await analytics.RegisterAsync(new BaseUserData());
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
@@ -787,7 +787,7 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync();
 			var loginReq = Assert.IsAssignableFrom<IdBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
 			Assert.Equal(ds.UserID, loginReq.UserId);
-			Assert.Equal("SGLAnalyticsUnitTests", loginReq.AppName);
+			Assert.Equal("SglAnalyticsUnitTests", loginReq.AppName);
 			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
 		}
 	}
