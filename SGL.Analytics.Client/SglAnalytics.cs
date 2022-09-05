@@ -111,6 +111,15 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		/// <summary>
+		/// Instantiates a client facade object using the given app credentials and http client, configured by the given <paramref name="configuration"/> function.
+		/// </summary>
+		/// <param name="appName">The technical name of the application for which analytics logs are recorded. This is used for identifying the application in the backend and the application must be registered there for log collection and user registration to work properly.</param>
+		/// <param name="appAPIToken">The API token assigned to the application in the backend. This is used as an additional security layer in the communication with the backend.</param>
+		/// <param name="httpClient">
+		/// The <see cref="HttpClient"/> that the client object shall use to communicate with the backend.
+		/// The <see cref="HttpClient.BaseAddress"/> is must be set to the base adress of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
+		/// <param name="configuration">A configurator function that performs fluent-style configuration for the client object.</param>
 		public SglAnalytics(string appName, string appAPIToken, HttpClient httpClient, Action<ISglAnalyticsConfigurator> configuration) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
@@ -147,6 +156,10 @@ namespace SGL.Analytics.Client {
 		/// Gets the technical name of the application that uses this SGL Analytics instance, as specified in the constructor.
 		/// </summary>
 		public string AppName { get => appName; }
+
+		/// <summary>
+		/// The <see cref="ILoggerFactory"/> object that this client uses for logging.
+		/// </summary>
 		public ILoggerFactory LoggerFactory { get; }
 
 		/// <summary>

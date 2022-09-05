@@ -5,6 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
+	/// <summary>
+	/// A base interface for all client components that provide a list of associated authorized data recipients to allow common code for working with these lists.
+	/// </summary>
 	public interface IRecipientCertificatesClient {
 		/// <summary>
 		/// Asynchronously obtains the certificates for the authorized recipients from the backend and adds them to <paramref name="targetCertificateStore"/>.
