@@ -26,7 +26,7 @@ namespace SGL.Analytics.Client.Tests {
 		public UserRegistrationRestClientUnitTest(MockServerFixture serverFixture, ITestOutputHelper output) {
 			this.serverFixture = serverFixture;
 			this.output = output;
-			client = new UserRegistrationRestClient(new Uri(serverFixture.Server.Urls.First()));
+			client = new UserRegistrationRestClient(serverFixture.Server.CreateClient());
 		}
 
 		public void Dispose() {
