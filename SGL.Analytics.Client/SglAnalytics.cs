@@ -52,66 +52,6 @@ namespace SGL.Analytics.Client {
 		// TODO: Replace default URL with registered URL of Prod backend when available.
 
 		/// <summary>
-		/// Initializes the SGL Analytics service with the given configuration parameters.
-		/// The parameters can be used to adapt SGL Analytics for the different applications and their environment, or may be used to replace some functionality with a dummy for testing purposes.
-		/// If an parameter is passed as <see langword="null"/>, as is their syntactic default, it is internally set to a resonable default. These semantic defaults are documented with each optional parameter.
-		/// </summary>
-		/// <param name="appName">The technical name of the application for which analytics logs are recorded. This is used for identifying the application in the backend and the application must be registered there for log collection and user registration to work properly.</param>
-		/// <param name="appAPIToken">The API token assigned to the application in the backend. This is used as an additional security layer in the communication with the backend.</param>
-		/// <param name="recipientCertificateValidator">
-		/// Validates the certificates of recipients to determine the authorized recipients for end-to-end encrypted data.
-		/// </param>
-		/// <param name="backendBaseUri">
-		/// The base URI of the REST API backend. The API routes are prefixed with this and it needs to be an absolute URI to specify the domain name of the server.
-		/// It defaults to the value specified in <see cref="DefaultBackendBaseUri"/>.
-		/// </param>
-		/// <param name="rootDataStore">
-		/// Specifies the root data store implementation to use. This is used to store the user registration data (usually on the device).
-		/// It defaults to a <see cref="FileRootDataStore"/> that stores the data in a JSON file under a subfolder, named after <paramref name="appName"/> in the user's application data folder
-		/// as identified by <see cref="Environment.SpecialFolder.ApplicationData"/>.
-		/// </param>
-		/// <param name="logStorage">
-		/// Specifies the local analytics log storage implementation to use. This is used to manage the locally stored analytics log files.
-		/// It defaults to a <see cref="DirectoryLogStorage"/>, storing the logs as compressed files under a subfolder named <c>DataLogs</c> under the <see cref="IRootDataStore.DataDirectory"/>
-		/// property of <paramref name="rootDataStore"/>, using the file timestamps to store the time metadata of the log, and deleting logs after they are uploaded (instead of archiving them).
-		/// </param>
-		/// <param name="logCollectorClient">
-		/// Specifies the client implementation to use for the log collector backend.
-		/// It defaults to using a <see cref="LogCollectorRestClient"/> that uses REST API calls to the backend specified by <paramref name="backendBaseUri"/>.
-		/// </param>
-		/// <param name="userRegistrationClient">
-		/// Specifies the client implementation to use for the user registration backend.
-		/// It defaults to using a <see cref="UserRegistrationRestClient"/> that uses REST API calls to the backend specified by <paramref name="backendBaseUri"/>.
-		/// </param>
-		/// <param name="diagnosticsLogger">
-		/// Allows providing an <see cref="ILogger{SGLAnalytics}"/> to which SGL Analytics should log its internal diagnostic log events and possible errors.
-		/// Note that this does not affect the analytics logs, which log data about the application, but it is used to log data about SGL Analytics itself.
-		/// It defaults to <see cref="NullLogger{SGLAnalytics}.Instance"/> so that log messages are ignored.
-		/// </param>
-		public SglAnalytics(string appName, string appAPIToken, ICertificateValidator recipientCertificateValidator, Uri? backendBaseUri = null, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SglAnalytics>? diagnosticsLogger = null) {
-			// Capture the SynchronizationContext of the 'main' thread, so we can perform tasks that need to run there by Post()ing to the context.
-			mainSyncContext = SynchronizationContext.Current ?? new SynchronizationContext();
-			this.appName = appName;
-			this.appAPIToken = appAPIToken;
-			cryptoConfig = new CryptoConfig();
-			this.recipientCertificateValidator = recipientCertificateValidator;
-			if (backendBaseUri is null) backendBaseUri = DefaultBackendBaseUri;
-			if (diagnosticsLogger is null) diagnosticsLogger = NullLogger<SglAnalytics>.Instance;
-			logger = diagnosticsLogger;
-			if (rootDataStore is null) rootDataStore = new FileRootDataStore(appName);
-			this.rootDataStore = rootDataStore;
-			if (logStorage is null) logStorage = new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"));
-			this.logStorage = logStorage;
-			if (logCollectorClient is null) logCollectorClient = new LogCollectorRestClient(backendBaseUri);
-			this.logCollectorClient = logCollectorClient;
-			if (userRegistrationClient is null) userRegistrationClient = new UserRegistrationRestClient(backendBaseUri);
-			this.userRegistrationClient = userRegistrationClient;
-			if (IsRegistered()) {
-				startUploadingExistingLogs();
-			}
-		}
-
-		/// <summary>
 		/// Instantiates a client facade object using the given app credentials and http client, configured by the given <paramref name="configuration"/> function.
 		/// </summary>
 		/// <param name="appName">The technical name of the application for which analytics logs are recorded. This is used for identifying the application in the backend and the application must be registered there for log collection and user registration to work properly.</param>
