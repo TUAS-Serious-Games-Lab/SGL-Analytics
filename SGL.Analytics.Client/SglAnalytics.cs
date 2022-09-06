@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Utilities;
+using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.EndToEnd;
 using System;
@@ -14,8 +15,8 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Client {
 
 	/// <summary>
-	/// Can be used to annotate types used as event representations for <see cref="SGLAnalytics.RecordEvent(string, ICloneable)"/> or
-	/// <see cref="SGLAnalytics.RecordEventUnshared(string, object)"/> to use an event type name that differs from the types name.
+	/// Can be used to annotate types used as event representations for <see cref="SglAnalytics.RecordEvent(string, ICloneable)"/> or
+	/// <see cref="SglAnalytics.RecordEventUnshared(string, object)"/> to use an event type name that differs from the types name.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Class)]
 	public class EventTypeAttribute : Attribute {
@@ -42,8 +43,7 @@ namespace SGL.Analytics.Client {
 	/// The public methods allow registering the user, beginning a new analytics log file, recording events and snapshots into the current analytics log file,
 	/// and finishing the analytics log operations by finishing the current file, waiting for it to be written and ensuring all pending uploads are complete.
 	/// </summary>
-	public partial class SGLAnalytics {
-
+	public partial class SglAnalytics : IAsyncDisposable {
 		/// <summary>
 		/// Acts as the default value for the <c>backendBaseUri</c> parameter of the constructor and can be set before instantiating the object.
 		/// It defaults to localhost for testing. Thus, released applications need to either set this property before instantiating SGL Analytics or pass a <c>backendBaseUri</c> to the constructor.
@@ -52,59 +52,34 @@ namespace SGL.Analytics.Client {
 		// TODO: Replace default URL with registered URL of Prod backend when available.
 
 		/// <summary>
-		/// Initializes the SGL Analytics service with the given configuration parameters.
-		/// The parameters can be used to adapt SGL Analytics for the different applications and their environment, or may be used to replace some functionality with a dummy for testing purposes.
-		/// If an parameter is passed as <see langword="null"/>, as is their syntactic default, it is internally set to a resonable default. These semantic defaults are documented with each optional parameter.
+		/// Instantiates a client facade object using the given app credentials and http client, configured by the given <paramref name="configuration"/> function.
 		/// </summary>
 		/// <param name="appName">The technical name of the application for which analytics logs are recorded. This is used for identifying the application in the backend and the application must be registered there for log collection and user registration to work properly.</param>
 		/// <param name="appAPIToken">The API token assigned to the application in the backend. This is used as an additional security layer in the communication with the backend.</param>
-		/// <param name="recipientCertificateValidator">
-		/// Validates the certificates of recipients to determine the authorized recipients for end-to-end encrypted data.
-		/// </param>
-		/// <param name="backendBaseUri">
-		/// The base URI of the REST API backend. The API routes are prefixed with this and it needs to be an absolute URI to specify the domain name of the server.
-		/// It defaults to the value specified in <see cref="DefaultBackendBaseUri"/>.
-		/// </param>
-		/// <param name="rootDataStore">
-		/// Specifies the root data store implementation to use. This is used to store the user registration data (usually on the device).
-		/// It defaults to a <see cref="FileRootDataStore"/> that stores the data in a JSON file under a subfolder, named after <paramref name="appName"/> in the user's application data folder
-		/// as identified by <see cref="Environment.SpecialFolder.ApplicationData"/>.
-		/// </param>
-		/// <param name="logStorage">
-		/// Specifies the local analytics log storage implementation to use. This is used to manage the locally stored analytics log files.
-		/// It defaults to a <see cref="DirectoryLogStorage"/>, storing the logs as compressed files under a subfolder named <c>DataLogs</c> under the <see cref="IRootDataStore.DataDirectory"/>
-		/// property of <paramref name="rootDataStore"/>, using the file timestamps to store the time metadata of the log, and deleting logs after they are uploaded (instead of archiving them).
-		/// </param>
-		/// <param name="logCollectorClient">
-		/// Specifies the client implementation to use for the log collector backend.
-		/// It defaults to using a <see cref="LogCollectorRestClient"/> that uses REST API calls to the backend specified by <paramref name="backendBaseUri"/>.
-		/// </param>
-		/// <param name="userRegistrationClient">
-		/// Specifies the client implementation to use for the user registration backend.
-		/// It defaults to using a <see cref="UserRegistrationRestClient"/> that uses REST API calls to the backend specified by <paramref name="backendBaseUri"/>.
-		/// </param>
-		/// <param name="diagnosticsLogger">
-		/// Allows providing an <see cref="ILogger{SGLAnalytics}"/> to which SGL Analytics should log its internal diagnostic log events and possible errors.
-		/// Note that this does not affect the analytics logs, which log data about the application, but it is used to log data about SGL Analytics itself.
-		/// It defaults to <see cref="NullLogger{SGLAnalytics}.Instance"/> so that log messages are ignored.
-		/// </param>
-		public SGLAnalytics(string appName, string appAPIToken, ICertificateValidator recipientCertificateValidator, Uri? backendBaseUri = null, IRootDataStore? rootDataStore = null, ILogStorage? logStorage = null, ILogCollectorClient? logCollectorClient = null, IUserRegistrationClient? userRegistrationClient = null, ILogger<SGLAnalytics>? diagnosticsLogger = null) {
-			// Capture the SynchronizationContext of the 'main' thread, so we can perform tasks that need to run there by Post()ing to the context.
-			mainSyncContext = SynchronizationContext.Current ?? new SynchronizationContext();
+		/// <param name="httpClient">
+		/// The <see cref="HttpClient"/> that the client object shall use to communicate with the backend.
+		/// The <see cref="HttpClient.BaseAddress"/> is must be set to the base adress of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
+		/// <param name="configuration">A configurator function that performs fluent-style configuration for the client object.</param>
+		public SglAnalytics(string appName, string appAPIToken, HttpClient httpClient, Action<ISglAnalyticsConfigurator> configuration) {
 			this.appName = appName;
 			this.appAPIToken = appAPIToken;
-			this.recipientCertificateValidator = recipientCertificateValidator;
-			if (backendBaseUri is null) backendBaseUri = DefaultBackendBaseUri;
-			if (diagnosticsLogger is null) diagnosticsLogger = NullLogger<SGLAnalytics>.Instance;
-			logger = diagnosticsLogger;
-			if (rootDataStore is null) rootDataStore = new FileRootDataStore(appName);
-			this.rootDataStore = rootDataStore;
-			if (logStorage is null) logStorage = new DirectoryLogStorage(Path.Combine(rootDataStore.DataDirectory, "DataLogs"));
-			this.logStorage = logStorage;
-			if (logCollectorClient is null) logCollectorClient = new LogCollectorRestClient(backendBaseUri);
-			this.logCollectorClient = logCollectorClient;
-			if (userRegistrationClient is null) userRegistrationClient = new UserRegistrationRestClient(backendBaseUri);
-			this.userRegistrationClient = userRegistrationClient;
+			this.httpClient = httpClient;
+			configuration(configurator);
+			mainSyncContext = configurator.SynchronizationContextGetter();
+			dataDirectory = configurator.DataDirectorySource(new SglAnalyticsConfiguratorDataDirectorySourceArguments(appName));
+			Directory.CreateDirectory(dataDirectory);
+			var loggerFactoryBootstrapArgs = new SglAnalyticsConfiguratorFactoryArguments(appName, appAPIToken, httpClient, dataDirectory,
+				NullLoggerFactory.Instance, randomGenerator, configurator.CustomArgumentFactories);
+			LoggerFactory = configurator.LoggerFactory.Factory(loggerFactoryBootstrapArgs);
+			var factoryArgs = new SglAnalyticsConfiguratorFactoryArguments(appName, appAPIToken, httpClient, dataDirectory, LoggerFactory,
+				randomGenerator, configurator.CustomArgumentFactories);
+			logger = LoggerFactory.CreateLogger<SglAnalytics>();
+			cryptoConfig = configurator.CryptoConfig();
+			recipientCertificateValidator = configurator.RecipientCertificateValidatorFactory.Factory(factoryArgs);
+			rootDataStore = configurator.RootDataStoreFactory.Factory(factoryArgs);
+			logStorage = configurator.LogStorageFactory.Factory(factoryArgs);
+			userRegistrationClient = configurator.UserRegistrationClientFactory.Factory(factoryArgs);
+			logCollectorClient = configurator.LogCollectorClientFactory.Factory(factoryArgs);
 			if (IsRegistered()) {
 				startUploadingExistingLogs();
 			}
@@ -121,6 +96,16 @@ namespace SGL.Analytics.Client {
 		/// Gets the technical name of the application that uses this SGL Analytics instance, as specified in the constructor.
 		/// </summary>
 		public string AppName { get => appName; }
+
+		/// <summary>
+		/// The <see cref="ILoggerFactory"/> object that this client uses for logging.
+		/// </summary>
+		public ILoggerFactory LoggerFactory { get; }
+
+		/// <summary>
+		/// The id of the registered user, or null if not registered.
+		/// </summary>
+		public Guid? UserID => rootDataStore.UserID;
 
 		/// <summary>
 		/// Checks if the user registration for this client was already done.
@@ -160,7 +145,7 @@ namespace SGL.Analytics.Client {
 					logger.LogError(msg);
 					throw new InvalidOperationException(msg);
 				}
-				var keyEncryptor = new KeyEncryptor(certList, randomGenerator, allowSharedMessageKeyPair);
+				var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
 				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);

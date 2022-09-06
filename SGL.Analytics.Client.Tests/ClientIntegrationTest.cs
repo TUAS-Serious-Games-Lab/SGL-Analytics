@@ -11,6 +11,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WireMock.Matchers;
@@ -24,14 +25,13 @@ namespace SGL.Analytics.Client.Tests {
 	public class ClientIntegrationTest : IDisposable {
 		private const string appName = "SGLAnalyticsClientIntegrationTest";
 		private const string appAPIToken = "FakeApiToken";
+		private string dataDirectory;
 		private ITestOutputHelper output;
 		private ILoggerFactory loggerFactory;
 		private MockServerFixture serverFixture;
 		private DirectoryLogStorage storage;
 		private FileRootDataStore rootDS;
-		private LogCollectorRestClient logCollectorClient;
-		private UserRegistrationRestClient userRegClient;
-		private SGLAnalytics analytics;
+		private SglAnalytics analytics;
 		private bool finished = false;
 
 		private KeyPair signerKeyPair;
@@ -41,6 +41,7 @@ namespace SGL.Analytics.Client.Tests {
 		private Certificate recipient1Cert;
 		private Certificate recipient2Cert;
 		private ICertificateValidator recipientCertificateValidator;
+		private HttpClient httpClient;
 		private string recipientCertsPem;
 
 		public ClientIntegrationTest(ITestOutputHelper output, MockServerFixture serverFixture) {
@@ -48,15 +49,15 @@ namespace SGL.Analytics.Client.Tests {
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
 			this.serverFixture = serverFixture;
 
-			File.Delete(new FileRootDataStore(appName).StorageFilePath);
-			rootDS = new FileRootDataStore(appName);
-			storage = new DirectoryLogStorage(Path.Combine(rootDS.DataDirectory, "DataLogs"));
+			if (string.IsNullOrWhiteSpace(appName)) throw new ArgumentException("Appname must not be empty", nameof(appName));
+			dataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), appName);
+			File.Delete(new FileRootDataStore(dataDirectory).StorageFilePath);
+			rootDS = new FileRootDataStore(dataDirectory);
+			storage = new DirectoryLogStorage(Path.Combine(dataDirectory, "DataLogs"));
 			storage.Archiving = false;
 			foreach (var log in storage.EnumerateLogs()) {
 				log.Remove();
 			}
-			logCollectorClient = new LogCollectorRestClient(new Uri(serverFixture.Server.Urls.First()));
-			userRegClient = new UserRegistrationRestClient(new Uri(serverFixture.Server.Urls.First()));
 
 			var random = new RandomGenerator();
 			var signerDN = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Analytics"), new("ou", "Tests"), new("cn", "Test Signer") });
@@ -77,12 +78,14 @@ namespace SGL.Analytics.Client.Tests {
 			recipientCertificateValidator = new CACertTrustValidator(signerCertPemBuffer.ToString(), ignoreValidityPeriod: false,
 				loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
 
-			analytics = new SGLAnalytics(appName, appAPIToken, recipientCertificateValidator,
-				rootDataStore: rootDS,
-				logStorage: storage,
-				logCollectorClient: logCollectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SGLAnalytics>());
+			httpClient = new HttpClient();
+			httpClient.BaseAddress = new Uri(serverFixture.Server.Urls.First());
+			analytics = new SglAnalytics(appName, appAPIToken, httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => rootDS, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 		}
 
 		public class SimpleTestEvent {
@@ -115,12 +118,12 @@ namespace SGL.Analytics.Client.Tests {
 			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1").UsingPost()
 					.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
 					.WithHeader("Content-Type", new ExactMatcher("application/json"))
-					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
+					.WithBody(b => b?.DetectedBodyType == WireMock.Types.BodyType.Json))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.Created)
 					.WithBodyAsJson(new UserRegistrationResultDTO(userId), true));
 			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1/login").UsingPost()
 					.WithHeader("Content-Type", new ExactMatcher("application/json"))
-					.WithBody(b => b.DetectedBodyType == WireMock.Types.BodyType.Json))
+					.WithBody(b => b?.DetectedBodyType == WireMock.Types.BodyType.Json))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
 					.WithBodyAsJson(new LoginResponseDTO(new AuthorizationToken("OK"))));
 			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1/recipient-certificates").UsingGet()
@@ -187,13 +190,13 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var successfulRegRequests = serverFixture.Server.LogEntries
-				.Where(le => (int)(le.ResponseMessage.StatusCode) < 300 && le.RequestMessage.Path == "/api/analytics/user/v1")
+				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/user/v1")
 				.Select(le => le.RequestMessage);
 			Assert.Single(successfulRegRequests);
 			await using (var stream = new MemoryStream(successfulRegRequests.Single().BodyAsBytes)) {
 				var userReg = await JsonSerializer.DeserializeAsync<UserRegistrationDTO>(stream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 				Assert.Equal(user.Username, userReg?.Username);
-				var studyAttr = userReg?.StudySpecificProperties as IDictionary<string, object?>;
+				var studyAttr = userReg?.StudySpecificProperties as IDictionary<string, object?> ?? new Dictionary<string, object?> { };
 				Assert.Equal(user.Label, Assert.Contains("Label", studyAttr));
 				Assert.Equal(user.RegistrationTime, Assert.Contains("RegistrationTime", studyAttr));
 				Assert.Equal(user.SomeNumber, Assert.Contains("SomeNumber", studyAttr));
@@ -204,7 +207,7 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var successfulLogRequests = serverFixture.Server.LogEntries
-				.Where(le => (int)(le.ResponseMessage.StatusCode) < 300 && le.RequestMessage.Path == "/api/analytics/log/v1")
+				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/log/v1")
 				.Select(le => le.RequestMessage);
 			foreach (var req in successfulLogRequests) {
 				using (var stream = new GZipStream(new MemoryStream(req.BodyAsBytes), CompressionMode.Decompress)) {
@@ -256,12 +259,14 @@ namespace SGL.Analytics.Client.Tests {
 
 		public void Dispose() {
 			if (!finished) analytics.FinishAsync().Wait();
+			analytics.DisposeAsync().AsTask().Wait();
 			storage.Archiving = false;
 			foreach (var log in storage.EnumerateLogs()) {
 				log.Remove();
 			}
 			File.Delete(rootDS.StorageFilePath);
 			serverFixture.Reset();
+			httpClient.Dispose();
 		}
 	}
 }

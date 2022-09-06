@@ -18,11 +18,6 @@ namespace SGL.Analytics.Client {
 		string? UserSecret { get; set; }
 
 		/// <summary>
-		/// Gets a data directory where other storages can store files locally.
-		/// </summary>
-		string DataDirectory { get; }
-
-		/// <summary>
 		/// Gets or sets the registered user's username if one was used for registration.
 		/// If no user is registerd or the registation was done without a username, the property contains <see langword="null"/>.
 		/// </summary>

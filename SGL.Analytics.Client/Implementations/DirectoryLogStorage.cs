@@ -24,8 +24,8 @@ namespace SGL.Analytics.Client {
 
 		/// <summary>
 		/// Specifies whether the log files should be compressed.
-		/// This property must not be changed during normal operation but only when no <see cref="SGLAnalytics"/> object uses this object.
-		/// Changing it while a <see cref="SGLAnalytics"/> is using it can cause problems with files not being found or listed correctly, depending on when the change happens.
+		/// This property must not be changed during normal operation but only when no <see cref="SglAnalytics"/> object uses this object.
+		/// Changing it while a <see cref="SglAnalytics"/> is using it can cause problems with files not being found or listed correctly, depending on when the change happens.
 		/// </summary>
 		public bool UseCompressedFiles {
 			get => useCompressedFiles;
@@ -36,8 +36,8 @@ namespace SGL.Analytics.Client {
 		}
 		/// <summary>
 		/// Specifies the currently used filename suffix for the stored log files.
-		/// This property must not be changed during normal operation but only when no <see cref="SGLAnalytics"/> object uses this object.
-		/// Changing it while a <see cref="SGLAnalytics"/> is using it can cause problems with files not being found or listed correctly, depending on when the change happens.
+		/// This property must not be changed during normal operation but only when no <see cref="SglAnalytics"/> object uses this object.
+		/// Changing it while a <see cref="SglAnalytics"/> is using it can cause problems with files not being found or listed correctly, depending on when the change happens.
 		/// </summary>
 		public string FileSuffix {
 			get => fileSuffix;

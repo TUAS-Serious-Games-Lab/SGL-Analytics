@@ -18,17 +18,18 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
-	public partial class SGLAnalytics {
+	public partial class SglAnalytics {
 		private readonly object lockObject = new object();
 		private string appName;
 		private string appAPIToken;
+		private HttpClient httpClient;
+		private SglAnalyticsConfigurator configurator = new SglAnalyticsConfigurator();
 		private ICertificateValidator recipientCertificateValidator;
 		private RandomGenerator randomGenerator = new RandomGenerator();
 		private IRootDataStore rootDataStore;
 		private ILogStorage logStorage;
 		private ILogCollectorClient logCollectorClient;
 		private IUserRegistrationClient userRegistrationClient;
-		private bool allowSharedMessageKeyPair = true; // TODO: Make configurable
 
 		private LogQueue? currentLogQueue;
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
@@ -37,10 +38,38 @@ namespace SGL.Analytics.Client {
 
 		private AuthorizationToken? authToken;
 		private SynchronizationContext mainSyncContext;
-
+		private string dataDirectory;
 		private Task? logUploader = null;
 
-		private ILogger<SGLAnalytics> logger;
+		private ILogger<SglAnalytics> logger;
+		private CryptoConfig cryptoConfig;
+
+		/// <inheritdoc/>
+		public async ValueTask DisposeAsync() {
+			try {
+				await FinishAsync();
+			}
+			catch (OperationCanceledException) { }
+			catch (Exception ex) {
+				logger.LogError(ex, "Caught error from FinishAsync during disposal.");
+			}
+			if (configurator.RecipientCertificateValidatorFactory.Dispose) await disposeIfDisposable(recipientCertificateValidator);
+			if (configurator.UserRegistrationClientFactory.Dispose) await disposeIfDisposable(userRegistrationClient);
+			if (configurator.LogCollectorClientFactory.Dispose) await disposeIfDisposable(logCollectorClient);
+			if (configurator.LogStorageFactory.Dispose) await disposeIfDisposable(logStorage);
+			if (configurator.RootDataStoreFactory.Dispose) await disposeIfDisposable(rootDataStore);
+			configurator.CustomArgumentFactories.Dispose();
+			if (configurator.LoggerFactory.Dispose) await disposeIfDisposable(LoggerFactory);
+		}
+
+		private async Task disposeIfDisposable(object obj) {
+			if (obj is IAsyncDisposable ad) {
+				await ad.DisposeAsync().AsTask();
+			}
+			if (obj is IDisposable d) {
+				d.Dispose();
+			}
+		}
 
 		private class EnumNamingPolicy : JsonNamingPolicy {
 			public override string ConvertName(string name) => name;
@@ -189,7 +218,7 @@ namespace SGL.Analytics.Client {
 				logger.LogError("Can't upload log files because no authorized recipients were found.");
 				return;
 			}
-			var keyEncryptor = new KeyEncryptor(certList, randomGenerator, allowSharedMessageKeyPair);
+			var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
 			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
 				// If we already completed this file, it has been added to the queue twice,
 				// e.g. once by the writer worker and once by startUploadingExistingLogs.
