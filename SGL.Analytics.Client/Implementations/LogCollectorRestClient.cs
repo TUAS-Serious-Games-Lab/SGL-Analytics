@@ -24,6 +24,9 @@ namespace SGL.Analytics.Client {
 		/// <param name="httpClient">The <see cref="HttpClient"/> to use for requests to the backend.
 		/// The <see cref="HttpClient.BaseAddress"/> of the client needs to be set to the base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
 		public LogCollectorRestClient(HttpClient httpClient) {
+			if (httpClient.BaseAddress == null) {
+				throw new ArgumentNullException($"{nameof(httpClient)}.{nameof(HttpClient.BaseAddress)}");
+			}
 			this.httpClient = httpClient;
 		}
 
@@ -31,7 +34,9 @@ namespace SGL.Analytics.Client {
 		public async Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore) {
 			var query = HttpUtility.ParseQueryString("");
 			query.Add("appName", appName);
-			var uriBuilder = new UriBuilder(new Uri(httpClient.BaseAddress, recipientsApiRoute));
+			var uriBuilder = new UriBuilder(new Uri(httpClient.BaseAddress ??
+				throw new ArgumentNullException($"{nameof(httpClient)}.{nameof(HttpClient.BaseAddress)}"),
+				recipientsApiRoute));
 			uriBuilder.Query = query.ToString();
 			using var request = new HttpRequestMessage(HttpMethod.Get, uriBuilder.Uri);
 			request.Headers.Add("App-API-Token", appAPIToken);
@@ -42,6 +47,9 @@ namespace SGL.Analytics.Client {
 
 		/// <inheritdoc/>
 		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile) {
+			if (httpClient.BaseAddress == null) {
+				throw new ArgumentNullException($"{nameof(httpClient)}.{nameof(HttpClient.BaseAddress)}");
+			}
 			using (var stream = logFile.OpenReadRaw()) {
 				var content = new StreamContent(stream);
 				LogMetadataDTO dto = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding);
