@@ -52,7 +52,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
 			var key = new LogPath() { AppName = appName, UserId = userId, LogId = logFileId, Suffix = suffix };
 			await using (var origContent = generateRandomMemoryStream()) {
-				await manager.IngestLogAsync(userId, appName, dto, origContent, origContent.Length);
+				await manager.IngestLogAsync(userId, appName, appApiToken, dto, origContent, origContent.Length);
 				var logMd = await logMetadataRepo.GetLogMetadataByIdAsync(logFileId);
 				await using (var readContent = new MemoryStream()) {
 					await logFileRepo.CopyLogIntoAsync(key, readContent);
@@ -75,10 +75,10 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			LogMetadataDTO dto1 = new(logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95), suffix, LogContentEncoding.Plain);
 			LogMetadataDTO dto2 = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
 			await using (var content = generateRandomMemoryStream()) {
-				await manager.IngestLogAsync(user1Id, appName, dto1, content, content.Length);
+				await manager.IngestLogAsync(user1Id, appName, appApiToken, dto1, content, content.Length);
 			}
 			await using (var origContent = generateRandomMemoryStream()) {
-				var logFile = await manager.IngestLogAsync(user2Id, appName, dto2, origContent, origContent.Length);
+				var logFile = await manager.IngestLogAsync(user2Id, appName, appApiToken, dto2, origContent, origContent.Length);
 				Assert.Equal(logFileId, logFile.LocalLogId);
 				Assert.NotEqual(logFileId, logFile.Id);
 				await using (var readContent = new MemoryStream()) {
@@ -100,11 +100,11 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
 			await using (var origContent = generateRandomMemoryStream()) {
 				var streamWrapper = new TriggeredBlockingStream(origContent);
-				var task = manager.IngestLogAsync(userId, appName, dto, streamWrapper, origContent.Length);
+				var task = manager.IngestLogAsync(userId, appName, appApiToken, dto, streamWrapper, origContent.Length);
 				streamWrapper.TriggerReadError(new IOException("Connection to client lost."));
 				await Assert.ThrowsAsync<IOException>(async () => await task);
 				origContent.Position = 0;
-				var logFile = await manager.IngestLogAsync(userId, appName, dto, origContent, origContent.Length);
+				var logFile = await manager.IngestLogAsync(userId, appName, appApiToken, dto, origContent, origContent.Length);
 				Assert.Equal(logFileId, logFile.LocalLogId);
 				Assert.Equal(logFileId, logFile.Id);
 				await using (var readContent = new MemoryStream()) {
@@ -126,7 +126,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			string suffix = ".log";
 			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
 			await using (var origContent = generateRandomMemoryStream()) {
-				await Assert.ThrowsAsync<ApplicationDoesNotExistException>(async () => await manager.IngestLogAsync(userId, "DoesNotExist", dto, origContent, origContent.Length));
+				await Assert.ThrowsAsync<ApplicationDoesNotExistException>(async () => await manager.IngestLogAsync(userId, "DoesNotExist", "FakeAPIToken", dto, origContent, origContent.Length));
 			}
 		}
 		[Fact]
@@ -136,14 +136,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			string suffix = ".log";
 			LogMetadataDTO dto1 = new(logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95), suffix, LogContentEncoding.Plain);
 			await using (var content = generateRandomMemoryStream()) {
-				await manager.IngestLogAsync(user1Id, appName, dto1, content, content.Length);
+				await manager.IngestLogAsync(user1Id, appName, appApiToken, dto1, content, content.Length);
 			}
 
 			Guid user2Id = Guid.NewGuid();
 			LogMetadataDTO dto2 = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
 			await using (var origContent = generateRandomMemoryStream()) {
 				var streamWrapper = new TriggeredBlockingStream(origContent);
-				var task = manager.IngestLogAsync(user2Id, appName, dto2, streamWrapper, origContent.Length);
+				var task = manager.IngestLogAsync(user2Id, appName, appApiToken, dto2, streamWrapper, origContent.Length);
 				streamWrapper.TriggerReadError(new IOException("Connection to client lost."));
 				await Assert.ThrowsAsync<IOException>(async () => await task);
 				origContent.Position = 0;
@@ -151,7 +151,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 				Assert.Single(logQuery);
 				var logMd = logQuery.Single();
 
-				var logFile = await manager.IngestLogAsync(user2Id, appName, dto2, origContent, origContent.Length);
+				var logFile = await manager.IngestLogAsync(user2Id, appName, appApiToken, dto2, origContent, origContent.Length);
 				Assert.Equal(logFileId, logFile.LocalLogId);
 				Assert.NotEqual(logFileId, logFile.Id);
 				Assert.Equal(logMd.Id, logFile.Id);

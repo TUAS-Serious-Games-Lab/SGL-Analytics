@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.Applications;
@@ -85,38 +86,25 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 				metrics.HandleIncorrectSecurityTokenClaimsError();
 				return Unauthorized("The operation failed due to a security token error.");
 			}
-			Domain.Entity.Application? app = null;
-			try {
-				app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
-			}
-			catch (OperationCanceledException) {
-				logger.LogDebug("IngestLog POST request from user {userId} was cancelled while fetching application metadata.", userId);
-				throw;
-			}
-			catch (Exception ex) {
-				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to an unexpected exception when fetching application metadata.", userId);
-				metrics.HandleUnexpectedError(appName, ex);
-				throw;
-			}
-			if (app is null) {
-				logger.LogError("IngestLog POST request from user {userId} failed due to unknown application {appName}.", userId, appName);
-				metrics.HandleUnknownAppError(appName);
-				return Unauthorized();
-			}
-			else if (app.ApiToken != appApiToken) {
-				logger.LogError("IngestLog POST request from user {userId} failed due to incorrect API token for application {appName}.", userId, appName);
-				metrics.HandleIncorrectAppApiTokenError(appName);
-				return Unauthorized();
-			}
 
 			try {
-				await logManager.IngestLogAsync(userId, appName, logMetadata, Request.Body, Request.ContentLength, ct);
+				await logManager.IngestLogAsync(userId, appName, appApiToken, logMetadata, Request.Body, Request.ContentLength, ct);
 				metrics.HandleLogUploadedSuccessfully(appName);
 				return StatusCode(StatusCodes.Status201Created);
 			}
 			catch (OperationCanceledException) {
 				logger.LogDebug("IngestLog POST request from user {userId} was cancelled while fetching application metadata.", userId);
 				throw;
+			}
+			catch (ApplicationDoesNotExistException) {
+				logger.LogError("IngestLog POST request from user {userId} failed due to unknown application {appName}.", userId, appName);
+				metrics.HandleUnknownAppError(appName);
+				return Unauthorized();
+			}
+			catch (ApplicationApiTokenMismatchException) {
+				logger.LogError("IngestLog POST request from user {userId} failed due to incorrect API token for application {appName}.", userId, appName);
+				metrics.HandleIncorrectAppApiTokenError(appName);
+				return Unauthorized();
 			}
 			catch (BadHttpRequestException ex) when (ex.StatusCode == StatusCodes.Status413RequestEntityTooLarge) {
 				logger.LogCritical("IngestLog POST request from user {userId} failed because the log file was too large for the server's limit. " +
