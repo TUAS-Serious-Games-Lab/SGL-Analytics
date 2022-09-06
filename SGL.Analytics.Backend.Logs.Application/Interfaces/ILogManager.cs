@@ -21,6 +21,6 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <param name="contentSize">The size of the content of the log file.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the ingest operation, providing a <see cref="LogFile"/> for the log upon success.</returns>
-		Task<LogFile> IngestLogAsync(Guid userId, string appName, string appApiToken, LogMetadataDTO logMetaDTO, Stream logContent, long? contentSize, CancellationToken ct = default);
+		Task<LogFile> IngestLogAsync(Guid userId, string appName, string appApiToken, LogMetadataDTO logMetaDTO, Stream logContent, CancellationToken ct = default);
 	}
 }

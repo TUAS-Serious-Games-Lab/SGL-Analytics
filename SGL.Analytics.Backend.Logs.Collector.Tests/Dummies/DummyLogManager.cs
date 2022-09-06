@@ -33,7 +33,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			this.appRepo = appRepo;
 		}
 
-		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, string appApiToken, LogMetadataDTO logMetaDTO, Stream logContent, long? contentSize, CancellationToken ct = default) {
+		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, string appApiToken, LogMetadataDTO logMetaDTO, Stream logContent, CancellationToken ct = default) {
 			long size = 0;
 			var app = await appRepo.GetApplicationByNameAsync(appName);
 			if (app == null) {

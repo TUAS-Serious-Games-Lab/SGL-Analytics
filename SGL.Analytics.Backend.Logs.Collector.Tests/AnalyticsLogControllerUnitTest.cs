@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Collector.Controllers;
@@ -11,7 +13,12 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -23,6 +30,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		private DummyLogManager logManager;
 		private ILoggerFactory loggerFactory;
 		private AnalyticsLogController controller;
+		private JsonSerializerOptions jsonOptions;
 		private string apiToken = StringGenerator.GenerateRandomWord(32);
 
 		public AnalyticsLogControllerUnitTest(ITestOutputHelper output) {
@@ -31,32 +39,46 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			logManager = new DummyLogManager(appRepo);
 			appRepo.AddApplicationAsync(new Domain.Entity.Application(Guid.NewGuid(), nameof(AnalyticsLogControllerUnitTest), apiToken)).Wait();
 			controller = new AnalyticsLogController(logManager, appRepo, loggerFactory.CreateLogger<AnalyticsLogController>(), new NullMetricsManager());
+			jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
+				WriteIndented = true,
+				DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+			};
 		}
 
-		private ControllerContext createControllerContext(string appNameClaim, Guid userIdClaim) {
-			return createControllerContext(appNameClaim, userIdClaim, Stream.Null);
+		private Task<ControllerContext> createControllerContext(string appNameClaim, Guid userIdClaim, LogMetadataDTO metadata) {
+			return createControllerContext(appNameClaim, userIdClaim, metadata, Stream.Null);
 		}
 
-		private ControllerContext createControllerContext(string appNameClaim, Guid userIdClaim, Stream bodyContent) {
+		private async Task<ControllerContext> createControllerContext(string appNameClaim, Guid userIdClaim, LogMetadataDTO metadata, Stream content) {
+			var multipartBodyObj = new MultipartFormDataContent();
+			multipartBodyObj.Add(JsonContent.Create(metadata, MediaTypeHeaderValue.Parse("application/json"), jsonOptions), "metadata");
+			var contentObj = new StreamContent(content);
+			contentObj.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
+			multipartBodyObj.Add(contentObj, "content");
+			var multipartStream = await multipartBodyObj.ReadAsStreamAsync();
+
 			var principal = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("appname", appNameClaim), new Claim("userid", userIdClaim.ToString()) }));
 			var httpContext = new DefaultHttpContext();
 			httpContext.User = principal;
-			httpContext.Request.Body = bodyContent;
-			httpContext.Request.ContentLength = bodyContent.Length;
+			httpContext.Request.Body = multipartStream;
+			httpContext.Request.ContentLength = multipartStream.Length;
+			httpContext.Request.ContentType = multipartBodyObj.Headers.ContentType!.ToString();
 			return new ControllerContext() { HttpContext = httpContext };
 		}
 
 		[Fact]
 		public async Task IngestLogWithInvalidAppNameFailsWithUnauthorized() {
-			controller.ControllerContext = createControllerContext("DoesNotExist", Guid.NewGuid());
-			var res = await controller.IngestLog(apiToken, new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2), ".log", LogContentEncoding.Plain));
+			var dto = new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2), ".log", LogContentEncoding.Plain);
+			controller.ControllerContext = await createControllerContext("DoesNotExist", Guid.NewGuid(), dto);
+			var res = await controller.IngestLog(apiToken);
 			Assert.IsType<UnauthorizedResult>(res);
 			Assert.Empty(logManager.Ingests);
 		}
 		[Fact]
 		public async Task IngestLogWithInvalidApiTokensFailsWithUnauthorized() {
-			controller.ControllerContext = createControllerContext(nameof(AnalyticsLogControllerUnitTest), Guid.NewGuid());
-			var res = await controller.IngestLog(StringGenerator.GenerateRandomWord(32), new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2), ".log", LogContentEncoding.Plain));
+			var dto = new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2), ".log", LogContentEncoding.Plain);
+			controller.ControllerContext = await createControllerContext(nameof(AnalyticsLogControllerUnitTest), Guid.NewGuid(), dto);
+			var res = await controller.IngestLog(StringGenerator.GenerateRandomWord(32));
 			Assert.IsType<UnauthorizedResult>(res);
 			Assert.Empty(logManager.Ingests);
 		}
@@ -77,9 +99,9 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var content = generateRandomGZippedTestData()) {
 				var appName = nameof(AnalyticsLogControllerUnitTest);
 				var userId = Guid.NewGuid();
-				controller.ControllerContext = createControllerContext(appName, userId, content);
 				var logDto = new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2), ".log", LogContentEncoding.Plain);
-				var res = await controller.IngestLog(apiToken, logDto);
+				controller.ControllerContext = await createControllerContext(appName, userId, logDto, content);
+				var res = await controller.IngestLog(apiToken);
 				Assert.Equal(StatusCodes.Status201Created, Assert.IsType<StatusCodeResult>(res).StatusCode);
 				content.Position = 0;
 				var ingest = logManager.Ingests.Single();
