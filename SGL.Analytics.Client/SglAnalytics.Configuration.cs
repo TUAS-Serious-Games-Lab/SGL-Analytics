@@ -20,7 +20,7 @@ namespace SGL.Analytics.Client {
 				LoggerFactory = (args => NullLoggerFactory.Instance, true);
 				RootDataStoreFactory = (args => new FileRootDataStore(args.DataDirectory), true);
 				LogStorageFactory = (args => new DirectoryLogStorage(Path.Combine(args.DataDirectory, "DataLogs")), true);
-				LogCollectorClientFactory = (args => new LogCollectorRestClient(args.HttpClient.BaseAddress), true);
+				LogCollectorClientFactory = (args => new LogCollectorRestClient(args.HttpClient), true);
 				UserRegistrationClientFactory = (args => new UserRegistrationRestClient(args.HttpClient.BaseAddress), true);
 				RecipientCertificateValidatorFactory = (args => throw new MissingSglAnalyticsConfigurationException(nameof(ISglAnalyticsConfigurator.UseRecipientCertificateValidator)), true);
 			}

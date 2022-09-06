@@ -14,53 +14,28 @@ namespace SGL.Analytics.Client {
 	/// An implementation of <see cref="ILogCollectorClient"/> that uses REST API calls to contact the log collector backend.
 	/// </summary>
 	public class LogCollectorRestClient : ILogCollectorClient {
-		private readonly static HttpClient httpClient = new();
-		private Uri backendServerBaseUri;
-		private Uri logApiRoute;
-		private Uri recipientsApiRoute;
-		private Uri logFullApiUri;
-		private Uri recipientsFullApiUri;
+		private readonly HttpClient httpClient;
+		private static readonly Uri logApiRoute = new Uri("/api/analytics/log/v1", UriKind.Relative);
+		private static readonly Uri recipientsApiRoute = new Uri("/api/analytics/log/v1/recipient-certificates", UriKind.Relative);
 
-		static LogCollectorRestClient() {
-			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SGL.Analytics.Client", null));
-			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-		}
-
-		// TODO: Support configuration of URIs through general configuration system.
-
-		/// <summary>
-		/// Creates a client object that uses <see cref="SglAnalytics.DefaultBackendBaseUri"/> as the backend server URI.
-		/// </summary>
-		public LogCollectorRestClient() : this(SglAnalytics.DefaultBackendBaseUri) { }
 		/// <summary>
 		/// Creates a client object that uses the given base URI of the backend server and the standard API URI <c>api/analytics/log/v1</c>.
 		/// </summary>
-		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
-		public LogCollectorRestClient(Uri backendServerBaseUri) : this(backendServerBaseUri, new Uri("api/analytics/log/v1", UriKind.Relative),
-			new Uri("api/analytics/log/v1/recipient-certificates", UriKind.Relative)) { }
-
-		/// <summary>
-		/// Creates a client object that uses the given base URI of the backend server and the given relative API endpoint below it as the target for the requests.
-		/// </summary>
-		/// <param name="backendServerBaseUri">The base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
-		/// <param name="logApiRoute">The relative URI under <paramref name="backendServerBaseUri"/> to the API endpoint, e.g. <c>api/analytics/log</c>.</param>
-		/// <param name="recipientsApiRoute"></param>
-		public LogCollectorRestClient(Uri backendServerBaseUri, Uri logApiRoute, Uri recipientsApiRoute) {
-			this.backendServerBaseUri = backendServerBaseUri;
-			this.logApiRoute = logApiRoute;
-			this.recipientsApiRoute = recipientsApiRoute;
-			this.logFullApiUri = new Uri(backendServerBaseUri, logApiRoute);
-			this.recipientsFullApiUri = new Uri(backendServerBaseUri, recipientsApiRoute);
+		/// <param name="httpClient">The <see cref="HttpClient"/> to use for requests to the backend.
+		/// The <see cref="HttpClient.BaseAddress"/> of the client needs to be set to the base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
+		public LogCollectorRestClient(HttpClient httpClient) {
+			this.httpClient = httpClient;
 		}
 
 		/// <inheritdoc/>
 		public async Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore) {
-			var query = HttpUtility.ParseQueryString(recipientsFullApiUri.Query);
+			var query = HttpUtility.ParseQueryString("");
 			query.Add("appName", appName);
-			var uriBuilder = new UriBuilder(recipientsFullApiUri);
+			var uriBuilder = new UriBuilder(new Uri(httpClient.BaseAddress, recipientsApiRoute));
 			uriBuilder.Query = query.ToString();
 			using var request = new HttpRequestMessage(HttpMethod.Get, uriBuilder.Uri);
 			request.Headers.Add("App-API-Token", appAPIToken);
+			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-pem-file"));
 			request.Version = HttpVersion.Version20;
 			await targetCertificateStore.LoadCertificatesFromHttpAsync(httpClient, request);
 		}
@@ -73,7 +48,7 @@ namespace SGL.Analytics.Client {
 				Validator.ValidateObject(dto, new ValidationContext(dto), true);
 				content.Headers.MapDtoProperties(dto);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				using var request = new HttpRequestMessage(HttpMethod.Post, logFullApiUri);
+				using var request = new HttpRequestMessage(HttpMethod.Post, logApiRoute);
 				request.Content = content;
 				request.Headers.Add("App-API-Token", appAPIToken);
 				request.Headers.Authorization = authToken.ToHttpHeaderValue();

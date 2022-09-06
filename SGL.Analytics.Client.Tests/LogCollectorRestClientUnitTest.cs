@@ -20,7 +20,7 @@ namespace SGL.Analytics.Client.Tests {
 
 		public LogCollectorRestClientUnitTest(MockServerFixture serverFixture) {
 			this.serverFixture = serverFixture;
-			client = new LogCollectorRestClient(new Uri(serverFixture.Server.Urls.First()));
+			client = new LogCollectorRestClient(serverFixture.Server.CreateClient());
 			storage = new InMemoryLogStorage();
 		}
 
