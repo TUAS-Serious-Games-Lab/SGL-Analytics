@@ -18,7 +18,7 @@ namespace SGL.Analytics.Client {
 				SynchronizationContextGetter = () => SynchronizationContext.Current ?? throw new InvalidOperationException("No SynchronizationContext set. " +
 					"SGL Analytics requires a synchronized SynchronizationContext that can be used to dispatch event handler invocations to the main thread.");
 				LoggerFactory = (args => NullLoggerFactory.Instance, true);
-				RootDataStoreFactory = (args => new FileRootDataStore(args.AppName), true);
+				RootDataStoreFactory = (args => new FileRootDataStore(args.DataDirectory), true);
 				LogStorageFactory = (args => new DirectoryLogStorage(Path.Combine(args.DataDirectory, "DataLogs")), true);
 				LogCollectorClientFactory = (args => new LogCollectorRestClient(args.HttpClient.BaseAddress), true);
 				UserRegistrationClientFactory = (args => new UserRegistrationRestClient(args.HttpClient.BaseAddress), true);

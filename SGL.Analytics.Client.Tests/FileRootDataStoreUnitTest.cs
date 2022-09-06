@@ -6,7 +6,8 @@ using Xunit;
 namespace SGL.Analytics.Client.Tests {
 	public class FileRootDataStoreUnitTest {
 		private const string appName = "FileRootDataStoreUnitTest";
-		private FileRootDataStore getDS() => new FileRootDataStore(appName);
+		private string getDataDir() => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), appName);
+		private FileRootDataStore getDS() => new FileRootDataStore(getDataDir());
 
 		public FileRootDataStoreUnitTest() {
 			cleanUp();

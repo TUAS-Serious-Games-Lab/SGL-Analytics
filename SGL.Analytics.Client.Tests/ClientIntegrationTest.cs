@@ -25,6 +25,7 @@ namespace SGL.Analytics.Client.Tests {
 	public class ClientIntegrationTest : IDisposable {
 		private const string appName = "SGLAnalyticsClientIntegrationTest";
 		private const string appAPIToken = "FakeApiToken";
+		private string dataDirectory;
 		private ITestOutputHelper output;
 		private ILoggerFactory loggerFactory;
 		private MockServerFixture serverFixture;
@@ -48,9 +49,11 @@ namespace SGL.Analytics.Client.Tests {
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
 			this.serverFixture = serverFixture;
 
-			File.Delete(new FileRootDataStore(appName).StorageFilePath);
-			rootDS = new FileRootDataStore(appName);
-			storage = new DirectoryLogStorage(Path.Combine(rootDS.DataDirectory, "DataLogs"));
+			if (string.IsNullOrWhiteSpace(appName)) throw new ArgumentException("Appname must not be empty", nameof(appName));
+			dataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), appName);
+			File.Delete(new FileRootDataStore(dataDirectory).StorageFilePath);
+			rootDS = new FileRootDataStore(dataDirectory);
+			storage = new DirectoryLogStorage(Path.Combine(dataDirectory, "DataLogs"));
 			storage.Archiving = false;
 			foreach (var log in storage.EnumerateLogs()) {
 				log.Remove();

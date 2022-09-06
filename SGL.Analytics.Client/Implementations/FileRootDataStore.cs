@@ -15,7 +15,6 @@ namespace SGL.Analytics.Client {
 			public string? Username { get; internal set; }
 		}
 		private StorageStructure storage;
-		string appName;
 		JsonSerializerOptions jsonOptions = new JsonSerializerOptions() {
 			WriteIndented = true
 		};
@@ -32,12 +31,12 @@ namespace SGL.Analytics.Client {
 		/// If a user data file is present, its contents are loaded into the properties.
 		/// Optionally, a custom file name for the data file whithin the directory can be given. By default, the filename <c>"SGLAnalytics_AppDataStore.json"</c> is used.
 		/// </summary>
-		/// <param name="appName">Application name used to form the user data directory path.</param>
+		/// <param name="dataDirectory">The user data directory path where to store the application data.</param>
 		/// <param name="storageFileName">Overrides the filename to use.</param>
-		public FileRootDataStore(string appName, string? storageFileName = null) {
-			this.appName = appName;
+		public FileRootDataStore(string dataDirectory, string? storageFileName = null) {
+			DataDirectory = dataDirectory;
 			if (storageFileName != null) StorageFileName = storageFileName;
-			Directory.CreateDirectory(DataDirectory);
+			Directory.CreateDirectory(dataDirectory);
 			Task.Run(async () => await LoadAsync()).GetAwaiter().GetResult();
 		}
 
@@ -75,9 +74,9 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <summary>
-		/// Gets the path of the directory that contains the user data file. This can also be used to store other files for the application.
+		/// Gets the path of the directory that contains the user data file.
 		/// </summary>
-		public string DataDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), appName);
+		public string DataDirectory { get; }
 
 		/// <summary>
 		/// Gets or sets the name of the file within <see cref="DataDirectory"/> to use for the user data.
