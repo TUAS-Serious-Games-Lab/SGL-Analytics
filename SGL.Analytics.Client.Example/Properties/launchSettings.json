@@ -15,12 +15,12 @@
     },
     "SGL.Analytics.Client.Example -b https://shg-test.hochschule-trier.de ExampleSession.txt": {
       "commandName": "Project",
-      "commandLineArgs": "-b https://shg-test.hochschule-trier.de -v ExampleSession.txt -l Trace",
+      "commandLineArgs": "-b https://shg-test.hochschule-trier.de -s StagingTrustedSignerCert.pem -v ExampleSession.txt -l Trace",
       "workingDirectory": "$(ProjectDir)"
     },
     "SGL.Analytics.Client.Example -b https://shg-test.hochschule-trier.de TestSession.txt": {
       "commandName": "Project",
-      "commandLineArgs": "-b https://shg-test.hochschule-trier.de -v TestSession.txt -l Trace",
+      "commandLineArgs": "-b https://shg-test.hochschule-trier.de -s StagingTrustedSignerCert.pem -v TestSession.txt -l Trace",
       "workingDirectory": "$(ProjectDir)"
     }
   }

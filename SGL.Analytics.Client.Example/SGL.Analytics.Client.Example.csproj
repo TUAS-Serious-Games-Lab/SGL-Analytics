@@ -18,4 +18,10 @@
 		<ProjectReference Include="..\SGL.Analytics.Client\SGL.Analytics.Client.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="StagingTrustedSignerCert.pem">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
 </Project>
