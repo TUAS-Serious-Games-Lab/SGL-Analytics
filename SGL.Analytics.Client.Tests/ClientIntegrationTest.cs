@@ -11,6 +11,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WireMock.Matchers;
@@ -29,8 +30,6 @@ namespace SGL.Analytics.Client.Tests {
 		private MockServerFixture serverFixture;
 		private DirectoryLogStorage storage;
 		private FileRootDataStore rootDS;
-		private LogCollectorRestClient logCollectorClient;
-		private UserRegistrationRestClient userRegClient;
 		private SglAnalytics analytics;
 		private bool finished = false;
 
@@ -41,6 +40,7 @@ namespace SGL.Analytics.Client.Tests {
 		private Certificate recipient1Cert;
 		private Certificate recipient2Cert;
 		private ICertificateValidator recipientCertificateValidator;
+		private HttpClient httpClient;
 		private string recipientCertsPem;
 
 		public ClientIntegrationTest(ITestOutputHelper output, MockServerFixture serverFixture) {
@@ -55,8 +55,6 @@ namespace SGL.Analytics.Client.Tests {
 			foreach (var log in storage.EnumerateLogs()) {
 				log.Remove();
 			}
-			logCollectorClient = new LogCollectorRestClient(new Uri(serverFixture.Server.Urls.First()));
-			userRegClient = new UserRegistrationRestClient(new Uri(serverFixture.Server.Urls.First()));
 
 			var random = new RandomGenerator();
 			var signerDN = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Analytics"), new("ou", "Tests"), new("cn", "Test Signer") });
@@ -77,12 +75,14 @@ namespace SGL.Analytics.Client.Tests {
 			recipientCertificateValidator = new CACertTrustValidator(signerCertPemBuffer.ToString(), ignoreValidityPeriod: false,
 				loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
 
-			analytics = new SglAnalytics(appName, appAPIToken, recipientCertificateValidator,
-				rootDataStore: rootDS,
-				logStorage: storage,
-				logCollectorClient: logCollectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			httpClient = new HttpClient();
+			httpClient.BaseAddress = new Uri(serverFixture.Server.Urls.First());
+			analytics = new SglAnalytics(appName, appAPIToken, httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => rootDS, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 		}
 
 		public class SimpleTestEvent {
@@ -263,6 +263,7 @@ namespace SGL.Analytics.Client.Tests {
 			}
 			File.Delete(rootDS.StorageFilePath);
 			serverFixture.Reset();
+			httpClient.Dispose();
 		}
 	}
 }

@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
@@ -31,6 +32,7 @@ namespace SGL.Analytics.Client.Tests {
 		private SglAnalytics analytics;
 		private ITestOutputHelper output;
 		private ILoggerFactory loggerFactory;
+		private HttpClient httpClient;
 
 		public ClientMainUnitTest(ITestOutputHelper output) {
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
@@ -51,18 +53,23 @@ namespace SGL.Analytics.Client.Tests {
 				loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
 			userRegClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: logCollectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			httpClient = new HttpClient();
+			httpClient.BaseAddress = new Uri("https://localhost/fake");
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			this.output = output;
 		}
 
 		public void Dispose() {
 			analytics.DisposeAsync().AsTask().Wait();
 			storage.Dispose();
+			httpClient.Dispose();
 		}
 
 		[Fact]
@@ -494,12 +501,14 @@ namespace SGL.Analytics.Client.Tests {
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: collectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			await analytics.FinishAsync();
 
 			Assert.Equal(5, collectorClient.UploadedLogFileIds.Count);
@@ -515,12 +524,14 @@ namespace SGL.Analytics.Client.Tests {
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
 			collectorClient.StatusCode = HttpStatusCode.InternalServerError;
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: collectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			List<Guid> logIds = new();
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
@@ -529,12 +540,14 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Empty(collectorClient.UploadedLogFileIds);
 
 			collectorClient.StatusCode = HttpStatusCode.NoContent;
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: collectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			await analytics.FinishAsync();
 			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
 		}
@@ -545,12 +558,14 @@ namespace SGL.Analytics.Client.Tests {
 			ds.UserID = Guid.NewGuid();
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: collectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			List<Guid> logIds = new();
 
 			logIds.Add(analytics.StartNewLog());
@@ -622,12 +637,14 @@ namespace SGL.Analytics.Client.Tests {
 		public async Task PendingUploadsAreRetriedOnSuccessfulRegistration() {
 			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
 			ds.UserID = null;
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: logCollectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			List<Guid> logIds = new();
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
@@ -639,12 +656,14 @@ namespace SGL.Analytics.Client.Tests {
 
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: collectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			var user = new TestUserData("Testuser") { Label = "This is a test!", SomeNumber = 42 };
 			Assert.Empty(collectorClient.UploadedLogFileIds);
 			await analytics.RegisterAsync(user);
@@ -659,12 +678,14 @@ namespace SGL.Analytics.Client.Tests {
 			var collectorClient = new FakeLogCollectorClient();
 			collectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
 			collectorClient.StatusCode = HttpStatusCode.InternalServerError;
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: collectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			List<Guid> logIds = new();
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
@@ -685,12 +706,14 @@ namespace SGL.Analytics.Client.Tests {
 			ds.Username = "Testuser";
 			logCollectorClient = new FakeLogCollectorClient();
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: logCollectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
@@ -708,12 +731,14 @@ namespace SGL.Analytics.Client.Tests {
 			ds.Username = null;
 			logCollectorClient = new FakeLogCollectorClient();
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: logCollectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
@@ -730,12 +755,14 @@ namespace SGL.Analytics.Client.Tests {
 			ds.Username = "Testuser";
 			logCollectorClient = new FakeLogCollectorClient();
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: logCollectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
@@ -752,12 +779,14 @@ namespace SGL.Analytics.Client.Tests {
 			ds.Username = null;
 			logCollectorClient = new FakeLogCollectorClient();
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: logCollectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			await analytics.RegisterAsync(new BaseUserData("Testuser"));
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
@@ -775,12 +804,14 @@ namespace SGL.Analytics.Client.Tests {
 			ds.Username = null;
 			logCollectorClient = new FakeLogCollectorClient();
 			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
-			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", recipientCertificateValidator,
-				rootDataStore: ds,
-				logStorage: storage,
-				logCollectorClient: logCollectorClient,
-				userRegistrationClient: userRegClient,
-				diagnosticsLogger: loggerFactory.CreateLogger<SglAnalytics>());
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
 			await analytics.RegisterAsync(new BaseUserData());
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();

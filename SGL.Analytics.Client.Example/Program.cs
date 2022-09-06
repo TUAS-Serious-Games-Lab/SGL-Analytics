@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -68,36 +69,31 @@ namespace SGL.Analytics.Client.Example {
 			}));
 		}
 
-
-		private static ICertificateValidator GetRecipientCertificateValidator(Options opts, ILoggerFactory loggerFactory) {
-			if (opts.RecipientSignerPemFile == null) {
-				return new CACertTrustValidator(localDevDemoSignerCertificatesPem, ignoreValidityPeriod: true,
-					loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
-			}
-			else {
-				using var reader = File.OpenText(opts.RecipientSignerPemFile);
-				return new CACertTrustValidator(reader, opts.RecipientSignerPemFile, ignoreValidityPeriod: true,
-					loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
-			}
-		}
-
 		async static Task RealMain(Options opts) {
-			ILoggerFactory loggerFactory = NullLoggerFactory.Instance;
-			if (opts.LoggingLevel < LogLevel.None) {
-				loggerFactory = LoggerFactory.Create(config => config.ClearProviders().AddConsole().SetMinimumLevel(opts.LoggingLevel));
-			}
-			var logger = loggerFactory.CreateLogger<SglAnalytics>();
-
-			var rootDS = new FileRootDataStore(opts.AppName);
-			var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(rootDS.DataDirectory, "DataLogs"));
-			logStorage.Archiving = opts.KeepFiles;
-			var recipientCertificateValidator = GetRecipientCertificateValidator(opts, loggerFactory);
-			await using SglAnalytics analytics = new SglAnalytics(opts.AppName, opts.AppApiToken, recipientCertificateValidator,
-				rootDataStore: rootDS,
-				logStorage: logStorage,
-				logCollectorClient: new LogCollectorRestClient(opts.Backend),
-				userRegistrationClient: new UserRegistrationRestClient(opts.Backend),
-				diagnosticsLogger: logger);
+			using var loggerFactory = LoggerFactory.Create(config => config.ClearProviders().AddConsole().SetMinimumLevel(opts.LoggingLevel));
+			var logger = loggerFactory.CreateLogger<Program>();
+			using var httpClient = new HttpClient();
+			httpClient.BaseAddress = opts.Backend;
+			await using SglAnalytics analytics = new SglAnalytics(opts.AppName, opts.AppApiToken, httpClient, config => {
+				if (opts.LogsDirectory != null) {
+					config.UseLogStorage(args => {
+						var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(args.DataDirectory, "DataLogs"));
+						logStorage.Archiving = opts.KeepFiles;
+						return logStorage;
+					});
+				}
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+				if (opts.RecipientSignerPemFile == null) {
+					config.UseEmbeddedRecipientCertificateAuthority(localDevDemoSignerCertificatesPem, ignoreCAValidityPeriod: true);
+				}
+				else {
+					config.UseRecipientCertificateValidator(args => {
+						using var reader = File.OpenText(opts.RecipientSignerPemFile);
+						return new CACertTrustValidator(reader, opts.RecipientSignerPemFile, ignoreValidityPeriod: true,
+							args.LoggerFactory.CreateLogger<CACertTrustValidator>(), args.LoggerFactory.CreateLogger<CertificateStore>());
+					});
+				}
+			});
 			if (!analytics.IsRegistered()) {
 				try {
 					await analytics.RegisterAsync(new BaseUserData(opts.NoUsername ? null : opts.Username));

@@ -44,6 +44,7 @@ namespace SGL.Analytics.Client {
 		private ILogger<SglAnalytics> logger;
 		private CryptoConfig cryptoConfig;
 
+		/// <inheritdoc/>
 		public async ValueTask DisposeAsync() {
 			try {
 				await FinishAsync();
