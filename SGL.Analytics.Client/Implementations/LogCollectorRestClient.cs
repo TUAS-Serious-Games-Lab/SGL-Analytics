@@ -19,7 +19,7 @@ namespace SGL.Analytics.Client {
 		private static readonly Uri recipientsApiRoute = new Uri("/api/analytics/log/v1/recipient-certificates", UriKind.Relative);
 
 		/// <summary>
-		/// Creates a client object that uses the given base URI of the backend server and the standard API URI <c>api/analytics/log/v1</c>.
+		/// Creates a client object that uses the given <see cref="HttpClient"/> and its associated <see cref="HttpClient.BaseAddress"/> to communicate with the backend at that address.
 		/// </summary>
 		/// <param name="httpClient">The <see cref="HttpClient"/> to use for requests to the backend.
 		/// The <see cref="HttpClient.BaseAddress"/> of the client needs to be set to the base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
