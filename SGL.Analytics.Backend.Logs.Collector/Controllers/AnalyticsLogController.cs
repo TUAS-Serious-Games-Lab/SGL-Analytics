@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.Applications;
@@ -10,7 +12,10 @@ using SGL.Utilities.Backend.Security;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,7 +24,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 	/// <summary>
 	/// The controller class serving the <c>api/analytics/log</c> route that accepts uploads of analytics log files for SGL Analytics.
 	/// </summary>
-	[Route("api/analytics/log/v1")]
+	[Route("api/analytics/log/v2")]
 	[ApiController]
 	public class AnalyticsLogController : ControllerBase {
 
@@ -52,28 +57,29 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			return Ok(app.DataRecipients.Select(r => r.CertificatePem));
 		}
 
-		// POST: api/analytics/log
+		// POST: api/analytics/log/v2
 		/// <summary>
-		/// Handles POST requests to <c>api/analytics/log</c> for analytics log files with the log contents and associated metadata.
+		/// Handles POST requests to <c>api/analytics/log/v2</c> for analytics log files with the log contents and associated metadata.
 		/// Request body shall consist of the raw log file contents. The associated metadata for the log file are accepted in the for of custom HTTP headers with the names of the properties of <see cref="LogMetadataDTO"/>.
 		/// This route requires authorization using a JWT bearer token issued by the controller for <c>api/analytics/user/login</c> in the user registration service.
 		/// If no such token is present, the authorization layer will reject the request and respond with a <see cref="StatusCodes.Status401Unauthorized"/>, containing a <c>WWW-Authenticate</c> header as an authorization challenge.
 		/// Upon successful upload, the controller responds with a <see cref="StatusCodes.Status201Created"/>.
 		/// If there is an error with either the JWT bearer token or with <paramref name="appApiToken"/>, the controller responds with a <see cref="StatusCodes.Status401Unauthorized"/>.
-		/// If the log file is larger than the limit of 200 MiB, the controller responds with a <see cref="StatusCodes.Status413RequestEntityTooLarge"/>.
+		/// If the log file is larger than the limit configured in <c>AnalyticsLog:UploadSizeLimit</c>, the controller responds with a <see cref="StatusCodes.Status413RequestEntityTooLarge"/>.
 		/// Other errors are represented by the controller responding with a <see cref="StatusCodes.Status500InternalServerError"/>.
 		/// </summary>
 		/// <param name="appApiToken">The API token of the client application, provided by the HTTP header <c>App-API-Token</c>.</param>
 		/// <param name="logMetadata">The metadata of the uploaded log file, provided as HTTP headers with the names of the properties of <see cref="LogMetadataDTO"/>.</param>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
-		[Consumes("application/octet-stream")]
+		[HttpPost]
+		[DisableFormValueModelBinding]
+		[Consumes("multipart/form-data")]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 		[ProducesResponseType(StatusCodes.Status413RequestEntityTooLarge)]
-		[HttpPost]
 		[Authorize]
 		[UseConfigurableUploadLimit]
-		public async Task<ActionResult> IngestLog([FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, [DtoFromHeaderModelBinder] LogMetadataDTO logMetadata, CancellationToken ct = default) {
+		public async Task<ActionResult> IngestLog([FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, CancellationToken ct = default) {
 			Guid userId;
 			string appName;
 			try {
@@ -85,44 +91,94 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 				metrics.HandleIncorrectSecurityTokenClaimsError();
 				return Unauthorized("The operation failed due to a security token error.");
 			}
-			Domain.Entity.Application? app = null;
-			try {
-				app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
-			}
-			catch (OperationCanceledException) {
-				logger.LogDebug("IngestLog POST request from user {userId} was cancelled while fetching application metadata.", userId);
-				throw;
-			}
-			catch (Exception ex) {
-				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to an unexpected exception when fetching application metadata.", userId);
-				metrics.HandleUnexpectedError(appName, ex);
-				throw;
-			}
-			if (app is null) {
-				logger.LogError("IngestLog POST request from user {userId} failed due to unknown application {appName}.", userId, appName);
-				metrics.HandleUnknownAppError(appName);
-				return Unauthorized();
-			}
-			else if (app.ApiToken != appApiToken) {
-				logger.LogError("IngestLog POST request from user {userId} failed due to incorrect API token for application {appName}.", userId, appName);
-				metrics.HandleIncorrectAppApiTokenError(appName);
-				return Unauthorized();
-			}
 
 			try {
-				await logManager.IngestLogAsync(userId, appName, logMetadata, Request.Body, Request.ContentLength, ct);
+				var streamingHelper = new MultipartStreamingHelper(Request,
+					invalidContentTypeCallback: actualContentType => {
+						logger.LogError("IngestLog operation from user {userId} of app {appName}: Invalid content-type {contentType}.", userId, appName, actualContentType);
+						return BadRequest("Invalid content type.");
+					},
+					noBoundaryCallback: () => {
+						logger.LogError("IngestLog operation from user {userId} of app {appName}: Missing multipart boundary in content-type.", userId, appName);
+						return BadRequest("No multipart boundary found in content type.");
+					},
+					boundaryTooLongCallback: () => {
+						logger.LogError("IngestLog operation from user {userId} of app {appName}: Multipart boundary too long.", userId, appName);
+						return BadRequest("Multipart boundary too long.");
+					},
+					skippedUnexpectedSectionNameContentTypeCallback: (name, contentType) => logger.LogDebug("IngestLog operation from user {userId} of app {appName}: " +
+						"Skipping unexpected body section with name {name} with content-type {contentType}.", userId, appName, name, contentType),
+					skippedSectionWithoutValidContentDispositionCallback: contentType => logger.LogDebug("IngestLog operation from user {userId} of app {appName}: " +
+						"Skipping unexpected body section without valid content disposition and with content-type {contentType}.", userId, appName, contentType),
+					boundaryLengthLimit: 100);
+				if (streamingHelper.InitError != null) {
+					return streamingHelper.InitError;
+				}
+
+				if (!await streamingHelper.ReadUntilSection(ct, ("metadata", "application/json"), ("content", "application/octet-stream"))) {
+					logger.LogError("IngestLog operation from user {userId} of app {appName}: Required request body sections (metadata,content) not present.", userId, appName);
+					return BadRequest("Required request body sections not present.");
+				}
+
+				LogMetadataDTO logMetadata;
+				if (streamingHelper.IsCurrentSection("metadata", "application/json")) {
+					var metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(streamingHelper.Section!.Body, new JsonSerializerOptions(JsonSerializerDefaults.Web), ct);
+					if (metadata == null) {
+						logger.LogError("IngestLog operation from user {userId} of app {appName}: Invalid JSON for LogMetadataDTO in request body section 'metadata'.", userId, appName);
+						throw new BadHttpRequestException("Invalid JSON for LogMetadataDTO in request body section 'metadata'.");
+					}
+					else if (ObjectValidator != null && !TryValidateModel(metadata)) {
+						logger.LogError("IngestLog operation from user {userId} of app {appName}: Metadata JSON failed model state validation. Errors:\n{errors}\n-----\n", userId, appName,
+							string.Join('\n', ModelState.SelectMany(kvp => kvp.Value?.Errors ?? new ModelErrorCollection()).Select(err => err.ErrorMessage)));
+						return BadRequest(ModelState);
+					}
+					else {
+						logMetadata = metadata;
+					}
+					await streamingHelper.ReadUntilSection(ct, ("content", "application/octet-stream"));
+				}
+				else {
+					logger.LogError("IngestLog operation from user {userId} of app {appName}: Request body section 'content' was received before request body section 'metadata'. However, 'metadata' must be sent before 'content'.", userId, appName);
+					return BadRequest("Request body section 'content' was received before request body section 'metadata', but they must be sent in opposite order.");
+				}
+
+				if (!streamingHelper.IsCurrentSection("content", "application/octet-stream")) {
+					logger.LogError("IngestLog operation from user {userId} of app {appName}: Request body section 'content' not present.", userId, appName);
+					return BadRequest("Request body section 'content' not present.");
+				}
+
+				await logManager.IngestLogAsync(userId, appName, appApiToken, logMetadata, streamingHelper.Section!.Body, ct);
 				metrics.HandleLogUploadedSuccessfully(appName);
+				logger.LogDebug("IngestLog operation from user {userId} of app {appName} successfully completed, uploaded log with id {id}.", userId, appName, logMetadata.LogFileId);
 				return StatusCode(StatusCodes.Status201Created);
 			}
 			catch (OperationCanceledException) {
 				logger.LogDebug("IngestLog POST request from user {userId} was cancelled while fetching application metadata.", userId);
 				throw;
 			}
+			catch (ApplicationDoesNotExistException) {
+				logger.LogError("IngestLog POST request from user {userId} failed due to unknown application {appName}.", userId, appName);
+				metrics.HandleUnknownAppError(appName);
+				return Unauthorized();
+			}
+			catch (ApplicationApiTokenMismatchException) {
+				logger.LogError("IngestLog POST request from user {userId} failed due to incorrect API token for application {appName}.", userId, appName);
+				metrics.HandleIncorrectAppApiTokenError(appName);
+				return Unauthorized();
+			}
 			catch (BadHttpRequestException ex) when (ex.StatusCode == StatusCodes.Status413RequestEntityTooLarge) {
 				logger.LogCritical("IngestLog POST request from user {userId} failed because the log file was too large for the server's limit. " +
 					"The Content-Length given by the client was {size}.", userId, HttpContext.Request.ContentLength);
 				metrics.HandleLogFileTooLargeError(appName);
 				return AbortWithErrorObject(ex.StatusCode, "The log file's size exceeds the limit.");
+			}
+			catch (BadHttpRequestException ex) {
+				// Logging is done at throwing site.
+				return BadRequest(ex.Message);
+			}
+			catch (JsonException ex) {
+				logger.LogError(ex, "IngestLog POST request from user {userId} of app {appName} failed due to invalid JSON in request body.", userId, appName);
+				return BadRequest("Invalid JSON for metadata.");
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "IngestLog POST request from user {userId} failed due to unexpected exception during log ingest.", userId);

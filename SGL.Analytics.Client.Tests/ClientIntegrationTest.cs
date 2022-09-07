@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Ocsp;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Crypto;
@@ -12,8 +13,10 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using WireMock;
 using WireMock.Matchers;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
@@ -26,6 +29,7 @@ namespace SGL.Analytics.Client.Tests {
 		private const string appName = "SGLAnalyticsClientIntegrationTest";
 		private const string appAPIToken = "FakeApiToken";
 		private string dataDirectory;
+		private DateTime startTime;
 		private ITestOutputHelper output;
 		private ILoggerFactory loggerFactory;
 		private MockServerFixture serverFixture;
@@ -45,6 +49,7 @@ namespace SGL.Analytics.Client.Tests {
 		private string recipientCertsPem;
 
 		public ClientIntegrationTest(ITestOutputHelper output, MockServerFixture serverFixture) {
+			startTime = DateTime.UtcNow.AddSeconds(-1);
 			this.output = output;
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
 			this.serverFixture = serverFixture;
@@ -104,12 +109,12 @@ namespace SGL.Analytics.Client.Tests {
 		[InlineData(null)]
 		public async Task LogEventsAreRecordedAndUploadedAsLogFilesWithCorrectContentAfterRegistration(string? username) {
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v1").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2").UsingPost()
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
-						.WithHeader("LogFileId", guidMatcher)
+						.WithHeader("Content-Type", new ContentTypeMatcher("multipart/form-data"))
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v1/recipient-certificates").UsingGet()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2/recipient-certificates").UsingGet()
 						.WithParam("appName", appName)
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken)))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
@@ -161,6 +166,8 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync();
 			finished = true;
 
+			var endTime = DateTime.UtcNow.AddSeconds(1);
+
 			static void readAndAssertSimpleTestEvent(ref JsonElement.ArrayEnumerator arrEnumerator, string expChannel, string expName) {
 				Assert.True(arrEnumerator.MoveNext());
 				var entryElem = arrEnumerator.Current;
@@ -206,20 +213,28 @@ namespace SGL.Analytics.Client.Tests {
 				output.WriteStreamContents(stream);
 			}
 
+			output.WriteLine("");
+			output.WriteLine("Logs:");
+			output.WriteLine("=============================================");
+
 			var successfulLogRequests = serverFixture.Server.LogEntries
-				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/log/v1")
+				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/log/v2")
 				.Select(le => le.RequestMessage);
-			foreach (var req in successfulLogRequests) {
-				using (var stream = new GZipStream(new MemoryStream(req.BodyAsBytes), CompressionMode.Decompress)) {
-					output.WriteLine("");
-					output.WriteLine($"{req.Headers?["LogFileId"]?.Single() ?? "null"}");
-					output.WriteStreamContents(stream);
-				}
-			}
+			Assert.Equal(3, successfulLogRequests.Count());
 			var requestsEnumerator = successfulLogRequests.GetEnumerator();
 
 			Assert.True(requestsEnumerator.MoveNext());
-			await using (var stream = new GZipStream(new MemoryStream(requestsEnumerator.Current.BodyAsBytes), CompressionMode.Decompress)) {
+			var (metadataStream, contentStream) = CheckRequest(requestsEnumerator.Current);
+			using (var stream = new GZipStream(contentStream, CompressionMode.Decompress, leaveOpen: true)) {
+				output.WriteLine("=== Metadata ===");
+				output.WriteStreamContents(metadataStream);
+				output.WriteLine("=== Content ===");
+				output.WriteStreamContents(stream);
+				output.WriteLine("");
+			}
+			metadataStream.Position = 0;
+			contentStream.Position = 0;
+			await using (var stream = new GZipStream(contentStream, CompressionMode.Decompress)) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
 					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
 					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test A");
@@ -231,8 +246,23 @@ namespace SGL.Analytics.Client.Tests {
 					readAndAssertSimpleSnapshot(ref arrEnumerator, "Channel 3", 2, "Snap C");
 				}
 			}
+			var metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+			Assert.NotNull(metadata);
+			Assert.InRange(metadata.CreationTime.ToUniversalTime(), startTime, endTime);
+			Assert.InRange(metadata.EndTime.ToUniversalTime(), startTime, endTime);
+
 			Assert.True(requestsEnumerator.MoveNext());
-			await using (var stream = new GZipStream(new MemoryStream(requestsEnumerator.Current.BodyAsBytes), CompressionMode.Decompress)) {
+			(metadataStream, contentStream) = CheckRequest(requestsEnumerator.Current);
+			using (var stream = new GZipStream(contentStream, CompressionMode.Decompress, leaveOpen: true)) {
+				output.WriteLine("=== Metadata ===");
+				output.WriteStreamContents(metadataStream);
+				output.WriteLine("=== Content ===");
+				output.WriteStreamContents(stream);
+				output.WriteLine("");
+			}
+			metadataStream.Position = 0;
+			contentStream.Position = 0;
+			await using (var stream = new GZipStream(contentStream, CompressionMode.Decompress)) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
 					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
 					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test E");
@@ -244,8 +274,23 @@ namespace SGL.Analytics.Client.Tests {
 					readAndAssertSimpleSnapshot(ref arrEnumerator, "Channel 3", 2, "Snap E");
 				}
 			}
+			metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+			Assert.NotNull(metadata);
+			Assert.InRange(metadata.CreationTime.ToUniversalTime(), startTime, endTime);
+			Assert.InRange(metadata.EndTime.ToUniversalTime(), startTime, endTime);
+
 			Assert.True(requestsEnumerator.MoveNext());
-			await using (var stream = new GZipStream(new MemoryStream(requestsEnumerator.Current.BodyAsBytes), CompressionMode.Decompress)) {
+			(metadataStream, contentStream) = CheckRequest(requestsEnumerator.Current);
+			using (var stream = new GZipStream(contentStream, CompressionMode.Decompress, leaveOpen: true)) {
+				output.WriteLine("=== Metadata ===");
+				output.WriteStreamContents(metadataStream);
+				output.WriteLine("=== Content ===");
+				output.WriteStreamContents(stream);
+				output.WriteLine("");
+			}
+			metadataStream.Position = 0;
+			contentStream.Position = 0;
+			await using (var stream = new GZipStream(contentStream, CompressionMode.Decompress)) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
 					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
 					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test J");
@@ -253,8 +298,24 @@ namespace SGL.Analytics.Client.Tests {
 					readAndAssertSimpleSnapshot(ref arrEnumerator, "Channel 3", 1, "Snap F");
 				}
 			}
+			metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+			Assert.NotNull(metadata);
+			Assert.InRange(metadata.CreationTime.ToUniversalTime(), startTime, endTime);
+			Assert.InRange(metadata.EndTime.ToUniversalTime(), startTime, endTime);
+
 			Assert.False(requestsEnumerator.MoveNext());
 
+		}
+
+		private static (MemoryStream, MemoryStream) CheckRequest(IRequestMessage request) {
+			var contentParts = MultipartBodySplitter.SplitMultipartBody(request.BodyAsBytes, MultipartBodySplitter.GetBoundaryFromContentType(request.Headers?["Content-Type"].First())).ToList();
+			Assert.Equal("application/json", contentParts[0].SectionHeaders["Content-Type"]);
+			Assert.Equal("form-data; name=metadata", contentParts[0].SectionHeaders["Content-Disposition"]);
+			var metadataStream = new MemoryStream(contentParts[0].Content, writable: false);
+			Assert.Equal("application/octet-stream", contentParts[1].SectionHeaders["Content-Type"]);
+			Assert.Equal("form-data; name=content", contentParts[1].SectionHeaders["Content-Disposition"]);
+			var contentStream = new MemoryStream(contentParts[1].Content, writable: false);
+			return (metadataStream, contentStream);
 		}
 
 		public void Dispose() {

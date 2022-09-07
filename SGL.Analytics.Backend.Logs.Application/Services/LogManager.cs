@@ -54,19 +54,23 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 		}
 
 		/// <summary>
-		/// Ingests the log file with the given metadata and content as described by <see cref="ILogManager.IngestLogAsync(Guid, string, LogMetadataDTO, Stream, long?, CancellationToken)"/>.
+		/// Ingests the log file with the given metadata and content as described by <see cref="ILogManager.IngestLogAsync(Guid, string, string, LogMetadataDTO, Stream, CancellationToken)"/>.
 		/// </summary>
-		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, LogMetadataDTO logMetaDTO, Stream logContent, long? contentSize, CancellationToken ct = default) {
+		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, string appApiToken, LogMetadataDTO logMetaDTO, Stream logContent, CancellationToken ct = default) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
 			if (app is null) {
 				logger.LogError("Attempt to ingest a log file with id {logId} for non-existent application {appName} from user {user}.", logMetaDTO.LogFileId, appName, userId);
 				throw new ApplicationDoesNotExistException(appName);
 			}
+			else if (app.ApiToken != appApiToken) {
+				logger.LogError("Attempt to ingest a log file with id {logId} for application {appName} using incorrect app API token {token} from user {user}.", logMetaDTO.LogFileId, appName, appApiToken, userId);
+				throw new ApplicationApiTokenMismatchException(appName, appApiToken);
+			}
 			try {
 				var logMetadata = await logMetaRepo.GetLogMetadataByIdAsync(logMetaDTO.LogFileId, ct);
 				if (logMetadata is null) {
 					logMetadata = new(logMetaDTO.LogFileId, app.Id, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now,
-						logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, contentSize, false);
+						logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, null, false);
 					logMetadata.App = app;
 					logger.LogInformation("Ingesting new log file {logId} from user {userId}.", logMetaDTO.LogFileId, userId);
 					logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata, ct);
@@ -76,7 +80,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					var oldLogMetadata = await logMetaRepo.GetLogMetadataByUserLocalIdAsync(app.Id, userId, logMetaDTO.LogFileId);
 					if (oldLogMetadata is null) {
 						logMetadata = new(Guid.NewGuid(), app.Id, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now,
-							logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, contentSize, false);
+							logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, null, false);
 						logMetadata.App = app;
 						logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. " +
 							"Resolving this conflict by assigning a new log id {newLogId} for the new log file.",
@@ -105,7 +109,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 							metrics.HandleLogUploadRetryWarning(appName);
 							updateContentEncodingAndSuffix(logMetaDTO, logMetadata, appName);
 							logMetadata.UploadTime = DateTime.Now;
-							logMetadata.Size = contentSize;
+							logMetadata.Size = null;
 							logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 						}
 					}
@@ -123,7 +127,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					metrics.HandleLogUploadRetryWarning(appName);
 					updateContentEncodingAndSuffix(logMetaDTO, logMetadata, appName);
 					logMetadata.UploadTime = DateTime.Now;
-					logMetadata.Size = contentSize;
+					logMetadata.Size = null;
 					logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 				}
 				long storedSize = 0;

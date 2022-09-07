@@ -6,6 +6,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -15,8 +18,12 @@ namespace SGL.Analytics.Client {
 	/// </summary>
 	public class LogCollectorRestClient : ILogCollectorClient {
 		private readonly HttpClient httpClient;
-		private static readonly Uri logApiRoute = new Uri("/api/analytics/log/v1", UriKind.Relative);
-		private static readonly Uri recipientsApiRoute = new Uri("/api/analytics/log/v1/recipient-certificates", UriKind.Relative);
+		private static readonly Uri logApiRoute = new Uri("/api/analytics/log/v2", UriKind.Relative);
+		private static readonly Uri recipientsApiRoute = new Uri("/api/analytics/log/v2/recipient-certificates", UriKind.Relative);
+		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
+			WriteIndented = true,
+			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+		};
 
 		/// <summary>
 		/// Creates a client object that uses the given <see cref="HttpClient"/> and its associated <see cref="HttpClient.BaseAddress"/> to communicate with the backend at that address.
@@ -52,12 +59,15 @@ namespace SGL.Analytics.Client {
 			}
 			using (var stream = logFile.OpenReadRaw()) {
 				var content = new StreamContent(stream);
+				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 				LogMetadataDTO dto = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding);
 				Validator.ValidateObject(dto, new ValidationContext(dto), true);
-				content.Headers.MapDtoProperties(dto);
-				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+				var metadata = JsonContent.Create(dto, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				using var multipartContent = new MultipartFormDataContent();
+				multipartContent.Add(metadata, "metadata");
+				multipartContent.Add(content, "content");
 				using var request = new HttpRequestMessage(HttpMethod.Post, logApiRoute);
-				request.Content = content;
+				request.Content = multipartContent;
 				request.Headers.Add("App-API-Token", appAPIToken);
 				request.Headers.Authorization = authToken.ToHttpHeaderValue();
 				request.Version = HttpVersion.Version20;

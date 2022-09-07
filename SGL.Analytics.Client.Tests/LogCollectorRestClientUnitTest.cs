@@ -1,9 +1,13 @@
+using SGL.Analytics.DTO;
 using SGL.Utilities;
 using System;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using WireMock.Matchers;
 using WireMock.RequestBuilders;
@@ -39,9 +43,9 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v1").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2").UsingPost()
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
-						.WithHeader("LogFileId", guidMatcher)
+						.WithHeader("Content-Type", new ContentTypeMatcher("multipart/form-data"))
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
 
@@ -49,12 +53,21 @@ namespace SGL.Analytics.Client.Tests {
 
 			Assert.Single(serverFixture.Server.LogEntries);
 			var logEntry = serverFixture.Server.LogEntries.Single();
-			Assert.Equal(content, logEntry.RequestMessage.Body);
 			var headers = logEntry.RequestMessage.Headers;
 			Assert.Equal(appAPIToken, headers?["App-API-Token"]?.Single());
-			Assert.Equal(logFile.ID, Guid.Parse(headers?["LogFileId"]?.Single() ?? ""));
-			Assert.Equal(logFile.CreationTime, DateTime.Parse(headers?["CreationTime"]?.Single() ?? ""));
-			Assert.Equal(logFile.EndTime, DateTime.Parse(headers?["EndTime"]?.Single() ?? ""));
+			var contentParts = MultipartBodySplitter.SplitMultipartBody(logEntry.RequestMessage.BodyAsBytes, MultipartBodySplitter.GetBoundaryFromContentType(logEntry.RequestMessage?.Headers?["Content-Type"].First())).ToList();
+			Assert.Equal("application/json", contentParts[0].SectionHeaders["Content-Type"]);
+			Assert.Equal("form-data; name=metadata", contentParts[0].SectionHeaders["Content-Disposition"]);
+			using var metadataStream = new MemoryStream(contentParts[0].Content, writable: false);
+			var metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+			Assert.Equal("application/octet-stream", contentParts[1].SectionHeaders["Content-Type"]);
+			Assert.Equal("form-data; name=content", contentParts[1].SectionHeaders["Content-Disposition"]);
+			Assert.Equal(content, Encoding.UTF8.GetString(contentParts[1].Content));
+
+			Assert.Equal(logFile.ID, metadata?.LogFileId);
+			Assert.Equal(logFile.CreationTime, metadata?.CreationTime);
+			Assert.Equal(logFile.EndTime, metadata?.EndTime);
 		}
 		[Fact]
 		public async Task ServerErrorsAreCorrectlyReportedByException() {
@@ -66,9 +79,9 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v1").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2").UsingPost()
 						.WithHeader("App-API-Token", new WildcardMatcher("*"))
-						.WithHeader("LogFileId", guidMatcher)
+						.WithHeader("Content-Type", new ContentTypeMatcher("multipart/form-data"))
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
 

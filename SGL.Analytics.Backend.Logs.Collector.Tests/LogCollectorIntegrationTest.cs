@@ -24,6 +24,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -102,6 +105,10 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 	public class LogCollectorIntegrationTest : IClassFixture<LogCollectorIntegrationTestFixture> {
 		private readonly LogCollectorIntegrationTestFixture fixture;
 		private readonly ITestOutputHelper output;
+		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
+			WriteIndented = true,
+			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+		};
 
 		public LogCollectorIntegrationTest(LogCollectorIntegrationTestFixture fixture, ITestOutputHelper output) {
 			this.fixture = fixture;
@@ -112,7 +119,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		[Fact]
 		public async Task RecipientCertificateListContainsExpectedEntries() {
 			using (var client = fixture.CreateClient()) {
-				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/analytics/log/v1/recipient-certificates?appName={fixture.AppName}");
+				var request = new HttpRequestMessage(HttpMethod.Get, $"/api/analytics/log/v2/recipient-certificates?appName={fixture.AppName}");
 				request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/x-pem-file"));
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
@@ -138,13 +145,16 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		private HttpRequestMessage buildUploadRequest(Stream logContent, LogMetadataDTO logMDTO, Guid userId, string appName, string? appApiToken = null) {
 			var content = new StreamContent(logContent);
-			content.Headers.MapDtoProperties(logMDTO);
 			content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-			var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
+			var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+			var multipartContent = new MultipartFormDataContent();
+			multipartContent.Add(metadata, "metadata");
+			multipartContent.Add(content, "content");
+			var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v2");
 			request.Headers.Add("App-API-Token", appApiToken ?? fixture.AppApiToken);
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 				fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", appName)));
-			request.Content = content;
+			request.Content = multipartContent;
 			return request;
 		}
 
@@ -201,13 +211,17 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed));
+				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
+				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				var multipartContent = new MultipartFormDataContent();
+				multipartContent.Add(metadata, "metadata");
+				multipartContent.Add(content, "content");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v2");
 				request.Headers.Add("App-API-Token", "IncorrectToken");
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 					fixture.TokenGenerator.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
-				request.Content = content;
+				request.Content = multipartContent;
 				var response = await client.SendAsync(request);
 				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
 				Assert.Empty(response.Headers.WwwAuthenticate); // Ensure the error is not from JWT challenge but from the incorrect app token.
@@ -221,11 +235,15 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed));
+				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
+				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				var multipartContent = new MultipartFormDataContent();
+				multipartContent.Add(metadata, "metadata");
+				multipartContent.Add(content, "content");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v2");
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
-				request.Content = content;
+				request.Content = multipartContent;
 				var response = await client.SendAsync(request);
 				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
 				// Ensure the error is from JWT challenge, not from incorrect app credentials.
@@ -240,14 +258,18 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed));
+				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
+				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				var multipartContent = new MultipartFormDataContent();
+				multipartContent.Add(metadata, "metadata");
+				multipartContent.Add(content, "content");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v2");
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 									new JwtTokenGenerator(fixture.JwtOptions.Issuer, fixture.JwtOptions.Audience, "InvalidKeyInvalidKeyInvalidKeyInvalidKeyInvalidKey")
 									.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
-				request.Content = content;
+				request.Content = multipartContent;
 				var response = await client.SendAsync(request);
 				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
 				// Ensure the error is from JWT challenge, not from incorrect app credentials.
@@ -262,14 +284,18 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed));
+				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
+				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				var multipartContent = new MultipartFormDataContent();
+				multipartContent.Add(metadata, "metadata");
+				multipartContent.Add(content, "content");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v2");
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 									new JwtTokenGenerator("InvalidIssuer", fixture.JwtOptions.Audience, fixture.JwtOptions.SymmetricKey!)
 									.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
-				request.Content = content;
+				request.Content = multipartContent;
 				var response = await client.SendAsync(request);
 				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
 				// Ensure the error is from JWT challenge, not from incorrect app credentials.
@@ -284,14 +310,18 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				content.Headers.MapDtoProperties(new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed));
+				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v1");
+				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				var multipartContent = new MultipartFormDataContent();
+				multipartContent.Add(metadata, "metadata");
+				multipartContent.Add(content, "content");
+				var request = new HttpRequestMessage(HttpMethod.Post, "/api/analytics/log/v2");
 				request.Headers.Add("App-API-Token", fixture.AppApiToken);
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
 									new JwtTokenGenerator(fixture.JwtOptions.Issuer, "InvalidAudience", fixture.JwtOptions.SymmetricKey!)
 									.GenerateToken(userId, TimeSpan.FromMinutes(5), ("appname", fixture.AppName)));
-				request.Content = content;
+				request.Content = multipartContent;
 				var response = await client.SendAsync(request);
 				Assert.Equal(System.Net.HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
 				// Ensure the error is from JWT challenge, not from incorrect app credentials.
@@ -344,7 +374,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					Assert.Equal(logMDTO.NameSuffix, logMd?.FilenameSuffix);
 					Assert.Equal(logMDTO.LogContentEncoding, logMd?.Encoding);
 					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
-					Assert.Equal(logContent.Length, logMd?.Size);
+					Assert.Null(logMd?.Size);
 					Assert.False(logMd?.Complete);
 				}
 				// Reattempt normally...
