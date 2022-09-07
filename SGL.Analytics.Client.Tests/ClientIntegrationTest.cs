@@ -104,12 +104,12 @@ namespace SGL.Analytics.Client.Tests {
 		[InlineData(null)]
 		public async Task LogEventsAreRecordedAndUploadedAsLogFilesWithCorrectContentAfterRegistration(string? username) {
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v1").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2").UsingPost()
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
-						.WithHeader("LogFileId", guidMatcher)
+						.WithHeader("Content-Type", new ContentTypeMatcher("multipart/form-data"))
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v1/recipient-certificates").UsingGet()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2/recipient-certificates").UsingGet()
 						.WithParam("appName", appName)
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken)))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
@@ -207,12 +207,12 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var successfulLogRequests = serverFixture.Server.LogEntries
-				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/log/v1")
+				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/log/v2")
 				.Select(le => le.RequestMessage);
+			Assert.Equal(3, successfulLogRequests.Count());
 			foreach (var req in successfulLogRequests) {
 				using (var stream = new GZipStream(new MemoryStream(req.BodyAsBytes), CompressionMode.Decompress)) {
 					output.WriteLine("");
-					output.WriteLine($"{req.Headers?["LogFileId"]?.Single() ?? "null"}");
 					output.WriteStreamContents(stream);
 				}
 			}

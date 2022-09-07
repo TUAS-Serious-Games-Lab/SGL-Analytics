@@ -39,9 +39,9 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v1").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2").UsingPost()
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
-						.WithHeader("LogFileId", guidMatcher)
+						.WithHeader("Content-Type", new ContentTypeMatcher("multipart/form-data"))
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
 
@@ -66,9 +66,9 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v1").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2").UsingPost()
 						.WithHeader("App-API-Token", new WildcardMatcher("*"))
-						.WithHeader("LogFileId", guidMatcher)
+						.WithHeader("Content-Type", new ContentTypeMatcher("multipart/form-data"))
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
 
