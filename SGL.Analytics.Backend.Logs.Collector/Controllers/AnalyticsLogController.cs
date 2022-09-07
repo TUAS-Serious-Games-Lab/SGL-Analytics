@@ -60,16 +60,19 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		// POST: api/analytics/log/v2
 		/// <summary>
 		/// Handles POST requests to <c>api/analytics/log/v2</c> for analytics log files with the log contents and associated metadata.
-		/// Request body shall consist of the raw log file contents. The associated metadata for the log file are accepted in the for of custom HTTP headers with the names of the properties of <see cref="LogMetadataDTO"/>.
+		/// Request body shall consist of two multipart/form-data sections:
+		/// - The first section shall have a <c>Content-Type</c> of <c>application/json</c> an a <c>Content-Disposition</c> with name <c>metadata</c> and shall contain the metadata for the uploaded log file as a JSON-serialized <see cref="LogMetadataDTO"/> object.
+		/// - The second section shall have a <c>Content-Type</c> of <c>application/octet-stream</c> an a <c>Content-Disposition</c> with name <c>content</c> and shall contain the raw log file contents, compressed and / or encrypted depending on <see cref="LogMetadataDTO.LogContentEncoding"/>.
+		///
 		/// This route requires authorization using a JWT bearer token issued by the controller for <c>api/analytics/user/login</c> in the user registration service.
 		/// If no such token is present, the authorization layer will reject the request and respond with a <see cref="StatusCodes.Status401Unauthorized"/>, containing a <c>WWW-Authenticate</c> header as an authorization challenge.
 		/// Upon successful upload, the controller responds with a <see cref="StatusCodes.Status201Created"/>.
 		/// If there is an error with either the JWT bearer token or with <paramref name="appApiToken"/>, the controller responds with a <see cref="StatusCodes.Status401Unauthorized"/>.
 		/// If the log file is larger than the limit configured in <c>AnalyticsLog:UploadSizeLimit</c>, the controller responds with a <see cref="StatusCodes.Status413RequestEntityTooLarge"/>.
+		/// Errors with the request body data result in  <see cref="StatusCodes.Status400BadRequest"/>.
 		/// Other errors are represented by the controller responding with a <see cref="StatusCodes.Status500InternalServerError"/>.
 		/// </summary>
 		/// <param name="appApiToken">The API token of the client application, provided by the HTTP header <c>App-API-Token</c>.</param>
-		/// <param name="logMetadata">The metadata of the uploaded log file, provided as HTTP headers with the names of the properties of <see cref="LogMetadataDTO"/>.</param>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
 		[HttpPost]
 		[DisableFormValueModelBinding]
