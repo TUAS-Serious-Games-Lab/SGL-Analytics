@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 namespace SGL.Analytics.Client {
 	[JsonConverter(typeof(LogEntryJsonConverter))]
 	internal class LogEntry {
+		[JsonConverter(typeof(JsonStringEnumConverter))]
 		public enum LogEntryType {
 			Event, Snapshot
 		}

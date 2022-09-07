@@ -76,8 +76,7 @@ namespace SGL.Analytics.Client {
 		}
 
 		private readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions() {
-			WriteIndented = true,
-			Converters = { new JsonStringEnumConverter(new EnumNamingPolicy()) }
+			WriteIndented = true
 		};
 
 		private class LogQueue {
