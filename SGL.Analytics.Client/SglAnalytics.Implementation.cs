@@ -260,11 +260,19 @@ namespace SGL.Analytics.Client {
 				bool removing = false;
 				try {
 					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
-					Task uploadTask;
-					lock (lockObject) { // At the beginning, of the upload task, the stream for the log file needs to be aquired under lock.
-						uploadTask = logCollectorClient.UploadLogFileAsync(appName, appAPIToken, authToken, logFile);
+					LogMetadataDTO metadataDTO;
+					Stream contentStream = Stream.Null;
+					try {
+						lock (lockObject) { // Access to the log file object needs to be done under lock.
+							metadataDTO = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding);
+							contentStream = logFile.OpenReadRaw();
+						}
+						Validator.ValidateObject(metadataDTO, new ValidationContext(metadataDTO), true);
+						await logCollectorClient.UploadLogFileAsync(appName, appAPIToken, authToken, metadataDTO, contentStream);
 					}
-					await uploadTask;
+					finally {
+						await contentStream.DisposeAsync();
+					}
 					removing = true;
 					lock (lockObject) { // ILogStorage implementations may need to do this under lock.
 						logFile.Remove();

@@ -3,6 +3,7 @@ using SGL.Utilities;
 using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -53,19 +54,16 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <inheritdoc/>
-		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile) {
+		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, LogMetadataDTO metadata, Stream content) {
 			if (httpClient.BaseAddress == null) {
 				throw new ArgumentNullException($"{nameof(httpClient)}.{nameof(HttpClient.BaseAddress)}");
 			}
-			using (var stream = logFile.OpenReadRaw()) {
-				var content = new StreamContent(stream);
-				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				LogMetadataDTO dto = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding);
-				Validator.ValidateObject(dto, new ValidationContext(dto), true);
-				var metadata = JsonContent.Create(dto, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
-				using var multipartContent = new MultipartFormDataContent();
-				multipartContent.Add(metadata, "metadata");
-				multipartContent.Add(content, "content");
+			using (var multipartContent = new MultipartFormDataContent()) {
+				var contentObj = new StreamContent(content);
+				contentObj.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+				var metadataObj = JsonContent.Create(metadata, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				multipartContent.Add(metadataObj, "metadata");
+				multipartContent.Add(contentObj, "content");
 				using var request = new HttpRequestMessage(HttpMethod.Post, logApiRoute);
 				request.Content = multipartContent;
 				request.Headers.Add("App-API-Token", appAPIToken);

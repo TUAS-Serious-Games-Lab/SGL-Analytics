@@ -1,7 +1,9 @@
+using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -24,11 +26,11 @@ namespace SGL.Analytics.Client.Tests {
 			return Task.CompletedTask;
 		}
 
-		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile) {
+		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, LogMetadataDTO metadata, Stream content) {
 			await Task.CompletedTask;
 			var resp = new HttpResponseMessage(StatusCode);
 			resp.EnsureSuccessStatusCode();
-			UploadedLogFileIds.Add(logFile.ID);
+			UploadedLogFileIds.Add(metadata.LogFileId);
 		}
 	}
 }
