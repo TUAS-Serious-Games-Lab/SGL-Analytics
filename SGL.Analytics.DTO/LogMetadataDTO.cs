@@ -1,11 +1,13 @@
 using SGL.Utilities.Validation;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace SGL.Analytics.DTO {
 	/// <summary>
 	/// Represents the different supported content encodings that can be used for an analytics log file.
 	/// </summary>
+	[JsonConverter(typeof(JsonStringEnumConverter))]
 	public enum LogContentEncoding {
 		/// <summary>
 		/// The log file content is uploaded as plain text JSON.
