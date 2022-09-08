@@ -1,4 +1,5 @@
 using SGL.Analytics.DTO;
+using SGL.Utilities.Crypto.EndToEnd;
 using System;
 using System.Collections.Generic;
 
@@ -66,7 +67,11 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <summary>
 		/// Contains the initialization vector for the encryption if the log is encrypted, otherwise null.
 		/// </summary>
-		public byte[]? InitializationVector { get; set; }
+		public byte[] InitializationVector { get; set; }
+		/// <summary>
+		/// The encryption mode used for the log file data.
+		/// </summary>
+		public DataEncryptionMode EncryptionMode { get; set; }
 		/// <summary>
 		/// If the log is encrypted and uses a shared per-log public key for ECDH, stores this key, otherwise null.
 		/// </summary>
