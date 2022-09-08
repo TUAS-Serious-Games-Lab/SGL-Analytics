@@ -290,10 +290,10 @@ namespace SGL.Analytics.Client {
 				}
 #endif
 				catch (HttpRequestException ex) {
-					logger.LogError("Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup on explicit retry.", logFile.ID, ex.Message);
+					logger.LogError("Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup or explicit retry.", logFile.ID, ex.Message);
 				}
 				catch (Exception ex) when (!removing) {
-					logger.LogError(ex, "Uploading data log {logId} failed with an unexpected exception. It will be retried at next startup on explicit retry.", logFile.ID);
+					logger.LogError(ex, "Uploading data log {logId} failed with an unexpected exception. It will be retried at next startup or explicit retry.", logFile.ID);
 				}
 				catch (Exception ex) {
 					logger.LogError(ex, "Removing data log {logId} failed with an unexpected exception.", logFile.ID);
