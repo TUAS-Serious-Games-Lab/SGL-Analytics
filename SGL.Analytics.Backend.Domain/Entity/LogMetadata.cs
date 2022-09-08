@@ -2,6 +2,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities.Crypto.EndToEnd;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
 	/// <summary>
@@ -85,8 +86,8 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// Constructs a LogMetadata with the given data values.
 		/// </summary>
 		public LogMetadata(Guid id, Guid appId, Guid userId, Guid localLogId,
-			DateTime creationTime, DateTime endTime, DateTime uploadTime, string filenameSuffix, LogContentEncoding encoding, long? size, bool complete = false,
-			byte[]? initializationVector = null, byte[]? sharedLogPublicKey = null) {
+			DateTime creationTime, DateTime endTime, DateTime uploadTime, string filenameSuffix, LogContentEncoding encoding, long? size, byte[] initializationVector,
+			DataEncryptionMode encryptionMode, byte[]? sharedLogPublicKey = null, bool complete = false) {
 			Id = id;
 			AppId = appId;
 			UserId = userId;
@@ -97,9 +98,52 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			FilenameSuffix = filenameSuffix;
 			Encoding = encoding;
 			Size = size;
-			Complete = complete;
 			InitializationVector = initializationVector;
+			EncryptionMode = encryptionMode;
 			SharedLogPublicKey = sharedLogPublicKey;
+			Complete = complete;
+		}
+
+		public static LogMetadata Create(Guid id, Application app, Guid userId, Guid localLogId, DateTime creationTime, DateTime endTime, DateTime uploadTime, string filenameSuffix,
+				LogContentEncoding encoding, long? size, EncryptionInfo encryptionInfo, bool complete = false) {
+			var metadata = new LogMetadata(id, app.Id, userId, localLogId, creationTime, endTime, uploadTime, filenameSuffix, encoding, size, encryptionInfo.IVs.Single(),
+				encryptionInfo.DataMode, sharedLogPublicKey: encryptionInfo.MessagePublicKey, complete: complete);
+			metadata.App = app;
+			metadata.RecipientKeys = new List<LogRecipientKey>();
+			metadata.EncryptionInfo = encryptionInfo;
+			return metadata;
+		}
+
+		public EncryptionInfo EncryptionInfo {
+			get {
+				return new EncryptionInfo {
+					DataMode = EncryptionMode,
+					IVs = new List<byte[]> { InitializationVector },
+					MessagePublicKey = SharedLogPublicKey,
+					DataKeys = RecipientKeys.ToDictionary(lrk => lrk.RecipientKeyId, lrk => lrk.ToDataKeyInfo())
+				};
+			}
+			set {
+				EncryptionMode = value.DataMode;
+				InitializationVector = value.IVs.Single();
+				SharedLogPublicKey = value.MessagePublicKey;
+				var currentKeys = RecipientKeys.ToDictionary(lrk => lrk.RecipientKeyId);
+
+				RecipientKeys.Where(rk => !value.DataKeys.ContainsKey(rk.RecipientKeyId)).ToList().ForEach(rk => RecipientKeys.Remove(rk));
+				foreach (var rk in RecipientKeys) {
+					var newValues = value.DataKeys[rk.RecipientKeyId];
+					rk.EncryptedKey = newValues.EncryptedKey;
+					rk.EncryptionMode = newValues.Mode;
+					rk.LogPublicKey = newValues.MessagePublicKey;
+				}
+				value.DataKeys.Where(pair => !currentKeys.ContainsKey(pair.Key)).Select(pair => new LogRecipientKey {
+					LogId = Id,
+					RecipientKeyId = pair.Key,
+					EncryptionMode = pair.Value.Mode,
+					EncryptedKey = pair.Value.EncryptedKey,
+					LogPublicKey = pair.Value.MessagePublicKey
+				}).ToList().ForEach(k => RecipientKeys.Add(k));
+			}
 		}
 	}
 }

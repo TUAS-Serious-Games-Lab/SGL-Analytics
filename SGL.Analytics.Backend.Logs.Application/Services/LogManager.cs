@@ -69,9 +69,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 			try {
 				var logMetadata = await logMetaRepo.GetLogMetadataByIdAsync(logMetaDTO.LogFileId, ct);
 				if (logMetadata is null) {
-					logMetadata = new(logMetaDTO.LogFileId, app.Id, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now,
-						logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, null, false);
-					logMetadata.App = app;
+					logMetadata = LogMetadata.Create(logMetaDTO.LogFileId, app, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now,
+						logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, size: null, logMetaDTO.EncryptionInfo, complete: false);
 					logger.LogInformation("Ingesting new log file {logId} from user {userId}.", logMetaDTO.LogFileId, userId);
 					logMetadata = await logMetaRepo.AddLogMetadataAsync(logMetadata, ct);
 				}
@@ -79,9 +78,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					var otherLogMetadata = logMetadata;
 					var oldLogMetadata = await logMetaRepo.GetLogMetadataByUserLocalIdAsync(app.Id, userId, logMetaDTO.LogFileId);
 					if (oldLogMetadata is null) {
-						logMetadata = new(Guid.NewGuid(), app.Id, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now,
-							logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, null, false);
-						logMetadata.App = app;
+						logMetadata = LogMetadata.Create(Guid.NewGuid(), app, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now,
+							logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, size: null, logMetaDTO.EncryptionInfo, complete: false);
 						logger.LogWarning("User {curUser} attempted to upload log file {origLog} which was already uploaded by user {otherUser}. " +
 							"Resolving this conflict by assigning a new log id {newLogId} for the new log file.",
 							userId, logMetaDTO.LogFileId, otherLogMetadata.UserId, logMetadata.Id);
@@ -110,6 +108,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 							updateContentEncodingAndSuffix(logMetaDTO, logMetadata, appName);
 							logMetadata.UploadTime = DateTime.Now;
 							logMetadata.Size = null;
+							logMetadata.EncryptionInfo = logMetaDTO.EncryptionInfo;
 							logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 						}
 					}
@@ -128,6 +127,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					updateContentEncodingAndSuffix(logMetaDTO, logMetadata, appName);
 					logMetadata.UploadTime = DateTime.Now;
 					logMetadata.Size = null;
+					logMetadata.EncryptionInfo = logMetaDTO.EncryptionInfo;
 					logMetadata = await logMetaRepo.UpdateLogMetadataAsync(logMetadata, ct);
 				}
 				long storedSize = 0;
@@ -140,6 +140,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				}
 				if (logMetadata.Complete) {
 					updateContentEncodingAndSuffix(logMetaDTO, logMetadata, appName);
+					logMetadata.EncryptionInfo = logMetaDTO.EncryptionInfo;
 				}
 				logMetadata.Complete = true;
 				logMetadata.UploadTime = DateTime.Now;
