@@ -4,6 +4,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
@@ -90,6 +91,9 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseRootDataStore(_ => rootDS, dispose: false);
 				config.UseLogStorage(_ => storage, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+				config.ConfigureCryptography(cryptoConf => {
+					cryptoConf.AllowSharedMessageKeyPair();
+				});
 			});
 		}
 
@@ -223,18 +227,28 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Equal(3, successfulLogRequests.Count());
 			var requestsEnumerator = successfulLogRequests.GetEnumerator();
 
+			var keyDecryptorRecipient1 = new KeyDecryptor(recipient1KeyPair);
+			var keyDecryptorRecipient2 = new KeyDecryptor(recipient2KeyPair);
+
 			Assert.True(requestsEnumerator.MoveNext());
 			var (metadataStream, contentStream) = CheckRequest(requestsEnumerator.Current);
-			using (var stream = new GZipStream(contentStream, CompressionMode.Decompress, leaveOpen: true)) {
-				output.WriteLine("=== Metadata ===");
-				output.WriteStreamContents(metadataStream);
+			output.WriteLine("=== Metadata ===");
+			output.WriteStreamContents(metadataStream);
+			metadataStream.Position = 0;
+			var metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+			Assert.NotNull(metadata);
+			Assert.InRange(metadata.CreationTime.ToUniversalTime(), startTime, endTime);
+			Assert.InRange(metadata.EndTime.ToUniversalTime(), startTime, endTime);
+			var dataDecryptor = DataDecryptor.FromEncryptionInfo(metadata.EncryptionInfo, keyDecryptorRecipient1);
+			Assert.NotNull(dataDecryptor);
+			using (var stream = new GZipStream(dataDecryptor.OpenDecryptionReadStream(contentStream, 0, leaveOpen: true), CompressionMode.Decompress)) {
 				output.WriteLine("=== Content ===");
 				output.WriteStreamContents(stream);
 				output.WriteLine("");
 			}
 			metadataStream.Position = 0;
 			contentStream.Position = 0;
-			await using (var stream = new GZipStream(contentStream, CompressionMode.Decompress)) {
+			await using (var stream = new GZipStream(dataDecryptor.OpenDecryptionReadStream(contentStream, 0), CompressionMode.Decompress)) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
 					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
 					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test A");
@@ -246,23 +260,25 @@ namespace SGL.Analytics.Client.Tests {
 					readAndAssertSimpleSnapshot(ref arrEnumerator, "Channel 3", 2, "Snap C");
 				}
 			}
-			var metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
-			Assert.NotNull(metadata);
-			Assert.InRange(metadata.CreationTime.ToUniversalTime(), startTime, endTime);
-			Assert.InRange(metadata.EndTime.ToUniversalTime(), startTime, endTime);
 
 			Assert.True(requestsEnumerator.MoveNext());
 			(metadataStream, contentStream) = CheckRequest(requestsEnumerator.Current);
-			using (var stream = new GZipStream(contentStream, CompressionMode.Decompress, leaveOpen: true)) {
-				output.WriteLine("=== Metadata ===");
-				output.WriteStreamContents(metadataStream);
+			output.WriteLine("=== Metadata ===");
+			output.WriteStreamContents(metadataStream);
+			metadataStream.Position = 0;
+			metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+			Assert.NotNull(metadata);
+			Assert.InRange(metadata.CreationTime.ToUniversalTime(), startTime, endTime);
+			Assert.InRange(metadata.EndTime.ToUniversalTime(), startTime, endTime);
+			dataDecryptor = DataDecryptor.FromEncryptionInfo(metadata.EncryptionInfo, keyDecryptorRecipient2);
+			Assert.NotNull(dataDecryptor);
+			using (var stream = new GZipStream(dataDecryptor.OpenDecryptionReadStream(contentStream, 0, leaveOpen: true), CompressionMode.Decompress)) {
 				output.WriteLine("=== Content ===");
 				output.WriteStreamContents(stream);
 				output.WriteLine("");
 			}
-			metadataStream.Position = 0;
 			contentStream.Position = 0;
-			await using (var stream = new GZipStream(contentStream, CompressionMode.Decompress)) {
+			await using (var stream = new GZipStream(dataDecryptor.OpenDecryptionReadStream(contentStream, 0), CompressionMode.Decompress)) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
 					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
 					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test E");
@@ -274,23 +290,25 @@ namespace SGL.Analytics.Client.Tests {
 					readAndAssertSimpleSnapshot(ref arrEnumerator, "Channel 3", 2, "Snap E");
 				}
 			}
+
+			Assert.True(requestsEnumerator.MoveNext());
+			(metadataStream, contentStream) = CheckRequest(requestsEnumerator.Current);
+			output.WriteLine("=== Metadata ===");
+			output.WriteStreamContents(metadataStream);
+			metadataStream.Position = 0;
 			metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 			Assert.NotNull(metadata);
 			Assert.InRange(metadata.CreationTime.ToUniversalTime(), startTime, endTime);
 			Assert.InRange(metadata.EndTime.ToUniversalTime(), startTime, endTime);
-
-			Assert.True(requestsEnumerator.MoveNext());
-			(metadataStream, contentStream) = CheckRequest(requestsEnumerator.Current);
-			using (var stream = new GZipStream(contentStream, CompressionMode.Decompress, leaveOpen: true)) {
-				output.WriteLine("=== Metadata ===");
-				output.WriteStreamContents(metadataStream);
+			dataDecryptor = DataDecryptor.FromEncryptionInfo(metadata.EncryptionInfo, keyDecryptorRecipient1);
+			Assert.NotNull(dataDecryptor);
+			using (var stream = new GZipStream(dataDecryptor.OpenDecryptionReadStream(contentStream, 0, leaveOpen: true), CompressionMode.Decompress)) {
 				output.WriteLine("=== Content ===");
 				output.WriteStreamContents(stream);
 				output.WriteLine("");
 			}
-			metadataStream.Position = 0;
 			contentStream.Position = 0;
-			await using (var stream = new GZipStream(contentStream, CompressionMode.Decompress)) {
+			await using (var stream = new GZipStream(dataDecryptor.OpenDecryptionReadStream(contentStream, 0), CompressionMode.Decompress)) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
 					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
 					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test J");
@@ -298,10 +316,6 @@ namespace SGL.Analytics.Client.Tests {
 					readAndAssertSimpleSnapshot(ref arrEnumerator, "Channel 3", 1, "Snap F");
 				}
 			}
-			metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
-			Assert.NotNull(metadata);
-			Assert.InRange(metadata.CreationTime.ToUniversalTime(), startTime, endTime);
-			Assert.InRange(metadata.EndTime.ToUniversalTime(), startTime, endTime);
 
 			Assert.False(requestsEnumerator.MoveNext());
 
