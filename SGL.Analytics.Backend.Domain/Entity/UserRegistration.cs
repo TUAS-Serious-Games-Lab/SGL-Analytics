@@ -1,4 +1,5 @@
 using SGL.Analytics.Backend.Domain.Exceptions;
+using SGL.Utilities.Crypto.EndToEnd;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -37,16 +38,82 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// </summary>
 		public ICollection<ApplicationUserPropertyInstance> AppSpecificProperties { get; set; } = null!;
 
+		/// <summary>
+		/// Stores end-to-end encrypted bytes containing sensitive application-specific properties about the user.
+		///	As the encryption is end-to-end this property in itself is opaque, but the usual use-case is for the client to store an encrypted JSON document here.
+		///	The metadata needed for decryption is stored in <see cref="PropertyInitializationVector"/>, <see cref="PropertyEncryptionMode"/>,
+		///	<see cref="PropertySharedPublicKey"/>, and <see cref="PropertyRecipientKeys"/>, with <see cref="PropertyEncryptionInfo"/> as a bundled object for convenience.
+		/// </summary>
+		public byte[] EncryptedProperties { get; set; }
+		/// <summary>
+		/// Stores the initialization vector for the encryption of <see cref="EncryptedProperties"/>.
+		/// </summary>
+		public byte[] PropertyInitializationVector { get; set; }
+		/// <summary>
+		/// Stores the encryption mode used for the encryption of <see cref="EncryptedProperties"/>.
+		/// </summary>
+		public DataEncryptionMode PropertyEncryptionMode { get; set; }
+		/// <summary>
+		/// Stores the shared EC per-registration public key for ECDH if it is used for the encryption of <see cref="EncryptedProperties"/>.
+		/// </summary>
+		public byte[]? PropertySharedPublicKey { get; set; }
+		/// <summary>
+		/// Stores the data key for the encryption of <see cref="EncryptedProperties"/>, encrypted for each authorized recipient as a separate copy.
+		/// </summary>
+		public ICollection<UserRegistrationPropertyRecipientKey> PropertyRecipientKeys { get; set; } = null!;
+
+		/// <summary>
+		/// Provides access to the encryption metadata for <see cref="EncryptedProperties"/> in bundled form.
+		/// The object is packed / unpacked into separate properties on-the-fly, thus the property should not be accessed in a tight loop, but the value should be copied locally.
+		/// </summary>
+		public EncryptionInfo PropertyEncryptionInfo {
+			get {
+				return new EncryptionInfo {
+					DataMode = PropertyEncryptionMode,
+					IVs = new List<byte[]> { PropertyInitializationVector },
+					MessagePublicKey = PropertySharedPublicKey,
+					DataKeys = PropertyRecipientKeys.ToDictionary(lrk => lrk.RecipientKeyId, lrk => lrk.ToDataKeyInfo())
+				};
+			}
+			set {
+				PropertyEncryptionMode = value.DataMode;
+				PropertyInitializationVector = value.IVs.Single();
+				PropertySharedPublicKey = value.MessagePublicKey;
+				var currentKeys = PropertyRecipientKeys.ToDictionary(lrk => lrk.RecipientKeyId);
+
+				PropertyRecipientKeys.Where(rk => !value.DataKeys.ContainsKey(rk.RecipientKeyId)).ToList().ForEach(rk => PropertyRecipientKeys.Remove(rk));
+				foreach (var rk in PropertyRecipientKeys) {
+					var newValues = value.DataKeys[rk.RecipientKeyId];
+					rk.EncryptedKey = newValues.EncryptedKey;
+					rk.EncryptionMode = newValues.Mode;
+					rk.UserPropertiesPublicKey = newValues.MessagePublicKey;
+				}
+				value.DataKeys.Where(pair => !currentKeys.ContainsKey(pair.Key)).Select(pair => new UserRegistrationPropertyRecipientKey {
+					UserId = Id,
+					RecipientKeyId = pair.Key,
+					EncryptionMode = pair.Value.Mode,
+					EncryptedKey = pair.Value.EncryptedKey,
+					UserPropertiesPublicKey = pair.Value.MessagePublicKey
+				}).ToList().ForEach(k => PropertyRecipientKeys.Add(k));
+			}
+
+		}
 
 		/// <summary>
 		/// Creates a user registration object with the given data values.
-		/// This constructor is intended to be used by the OR mapper. To create a new application, see <see cref="Create(Guid, ApplicationWithUserProperties, string, string)"/> or <see cref="Create(ApplicationWithUserProperties, string, string)"/>.
+		/// This constructor is intended to be used by the OR mapper. To create a new application,
+		/// see <see cref="Create(ApplicationWithUserProperties, string, string, byte[], EncryptionInfo)"/> or its overloads.
 		/// </summary>
-		public UserRegistration(Guid id, Guid appId, string username, string hashedSecret) {
+		public UserRegistration(Guid id, Guid appId, string username, string hashedSecret, byte[] encryptedProperties,
+			byte[] propertyInitializationVector, DataEncryptionMode propertyEncryptionMode, byte[]? propertySharedPublicKey) {
 			Id = id;
 			AppId = appId;
 			Username = username;
 			HashedSecret = hashedSecret;
+			EncryptedProperties = encryptedProperties;
+			PropertyInitializationVector = propertyInitializationVector;
+			PropertyEncryptionMode = propertyEncryptionMode;
+			PropertySharedPublicKey = propertySharedPublicKey;
 		}
 
 		/// <summary>
@@ -57,12 +124,20 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <param name="username">The username of the user.</param>
 		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
 		/// <returns>The created object.</returns>
-		public static UserRegistration Create(Guid id, ApplicationWithUserProperties app, string username, string hashedSecret) {
-			var userReg = new UserRegistration(id, app.Id, username, hashedSecret);
+		public static UserRegistration Create(Guid id, ApplicationWithUserProperties app, string username, string hashedSecret) =>
+			Create(id, app, username, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted());
+		public static UserRegistration Create(Guid id, ApplicationWithUserProperties app, string username, string hashedSecret,
+				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo) {
+			var userReg = new UserRegistration(id, app.Id, username, hashedSecret, encryptedProperties,
+				propertyEncryptionInfo.IVs.Single(), propertyEncryptionInfo.DataMode, propertyEncryptionInfo.MessagePublicKey);
 			userReg.App = app;
 			userReg.AppSpecificProperties = new List<ApplicationUserPropertyInstance>();
+			userReg.PropertyRecipientKeys = new List<UserRegistrationPropertyRecipientKey>();
+			userReg.PropertyEncryptionInfo = propertyEncryptionInfo;
 			return userReg;
 		}
+
+
 
 		/// <summary>
 		/// Creates an user registration object with a generated id for the given application and with the given data values.
@@ -71,8 +146,11 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <param name="username">The username of the user.</param>
 		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
 		/// <returns>The created object.</returns>
-		public static UserRegistration Create(ApplicationWithUserProperties app, string username, string hashedSecret) {
-			return Create(Guid.NewGuid(), app, username, hashedSecret);
+		public static UserRegistration Create(ApplicationWithUserProperties app, string username, string hashedSecret) =>
+			Create(app, username, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted());
+		public static UserRegistration Create(ApplicationWithUserProperties app, string username, string hashedSecret,
+				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo) {
+			return Create(Guid.NewGuid(), app, username, hashedSecret, encryptedProperties, propertyEncryptionInfo);
 		}
 
 		/// <summary>
@@ -81,9 +159,13 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <param name="app">The application for which the user is registered.</param>
 		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
 		/// <returns>The created object.</returns>
-		public static UserRegistration Create(ApplicationWithUserProperties app, string hashedSecret) {
+		public static UserRegistration Create(ApplicationWithUserProperties app, string hashedSecret) =>
+			Create(app, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted());
+
+		public static UserRegistration Create(ApplicationWithUserProperties app, string hashedSecret,
+				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo) {
 			var id = Guid.NewGuid();
-			return Create(id, app, id.ToString(), hashedSecret);
+			return Create(id, app, id.ToString(), hashedSecret, encryptedProperties, propertyEncryptionInfo);
 		}
 
 		private ApplicationUserPropertyInstance setAppSpecificPropertyImpl(string name, object? value, Func<string, ApplicationUserPropertyDefinition> getPropDef) {
