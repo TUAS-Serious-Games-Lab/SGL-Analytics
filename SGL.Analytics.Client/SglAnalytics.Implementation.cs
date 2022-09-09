@@ -358,7 +358,7 @@ namespace SGL.Analytics.Client {
 					WriteIndented = true,
 					DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
 				};
-				await using var compressionStream = new GZipStream(encryptionStream, CompressionLevel.Optimal);
+				await using var compressionStream = new GZipStream(encryptionStream, CompressionLevel.Optimal, leaveOpen: true);
 				options.Converters.Add(new ObjectDictionaryJsonConverter());
 				await JsonSerializer.SerializeAsync(compressionStream, properties, options, ct);
 			}
