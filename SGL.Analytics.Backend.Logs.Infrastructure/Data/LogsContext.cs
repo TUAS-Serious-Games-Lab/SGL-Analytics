@@ -41,8 +41,8 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 				rk.Property(mrk => mrk.RecipientKeyId).IsStoredAsByteArray().HasMaxLength(34);
 				rk.HasKey(mrk => new { mrk.LogId, mrk.RecipientKeyId });
 			});
-			// TODO: Reactive if we need QueryOptions for log metadata.
-			//logMetadata.Navigation(m => m.RecipientKeys).AutoInclude(false);
+			// TODO: Reactivate if we need QueryOptions for log metadata.
+			//logMetadata.Navigation(lm => lm.RecipientKeys).AutoInclude(false);
 
 			var application = modelBuilder.Entity<Domain.Entity.Application>();
 			application.Property(a => a.Name).HasMaxLength(128);
@@ -52,7 +52,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 			application.OwnsMany(app => app.DataRecipients, r => {
 				r.WithOwner(r => r.App);
 				r.HasKey(r => new { r.AppId, r.PublicKeyId });
-				r.Property(r => r.PublicKeyId).IsStoredAsByteArray().HasMaxLength(33);
+				r.Property(r => r.PublicKeyId).IsStoredAsByteArray().HasMaxLength(34);
 				r.Property(r => r.Label).HasMaxLength(128);
 			});
 		}
