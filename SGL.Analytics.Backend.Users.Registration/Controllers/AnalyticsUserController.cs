@@ -20,7 +20,8 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	/// <summary>
-	/// The controller class serving the <c>api/analytics/user</c> and <c>api/analytics/user/login</c> routes that manage user registrations for SGL Analytics and perform logins for user sessions.
+	/// The controller class serving the <c>api/analytics/user/v1</c>, <c>api/analytics/user/v1/login</c>, and <c>api/analytics/user/v1/recipient-certificates</c>
+	/// routes that manage user registrations for SGL Analytics and perform logins for user sessions.
 	/// </summary>
 	[Route("api/analytics/user/v1")]
 	[ApiController]
