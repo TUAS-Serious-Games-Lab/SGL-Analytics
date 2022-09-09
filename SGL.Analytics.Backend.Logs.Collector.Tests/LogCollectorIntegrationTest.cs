@@ -14,6 +14,7 @@ using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Backend.TestUtilities;
 using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
@@ -48,8 +49,15 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		public RandomGenerator Random { get; } = new RandomGenerator();
 		public PublicKey SignerPublicKey => signerKeyPair.Public;
 		private KeyPair signerKeyPair;
-		public List<Certificate> Certificates = new List<Certificate>();
+		public List<Certificate> Certificates;
+		public KeyPair RecipientKeyPair1 { get; }
+		public KeyPair RecipientKeyPair2 { get; }
+		public KeyPair RecipientKeyPair3 { get; }
+
 		public DistinguishedName SignerIdentity { get; } = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Utility"), new("ou", "Tests"), new("cn", "Test Signer") });
+		public Certificate RecipientCert1 { get; }
+		public Certificate RecipientCert2 { get; }
+		public Certificate RecipientCert3 { get; }
 
 		public LogCollectorIntegrationTestFixture() {
 			JwtConfig = new() {
@@ -67,27 +75,34 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			TokenGenerator = new JwtTokenGenerator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
 
 			signerKeyPair = KeyPair.GenerateEllipticCurves(Random, 521);
+			(RecipientCert1, RecipientKeyPair1) = createRecipient("Test 1");
+			(RecipientCert2, RecipientKeyPair2) = createRecipient("Test 2");
+			(RecipientCert3, RecipientKeyPair3) = createRecipient("Test 3");
+			Certificates = new List<Certificate> { RecipientCert1, RecipientCert2, RecipientCert3 };
 		}
 
-		private string createCertificatePem(string cn, List<Certificate>? certificateList) {
-			var keyPair = KeyPair.GenerateEllipticCurves(Random, 521);
-			var identity = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Utility"), new("ou", "Tests"), new("cn", cn) });
-			var certificate = Certificate.Generate(SignerIdentity, signerKeyPair.Private, identity, keyPair.Public, TimeSpan.FromHours(1), Random, 128);
+		private string createCertificatePem(Certificate certificate) {
 			using var writer = new StringWriter();
 			certificate.StoreToPem(writer);
-			certificateList?.Add(certificate);
 			return writer.ToString();
+		}
+
+		private (Certificate, KeyPair) createRecipient(string cn) {
+			var keyPair = KeyPair.GenerateEllipticCurves(Random, 521);
+			var identity = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Utility"), new("ou", "Tests"), new("cn", cn) });
+			var cert = Certificate.Generate(SignerIdentity, signerKeyPair.Private, identity, keyPair.Public, TimeSpan.FromHours(1), Random, 128);
+			return (cert, keyPair);
 		}
 
 		protected override void SeedDatabase(LogsContext context) {
 			Domain.Entity.Application app = Domain.Entity.Application.Create(AppName, AppApiToken);
-			app.AddRecipient("test recipient 1", createCertificatePem("Test 1", Certificates));
-			app.AddRecipient("test recipient 2", createCertificatePem("Test 2", Certificates));
-			app.AddRecipient("test recipient 3", createCertificatePem("Test 3", Certificates));
+			app.AddRecipient("test recipient 1", createCertificatePem(RecipientCert1));
+			app.AddRecipient("test recipient 2", createCertificatePem(RecipientCert2));
+			app.AddRecipient("test recipient 3", createCertificatePem(RecipientCert3));
 			context.Applications.Add(app);
 			Domain.Entity.Application otherApp = Domain.Entity.Application.Create("SomeOtherApp", StringGenerator.GenerateRandomWord(32));
-			otherApp.AddRecipient("other test recipient 1", createCertificatePem("Other Test 1", null));
-			otherApp.AddRecipient("other test recipient 2", createCertificatePem("Other Test 2", null));
+			otherApp.AddRecipient("other test recipient 1", createCertificatePem(createRecipient("Other Test 1").Item1));
+			otherApp.AddRecipient("other test recipient 2", createCertificatePem(createRecipient("Other Test 2").Item1));
 			context.Applications.Add(otherApp);
 			context.SaveChanges();
 		}
@@ -162,19 +177,17 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		public async Task LogIngestWithValidParametersSucceeds() {
 			var userId = Guid.NewGuid();
 			var logId = Guid.NewGuid();
-			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
+			var keyEncryptor = new KeyEncryptor(fixture.Certificates.Select(cert => cert.PublicKey), fixture.Random);
+			var dataEncryptor = new DataEncryptor(fixture.Random, 1);
+			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
 			using (var logContent = generateRandomGZippedTestData()) {
 				using (var client = fixture.CreateClient()) {
-					var request = buildUploadRequest(logContent, logMDTO, userId, fixture.AppName);
+					using var encrStream = dataEncryptor.OpenEncryptionReadStream(logContent, 0, leaveOpen: true);
+					var request = buildUploadRequest(encrStream, logMDTO, userId, fixture.AppName);
 					var response = await client.SendAsync(request);
 					response.EnsureSuccessStatusCode();
 				}
 				using (var scope = fixture.Services.CreateScope()) {
-					var fileRepo = scope.ServiceProvider.GetRequiredService<ILogFileRepository>();
-					using (var readStream = await fileRepo.ReadLogAsync(fixture.AppName, userId, logId, ".log.gz")) {
-						logContent.Position = 0;
-						StreamUtils.AssertEqualContent(logContent, readStream);
-					}
 					var logMdRepo = scope.ServiceProvider.GetRequiredService<ILogMetadataRepository>();
 					var logMd = await logMdRepo.GetLogMetadataByIdAsync(logId);
 					Assert.NotNull(logMd);
@@ -185,8 +198,19 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					Assert.Equal(logMDTO.NameSuffix, logMd?.FilenameSuffix);
 					Assert.Equal(logMDTO.LogContentEncoding, logMd?.Encoding);
 					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
-					Assert.Equal(logContent.Length, logMd?.Size);
 					Assert.True(logMd?.Complete);
+					Assert.Equal(DataEncryptionMode.AES_256_CCM, logMd?.EncryptionMode);
+
+					var keyDecryptor = new KeyDecryptor(fixture.RecipientKeyPair2);
+					var dataDecryptor = DataDecryptor.FromEncryptionInfo(logMd!.EncryptionInfo, keyDecryptor);
+					Assert.NotNull(dataDecryptor);
+					var fileRepo = scope.ServiceProvider.GetRequiredService<ILogFileRepository>();
+					using (var readStream = await fileRepo.ReadLogAsync(fixture.AppName, userId, logId, ".log.gz")) {
+						logContent.Position = 0;
+						using var decrStream = dataDecryptor.OpenDecryptionReadStream(readStream, 0);
+						StreamUtils.AssertEqualContent(logContent, decrStream);
+						Assert.Equal(readStream.Length, logMd.Size);
+					}
 				}
 			}
 		}
@@ -197,7 +221,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			var logId = Guid.NewGuid();
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
-				var request = buildUploadRequest(logContent, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed), userId, "DoesNotExist");
+				var request = buildUploadRequest(logContent, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted()), userId, "DoesNotExist");
 				var response = await client.SendAsync(request);
 				Assert.Equal(HttpStatusCode.Unauthorized, Assert.Throws<HttpRequestException>(() => response.EnsureSuccessStatusCode()).StatusCode);
 				Assert.Empty(response.Headers.WwwAuthenticate); // Ensure the error is not from JWT challenge but from the missing application.
@@ -211,7 +235,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
+				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted());
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
 				var multipartContent = new MultipartFormDataContent();
@@ -235,7 +259,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
+				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted());
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
 				var multipartContent = new MultipartFormDataContent();
@@ -258,7 +282,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
+				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted());
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
 				var multipartContent = new MultipartFormDataContent();
@@ -284,7 +308,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
+				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted());
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
 				var multipartContent = new MultipartFormDataContent();
@@ -310,7 +334,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var logContent = generateRandomGZippedTestData())
 			using (var client = fixture.CreateClient()) {
 				var content = new StreamContent(logContent);
-				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
+				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted());
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
 				var multipartContent = new MultipartFormDataContent();
@@ -333,7 +357,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		public async Task FailedLogIngestCanBeSuccessfullyRetried() {
 			var userId = Guid.NewGuid();
 			var logId = Guid.NewGuid();
-			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
+			var keyEncryptor = new KeyEncryptor(fixture.Certificates.Select(cert => cert.PublicKey), fixture.Random);
+			var logMDTOBase = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted() /*Placeholder*/);
 			using (var logContent = generateRandomGZippedTestData()) {
 				using (var client = fixture.CreateClient(new() {
 					// These options are required for the fault simulation,
@@ -348,7 +373,9 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					// For this, we give an ample timeout to ensure the write can occur before the request times out.
 					client.Timeout = TimeSpan.FromMilliseconds(100000);
 					var cts = new CancellationTokenSource();
-					var streamWrapper = new TriggeredBlockingStream(logContent);
+					var dataEncryptor = new DataEncryptor(fixture.Random, 1);
+					var logMDTO = new LogMetadataDTO(logMDTOBase.LogFileId, logMDTOBase.CreationTime, logMDTOBase.EndTime, logMDTOBase.NameSuffix, logMDTOBase.LogContentEncoding, dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
+					var streamWrapper = new TriggeredBlockingStream(dataEncryptor.OpenEncryptionReadStream(logContent, 0, leaveOpen: true));
 					var request = buildUploadRequest(streamWrapper, logMDTO, userId, fixture.AppName);
 					var task = client.SendAsync(request, cts.Token);
 
@@ -369,10 +396,10 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					Assert.NotNull(logMd);
 					Assert.Equal(userId, logMd?.UserId);
 					Assert.Equal(fixture.AppName, logMd?.App.Name);
-					Assert.Equal(logMDTO.CreationTime.ToUniversalTime(), logMd?.CreationTime);
-					Assert.Equal(logMDTO.EndTime.ToUniversalTime(), logMd?.EndTime);
-					Assert.Equal(logMDTO.NameSuffix, logMd?.FilenameSuffix);
-					Assert.Equal(logMDTO.LogContentEncoding, logMd?.Encoding);
+					Assert.Equal(logMDTOBase.CreationTime.ToUniversalTime(), logMd?.CreationTime);
+					Assert.Equal(logMDTOBase.EndTime.ToUniversalTime(), logMd?.EndTime);
+					Assert.Equal(logMDTOBase.NameSuffix, logMd?.FilenameSuffix);
+					Assert.Equal(logMDTOBase.LogContentEncoding, logMd?.Encoding);
 					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
 					Assert.Null(logMd?.Size);
 					Assert.False(logMd?.Complete);
@@ -380,29 +407,37 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				// Reattempt normally...
 				using (var client = fixture.CreateClient()) {
 					logContent.Position = 0;
-					var request = buildUploadRequest(logContent, logMDTO, userId, fixture.AppName);
+					var dataEncryptor = new DataEncryptor(fixture.Random, 1);
+					var logMDTO = new LogMetadataDTO(logMDTOBase.LogFileId, logMDTOBase.CreationTime, logMDTOBase.EndTime, logMDTOBase.NameSuffix, logMDTOBase.LogContentEncoding, dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
+					var request = buildUploadRequest(dataEncryptor.OpenEncryptionReadStream(logContent, 0, leaveOpen: true), logMDTO, userId, fixture.AppName);
 					var response = await client.SendAsync(request);
 					response.EnsureSuccessStatusCode();
 				}
 				using (var scope = fixture.Services.CreateScope()) {
 					// Should be fine now.
-					var fileRepo = scope.ServiceProvider.GetRequiredService<ILogFileRepository>();
-					using (var readStream = await fileRepo.ReadLogAsync(fixture.AppName, userId, logId, ".log.gz")) {
-						logContent.Position = 0;
-						StreamUtils.AssertEqualContent(logContent, readStream);
-					}
 					var logMdRepo = scope.ServiceProvider.GetRequiredService<ILogMetadataRepository>();
 					var logMd = await logMdRepo.GetLogMetadataByIdAsync(logId);
 					Assert.NotNull(logMd);
 					Assert.Equal(userId, logMd?.UserId);
 					Assert.Equal(fixture.AppName, logMd?.App.Name);
-					Assert.Equal(logMDTO.CreationTime.ToUniversalTime(), logMd?.CreationTime);
-					Assert.Equal(logMDTO.EndTime.ToUniversalTime(), logMd?.EndTime);
-					Assert.Equal(logMDTO.NameSuffix, logMd?.FilenameSuffix);
-					Assert.Equal(logMDTO.LogContentEncoding, logMd?.Encoding);
+					Assert.Equal(logMDTOBase.CreationTime.ToUniversalTime(), logMd?.CreationTime);
+					Assert.Equal(logMDTOBase.EndTime.ToUniversalTime(), logMd?.EndTime);
+					Assert.Equal(logMDTOBase.NameSuffix, logMd?.FilenameSuffix);
+					Assert.Equal(logMDTOBase.LogContentEncoding, logMd?.Encoding);
 					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
-					Assert.Equal(logContent.Length, logMd?.Size);
 					Assert.True(logMd?.Complete);
+					Assert.Equal(DataEncryptionMode.AES_256_CCM, logMd?.EncryptionMode);
+
+					var keyDecryptor = new KeyDecryptor(fixture.RecipientKeyPair2);
+					var dataDecryptor = DataDecryptor.FromEncryptionInfo(logMd!.EncryptionInfo, keyDecryptor);
+					Assert.NotNull(dataDecryptor);
+					var fileRepo = scope.ServiceProvider.GetRequiredService<ILogFileRepository>();
+					using (var readStream = await fileRepo.ReadLogAsync(fixture.AppName, userId, logId, ".log.gz")) {
+						logContent.Position = 0;
+						using var decrStream = dataDecryptor.OpenDecryptionReadStream(readStream, 0);
+						StreamUtils.AssertEqualContent(logContent, decrStream);
+						Assert.Equal(readStream.Length, logMd.Size);
+					}
 				}
 			}
 
@@ -422,19 +457,23 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		[Fact]
 		public async Task LogIngestWithCollidingIdSucceedsButGetsNewId() {
 			var logId = Guid.NewGuid();
+			var keyEncryptor = new KeyEncryptor(fixture.Certificates.Select(cert => cert.PublicKey), fixture.Random);
 			// First, create the conflicting log:
 			using (var client = fixture.CreateClient()) {
+				var dataEncryptorOther = new DataEncryptor(fixture.Random, 1);
 				Guid otherUserId = Guid.NewGuid();
-				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45), ".log.gz", LogContentEncoding.GZipCompressed), otherUserId, fixture.AppName);
+				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45), ".log.gz", LogContentEncoding.GZipCompressed,
+					dataEncryptorOther.GenerateEncryptionInfo(keyEncryptor)), otherUserId, fixture.AppName);
 				var response = await client.SendAsync(request);
 				response.EnsureSuccessStatusCode();
 			}
 			// Now try to upload a log with the same id from a different user:
 			var userId = Guid.NewGuid();
-			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
+			var dataEncryptor = new DataEncryptor(fixture.Random, 1);
+			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
 			using (var logContent = generateRandomGZippedTestData()) {
 				using (var client = fixture.CreateClient()) {
-					var request = buildUploadRequest(logContent, logMDTO, userId, fixture.AppName);
+					var request = buildUploadRequest(dataEncryptor.OpenEncryptionReadStream(logContent, 0, leaveOpen: true), logMDTO, userId, fixture.AppName);
 					var response = await client.SendAsync(request);
 					response.EnsureSuccessStatusCode();
 				}
@@ -450,12 +489,17 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					Assert.Equal(logMDTO.NameSuffix, logMd?.FilenameSuffix);
 					Assert.Equal(logMDTO.LogContentEncoding, logMd?.Encoding);
 					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
-					Assert.Equal(logContent.Length, logMd?.Size);
 					Assert.True(logMd?.Complete);
+
+					var keyDecryptor = new KeyDecryptor(fixture.RecipientKeyPair1);
+					var dataDecryptor = DataDecryptor.FromEncryptionInfo(logMd!.EncryptionInfo, keyDecryptor);
+					Assert.NotNull(dataDecryptor);
 					var fileRepo = scope.ServiceProvider.GetRequiredService<ILogFileRepository>();
 					using (var readStream = await fileRepo.ReadLogAsync(fixture.AppName, userId, logMd?.Id ?? Guid.Empty, ".log.gz")) {
 						logContent.Position = 0;
-						StreamUtils.AssertEqualContent(logContent, readStream);
+						using var decrStream = dataDecryptor.OpenDecryptionReadStream(readStream, 0);
+						StreamUtils.AssertEqualContent(logContent, decrStream);
+						Assert.Equal(readStream.Length, logMd?.Size);
 					}
 				}
 			}
@@ -463,25 +507,30 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		[Fact]
 		public async Task ReattemptingIngestOfLogWhereServerAssignedNewIdPicksUpTheExistingEntry() {
 			var logId = Guid.NewGuid();
+			var keyEncryptor = new KeyEncryptor(fixture.Certificates.Select(cert => cert.PublicKey), fixture.Random);
 			// First, create the conflicting log:
 			using (var client = fixture.CreateClient()) {
+				var dataEncryptorOther = new DataEncryptor(fixture.Random, 1);
 				Guid otherUserId = Guid.NewGuid();
-				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45), ".log.gz", LogContentEncoding.GZipCompressed), otherUserId, fixture.AppName);
+				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45), ".log.gz", LogContentEncoding.GZipCompressed,
+					dataEncryptorOther.GenerateEncryptionInfo(keyEncryptor)), otherUserId, fixture.AppName);
 				var response = await client.SendAsync(request);
 				response.EnsureSuccessStatusCode();
 			}
 			// Now try to upload a log with the same id from a different user...
 			var userId = Guid.NewGuid();
-			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed);
+			var logMDTOBase = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted() /* Placeholder */);
 			using (var logContent = generateRandomGZippedTestData()) {
 				// ... but initially fail to do so due to a simulated connection fault:
 				using (var client = fixture.CreateClient(new() {
 					AllowAutoRedirect = false,
 					HandleCookies = false
 				})) {
+					var dataEncryptor = new DataEncryptor(fixture.Random, 1);
+					var logMDTO = new LogMetadataDTO(logMDTOBase.LogFileId, logMDTOBase.CreationTime, logMDTOBase.EndTime, logMDTOBase.NameSuffix, logMDTOBase.LogContentEncoding, dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
 					client.Timeout = TimeSpan.FromMilliseconds(100000);
 					var cts = new CancellationTokenSource();
-					var streamWrapper = new TriggeredBlockingStream(logContent);
+					var streamWrapper = new TriggeredBlockingStream(dataEncryptor.OpenEncryptionReadStream(logContent, 0, leaveOpen: true));
 					var request = buildUploadRequest(streamWrapper, logMDTO, userId, fixture.AppName);
 					var task = client.SendAsync(request, cts.Token);
 					streamWrapper.TriggerReadReady(1);
@@ -492,8 +541,9 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				}
 				// Now reattempt normally:
 				using (var client = fixture.CreateClient()) {
-					var content = new StreamContent(logContent);
-					var request = buildUploadRequest(logContent, logMDTO, userId, fixture.AppName);
+					var dataEncryptor = new DataEncryptor(fixture.Random, 1);
+					var logMDTO = new LogMetadataDTO(logMDTOBase.LogFileId, logMDTOBase.CreationTime, logMDTOBase.EndTime, logMDTOBase.NameSuffix, logMDTOBase.LogContentEncoding, dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
+					var request = buildUploadRequest(dataEncryptor.OpenEncryptionReadStream(logContent, 0, leaveOpen: true), logMDTO, userId, fixture.AppName);
 					var response = await client.SendAsync(request);
 					response.EnsureSuccessStatusCode();
 				}
@@ -504,17 +554,22 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 					Assert.NotEqual(logId, logMd?.Id);
 					Assert.Equal(userId, logMd?.UserId);
 					Assert.Equal(fixture.AppName, logMd?.App.Name);
-					Assert.Equal(logMDTO.CreationTime.ToUniversalTime(), logMd?.CreationTime);
-					Assert.Equal(logMDTO.EndTime.ToUniversalTime(), logMd?.EndTime);
-					Assert.Equal(logMDTO.NameSuffix, logMd?.FilenameSuffix);
-					Assert.Equal(logMDTO.LogContentEncoding, logMd?.Encoding);
+					Assert.Equal(logMDTOBase.CreationTime.ToUniversalTime(), logMd?.CreationTime);
+					Assert.Equal(logMDTOBase.EndTime.ToUniversalTime(), logMd?.EndTime);
+					Assert.Equal(logMDTOBase.NameSuffix, logMd?.FilenameSuffix);
+					Assert.Equal(logMDTOBase.LogContentEncoding, logMd?.Encoding);
 					Assert.InRange(logMd?.UploadTime ?? DateTime.UnixEpoch, DateTime.Now.AddMinutes(-1).ToUniversalTime(), DateTime.Now.AddSeconds(1).ToUniversalTime());
-					Assert.Equal(logContent.Length, logMd?.Size);
 					Assert.True(logMd?.Complete);
+
+					var keyDecryptor = new KeyDecryptor(fixture.RecipientKeyPair1);
+					var dataDecryptor = DataDecryptor.FromEncryptionInfo(logMd!.EncryptionInfo, keyDecryptor);
+					Assert.NotNull(dataDecryptor);
 					var fileRepo = scope.ServiceProvider.GetRequiredService<ILogFileRepository>();
 					using (var readStream = await fileRepo.ReadLogAsync(fixture.AppName, userId, logMd?.Id ?? Guid.Empty, ".log.gz")) {
 						logContent.Position = 0;
-						StreamUtils.AssertEqualContent(logContent, readStream);
+						using var decrStream = dataDecryptor.OpenDecryptionReadStream(readStream, 0);
+						StreamUtils.AssertEqualContent(logContent, decrStream);
+						Assert.Equal(readStream.Length, logMd?.Size);
 					}
 				}
 			}
@@ -524,7 +579,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			var logId = Guid.NewGuid();
 			using (var client = fixture.CreateClient()) {
 				Guid userId = Guid.NewGuid();
-				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45), ".log.gz", LogContentEncoding.GZipCompressed), userId, fixture.AppName, "x");
+				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted()), userId, fixture.AppName, "x");
 				var response = await client.SendAsync(request);
 				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 				output.WriteStreamContents(response.Content.ReadAsStream());
@@ -535,10 +590,30 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			var logId = Guid.NewGuid();
 			using (var client = fixture.CreateClient()) {
 				Guid userId = Guid.NewGuid();
-				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45), "/../test", LogContentEncoding.GZipCompressed), userId, fixture.AppName);
+				var request = buildUploadRequest(Stream.Null, new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-90), DateTime.Now.AddMinutes(-45), "/../test", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted()), userId, fixture.AppName);
 				var response = await client.SendAsync(request);
 				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 				output.WriteStreamContents(response.Content.ReadAsStream());
+			}
+		}
+
+		[Fact]
+		public async Task AttemptToInjectEncryptedLogWithoutRecipientKeysFailsWithBadRequestError() {
+			var userId = Guid.NewGuid();
+			var logId = Guid.NewGuid();
+			var keyEncryptor = new KeyEncryptor(fixture.Certificates.Select(cert => cert.PublicKey), fixture.Random);
+			var dataEncryptor = new DataEncryptor(fixture.Random, 1);
+			var encryptionInfo = dataEncryptor.GenerateEncryptionInfo(keyEncryptor);
+			encryptionInfo.DataKeys.Clear();
+			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, encryptionInfo);
+			using (var logContent = generateRandomGZippedTestData()) {
+				using (var client = fixture.CreateClient()) {
+					using var encrStream = dataEncryptor.OpenEncryptionReadStream(logContent, 0, leaveOpen: true);
+					var request = buildUploadRequest(encrStream, logMDTO, userId, fixture.AppName);
+					var response = await client.SendAsync(request);
+					Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+					output.WriteStreamContents(response.Content.ReadAsStream());
+				}
 			}
 		}
 	}

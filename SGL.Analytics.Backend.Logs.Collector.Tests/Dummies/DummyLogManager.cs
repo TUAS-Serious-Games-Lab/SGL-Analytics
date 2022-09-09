@@ -45,10 +45,9 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			var content = new MemoryStream();
 			await logContent.CopyToAsync(content, ct);
 			content.Position = 0;
-			var logMd = new LogMetadata(logMetaDTO.LogFileId, app.Id, userId, logMetaDTO.LogFileId,
+			var logMd = LogMetadata.Create(logMetaDTO.LogFileId, app, userId, logMetaDTO.LogFileId,
 				logMetaDTO.CreationTime.ToUniversalTime(), logMetaDTO.EndTime.ToUniversalTime(), DateTime.Now.ToUniversalTime(),
-				logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, size, true);
-			logMd.App = app;
+				logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, size, logMetaDTO.EncryptionInfo, complete: true);
 			ct.ThrowIfCancellationRequested();
 			Ingests.Add(new IngestOperation(logMetaDTO, logMd, content));
 			return new LogFile(logMd, new SingleLogFileRepository(app.Name, userId, logMd.Id, logMd.FilenameSuffix, content));

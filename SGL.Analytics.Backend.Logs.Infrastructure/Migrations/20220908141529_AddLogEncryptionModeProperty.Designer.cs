@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
@@ -11,9 +12,10 @@ using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
 {
     [DbContext(typeof(LogsContext))]
-    partial class LogsContextModelSnapshot : ModelSnapshot
+    [Migration("20220908141529_AddLogEncryptionModeProperty")]
+    partial class AddLogEncryptionModeProperty
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

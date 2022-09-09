@@ -43,6 +43,11 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// </summary>
 		void HandleModelStateValidationError(string errorMessage);
 		/// <summary>
+		/// Called when a problem with cryptographic metadata was encountered.
+		/// </summary>
+		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
+		void HandleCryptoMetadataError(string appName);
+		/// <summary>
 		/// Called when an unexpected error is caused, i.e. one that is not known ahead of time and thus doesn't have a separate <c>Handle</c>... method.
 		/// </summary>
 		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
@@ -102,6 +107,9 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 	public class NullMetricsManager : IMetricsManager {
 		/// <inheritdoc/>
 		public void EnsureMetricsExist(string appName) { }
+
+		/// <inheritdoc/>
+		public void HandleCryptoMetadataError(string appName) { }
 		/// <inheritdoc/>
 		public void HandleIncorrectAppApiTokenError(string appName) { }
 		/// <inheritdoc/>

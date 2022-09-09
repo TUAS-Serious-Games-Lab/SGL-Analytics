@@ -38,4 +38,8 @@ namespace SGL.Analytics.Backend.Domain.Exceptions {
 		/// </summary>
 		public string AppApiToken { get; }
 	}
+
+	public class MissingRecipientDataKeysForEncryptedDataException : Exception {
+		public MissingRecipientDataKeysForEncryptedDataException(string? message, Exception? innerException = null) : base(message, innerException) { }
+	}
 }
