@@ -1,4 +1,5 @@
 using SGL.Utilities;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Validation;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -37,6 +38,10 @@ namespace SGL.Analytics.DTO {
 		[JsonConverter(typeof(ObjectDictionaryJsonConverter))]
 		public Dictionary<string, object?> StudySpecificProperties { get; private set; }
 
+		public byte[]? EncryptedProperties { get; private set; }
+		public EncryptionInfo? PropertyEncryptionInfo { get; private set; }
+
+
 		/// <summary>
 		/// Creates a new DTO with the given data.
 		/// </summary>
@@ -46,8 +51,16 @@ namespace SGL.Analytics.DTO {
 		/// <param name="studySpecificProperties">A dictionary containing application-/study-specific properties that should be stored with the user registration.</param>
 		public UserRegistrationDTO([PlainName][StringLength(128, MinimumLength = 1)] string appName,
 			[PlainName(allowBrackets: true)][StringLength(64, MinimumLength = 1)] string? username,
-			[StringLength(128, MinimumLength = 8)] string secret, Dictionary<string, object?> studySpecificProperties) =>
-			(AppName, Username, Secret, StudySpecificProperties) = (appName, username, secret, studySpecificProperties);
+			[StringLength(128, MinimumLength = 8)] string secret, Dictionary<string, object?> studySpecificProperties) :
+			this(appName, username, secret, studySpecificProperties, null, null) { }
+
+		[JsonConstructor]
+		public UserRegistrationDTO([PlainName][StringLength(128, MinimumLength = 1)] string appName,
+			[PlainName(allowBrackets: true)][StringLength(64, MinimumLength = 1)] string? username,
+			[StringLength(128, MinimumLength = 8)] string secret, Dictionary<string, object?> studySpecificProperties,
+			byte[]? encryptedProperties, EncryptionInfo? propertyEncryptionInfo) =>
+			(AppName, Username, Secret, StudySpecificProperties, EncryptedProperties, PropertyEncryptionInfo) =
+			(appName, username, secret, studySpecificProperties, encryptedProperties, propertyEncryptionInfo);
 
 		/// <summary>
 		/// Deconstructs the DTO into the contained data.
@@ -56,11 +69,14 @@ namespace SGL.Analytics.DTO {
 		/// <param name="username"> A username that can optionally be used by the client application.</param>
 		/// <param name="secret">A secret string for the user, used to authenticate them later, when logging-in.</param>
 		/// <param name="studySpecificProperties">A dictionary containing application-/study-specific properties that should be stored with the user registration.</param>
-		public void Deconstruct(out string appName, out string? username, out string secret, out Dictionary<string, object?> studySpecificProperties) {
+		public void Deconstruct(out string appName, out string? username, out string secret, out Dictionary<string, object?> studySpecificProperties,
+				out byte[]? encryptedProperties, out EncryptionInfo? propertyEncryptionInfo) {
 			appName = AppName;
 			username = Username;
 			secret = Secret;
 			studySpecificProperties = StudySpecificProperties;
+			encryptedProperties = EncryptedProperties;
+			propertyEncryptionInfo = PropertyEncryptionInfo;
 		}
 	}
 }
