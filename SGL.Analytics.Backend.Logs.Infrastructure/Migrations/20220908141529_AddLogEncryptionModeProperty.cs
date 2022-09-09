@@ -6,14 +6,7 @@ using System;
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations {
 	public partial class AddLogEncryptionModeProperty : Migration {
 		protected override void Up(MigrationBuilder migrationBuilder) {
-			migrationBuilder.AlterColumn<byte[]>(
-				name: "InitializationVector",
-				table: "LogMetadata",
-				type: "bytea",
-				nullable: true,
-				defaultValue: new byte[0],
-				oldClrType: typeof(byte[]),
-				oldType: "bytea");
+			migrationBuilder.Sql(@"UPDATE ""LogMetadata"" SET ""InitializationVector"" = E'\\x' WHERE ""InitializationVector"" IS NULL;");
 
 			migrationBuilder.AlterColumn<byte[]>(
 				name: "InitializationVector",
