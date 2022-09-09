@@ -131,6 +131,11 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				metrics.HandleUserPropertyValiidationError(userRegistration.AppName);
 				return BadRequest(ex.Message);
 			}
+			catch (InvalidCryptographicMetadataException ex) {
+				logger.LogError(ex, "RegisterUser POST request failed because the registration uses encrypted user properties and there was a problem with the associated cryptographic metadata.");
+				metrics.HandleCryptoMetadataError(userRegistration.AppName);
+				return BadRequest(ex.Message);
+			}
 			catch (Exception ex) {
 				logger.LogError(ex, "RegisterUser POST request for user {username} failed due to unexpected exception.", userRegistration.Username);
 				metrics.HandleUnexpectedError(userRegistration.AppName, ex);
