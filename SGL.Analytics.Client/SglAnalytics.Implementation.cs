@@ -359,6 +359,7 @@ namespace SGL.Analytics.Client {
 					DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
 				};
 				await using var compressionStream = new GZipStream(encryptionStream, CompressionLevel.Optimal);
+				options.Converters.Add(new ObjectDictionaryJsonConverter());
 				await JsonSerializer.SerializeAsync(compressionStream, properties, options, ct);
 			}
 			return (encryptedPropsBuffer.ToArray(), dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
