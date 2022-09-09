@@ -20,7 +20,8 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	/// <summary>
-	/// The controller class serving the <c>api/analytics/user</c> and <c>api/analytics/user/login</c> routes that manage user registrations for SGL Analytics and perform logins for user sessions.
+	/// The controller class serving the <c>api/analytics/user/v1</c>, <c>api/analytics/user/v1/login</c>, and <c>api/analytics/user/v1/recipient-certificates</c>
+	/// routes that manage user registrations for SGL Analytics and perform logins for user sessions.
 	/// </summary>
 	[Route("api/analytics/user/v1")]
 	[ApiController]
@@ -128,6 +129,11 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			catch (UserPropertyValidationException ex) {
 				logger.LogError(ex, "The validation of app-specific properties failed while attempting to register user {username}.", userRegistration.Username);
 				metrics.HandleUserPropertyValiidationError(userRegistration.AppName);
+				return BadRequest(ex.Message);
+			}
+			catch (InvalidCryptographicMetadataException ex) {
+				logger.LogError(ex, "RegisterUser POST request failed because the registration uses encrypted user properties and there was a problem with the associated cryptographic metadata.");
+				metrics.HandleCryptoMetadataError(userRegistration.AppName);
 				return BadRequest(ex.Message);
 			}
 			catch (Exception ex) {

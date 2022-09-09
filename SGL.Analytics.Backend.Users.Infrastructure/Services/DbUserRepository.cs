@@ -29,8 +29,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		/// <inheritdoc/>
 		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, CancellationToken ct = default) {
 			return await context.UserRegistrations
+				.AsSplitQuery()
 				.Include(u => u.App).ThenInclude(a => a.UserProperties)
 				.Include(u => u.AppSpecificProperties).ThenInclude(p => p.Definition)
+				.Include(u => u.PropertyRecipientKeys)
 				.Where(u => u.Id == id)
 				.SingleOrDefaultAsync<UserRegistration?>(ct);
 		}
@@ -38,8 +40,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		/// <inheritdoc/>
 		public async Task<UserRegistration?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default) {
 			return await context.UserRegistrations
+				.AsSplitQuery()
 				.Include(u => u.App).ThenInclude(a => a.UserProperties)
 				.Include(u => u.AppSpecificProperties).ThenInclude(p => p.Definition)
+				.Include(u => u.PropertyRecipientKeys)
 				.Where(u => u.Username == username && u.App.Name == appName)
 				.SingleOrDefaultAsync<UserRegistration?>(ct);
 		}

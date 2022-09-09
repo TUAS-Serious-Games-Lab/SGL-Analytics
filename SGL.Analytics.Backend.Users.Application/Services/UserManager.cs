@@ -6,7 +6,9 @@ using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Crypto.EndToEnd;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,6 +49,20 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 
 		/// <inheritdoc/>
 		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO, CancellationToken ct = default) {
+			if (userRegDTO.EncryptedProperties != null) {
+				if (userRegDTO.PropertyEncryptionInfo == null) {
+					throw new EncryptedDataWithoutEncryptionMetadataException("User registration with encrypted properties is missing the associated encryption metadata.");
+				}
+				else if (userRegDTO.PropertyEncryptionInfo.DataMode == DataEncryptionMode.Unencrypted) {
+					throw new EncryptedDataWithoutEncryptionMetadataException("User registration with encrypted properties has no associated keys. " +
+						"The metadata object indicates unencrypted, which is not valid for encrypted properties.");
+				}
+				else if (!userRegDTO.PropertyEncryptionInfo.DataKeys.Any()) {
+					throw new MissingRecipientDataKeysForEncryptedDataException("User registration with encrypted properties is missing the recipient data keys, " +
+						"which means the properties could never be decrypted, refusing the registration.");
+				}
+			}
+
 			var app = await appRepo.GetApplicationByNameAsync(userRegDTO.AppName, ct: ct);
 			if (app is null) {
 				logger.LogError("Attempt to register user {username} for non-existent application {appName}.", userRegDTO.Username, userRegDTO.AppName);
@@ -55,8 +71,10 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 
 			var hashedSecret = SecretHashing.CreateHashedSecret(userRegDTO.Secret);
 			var userReg = userRegDTO.Username != null ?
-				UserRegistration.Create(app, userRegDTO.Username, hashedSecret) :
-				UserRegistration.Create(app, hashedSecret);
+				UserRegistration.Create(app, userRegDTO.Username, hashedSecret,
+					userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted()) :
+				UserRegistration.Create(app, hashedSecret,
+					userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted());
 			User user = new User(userReg);
 			foreach (var prop in userRegDTO.StudySpecificProperties) {
 				user.AppSpecificProperties[prop.Key] = prop.Value;

@@ -23,7 +23,7 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
-		<PackageReference Include="SGL.Utilities.Crypto" Version="0.8.5" />
+		<PackageReference Include="SGL.Utilities.Crypto" Version="0.8.6" />
 
 		<ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj">
 			<PrivateAssets>all</PrivateAssets>
@@ -45,7 +45,7 @@
 		</Content>
 		<!-- Dependencies from bundled support assemblies above: -->
 		<PackageReference Include="System.Text.Json" Version="6.0.5" />
-		<PackageReference Include="SGL.Utilities" Version="0.8.5" />
+		<PackageReference Include="SGL.Utilities" Version="0.8.6" />
 	</ItemGroup>
 
 	<ItemGroup>

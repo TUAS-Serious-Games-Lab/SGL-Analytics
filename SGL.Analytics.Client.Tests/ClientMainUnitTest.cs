@@ -612,8 +612,11 @@ namespace SGL.Analytics.Client.Tests {
 
 		public class TestUserData : BaseUserData {
 			public TestUserData(string username) : base(username) { }
+			[UnencryptedUserProperty]
 			public string Label { get; set; } = "";
+			[UnencryptedUserProperty]
 			public DateTime RegistrationTime { get; set; } = DateTime.Now;
+			[UnencryptedUserProperty]
 			public int SomeNumber { get; set; } = 0;
 		}
 		[Fact]

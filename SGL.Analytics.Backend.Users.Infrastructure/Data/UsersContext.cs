@@ -31,7 +31,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 			app.OwnsMany(app => app.DataRecipients, r => {
 				r.WithOwner(r => (ApplicationWithUserProperties)r.App);
 				r.HasKey(r => new { r.AppId, r.PublicKeyId });
-				r.Property(r => r.PublicKeyId).IsStoredAsByteArray().HasMaxLength(33);
+				r.Property(r => r.PublicKeyId).IsStoredAsByteArray().HasMaxLength(34);
 				r.Property(r => r.Label).HasMaxLength(128);
 			});
 
@@ -43,11 +43,19 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 			userReg.HasIndex(u => (new { u.AppId, u.Username })).IsUnique();
 			userReg.Property(u => u.Username).HasMaxLength(64);
 			userReg.Property(u => u.HashedSecret).HasMaxLength(128);
+			userReg.Ignore(u => u.PropertyEncryptionInfo);
 			userReg.OwnsMany(u => u.AppSpecificProperties, p => {
 				p.WithOwner(p => p.User);
 				p.HasIndex(pi => new { pi.DefinitionId, pi.UserId }).IsUnique();
 				p.Property(pi => pi.DateTimeValue).IsStoredInUtc();
 			});
+			userReg.OwnsMany(u => u.PropertyRecipientKeys, rk => {
+				rk.ToTable("UserPropertyRecipientKeys");
+				rk.WithOwner().HasForeignKey(prk => prk.UserId).HasPrincipalKey(u => u.Id);
+				rk.Property(prk => prk.RecipientKeyId).IsStoredAsByteArray().HasMaxLength(34);
+				rk.HasKey(prk => new { prk.UserId, prk.RecipientKeyId });
+			});
+			userReg.Navigation(u => u.PropertyRecipientKeys).AutoInclude(false);
 		}
 		/// <summary>
 		/// The accessor for the table containing <see cref="UserRegistration"/> objects.

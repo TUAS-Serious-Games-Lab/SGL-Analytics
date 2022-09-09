@@ -19,6 +19,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		private const string ERROR_INCORRECT_USER_SECRET = "Incorrect user secret";
 		private const string ERROR_UNKNOWN_APP = "Unknown app";
 		private const string ERROR_INCORRECT_APP_API_TOKEN = "Incorrect app API token";
+		private const string ERROR_INVALID_CRYPTO_METADATA = "Invalid cryptographic metadata";
 		private const string ERROR_USERID_APP_MISMATCH = "Userid does not belong to app";
 		private const string ERROR_USER_PROP_VALIDATION_FAILED = "User property validation failed";
 		private const string ERROR_CONCURRENCY_CONFLICT = "Concurrency conflict";
@@ -45,6 +46,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			errorCounter.WithLabels(ERROR_USERID_APP_MISMATCH, appName);
 			errorCounter.WithLabels(ERROR_USERNAME_ALREADY_TAKEN, appName);
 			errorCounter.WithLabels(ERROR_USER_PROP_VALIDATION_FAILED, appName);
+			errorCounter.WithLabels(ERROR_INVALID_CRYPTO_METADATA, appName);
 			loginCounter.WithLabels(appName);
 		}
 		/// <inheritdoc/>
@@ -121,6 +123,11 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		/// <inheritdoc/>
 		public void HandleModelStateValidationError(string errorMessage) {
 			errorCounter.WithLabels(ERROR_MODEL_STATE_VALIDATION_FAILED, "").Inc();
+		}
+
+		/// <inheritdoc/>
+		public void HandleCryptoMetadataError(string appName) {
+			errorCounter.WithLabels(ERROR_INVALID_CRYPTO_METADATA, appName).Inc();
 		}
 	}
 }

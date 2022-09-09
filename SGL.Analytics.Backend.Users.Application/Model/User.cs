@@ -1,6 +1,7 @@
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Crypto.EndToEnd;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,6 +57,9 @@ namespace SGL.Analytics.Backend.Users.Application.Model {
 		/// </summary>
 		public Dictionary<string, object?> AppSpecificProperties { get; private set; }
 
+		public byte[] EncryptedProperties { get; set; }
+		public EncryptionInfo PropertyEncryptionInfo { get; set; }
+
 		UserRegistration IUserRegistrationWrapper.Underlying { get => userReg; set => userReg = value; }
 
 		/// <summary>
@@ -64,7 +68,7 @@ namespace SGL.Analytics.Backend.Users.Application.Model {
 		/// <param name="userReg">The user registration object containing the user's data.</param>
 		public User(UserRegistration userReg) {
 			this.userReg = userReg;
-			AppSpecificProperties = loadAppProperties();
+			(this as IUserRegistrationWrapper).LoadAppPropertiesFromUnderlying();
 		}
 
 		private Dictionary<string, object?> loadAppProperties() {
@@ -79,9 +83,13 @@ namespace SGL.Analytics.Backend.Users.Application.Model {
 
 		void IUserRegistrationWrapper.LoadAppPropertiesFromUnderlying() {
 			AppSpecificProperties = loadAppProperties();
+			EncryptedProperties = userReg.EncryptedProperties;
+			PropertyEncryptionInfo = userReg.PropertyEncryptionInfo;
 		}
 
 		void IUserRegistrationWrapper.StoreAppPropertiesToUnderlying() {
+			userReg.EncryptedProperties = EncryptedProperties;
+			userReg.PropertyEncryptionInfo = PropertyEncryptionInfo;
 			foreach (var dictProp in AppSpecificProperties) {
 				userReg.SetAppSpecificProperty(dictProp.Key, dictProp.Value);
 			}

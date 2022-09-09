@@ -9,8 +9,10 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -345,6 +347,22 @@ namespace SGL.Analytics.Client {
 				uploadQueue.Enqueue(logFile);
 			}
 			startFileUploadingIfNotRunning();
+		}
+
+		private async Task<(byte[] EncryptedUserProperties, EncryptionInfo EncryptionInfo)> encryptUserProperties(
+				Dictionary<string, object?> properties, KeyEncryptor keyEncryptor, CancellationToken ct = default) {
+			var dataEncryptor = new DataEncryptor(randomGenerator, 1);
+			using var encryptedPropsBuffer = new MemoryStream();
+			await using (var encryptionStream = dataEncryptor.OpenEncryptionWriteStream(encryptedPropsBuffer, 0, leaveOpen: true)) {
+				var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
+					WriteIndented = true,
+					DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+				};
+				await using var compressionStream = new GZipStream(encryptionStream, CompressionLevel.Optimal, leaveOpen: true);
+				options.Converters.Add(new ObjectDictionaryJsonConverter());
+				await JsonSerializer.SerializeAsync(compressionStream, properties, options, ct);
+			}
+			return (encryptedPropsBuffer.ToArray(), dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
 		}
 	}
 }
