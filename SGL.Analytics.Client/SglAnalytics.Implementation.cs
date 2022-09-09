@@ -224,7 +224,7 @@ namespace SGL.Analytics.Client {
 				// Since we removed the file after successfully uploading it, lets not try again, only to fail with a missing file exception.
 				if (completedLogFiles.Contains(logFile.ID)) continue;
 				try {
-					await attemptToUploadFileAsync((AuthorizationToken)authToken, logFile);
+					await attemptToUploadFileAsync((AuthorizationToken)authToken, logFile, keyEncryptor);
 				}
 				catch (LoginRequiredException) {
 					logger.LogInformation("Uploading data log {logId} failed because the backend told us that we need to login first. " +
@@ -245,7 +245,7 @@ namespace SGL.Analytics.Client {
 						return;
 					}
 					try {
-						await attemptToUploadFileAsync((AuthorizationToken)authToken, logFile);
+						await attemptToUploadFileAsync((AuthorizationToken)authToken, logFile, keyEncryptor);
 					}
 					catch (LoginRequiredException ex) {
 						logger.LogError(ex, "The upload for data log {logId} failed again after obtaining a fresh session token. " +
@@ -256,15 +256,35 @@ namespace SGL.Analytics.Client {
 				completedLogFiles.Add(logFile.ID);
 			}
 
-			async Task attemptToUploadFileAsync(AuthorizationToken authToken, ILogStorage.ILogFile logFile) {
+			async Task attemptToUploadFileAsync(AuthorizationToken authToken, ILogStorage.ILogFile logFile, KeyEncryptor keyEncryptor) {
 				bool removing = false;
 				try {
 					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
-					Task uploadTask;
-					lock (lockObject) { // At the beginning, of the upload task, the stream for the log file needs to be aquired under lock.
-						uploadTask = logCollectorClient.UploadLogFileAsync(appName, appAPIToken, authToken, logFile);
+					Guid logFileID;
+					DateTime logFileCreationTime;
+					DateTime logFileEndTime;
+					string logFileSuffix;
+					LogContentEncoding logFileEncoding;
+					Stream contentStream = Stream.Null;
+					try {
+						lock (lockObject) { // Access to the log file object needs to be done under lock.
+							logFileID = logFile.ID;
+							logFileCreationTime = logFile.CreationTime;
+							logFileEndTime = logFile.EndTime;
+							logFileSuffix = logFile.Suffix;
+							logFileEncoding = logFile.Encoding;
+							contentStream = logFile.OpenReadRaw();
+						}
+						var dataEncryptor = new DataEncryptor(randomGenerator, numberOfStreams: 1);
+						var encryptionStream = dataEncryptor.OpenEncryptionReadStream(contentStream, 0, leaveOpen: false);
+						var encryptionInfo = dataEncryptor.GenerateEncryptionInfo(keyEncryptor);
+						var metadataDTO = new LogMetadataDTO(logFileID, logFileCreationTime, logFileEndTime, logFileSuffix, logFileEncoding, encryptionInfo);
+						Validator.ValidateObject(metadataDTO, new ValidationContext(metadataDTO), true);
+						await logCollectorClient.UploadLogFileAsync(appName, appAPIToken, authToken, metadataDTO, encryptionStream);
 					}
-					await uploadTask;
+					finally {
+						await contentStream.DisposeAsync();
+					}
 					removing = true;
 					lock (lockObject) { // ILogStorage implementations may need to do this under lock.
 						logFile.Remove();

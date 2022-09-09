@@ -2,6 +2,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Crypto.Certificates;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
@@ -57,7 +58,8 @@ namespace SGL.Analytics.Client {
 		/// <param name="appName">The technical name of the application used to identify it in the backend.</param>
 		/// <param name="appAPIToken">The API token for the application to authenticate it with the backend.</param>
 		/// <param name="authToken">The authorization token for the user, obtained by <see cref="IUserRegistrationClient.LoginUserAsync(LoginRequestDTO)"/>.</param>
-		/// <param name="logFile">A handle representing the log file to upload.</param>
+		/// <param name="metadata">The metadata for the log file to upload.</param>
+		/// <param name="content">The raw content of the log file to upload, encoded as described by <see cref="LogMetadataDTO.LogContentEncoding"/> in <paramref name="metadata"/>.</param>
 		/// <returns>A task representing the upload operation.</returns>
 		/// <exception cref="LoginRequiredException">
 		/// Thrown when <paramref name="authToken"/> has expired or doesn't contain a recognized token.
@@ -71,6 +73,6 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="FileTooLargeException">
 		/// Thrown when the server rejected the upload request because the given file is too large for the size limit of the server and thus can't be uploaded.
 		/// </exception>
-		Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, ILogStorage.ILogFile logFile);
+		Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, LogMetadataDTO metadata, Stream content);
 	}
 }
