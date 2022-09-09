@@ -109,6 +109,10 @@ namespace SGL.Analytics.Client.Tests {
 			public DateTime RegistrationTime { get; set; } = DateTime.Now;
 			[UnencryptedUserProperty]
 			public int SomeNumber { get; set; } = 0;
+			public string EncryptedLabel { get; set; } = "";
+			public DateTime EncryptedTime { get; set; } = DateTime.Now;
+			public int EncryptedNumber { get; set; } = 0;
+			public object EncryptedObject { get; set; } = new { };
 		}
 
 		[Theory]
@@ -162,7 +166,16 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test I" });
 			analytics.RecordSnapshotUnshared("Channel 3", 2, "Snap E");
 
-			var user = new TestUserData(username) { Label = "This is a test!", SomeNumber = 42 };
+			var user = new TestUserData(username) {
+				Label = "This is a test!",
+				SomeNumber = 42,
+				EncryptedLabel = "This is secret!",
+				EncryptedNumber = 23,
+				EncryptedObject = new {
+					Test1 = 123,
+					Test2 = "Hello World"
+				}
+			};
 			await analytics.RegisterAsync(user);
 
 			analytics.StartNewLog();
@@ -203,21 +216,43 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.Equal(expPayload, payload.GetString());
 			}
 
+			var keyDecryptorRecipient1 = new KeyDecryptor(recipient1KeyPair);
+			var keyDecryptorRecipient2 = new KeyDecryptor(recipient2KeyPair);
+
 			var successfulRegRequests = serverFixture.Server.LogEntries
 				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/user/v1")
 				.Select(le => le.RequestMessage);
 			Assert.Single(successfulRegRequests);
 			await using (var stream = new MemoryStream(successfulRegRequests.Single().BodyAsBytes)) {
-				var userReg = await JsonSerializer.DeserializeAsync<UserRegistrationDTO>(stream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
-				Assert.Equal(user.Username, userReg?.Username);
-				var studyAttr = userReg?.StudySpecificProperties as IDictionary<string, object?> ?? new Dictionary<string, object?> { };
-				Assert.Equal(user.Label, Assert.Contains("Label", studyAttr));
-				Assert.Equal(user.RegistrationTime, Assert.Contains("RegistrationTime", studyAttr));
-				Assert.Equal(user.SomeNumber, Assert.Contains("SomeNumber", studyAttr));
-				stream.Position = 0;
 				output.WriteLine("");
 				output.WriteLine("Registration:");
 				output.WriteStreamContents(stream);
+				stream.Position = 0;
+				var userReg = await JsonSerializer.DeserializeAsync<UserRegistrationDTO>(stream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+				Assert.NotNull(userReg);
+				Assert.Equal(user.Username, userReg.Username);
+				var studyAttr = userReg.StudySpecificProperties as IDictionary<string, object?> ?? new Dictionary<string, object?> { };
+				Assert.Equal(user.Label, Assert.Contains("Label", studyAttr));
+				Assert.Equal(user.RegistrationTime, Assert.Contains("RegistrationTime", studyAttr));
+				Assert.Equal(user.SomeNumber, Assert.Contains("SomeNumber", studyAttr));
+
+				Assert.NotNull(userReg.EncryptedProperties);
+				Assert.NotNull(userReg.PropertyEncryptionInfo);
+				var propDataDecryptor = DataDecryptor.FromEncryptionInfo(userReg.PropertyEncryptionInfo, keyDecryptorRecipient1);
+				Assert.NotNull(propDataDecryptor);
+				using var propDecrStream = new GZipStream(
+					propDataDecryptor.OpenDecryptionReadStream(
+						new MemoryStream(userReg.EncryptedProperties, writable: false), 0),
+					CompressionMode.Decompress);
+				var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true };
+				options.Converters.Add(new ObjectDictionaryJsonConverter());
+				var encryptedProps = await JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(propDecrStream, options);
+				using var encPropOutBuff = new MemoryStream();
+				await JsonSerializer.SerializeAsync(encPropOutBuff, encryptedProps, options);
+				encPropOutBuff.Position = 0;
+				output.WriteLine("");
+				output.WriteLine("Decrypted user properties:");
+				output.WriteStreamContents(encPropOutBuff);
 			}
 
 			output.WriteLine("");
@@ -229,9 +264,6 @@ namespace SGL.Analytics.Client.Tests {
 				.Select(le => le.RequestMessage);
 			Assert.Equal(3, successfulLogRequests.Count());
 			var requestsEnumerator = successfulLogRequests.GetEnumerator();
-
-			var keyDecryptorRecipient1 = new KeyDecryptor(recipient1KeyPair);
-			var keyDecryptorRecipient2 = new KeyDecryptor(recipient2KeyPair);
 
 			Assert.True(requestsEnumerator.MoveNext());
 			var (metadataStream, contentStream) = CheckRequest(requestsEnumerator.Current);
