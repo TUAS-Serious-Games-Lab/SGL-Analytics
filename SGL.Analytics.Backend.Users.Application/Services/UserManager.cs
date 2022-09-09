@@ -6,6 +6,7 @@ using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Crypto.EndToEnd;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,8 +56,10 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 
 			var hashedSecret = SecretHashing.CreateHashedSecret(userRegDTO.Secret);
 			var userReg = userRegDTO.Username != null ?
-				UserRegistration.Create(app, userRegDTO.Username, hashedSecret) :
-				UserRegistration.Create(app, hashedSecret);
+				UserRegistration.Create(app, userRegDTO.Username, hashedSecret,
+					userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted()) :
+				UserRegistration.Create(app, hashedSecret,
+					userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted());
 			User user = new User(userReg);
 			foreach (var prop in userRegDTO.StudySpecificProperties) {
 				user.AppSpecificProperties[prop.Key] = prop.Value;
