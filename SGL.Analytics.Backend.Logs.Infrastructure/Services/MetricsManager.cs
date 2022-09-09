@@ -19,6 +19,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			new HistogramConfiguration { Buckets = Histogram.ExponentialBuckets(512, 2, 20), LabelNames = new[] { "app" } });
 		private const string ERROR_LOG_FILE_TOO_LARGE = "Log file too large";
 		private const string ERROR_UNKNOWN_APP = "Unknown app";
+		private const string ERROR_INVALID_CRYPTO_METADATA = "Invalid cryptographic metadata";
 		private const string ERROR_INCORRECT_APP_API_TOKEN = "Incorrect app API token";
 		private const string ERROR_INCORRECT_SECURITY_TOKEN_CLAIMS = "Incorrect security token claims";
 		private const string ERROR_MODEL_STATE_VALIDATION_FAILED = "Model state validation failed";
@@ -43,6 +44,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			logSizes.WithLabels(appName);
 			errorCounter.WithLabels(ERROR_INCORRECT_APP_API_TOKEN, appName);
 			errorCounter.WithLabels(ERROR_LOG_FILE_TOO_LARGE, appName);
+			errorCounter.WithLabels(ERROR_INVALID_CRYPTO_METADATA, appName);
 			warningCounter.WithLabels(WARNING_LOG_ID_CONFLICT, appName);
 			warningCounter.WithLabels(WARNING_LOG_UPLOAD_RETRY, appName);
 			warningCounter.WithLabels(WARNING_RETRYING_COMPLETED_UPLOAD, appName);
@@ -123,6 +125,11 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		/// <inheritdoc/>
 		public void UpdateAvgLogSize(IDictionary<string, double> perAppSizes) {
 			logsAvgSize.UpdateLabeledValues(perAppSizes);
+		}
+
+		/// <inheritdoc/>
+		public void HandleCryptoMetadataError(string appName) {
+			errorCounter.WithLabels(ERROR_INVALID_CRYPTO_METADATA, appName).Inc();
 		}
 	}
 }

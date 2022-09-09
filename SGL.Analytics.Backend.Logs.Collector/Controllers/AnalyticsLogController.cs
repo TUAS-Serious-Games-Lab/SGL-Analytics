@@ -169,6 +169,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 				metrics.HandleIncorrectAppApiTokenError(appName);
 				return Unauthorized();
 			}
+			catch (MissingRecipientDataKeysForEncryptedDataException ex) {
+				logger.LogError("IngestLog POST request from user {userId} in application {appName} failed due to incomplete cryptographic metadata.", userId, appName);
+				metrics.HandleCryptoMetadataError(appName);
+				return BadRequest(ex.Message);
+			}
 			catch (BadHttpRequestException ex) when (ex.StatusCode == StatusCodes.Status413RequestEntityTooLarge) {
 				logger.LogCritical("IngestLog POST request from user {userId} failed because the log file was too large for the server's limit. " +
 					"The Content-Length given by the client was {size}.", userId, HttpContext.Request.ContentLength);

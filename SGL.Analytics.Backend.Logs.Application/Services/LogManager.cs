@@ -5,8 +5,10 @@ using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.Applications;
+using SGL.Utilities.Crypto.EndToEnd;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -57,6 +59,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 		/// Ingests the log file with the given metadata and content as described by <see cref="ILogManager.IngestLogAsync(Guid, string, string, LogMetadataDTO, Stream, CancellationToken)"/>.
 		/// </summary>
 		public async Task<LogFile> IngestLogAsync(Guid userId, string appName, string appApiToken, LogMetadataDTO logMetaDTO, Stream logContent, CancellationToken ct = default) {
+			if (logMetaDTO.EncryptionInfo.DataMode != DataEncryptionMode.Unencrypted && !logMetaDTO.EncryptionInfo.DataKeys.Any()) {
+				logger.LogError("Attempt to ingest a log file with id {logId} or app {appName} from user {user} with encryption mode {mode} without data keys, " +
+					"but encrypted modes need data keys to be present in metadata for the data to be readable later. Refusing to accept the file that would be unreadable due to missing keys.",
+					logMetaDTO.LogFileId, appName, userId, logMetaDTO.EncryptionInfo.DataMode);
+				throw new MissingRecipientDataKeysForEncryptedDataException($"Attempt to ingest a log file with id {logMetaDTO.LogFileId} or app {appName} from user {userId} with " +
+					$"encryption mode {logMetaDTO.EncryptionInfo.DataMode} without data keys, but encrypted modes need data keys to be present in metadata for the data to be readable later. " +
+					"Refusing to accept the file that would be unreadable due to missing keys.");
+			}
 			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
 			if (app is null) {
 				logger.LogError("Attempt to ingest a log file with id {logId} for non-existent application {appName} from user {user}.", logMetaDTO.LogFileId, appName, userId);

@@ -596,5 +596,25 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				output.WriteStreamContents(response.Content.ReadAsStream());
 			}
 		}
+
+		[Fact]
+		public async Task AttemptToInjectEncryptedLogWithoutRecipientKeysFailsWithBadRequestError() {
+			var userId = Guid.NewGuid();
+			var logId = Guid.NewGuid();
+			var keyEncryptor = new KeyEncryptor(fixture.Certificates.Select(cert => cert.PublicKey), fixture.Random);
+			var dataEncryptor = new DataEncryptor(fixture.Random, 1);
+			var encryptionInfo = dataEncryptor.GenerateEncryptionInfo(keyEncryptor);
+			encryptionInfo.DataKeys.Clear();
+			var logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, encryptionInfo);
+			using (var logContent = generateRandomGZippedTestData()) {
+				using (var client = fixture.CreateClient()) {
+					using var encrStream = dataEncryptor.OpenEncryptionReadStream(logContent, 0, leaveOpen: true);
+					var request = buildUploadRequest(encrStream, logMDTO, userId, fixture.AppName);
+					var response = await client.SendAsync(request);
+					Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+					output.WriteStreamContents(response.Content.ReadAsStream());
+				}
+			}
+		}
 	}
 }
