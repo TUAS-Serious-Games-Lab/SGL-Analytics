@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
@@ -136,16 +137,22 @@ namespace SGL.Analytics.Client {
 					throw new InvalidOperationException("User is already registered.");
 				}
 				logger.LogInformation("Starting user registration process...");
-				var secret = SecretGenerator.Instance.GenerateSecret(UserRegistrationSecretLength);
-				var userDTO = userData.MakeDTO(appName, secret);
-				var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(userRegistrationClient);
-				var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
-				if (!certList.Any() && userDTO.StudySpecificProperties.Any()) {
-					const string msg = "Can't send registration because no authorized recipients for study-specific properties were found.";
-					logger.LogError(msg);
-					throw new InvalidOperationException(msg);
+				var (unencryptedUserPropDict, encryptedUserPropDict) = userData.BuildUserProperties();
+				byte[]? encryptedUserProps = null;
+				EncryptionInfo? userPropsEncryptionInfo = null;
+				if (encryptedUserPropDict.Any()) {
+					var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(userRegistrationClient);
+					var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
+					if (!certList.Any()) {
+						const string msg = "Can't send registration because no authorized recipients for study-specific properties were found.";
+						logger.LogError(msg);
+						throw new InvalidOperationException(msg);
+					}
+					var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
+					(encryptedUserProps, userPropsEncryptionInfo) = await encryptUserProperties(encryptedUserPropDict, keyEncryptor);
 				}
-				var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
+				var secret = SecretGenerator.Instance.GenerateSecret(UserRegistrationSecretLength);
+				var userDTO = new UserRegistrationDTO(appName, userData.Username, secret, unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
 				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
