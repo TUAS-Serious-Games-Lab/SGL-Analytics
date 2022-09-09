@@ -10,6 +10,15 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations {
 				name: "InitializationVector",
 				table: "LogMetadata",
 				type: "bytea",
+				nullable: true,
+				defaultValue: new byte[0],
+				oldClrType: typeof(byte[]),
+				oldType: "bytea");
+
+			migrationBuilder.AlterColumn<byte[]>(
+				name: "InitializationVector",
+				table: "LogMetadata",
+				type: "bytea",
 				nullable: false,
 				defaultValue: new byte[0],
 				oldClrType: typeof(byte[]),
