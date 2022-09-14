@@ -18,9 +18,9 @@
 		<DebugType>None</DebugType>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="SGL.Utilities.Crypto.Abstractions" Version="0.8.6" />
+		<PackageReference Include="SGL.Utilities.Crypto.Abstractions" Version="0.9.0" />
 		<PackageReference Include="System.Text.Json" Version="6.0.5" />
-		<PackageReference Include="SGL.Utilities" Version="0.8.6" />
+		<PackageReference Include="SGL.Utilities" Version="0.9.0" />
 	</ItemGroup>
 
 </Project>
