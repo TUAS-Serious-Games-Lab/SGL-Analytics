@@ -93,7 +93,21 @@ namespace SGL.Analytics.Client {
 		}
 
 		private async Task<CertificateStore> loadAuthorizedRecipientCertificatesAsync(IRecipientCertificatesClient client) {
-			var store = new CertificateStore(recipientCertificateValidator, NullLogger<CertificateStore>.Instance);
+			var store = new CertificateStore(recipientCertificateValidator, LoggerFactory.CreateLogger<CertificateStore>(), (cert, logger) => {
+				if (!cert.AllowedKeyUsages.HasValue) {
+					logger.LogError("Recipient certificate with SubjectDN={subjDN} and KeyId={keyId} doesn't have allowed key usages specified. " +
+						"Valid certifiactes for end-to-end encryption must have a key usage extension including key encipherment. " +
+						"The recipient is therefore rejected.", cert.SubjectDN, cert.PublicKey.CalculateId());
+					return false;
+				}
+				else if (!cert.AllowedKeyUsages.Value.HasFlag(KeyUsages.KeyEncipherment)) {
+					logger.LogError("Recipient certificate with SubjectDN={subjDN} and KeyId={keyId} has allowed key usaged specified " +
+						"but they don't include the key encipherment usage required for end-to-end encryption. " +
+						"The recipient is therefore rejected.", cert.SubjectDN, cert.PublicKey.CalculateId());
+					return false;
+				}
+				return true;
+			});
 			await client.LoadRecipientCertificatesAsync(appName, appAPIToken, store);
 			return store;
 		}
