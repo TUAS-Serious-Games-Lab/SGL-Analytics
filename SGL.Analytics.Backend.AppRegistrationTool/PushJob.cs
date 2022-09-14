@@ -111,7 +111,12 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				return def;
 			}, ct);
 			if (definition != null) {
-				definition.DataRecipients = (await loadCertificates(filename, definition, ct)).ToList();
+				var certificates = (await loadCertificates(filename, definition, ct)).ToList();
+				definition.DataRecipients = certificates
+					.Where(item => item.Certificate.AllowedKeyUsages.HasValue &&
+							item.Certificate.AllowedKeyUsages.Value.HasFlag(KeyUsages.KeyEncipherment))
+					.Select(item => createRecipient(item.Certificate, item.Certificate.SubjectDN.ToString() + item.File != null ? (" # " + item.File) : ""))
+					.ToList();
 				if (!definition.DataRecipients.Any()) {
 					logger.LogWarning("No associated data recipient certificates found for app {app} from definition file '{definitionFile}'.", definition.Name, filename);
 				}
@@ -119,21 +124,20 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			return definition;
 		}
 
-		private async Task<IEnumerable<Recipient>> loadCertificates(string filename, ApplicationWithUserProperties? definition, CancellationToken ct) {
+		private async Task<IEnumerable<(Certificate Certificate, string? File)>> loadCertificates(string filename, ApplicationWithUserProperties? definition, CancellationToken ct) {
 			string dir = Path.GetDirectoryName(filename) ?? throw new ArgumentException("Filename has no valid directory.");
 			string fileBaseName = Path.GetFileNameWithoutExtension(filename);
 			EnumerationOptions enumOpts = new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive };
 			var siblingPemFile = Directory.EnumerateFiles(dir, fileBaseName + ".pem", enumOpts);
 			var pemDirName = Path.Combine(dir, fileBaseName);
 			var dirPemFiles = Directory.Exists(pemDirName) ? Directory.EnumerateFiles(pemDirName, "*.pem", enumOpts) : Enumerable.Empty<string>();
-			var siblingPemTask = siblingPemFile.Select(file => readPemCertFileAsync(file, ct));
+			var siblingPemTask = siblingPemFile.Select(async file => (file: file, certs: await readPemCertFileAsync(file, ct)));
 			var dirPemTasks = dirPemFiles.Select(async file => (file: file, certs: await readPemCertFileAsync(file, ct)));
-			var dirCerts = await Task.WhenAll(dirPemTasks);
-			var siblingCerts = await Task.WhenAll(siblingPemTask);
-			var siblingRecipients = siblingCerts.SelectMany(item => item).Select(cert => createRecipient(cert, cert.SubjectDN.ToString() ?? ""));
-			var dirRecipients = dirCerts.SelectMany(item => item.certs.Select(c => (file: item.file, cert: c)))
-				.Select(item => createRecipient(item.cert, (item.cert.SubjectDN.ToString() ?? "") + " # " + Path.GetFileNameWithoutExtension(item.file)));
-			return dirRecipients.Concat(siblingRecipients);
+			var dirCertResults = await Task.WhenAll(dirPemTasks);
+			var siblingCertResults = await Task.WhenAll(siblingPemTask);
+			var siblingCerts = siblingCertResults.SelectMany(item => item.certs.Select(c => (Certificate: c, File: (string?)Path.GetFileNameWithoutExtension(item.file))));
+			var dirCerts = dirCertResults.SelectMany(item => item.certs.Select(c => (Certificate: c, File: (string?)Path.GetFileNameWithoutExtension(item.file))));
+			return dirCerts.Concat(siblingCerts);
 		}
 
 		private Task<IEnumerable<Certificate>> readPemCertFileAsync(string file, CancellationToken ct) {

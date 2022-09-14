@@ -43,9 +43,9 @@ namespace SGL.Analytics.Client.Tests {
 			signerKeyPair = KeyPair.GenerateEllipticCurves(random, 521);
 			recipient1KeyPair = KeyPair.GenerateEllipticCurves(random, 521);
 			recipient2KeyPair = KeyPair.GenerateEllipticCurves(random, 521);
-			signerCert = Certificate.Generate(signerDN, signerKeyPair.Private, signerDN, signerKeyPair.Public, TimeSpan.FromHours(2), random, 128);
-			recipient1Cert = Certificate.Generate(signerDN, signerKeyPair.Private, recipient1DN, recipient1KeyPair.Public, TimeSpan.FromHours(1), random, 128);
-			recipient2Cert = Certificate.Generate(signerDN, signerKeyPair.Private, recipient2DN, recipient2KeyPair.Public, TimeSpan.FromHours(1), random, 128);
+			signerCert = Certificate.Generate(signerDN, signerKeyPair.Private, signerDN, signerKeyPair.Public, TimeSpan.FromHours(2), random, 128, keyUsages: KeyUsages.KeyCertSign, caConstraint: (true, 0));
+			recipient1Cert = Certificate.Generate(signerDN, signerKeyPair.Private, recipient1DN, recipient1KeyPair.Public, TimeSpan.FromHours(1), random, 128, keyUsages: KeyUsages.KeyEncipherment | KeyUsages.KeyAgreement, caConstraint: (false, null));
+			recipient2Cert = Certificate.Generate(signerDN, signerKeyPair.Private, recipient2DN, recipient2KeyPair.Public, TimeSpan.FromHours(1), random, 128, keyUsages: KeyUsages.KeyEncipherment | KeyUsages.KeyAgreement, caConstraint: (false, null));
 			using var signerCertPemBuffer = new StringWriter();
 			signerCert.StoreToPem(signerCertPemBuffer);
 
