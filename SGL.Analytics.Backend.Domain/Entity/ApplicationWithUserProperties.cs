@@ -69,5 +69,11 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			UserProperties.Add(prop);
 			return prop;
 		}
+
+		public ExporterKeyAuthCertificate AddAuthorizedExporter(string label, string certificatePem) {
+			var exporter = ExporterKeyAuthCertificate.Create(this, label, certificatePem);
+			AuthorizedExporters.Add(exporter);
+			return exporter;
+		}
 	}
 }
