@@ -1,10 +1,12 @@
 ﻿using SGL.Utilities;
 using SGL.Utilities.Crypto.Keys;
+using SGL.Utilities.Crypto.Signatures;
 using SGL.Utilities.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace SGL.Analytics.DTO {
 	public class ExporterKeyAuthRequestDTO {
@@ -22,10 +24,10 @@ namespace SGL.Analytics.DTO {
 		public Guid ChallengeId { get; private set; }
 		[MaxLength(64 * 1024)]
 		public byte[] ChallengeBytes { get; private set; }
-		//TODO Change to enum of supported digests?
-		public string DigestAlgorithmToUse { get; private set; }
+		[JsonConverter(typeof(JsonStringEnumConverter))]
+		public SignatureDigest DigestAlgorithmToUse { get; private set; }
 
-		public ExporterKeyAuthChallengeDTO(Guid challengeId, byte[] challengeBytes, string digestAlgorithmToUse) {
+		public ExporterKeyAuthChallengeDTO(Guid challengeId, byte[] challengeBytes, SignatureDigest digestAlgorithmToUse) {
 			ChallengeId = challengeId;
 			ChallengeBytes = challengeBytes;
 			DigestAlgorithmToUse = digestAlgorithmToUse;
