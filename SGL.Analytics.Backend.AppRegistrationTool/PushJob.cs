@@ -115,14 +115,22 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				definition.DataRecipients = certificates
 					.Where(item => item.Certificate.AllowedKeyUsages.HasValue &&
 							item.Certificate.AllowedKeyUsages.Value.HasFlag(KeyUsages.KeyEncipherment))
-					.Select(item => createRecipient(item.Certificate, item.Certificate.SubjectDN.ToString() + item.File != null ? (" # " + item.File) : ""))
+					.Select(item => createRecipient(item.Certificate, generateCertLabel(item.Certificate, item.File)))
 					.ToList();
+				definition.AuthorizedExporters = certificates
+					.Where(item => item.Certificate.AllowedKeyUsages.HasValue &&
+							item.Certificate.AllowedKeyUsages.Value.HasFlag(KeyUsages.DigitalSignature))
+					.Select(item => createExporterKeyAuth(item.Certificate, generateCertLabel(item.Certificate, item.File))).ToList();
 				if (!definition.DataRecipients.Any()) {
 					logger.LogWarning("No associated data recipient certificates found for app {app} from definition file '{definitionFile}'.", definition.Name, filename);
 				}
+				if (!definition.AuthorizedExporters.Any()) {
+					logger.LogWarning("No associated authorized exporter certificates found for app {app} from definition file '{definitionFile}'.", definition.Name, filename);
 			}
 			return definition;
 		}
+
+		private static string generateCertLabel(Certificate certificate, string? file) => certificate.SubjectDN.ToString() + file != null ? (" # " + file) : "";
 
 		private async Task<IEnumerable<(Certificate Certificate, string? File)>> loadCertificates(string filename, ApplicationWithUserProperties? definition, CancellationToken ct) {
 			string dir = Path.GetDirectoryName(filename) ?? throw new ArgumentException("Filename has no valid directory.");
@@ -151,6 +159,11 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			using var strWriter = new StringWriter();
 			cert.StoreToPem(strWriter);
 			return new Recipient(Guid.Empty, cert.PublicKey.CalculateId(), label, strWriter.ToString());
+		}
+		private ExporterKeyAuthCertificate createExporterKeyAuth(Certificate cert, string label) {
+			using var strWriter = new StringWriter();
+			cert.StoreToPem(strWriter);
+			return new ExporterKeyAuthCertificate(Guid.Empty, cert.PublicKey.CalculateId(), label, strWriter.ToString());
 		}
 
 		/// <summary>
