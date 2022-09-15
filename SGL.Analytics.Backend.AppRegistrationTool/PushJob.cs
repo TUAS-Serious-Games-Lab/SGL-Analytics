@@ -126,6 +126,18 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				}
 				if (!definition.AuthorizedExporters.Any()) {
 					logger.LogWarning("No associated authorized exporter certificates found for app {app} from definition file '{definitionFile}'.", definition.Name, filename);
+				}
+				var unusedCertificates = certificates
+					.Where(item => !item.Certificate.AllowedKeyUsages.HasValue ||
+						(!item.Certificate.AllowedKeyUsages.Value.HasFlag(KeyUsages.KeyEncipherment) &&
+						!item.Certificate.AllowedKeyUsages.Value.HasFlag(KeyUsages.DigitalSignature))).ToList();
+				if (unusedCertificates.Any()) {
+					foreach (var cert in unusedCertificates) {
+						logger.LogWarning("The certificate {subjectDN} with key id {keyid} was not installed because it did have neither " +
+							"KeyUsage=KeyEncipherment (needed for recipient certificates) nor KeyUsage=DigitalSignature (needed for exporter authentication certificates).",
+							cert.Certificate.SubjectDN, cert.Certificate.PublicKey.CalculateId());
+					}
+				}
 			}
 			return definition;
 		}
