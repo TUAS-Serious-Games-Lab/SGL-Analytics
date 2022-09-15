@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Prometheus;
+using SGL.Analytics.Backend.Users.Application;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Analytics.Backend.Users.Infrastructure;
@@ -42,8 +43,7 @@ namespace SGL.Analytics.Backend.Users.Registration {
 			services.AddControllers(options => options.AddPemFormatters());
 
 			services.UseUsersBackendInfrastructure(Configuration);
-
-			services.AddScoped<IUserManager, UserManager>();
+			services.UseUsersBackendAppplicationLayer(Configuration);
 			services.UseJwtLoginService(Configuration);
 
 			services.AddModelStateValidationErrorLogging((err, ctx) =>
