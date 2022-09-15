@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Backend.Users.Application {
 	public static class ServiceCollectionExtensions {
 		public static IServiceCollection UseUsersBackendAppplicationLayer(this IServiceCollection services, IConfiguration config) {
+			services.AddSingleton<IKeyAuthChallengeStateHolder, KeyAuthChallengeStateHolder>();
 			services.AddScoped<IUserManager, UserManager>();
 			return services;
 		}
