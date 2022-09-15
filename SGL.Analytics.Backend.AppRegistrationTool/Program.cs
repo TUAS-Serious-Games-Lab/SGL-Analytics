@@ -97,6 +97,21 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			[Value(2, MetaName = "NEW_LABEL", HelpText = "The new label text.", Required = true)]
 			public string Label { get; set; }
 		}
+		[Verb("list-exporters", HelpText = "Lists the currently registered exporters for a registered application.")]
+		public class ListExportersOptions : BaseOptions {
+			[Value(0, MetaName = "APP_NAME", HelpText = "The application of which to list the exporters.", Required = true)]
+			public string AppName { get; set; }
+		}
+
+		[Verb("relabel-exporter", HelpText = "Assign a new label to the given data exporter key in a registered application.")]
+		public class RelabelExporterOptions : BaseOptions {
+			[Value(0, MetaName = "APP_NAME", HelpText = "The application in which to relabel the exporter.", Required = true)]
+			public string AppName { get; set; }
+			[Value(1, MetaName = "KEYID", HelpText = "The keyid of the exporter to change the label of.", Required = true)]
+			public string KeyId { get; set; }
+			[Value(2, MetaName = "NEW_LABEL", HelpText = "The new label text.", Required = true)]
+			public string Label { get; set; }
+		}
 
 		async static Task<int> Main(string[] args) => await ((Func<ParserResult<object>, Task<int>>)(res => res.MapResult(
 			async (PushOptions opts) => await PushMain(opts),
@@ -107,10 +122,20 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			async (RemoveRecipientOptions opts) => await RemoveRecipientMain(opts),
 			async (ListRecipientsOptions opts) => await ListRecipientsMain(opts),
 			async (RelabelRecipientOptions opts) => await RelabelRecipientMain(opts),
+			async (ListExportersOptions opts) => await ListExportersMain(opts),
+			async (RelabelExporterOptions opts) => await RelabelExporterMain(opts),
 			async errs => await DisplayHelp(res, errs)
 			)))(new Parser(c => c.HelpWriter = null).
 			ParseArguments<PushOptions, GenerateApiTokenOptions, RemovePropertyOptions, RemoveApplicationOptions, ApplyMigrationsOptions,
 				RemoveRecipientOptions, ListRecipientsOptions, RelabelRecipientOptions>(args));
+
+		static Task<int> RelabelExporterMain(RelabelExporterOptions opts) {
+			throw new NotImplementedException();
+		}
+
+		static Task<int> ListExportersMain(ListExportersOptions opts) {
+			throw new NotImplementedException();
+		}
 
 		async static Task<int> DisplayHelp(ParserResult<object> result, IEnumerable<Error> errs) {
 			await Console.Out.WriteLineAsync(HelpText.AutoBuild(result, h => {
