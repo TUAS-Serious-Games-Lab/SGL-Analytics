@@ -23,6 +23,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 		/// <param name="modelBuilder">The builder to use for configuring the model.</param>
 		protected override void OnModelCreating(ModelBuilder modelBuilder) {
 			modelBuilder.Ignore<SGL.Analytics.Backend.Domain.Entity.Application>();
+			modelBuilder.Ignore<ApplicationCertificateBase>();
 			var app = modelBuilder.Entity<ApplicationWithUserProperties>();
 			app.HasIndex(a => a.Name).IsUnique();
 			app.Property(a => a.Name).HasMaxLength(128);
