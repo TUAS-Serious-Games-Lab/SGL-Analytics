@@ -5,6 +5,7 @@ using SGL.Utilities.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -58,6 +59,13 @@ namespace SGL.Analytics.DTO {
 			ChallengeId = challengeId;
 			Signature = signature;
 		}
+
+		public static byte[] ConstructContentToSign(ExporterKeyAuthRequestDTO request, ExporterKeyAuthChallengeDTO challenge) =>
+			Encoding.UTF8.GetBytes(challenge.ChallengeId.ToString("D"))
+				.Concat(request.KeyId.Id)
+				.Concat(challenge.ChallengeBytes)
+				.Concat(Encoding.UTF8.GetBytes(request.AppName))
+				.ToArray();
 	}
 
 	public class ExporterKeyAuthResponseDTO {
