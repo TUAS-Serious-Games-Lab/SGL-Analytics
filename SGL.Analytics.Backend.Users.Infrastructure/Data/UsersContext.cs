@@ -56,6 +56,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 				rk.HasKey(prk => new { prk.UserId, prk.RecipientKeyId });
 			});
 			userReg.Navigation(u => u.PropertyRecipientKeys).AutoInclude(false);
+
+			var ekac = modelBuilder.Entity<ExporterKeyAuthCertificate>();
+			ekac.HasKey(e => new { e.AppId, e.PublicKeyId });
+			ekac.Property(e => e.PublicKeyId).IsStoredAsByteArray().HasMaxLength(34);
+			ekac.Property(e => e.Label).HasMaxLength(128);
+			ekac.HasOne(e => e.App).WithMany();
 		}
 		/// <summary>
 		/// The accessor for the table containing <see cref="UserRegistration"/> objects.
@@ -74,5 +80,6 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 		/// </summary>
 		public DbSet<ApplicationUserPropertyInstance> ApplicationUserPropertyInstances => Set<ApplicationUserPropertyInstance>();
 
+		public DbSet<ExporterKeyAuthCertificate> ExporterKeyAuthCertificates => Set<ExporterKeyAuthCertificate>();
 	}
 }
