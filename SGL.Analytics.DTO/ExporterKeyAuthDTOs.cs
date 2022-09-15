@@ -40,9 +40,13 @@ namespace SGL.Analytics.DTO {
 		/// <summary>
 		/// Signature over the sequence
 		/// <list type="number">
-		/// <item><description>the bytes of <see cref="ExporterKeyAuthChallengeDTO.ChallengeId"/></description></item>
+		/// <item><description>
+		/// the bytes of <see cref="ExporterKeyAuthChallengeDTO.ChallengeId"/>,
+		/// formatted as <c>00000000-0000-0000-0000-000000000000</c> (format string "D") in UTF-8
+		/// </description></item>
 		/// <item><description>the bytes of <see cref="ExporterKeyAuthRequestDTO.KeyId"/></description></item>
 		/// <item><description>the bytes in <see cref="ExporterKeyAuthChallengeDTO.ChallengeBytes"/></description></item>
+		/// <item><description>the bytes of <see cref="ExporterKeyAuthRequestDTO.AppName"/> in UTF-8</description></item>
 		/// </list>
 		///	using <see cref="ExporterKeyAuthChallengeDTO.DigestAlgorithmToUse"/>,
 		///	with the appropriate signature algotihm for the key identified by <see cref="ExporterKeyAuthRequestDTO.KeyId"/>.
