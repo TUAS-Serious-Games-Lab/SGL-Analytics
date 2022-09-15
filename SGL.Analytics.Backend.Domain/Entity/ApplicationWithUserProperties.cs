@@ -5,7 +5,8 @@ using System.Linq;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
 	/// <summary>
-	/// Models a registered application that uses SGL Analytics, extending <see cref="Application"/> with the ability to store application-specific per-user registration properties.
+	/// Models a registered application that uses SGL Analytics, extending <see cref="Application"/> with the ability to store application-specific per-user registration properties
+	/// and certificates for authorized data exporters, as needed by the users backend.
 	/// </summary>
 	public class ApplicationWithUserProperties : Application {
 
@@ -18,6 +19,10 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// A collection containing the user registration for this application.
 		/// </summary>
 		public IReadOnlyCollection<UserRegistration> UserRegistrations { get; set; } = null!;
+		/// <summary>
+		/// A collection containing the key certificates for authorized data exporters.
+		/// </summary>
+		public ICollection<ExporterKeyAuthCertificate> AuthorizedExporters { get; set; } = null!;
 
 		/// <summary>
 		/// Creates an <see cref="ApplicationWithUserProperties"/> with the given data values, leaving <see cref="UserProperties"/> and <see cref="UserRegistrations"/> empty.

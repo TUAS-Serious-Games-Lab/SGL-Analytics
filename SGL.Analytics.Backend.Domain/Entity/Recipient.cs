@@ -9,6 +9,10 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 	/// The client uses these entries to determine the public keys for which the data keys for the files shall be encrypted.
 	/// </summary>
 	public class Recipient : ApplicationCertificateBase {
+		/// <summary>
+		/// The App to which this recipient belongs.
+		/// </summary>
+		public Application App { get; set; } = null!;
 
 		/// <summary>
 		/// The certificate for the recipient's public key, authorizing them as a valid recipient, encoded in the PEM format.

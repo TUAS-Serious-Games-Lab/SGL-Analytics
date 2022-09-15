@@ -16,10 +16,6 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// </summary>
 		public Guid AppId { get; set; }
 		/// <summary>
-		/// The App to which this entry belongs.
-		/// </summary>
-		public Application App { get; set; } = null!;
-		/// <summary>
 		/// The Id derived from the certificate's public key, used to identify the key pair behind the certificate within the app.
 		/// </summary>
 		public KeyId PublicKeyId { get; }

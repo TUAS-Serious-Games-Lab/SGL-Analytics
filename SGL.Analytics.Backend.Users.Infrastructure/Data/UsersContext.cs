@@ -61,7 +61,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 			ekac.HasKey(e => new { e.AppId, e.PublicKeyId });
 			ekac.Property(e => e.PublicKeyId).IsStoredAsByteArray().HasMaxLength(34);
 			ekac.Property(e => e.Label).HasMaxLength(128);
-			ekac.HasOne(e => e.App).WithMany();
+			ekac.HasOne(e => e.App).WithMany(a => a.AuthorizedExporters);
 		}
 		/// <summary>
 		/// The accessor for the table containing <see cref="UserRegistration"/> objects.
@@ -80,6 +80,9 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 		/// </summary>
 		public DbSet<ApplicationUserPropertyInstance> ApplicationUserPropertyInstances => Set<ApplicationUserPropertyInstance>();
 
+		/// <summary>
+		/// The accessor for the table containing <see cref="ExporterKeyAuthCertificates"/> objects.
+		/// </summary>
 		public DbSet<ExporterKeyAuthCertificate> ExporterKeyAuthCertificates => Set<ExporterKeyAuthCertificate>();
 	}
 }

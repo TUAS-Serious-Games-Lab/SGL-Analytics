@@ -13,6 +13,10 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 	/// The contained key is then used to validate a challenge response where the client signed a challenge byte string using the user's private key.
 	/// </summary>
 	public class ExporterKeyAuthCertificate : ApplicationCertificateBase {
+		/// <summary>
+		/// The App to which this entry belongs.
+		/// </summary>
+		public ApplicationWithUserProperties App { get; set; } = null!;
 
 		/// <summary>
 		/// Creates a new <see cref="ExporterKeyAuthCertificate"/> object using the given data.
@@ -27,7 +31,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <param name="label">A label identifying the key-authentication certificate (or the person using it) in humand-readable form.</param>
 		/// <param name="certificatePem">The certificate authorizing the key-authentication certificate's public key, in PEM-encoded form.</param>
 		/// <returns>The created object.</returns>
-		public static ExporterKeyAuthCertificate Create(Application app, KeyId publicKeyId, string label, string certificatePem) {
+		public static ExporterKeyAuthCertificate Create(ApplicationWithUserProperties app, KeyId publicKeyId, string label, string certificatePem) {
 			var ekac = new ExporterKeyAuthCertificate(app.Id, publicKeyId, label, certificatePem);
 			ekac.App = app;
 			return ekac;
@@ -41,7 +45,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <param name="label">A label identifying the key-authentication certificate (or the person using it) in humand-readable form.</param>
 		/// <param name="certificatePem">The certificate authorizing the key-authentication certificate's public key, in PEM-encoded form.</param>
 		/// <returns>The created object.</returns>
-		public static ExporterKeyAuthCertificate Create(Application app, string label, string certificatePem) {
+		public static ExporterKeyAuthCertificate Create(ApplicationWithUserProperties app, string label, string certificatePem) {
 			return Create(app, GetKeyIdFromPem(certificatePem), label, certificatePem);
 		}
 	}
