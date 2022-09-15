@@ -9,12 +9,12 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	[Route("api/analytics/user/v1/exporter-key-auth")]
 	[ApiController]
 	public class ExporterKeyAuthController : ControllerBase {
-		[HttpPost("challenge")]
-		public ActionResult<ExporterKeyAuthChallengeDTO> ObtainChallenge(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
+		[HttpPost("open-challenge")]
+		public ActionResult<ExporterKeyAuthChallengeDTO> OpenChallenge(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 
-		[HttpPost("complete")]
+		[HttpPost("complete-challenge")]
 		public ActionResult<ExporterKeyAuthResponseDTO> CompleteChallenge(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
