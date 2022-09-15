@@ -19,11 +19,21 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		public DbApplicationRepository(UsersContext context) : base(context) { }
 
 		protected override IQueryable<ApplicationWithUserProperties> OnPrepareQuery(IQueryable<ApplicationWithUserProperties> query, ApplicationQueryOptions? options) {
+			int includeCounter = 0;
 			if (options?.FetchUserProperties ?? true) {
 				query = query.Include(a => a.UserProperties);
+				includeCounter++;
 			}
 			if (options?.FetchRecipients ?? false) {
 				query = query.Include(a => a.DataRecipients);
+				includeCounter++;
+			}
+			if (options?.FetchExporterCertificates ?? false) {
+				query = query.Include(a => a.AuthorizedExporters);
+				includeCounter++;
+			}
+			if (includeCounter > 1) {
+				query = query.AsSplitQuery();
 			}
 			return query;
 		}
