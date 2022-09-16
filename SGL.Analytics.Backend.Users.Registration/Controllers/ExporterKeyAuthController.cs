@@ -6,6 +6,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	[Route("api/analytics/user/v1/exporter-key-auth")]
@@ -20,16 +21,16 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		[HttpPost("open-challenge")]
-		public ActionResult<ExporterKeyAuthChallengeDTO> OpenChallenge(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
+		public async Task<ActionResult<ExporterKeyAuthChallengeDTO>> OpenChallenge(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
 			// TODO: Exception handling, logging, metrics
-			var challenge = keyAuthManager.OpenChallengeAsync(requestDto, ct);
+			var challenge = await keyAuthManager.OpenChallengeAsync(requestDto, ct);
 			return challenge;
 		}
 
 		[HttpPost("complete-challenge")]
-		public ActionResult<ExporterKeyAuthResponseDTO> CompleteChallenge(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct = default) {
+		public async Task<ActionResult<ExporterKeyAuthResponseDTO>> CompleteChallenge(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct = default) {
 			// TODO: Exception handling, logging, metrics
-			var response = keyAuthManager.CompleteChallengeAsync(signatureDto, ct);
+			var response = await keyAuthManager.CompleteChallengeAsync(signatureDto, ct);
 			return response;
 		}
 	}
