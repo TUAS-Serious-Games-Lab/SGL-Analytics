@@ -51,7 +51,7 @@ namespace SGL.Analytics.ExporterClient {
 
 			var completeResponse = await httpClient.SendAsync(completeRequest, ct);
 			completeResponse.EnsureSuccessStatusCode();
-			var responseDto = await completeRequest.Content.ReadFromJsonAsync<ExporterKeyAuthResponseDTO>(jsonOptions, ct);
+			var responseDto = await completeResponse.Content.ReadFromJsonAsync<ExporterKeyAuthResponseDTO>(jsonOptions, ct);
 			if (responseDto == null) {
 				throw new InvalidDataException("Received null JSON from server.");
 			}
