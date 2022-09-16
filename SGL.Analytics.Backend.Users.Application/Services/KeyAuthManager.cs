@@ -99,7 +99,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			var verifier = new SignatureVerifier(keyCert.PublicKey, state.ChallengeData.DigestAlgorithmToUse);
 			var challengeContent = ExporterKeyAuthSignatureDTO.ConstructContentToSign(state.RequestData, state.ChallengeData);
 			verifier.ProcessBytes(challengeContent);
-			if (!verifier.IsValidSignature(challengeContent)) {
+			if (!verifier.IsValidSignature(signatureDto.Signature)) {
 				throw new ChallengeCompletionFailedException("The signature in the challenge response was invalid.");
 			}
 			// As we are issuing JWT bearer tokens, use the same key config as JwtLoginService
