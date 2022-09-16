@@ -8,61 +8,31 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 	/// Represents an authorized recipient for the collected data under end-to-end encryption.
 	/// The client uses these entries to determine the public keys for which the data keys for the files shall be encrypted.
 	/// </summary>
-	public class Recipient {
+	public class Recipient : ApplicationCertificateBase {
 		/// <summary>
-		/// The id of the App to which this entry belongs.
-		/// </summary>
-		public Guid AppId { get; set; }
-		/// <summary>
-		/// The App to which this entry belongs.
+		/// The App to which this recipient belongs.
 		/// </summary>
 		public Application App { get; set; } = null!;
-		/// <summary>
-		/// The Id derived from the recipient's public key, used to identify the recipient within the app using their key pair.
-		/// </summary>
-		public KeyId PublicKeyId { get; }
-		/// <summary>
-		/// A human-readable label providing an easy means of identification for the recipient entry.
-		/// This can, e.g. be the role or name of the receiving person.
-		/// </summary>
-		public string Label { get; set; }
+
 		/// <summary>
 		/// The certificate for the recipient's public key, authorizing them as a valid recipient, encoded in the PEM format.
 		/// The authorization of the recipient is achieved by it being present in the recipient list and the certificate being singed by a signer key pair trusted by the client.
 		/// </summary>
-		public string CertificatePem {
-			get => certificatePem;
-			set {
-				certificatePem = value;
-				certificate = null;
-			}
+		public new string CertificatePem {
+			get => base.CertificatePem;
+			set => base.CertificatePem = value;
 		}
-		private string certificatePem;
-		private Certificate? certificate = null;
 
 		/// <summary>
 		/// The certificate for the recipient's public key, authorizing them as a valid recipient.
 		/// The authorization of the recipient is achieved by it being present in the recipient list and the certificate being singed by a signer key pair trusted by the client.
 		/// </summary>
-		public Certificate Certificate {
-			get {
-				if (certificate == null) {
-					using var strReader = new StringReader(CertificatePem);
-					certificate = Certificate.LoadOneFromPem(strReader);
-				}
-				return certificate;
-			}
-		}
+		public new Certificate Certificate => base.Certificate;
 
 		/// <summary>
 		/// Instantiates a <see cref="Recipient"/> object with the given data.
 		/// </summary>
-		public Recipient(Guid appId, KeyId publicKeyId, string label, string certificatePem) {
-			AppId = appId;
-			Label = label;
-			PublicKeyId = publicKeyId;
-			CertificatePem = certificatePem;
-		}
+		public Recipient(Guid appId, KeyId publicKeyId, string label, string certificatePem) : base(appId, publicKeyId, label, certificatePem) { }
 
 		/// <summary>
 		/// Creates a new <see cref="Recipient"/> object using the given data.
@@ -87,10 +57,8 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <param name="certificatePem">The certificate authorizing the recipient's public key, in PEM-encoded form.</param>
 		/// <returns>The created object.</returns>
 		public static Recipient Create(Application app, string label, string certificatePem) {
-			using var strReader = new StringReader(certificatePem);
-			var cert = Certificate.LoadOneFromPem(strReader);
-			var keyId = cert.PublicKey.CalculateId();
-			return Create(app, keyId, label, certificatePem);
+			return Create(app, GetKeyIdFromPem(certificatePem), label, certificatePem);
 		}
+
 	}
 }

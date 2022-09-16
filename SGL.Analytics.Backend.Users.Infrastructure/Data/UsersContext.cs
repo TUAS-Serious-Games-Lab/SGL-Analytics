@@ -23,6 +23,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 		/// <param name="modelBuilder">The builder to use for configuring the model.</param>
 		protected override void OnModelCreating(ModelBuilder modelBuilder) {
 			modelBuilder.Ignore<SGL.Analytics.Backend.Domain.Entity.Application>();
+			modelBuilder.Ignore<ApplicationCertificateBase>();
 			var app = modelBuilder.Entity<ApplicationWithUserProperties>();
 			app.HasIndex(a => a.Name).IsUnique();
 			app.Property(a => a.Name).HasMaxLength(128);
@@ -56,6 +57,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 				rk.HasKey(prk => new { prk.UserId, prk.RecipientKeyId });
 			});
 			userReg.Navigation(u => u.PropertyRecipientKeys).AutoInclude(false);
+
+			var ekac = modelBuilder.Entity<ExporterKeyAuthCertificate>();
+			ekac.HasKey(e => new { e.AppId, e.PublicKeyId });
+			ekac.Property(e => e.PublicKeyId).IsStoredAsByteArray().HasMaxLength(34);
+			ekac.Property(e => e.Label).HasMaxLength(128);
+			ekac.HasOne(e => e.App).WithMany(a => a.AuthorizedExporters);
 		}
 		/// <summary>
 		/// The accessor for the table containing <see cref="UserRegistration"/> objects.
@@ -74,5 +81,9 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 		/// </summary>
 		public DbSet<ApplicationUserPropertyInstance> ApplicationUserPropertyInstances => Set<ApplicationUserPropertyInstance>();
 
+		/// <summary>
+		/// The accessor for the table containing <see cref="ExporterKeyAuthCertificates"/> objects.
+		/// </summary>
+		public DbSet<ExporterKeyAuthCertificate> ExporterKeyAuthCertificates => Set<ExporterKeyAuthCertificate>();
 	}
 }
