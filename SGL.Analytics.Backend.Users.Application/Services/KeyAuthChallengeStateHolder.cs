@@ -22,7 +22,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		public async Task<ChallengeState?> GetChallengeAsync(Guid challengeId, CancellationToken ct = default) {
 			using var lockHandle = await lockObj.WaitAsyncWithScopedRelease(ct);
 			if (openChallenges.TryGetValue(challengeId, out var challenge)) {
-				if (challenge.Timeout.ToUniversalTime() <= DateTime.UtcNow) {
+				if (challenge.Timeout.ToUniversalTime() >= DateTime.UtcNow) {
 					return challenge;
 				}
 				else {
