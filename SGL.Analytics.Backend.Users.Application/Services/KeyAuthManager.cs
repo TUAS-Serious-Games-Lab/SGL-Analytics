@@ -36,10 +36,11 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		private readonly IKeyAuthChallengeStateHolder stateHolder;
 		private readonly KeyAuthOptions options;
 
-		public KeyAuthManager(IServiceProvider serviceProvider, ILogger<KeyAuthManager> logger, IKeyAuthChallengeStateHolder stateHolder) {
+		public KeyAuthManager(IServiceProvider serviceProvider, ILogger<KeyAuthManager> logger, IKeyAuthChallengeStateHolder stateHolder, KeyAuthOptions options) {
 			this.serviceProvider = serviceProvider;
 			this.logger = logger;
 			this.stateHolder = stateHolder;
+			this.options = options;
 		}
 
 		public async Task<ExporterKeyAuthChallengeDTO> OpenChallengeAsync(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
