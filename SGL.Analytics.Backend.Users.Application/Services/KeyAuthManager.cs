@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
@@ -45,38 +46,45 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			var randomGenerator = new RandomGenerator();
 			var challengeDto = new ExporterKeyAuthChallengeDTO(Guid.NewGuid(), randomGenerator.GetBytes(16 * 1024/*TODO: Parameterize*/), SignatureDigest.Sha256/*TODO: Parameterize*/);
 			await stateHolder.OpenChallengeAsync(new Values.ChallengeState(requestDto, challengeDto, DateTime.UtcNow.AddMinutes(10)/*TODO: Parameterize*/), ct);
+			logger.LogInformation("Opened challenge for app {appName} and key id {keyId}.", requestDto.AppName, requestDto.KeyId);
 			return challengeDto;
 		}
 		public async Task<ExporterKeyAuthResponseDTO> CompleteChallengeAsync(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct = default) {
 			var appRepo = serviceProvider.GetRequiredService<IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions>>();
-			var jwtOptions = serviceProvider.GetRequiredService<IOptions<JwtOptions>>().Value;
 			var state = await stateHolder.GetChallengeAsync(signatureDto.ChallengeId, ct);
 			if (state == null) {
-				throw new Exception();//TODO: Make type-safe
+				logger.LogError("Couldn't find an open and not-timed-out challenge with id {id}.", signatureDto.ChallengeId);
+				throw new InvalidChallengeException(signatureDto.ChallengeId, "No open challenge with the given id.");
 			}
 			var app = await appRepo.GetApplicationByNameAsync(state.RequestData.AppName, new ApplicationQueryOptions { FetchExporterCertificates = true }, ct); // TODO: Let's just fetch the one cert we need
 			if (app == null) {
-				throw new Exception();//TODO: Make type-safe
+				logger.LogError("Challenge {id} was opened with a non-existent app name {appname}.", signatureDto.ChallengeId, state.RequestData.AppName);
+				throw new ApplicationDoesNotExistException(state.RequestData.AppName);
 			}
 			var keyCertEntry = app.AuthorizedExporters.SingleOrDefault(ekac => ekac.PublicKeyId == state.RequestData.KeyId);
 			if (keyCertEntry == null) {
-				throw new Exception();//TODO: Make type-safe
+				logger.LogError("Challend {id} was opened with a key id {keyId} for which there is no exporter certificate registered in the app {appName}.", signatureDto.ChallengeId, state.RequestData.KeyId, state.RequestData.AppName);
+				throw new NoCertificateForKeyIdException(state.RequestData.KeyId, "Could'n find an exporter certificate for the key id.");
 			}
 			var keyCert = keyCertEntry.Certificate;
+			var certKeyId = keyCert.PublicKey.CalculateId();
 			if (!keyCert.AllowedKeyUsages.HasValue) {
-				throw new Exception();//TODO: Make type-safe
+				logger.LogError("The exporter certificate {DN} with key id {keyId} doesn't have the required KeyUsage extension.", keyCert.SubjectDN, certKeyId);
+				throw new CertificateException("The exporter certificate doesn't have the required KeyUsage extension.");
 			}
 			if (!keyCert.AllowedKeyUsages.Value.HasFlag(Utilities.Crypto.Certificates.KeyUsages.DigitalSignature)) {
-				throw new Exception();//TODO: Make type-safe
+				logger.LogError("The exporter certificate {DN} with key id {keyId} has a KeyUsage extension without the required DigitalSignature usage.", keyCert.SubjectDN, certKeyId);
+				throw new CertificateException("The exporter certificate has a KeyUsage extension without the required DigitalSignature usage.");
 			}
-			var certKeyId = keyCert.PublicKey.CalculateId();
 			if (state.RequestData.KeyId != certKeyId) {
-				throw new Exception();//TODO: Make type-safe
+				logger.LogError("The key id {keyId} of the public key of the exporter certificate {DN} didn't match the key id in its metadata {metaKeyId}.", certKeyId, keyCert.SubjectDN, keyCertEntry.PublicKeyId);
+				throw new CertificateException("The key id of the public key of the exporter certificate didn't match the key id in its metadata.");
 			}
 			if (options.SignerCertificateFile != null) {
 				var signerValidator = GetSignerValidator();
 				if (!signerValidator.CheckCertificate(keyCert)) {
-					throw new Exception();//TODO: Make type-safe
+					logger.LogError("The exporter certificate {DN} with key id {keyId} failed validation.", keyCert.SubjectDN, certKeyId);
+					throw new CertificateException("The exporter certificate failed validation.");
 				}
 			}
 			else {
@@ -87,11 +95,12 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			var challengeContent = ExporterKeyAuthSignatureDTO.ConstructContentToSign(state.RequestData, state.ChallengeData);
 			verifier.ProcessBytes(challengeContent);
 			if (!verifier.IsValidSignature(challengeContent)) {
-				throw new Exception();//TODO: Make type-safe
+				throw new ChallengeCompletionFailedException("The signature in the challenge response was invalid.");
 			}
 			// As we are issuing JWT bearer tokens, use the same key config as JwtLoginService
+			var jwtOptions = serviceProvider.GetRequiredService<IOptions<JwtOptions>>().Value;
 			if (jwtOptions.SymmetricKey == null) {
-				throw new Exception("No signing key given for Jwt config.");//TODO: Make type-safe
+				throw new InvalidOperationException("No signing key given for Jwt config.");
 			}
 			var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SymmetricKey));
 			var signingCredentials = new SigningCredentials(signingKey, jwtOptions.LoginService.SigningAlgorithm);
@@ -105,6 +114,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			var jwtHandler = new JwtSecurityTokenHandler();
 			var jwtString = jwtHandler.WriteToken(token);
 			var response = new ExporterKeyAuthResponseDTO(new AuthorizationToken(AuthorizationTokenScheme.Bearer, jwtString));
+			logger.LogInformation("Issuing JWT session token for exporter certificate {DN} (key id = {keyId}) and app {appName}.", keyCert.SubjectDN, certKeyId, state.RequestData.AppName);
 			return response;
 		}
 
