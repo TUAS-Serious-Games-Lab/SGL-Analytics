@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SGL.Analytics.Backend.Domain.Entity;
@@ -9,10 +10,12 @@ using SGL.Utilities;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Crypto;
+using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.Signatures;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -22,6 +25,7 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Backend.Users.Application.Services {
 
 	public class KeyAuthOptions {
+		public string? SignerCertificateFile { get; set; } = null;
 
 	}
 
@@ -29,6 +33,8 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		private readonly IServiceProvider serviceProvider;
 		private readonly ILogger<KeyAuthManager> logger;
 		private readonly IKeyAuthChallengeStateHolder stateHolder;
+		private readonly KeyAuthOptions options;
+
 		public KeyAuthManager(IServiceProvider serviceProvider, ILogger<KeyAuthManager> logger, IKeyAuthChallengeStateHolder stateHolder) {
 			this.serviceProvider = serviceProvider;
 			this.logger = logger;
@@ -67,7 +73,15 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			if (state.RequestData.KeyId != certKeyId) {
 				throw new Exception();//TODO: Make type-safe
 			}
-			//TODO: Verify Certificate
+			if (options.SignerCertificateFile != null) {
+				var signerValidator = GetSignerValidator();
+				if (!signerValidator.CheckCertificate(keyCert)) {
+					throw new Exception();//TODO: Make type-safe
+				}
+			}
+			else {
+				logger.LogWarning("No signer certificate configured, can't check signer certificate of exporter authentication certificate.");
+			}
 
 			var verifier = new SignatureVerifier(keyCert.PublicKey, state.ChallengeData.DigestAlgorithmToUse);
 			var challengeContent = ExporterKeyAuthSignatureDTO.ConstructContentToSign(state.RequestData, state.ChallengeData);
@@ -92,6 +106,14 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			var jwtString = jwtHandler.WriteToken(token);
 			var response = new ExporterKeyAuthResponseDTO(new AuthorizationToken(AuthorizationTokenScheme.Bearer, jwtString));
 			return response;
+		}
+
+		private CACertTrustValidator GetSignerValidator() {
+			string file = options.SignerCertificateFile!;
+			using var reader = File.OpenText(file);
+			ILogger<CACertTrustValidator> validatorLogger = serviceProvider.GetService<ILogger<CACertTrustValidator>>() ?? NullLogger<CACertTrustValidator>.Instance;
+			ILogger<CertificateStore> caCertStoreLogger = serviceProvider.GetService<ILogger<CertificateStore>>() ?? NullLogger<CertificateStore>.Instance;
+			return new CACertTrustValidator(reader, file, ignoreValidityPeriod: false, validatorLogger, caCertStoreLogger);
 		}
 	}
 }
