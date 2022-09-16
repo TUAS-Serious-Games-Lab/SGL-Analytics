@@ -9,11 +9,10 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Services {
 	public class KeyAuthManager : IKeyAuthManager {
-		public ExporterKeyAuthResponseDTO CompleteChallengeAsync(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct) {
+		public ExporterKeyAuthChallengeDTO OpenChallengeAsync(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
-
-		public ExporterKeyAuthChallengeDTO OpenChallengeAsync(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct) {
+		public ExporterKeyAuthResponseDTO CompleteChallengeAsync(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 	}

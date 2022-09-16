@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 	public interface IKeyAuthManager {
-		ExporterKeyAuthResponseDTO CompleteChallengeAsync(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct);
-		ExporterKeyAuthChallengeDTO OpenChallengeAsync(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct);
+		ExporterKeyAuthResponseDTO CompleteChallengeAsync(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct = default);
+		ExporterKeyAuthChallengeDTO OpenChallengeAsync(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default);
 	}
 }
