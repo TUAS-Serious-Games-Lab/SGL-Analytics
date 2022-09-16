@@ -61,7 +61,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				logger.LogError("Couldn't find an open and not-timed-out challenge with id {id}.", signatureDto.ChallengeId);
 				throw new InvalidChallengeException(signatureDto.ChallengeId, "No open challenge with the given id.");
 			}
-			var app = await appRepo.GetApplicationByNameAsync(state.RequestData.AppName, new ApplicationQueryOptions { FetchExporterCertificates = true }, ct); // TODO: Let's just fetch the one cert we need
+			var app = await appRepo.GetApplicationByNameAsync(state.RequestData.AppName, new ApplicationQueryOptions { FetchExporterCertificate = state.RequestData.KeyId }, ct);
 			if (app == null) {
 				logger.LogError("Challenge {id} was opened with a non-existent app name {appname}.", signatureDto.ChallengeId, state.RequestData.AppName);
 				throw new ApplicationDoesNotExistException(state.RequestData.AppName);

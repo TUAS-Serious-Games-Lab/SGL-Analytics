@@ -3,6 +3,7 @@ using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Utilities.Backend.Applications;
+using SGL.Utilities.Crypto.Keys;
 using System.Linq;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
@@ -31,6 +32,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			if (options?.FetchExporterCertificates ?? false) {
 				query = query.Include(a => a.AuthorizedExporters);
 				includeCounter++;
+			}
+			else if (options?.FetchExporterCertificate != null) {
+				KeyId idToFetch = options.FetchExporterCertificate;
+				query = query.Include(a => a.AuthorizedExporters.Where(e => e.PublicKeyId == idToFetch));
 			}
 			if (includeCounter > 1) {
 				query = query.AsSplitQuery();
