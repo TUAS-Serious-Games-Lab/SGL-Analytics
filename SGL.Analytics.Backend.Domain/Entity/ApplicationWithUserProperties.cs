@@ -40,6 +40,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			var app = new ApplicationWithUserProperties(id, name, apiToken);
 			app.UserProperties = new List<ApplicationUserPropertyDefinition>();
 			app.DataRecipients = new List<Recipient>();
+			app.AuthorizedExporters = new List<ExporterKeyAuthCertificate>();
 			return app;
 		}
 
