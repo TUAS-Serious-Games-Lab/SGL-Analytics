@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SGL.Analytics.Backend.Domain.Entity;
@@ -25,26 +26,24 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 	}
 
 	public class KeyAuthManager : IKeyAuthManager {
+		private readonly IServiceProvider serviceProvider;
 		private readonly ILogger<KeyAuthManager> logger;
-		private readonly IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo;
 		private readonly IKeyAuthChallengeStateHolder stateHolder;
-		private readonly JwtOptions jwtOptions;
-		private readonly RandomGenerator randomGenerator = new RandomGenerator();
-
-		public KeyAuthManager(ILogger<KeyAuthManager> logger, IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo,
-				IKeyAuthChallengeStateHolder stateHolder, IOptions<JwtOptions> jwtOptions) {
+		public KeyAuthManager(IServiceProvider serviceProvider, ILogger<KeyAuthManager> logger, IKeyAuthChallengeStateHolder stateHolder) {
+			this.serviceProvider = serviceProvider;
 			this.logger = logger;
-			this.appRepo = appRepo;
 			this.stateHolder = stateHolder;
-			this.jwtOptions = jwtOptions.Value;
 		}
 
 		public async Task<ExporterKeyAuthChallengeDTO> OpenChallengeAsync(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
+			var randomGenerator = new RandomGenerator();
 			var challengeDto = new ExporterKeyAuthChallengeDTO(Guid.NewGuid(), randomGenerator.GetBytes(16 * 1024/*TODO: Parameterize*/), SignatureDigest.Sha256/*TODO: Parameterize*/);
 			await stateHolder.OpenChallengeAsync(new Values.ChallengeState(requestDto, challengeDto, DateTime.UtcNow.AddMinutes(10)/*TODO: Parameterize*/), ct);
 			return challengeDto;
 		}
 		public async Task<ExporterKeyAuthResponseDTO> CompleteChallengeAsync(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct = default) {
+			var appRepo = serviceProvider.GetRequiredService<IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions>>();
+			var jwtOptions = serviceProvider.GetRequiredService<IOptions<JwtOptions>>().Value;
 			var state = await stateHolder.GetChallengeAsync(signatureDto.ChallengeId, ct);
 			if (state == null) {
 				throw new Exception();//TODO: Make type-safe
@@ -77,7 +76,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				throw new Exception();//TODO: Make type-safe
 			}
 			// As we are issuing JWT bearer tokens, use the same key config as JwtLoginService
-			if (this.jwtOptions.SymmetricKey == null) {
+			if (jwtOptions.SymmetricKey == null) {
 				throw new Exception("No signing key given for Jwt config.");//TODO: Make type-safe
 			}
 			var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SymmetricKey));
