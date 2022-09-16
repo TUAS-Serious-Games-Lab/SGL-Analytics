@@ -1,9 +1,14 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Asn1.X509;
 using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Analytics.DTO;
+using SGL.Analytics.ExporterClient;
 using SGL.Utilities;
 using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Backend.TestUtilities;
@@ -44,6 +49,9 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		public List<Certificate> Certificates = new List<Certificate>();
 		public DistinguishedName SignerIdentity { get; } = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Utility"), new("ou", "Tests"), new("cn", "Test Signer") });
 
+		public KeyPair ExporterKeyPair = null!;
+		public Certificate ExporterCertificate = null!;
+
 		public UserRegistrationIntegrationTestFixture() {
 			Config = new() {
 				["Jwt:Audience"] = JwtOptions.Audience,
@@ -66,10 +74,19 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		private string createCertificatePem(string cn, List<Certificate>? certificateList) {
 			var keyPair = KeyPair.GenerateEllipticCurves(Random, 521);
 			var identity = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Utility"), new("ou", "Tests"), new("cn", cn) });
-			var certificate = Certificate.Generate(SignerIdentity, signerKeyPair.Private, identity, keyPair.Public, TimeSpan.FromHours(1), Random, 128);
+			var certificate = Certificate.Generate(SignerIdentity, signerKeyPair.Private, identity, keyPair.Public, TimeSpan.FromHours(1), Random, 128, keyUsages: KeyUsages.KeyEncipherment);
 			using var writer = new StringWriter();
 			certificate.StoreToPem(writer);
 			certificateList?.Add(certificate);
+			return writer.ToString();
+		}
+
+		private string createKeyAuthCertificatePem(string cn, out KeyPair keyPair, out Certificate certificate) {
+			keyPair = KeyPair.GenerateEllipticCurves(Random, 521);
+			var identity = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Utility"), new("ou", "Tests"), new("cn", cn) });
+			certificate = Certificate.Generate(SignerIdentity, signerKeyPair.Private, identity, keyPair.Public, TimeSpan.FromHours(1), Random, 128, keyUsages: KeyUsages.DigitalSignature);
+			using var writer = new StringWriter();
+			certificate.StoreToPem(writer);
 			return writer.ToString();
 		}
 
@@ -80,6 +97,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			app.AddRecipient("test recipient 1", createCertificatePem("Test 1", Certificates));
 			app.AddRecipient("test recipient 2", createCertificatePem("Test 2", Certificates));
 			app.AddRecipient("test recipient 3", createCertificatePem("Test 3", Certificates));
+			app.AddAuthorizedExporter("test exporter 1", createKeyAuthCertificatePem("Exporter 1", out ExporterKeyPair, out ExporterCertificate));
 			context.Applications.Add(app);
 			var app2 = ApplicationWithUserProperties.Create(AppName + "_2", AppApiToken + "_2");
 			app2.AddProperty("Foo", UserPropertyType.String, true);
@@ -455,6 +473,17 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				var content = JsonContent.Create(loginReqDTO);
 				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+			}
+		}
+		[Fact]
+		public async Task KeyAuthWithValidKeyPairWorksCorrectly() {
+			using (var client = fixture.CreateClient()) {
+				var authenticator = new ExporterKeyPairAuthenticator(client, fixture.ExporterKeyPair, fixture.Services.GetRequiredService<ILogger<ExporterKeyPairAuthenticator>>(), fixture.Random);
+				var token = await authenticator.AuthenticateAsync(fixture.AppName);
+				var (principal, validatedToken) = fixture.TokenValidator.Validate(token.Value);
+				Assert.Equal(fixture.ExporterKeyPair.Public.CalculateId(), principal.GetClaim<KeyId>("keyid", KeyId.TryParse));
+				Assert.Equal(fixture.ExporterCertificate.SubjectDN.ToString(), principal.GetClaim("exporter-dn"));
+				Assert.Equal(fixture.AppName, principal.GetClaim("appname"));
 			}
 		}
 	}

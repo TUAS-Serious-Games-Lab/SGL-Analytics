@@ -25,6 +25,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\SGL.Analytics.Backend.Users.Registration\SGL.Analytics.Backend.Users.Registration.csproj" />
+		<ProjectReference Include="..\SGL.Analytics.ExporterClient\SGL.Analytics.ExporterClient.csproj" />
 	</ItemGroup>
 
 </Project>
