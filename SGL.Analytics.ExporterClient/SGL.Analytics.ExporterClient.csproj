@@ -6,4 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="SGL.Utilities.Crypto" Version="0.10.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
+  </ItemGroup>
+
 </Project>
