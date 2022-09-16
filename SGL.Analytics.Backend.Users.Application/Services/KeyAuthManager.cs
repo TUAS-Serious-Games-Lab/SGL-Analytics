@@ -115,6 +115,8 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			var jwtHandler = new JwtSecurityTokenHandler();
 			var jwtString = jwtHandler.WriteToken(token);
 			var response = new ExporterKeyAuthResponseDTO(new AuthorizationToken(AuthorizationTokenScheme.Bearer, jwtString));
+			// As the challenge was sucessfully solved, close it.
+			await stateHolder.CloseChallengeAsync(state);
 			logger.LogInformation("Issuing JWT session token for exporter certificate {DN} (key id = {keyId}) and app {appName}.", keyCert.SubjectDN, certKeyId, state.RequestData.AppName);
 			return response;
 		}
