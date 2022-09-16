@@ -28,7 +28,10 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 	public class KeyAuthOptions {
 		public const string ExporterKeyAuth = "ExporterKeyAuth";
 		public string? SignerCertificateFile { get; set; } = null;
-
+		public int ChallengeSize { get; set; } = 16 * 1024;
+		public SignatureDigest ChallengeDigest { get; set; } = SignatureDigest.Sha256;
+		public TimeSpan ChallengeTimeout { get; set; } = TimeSpan.FromMinutes(5);
+		public TimeSpan TokenValidity { get; set; } = TimeSpan.FromDays(1);
 	}
 
 	public class KeyAuthManager : IKeyAuthManager {
@@ -46,8 +49,8 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 
 		public async Task<ExporterKeyAuthChallengeDTO> OpenChallengeAsync(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
 			var randomGenerator = new RandomGenerator();
-			var challengeDto = new ExporterKeyAuthChallengeDTO(Guid.NewGuid(), randomGenerator.GetBytes(16 * 1024/*TODO: Parameterize*/), SignatureDigest.Sha256/*TODO: Parameterize*/);
-			await stateHolder.OpenChallengeAsync(new Values.ChallengeState(requestDto, challengeDto, DateTime.UtcNow.AddMinutes(10)/*TODO: Parameterize*/), ct);
+			var challengeDto = new ExporterKeyAuthChallengeDTO(Guid.NewGuid(), randomGenerator.GetBytes(options.ChallengeSize), options.ChallengeDigest);
+			await stateHolder.OpenChallengeAsync(new Values.ChallengeState(requestDto, challengeDto, DateTime.UtcNow + options.ChallengeTimeout), ct);
 			logger.LogInformation("Opened challenge {id} for app {appName} and key id {keyId}.", challengeDto.ChallengeId, requestDto.AppName, requestDto.KeyId);
 			return challengeDto;
 		}
@@ -106,7 +109,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			}
 			var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SymmetricKey));
 			var signingCredentials = new SigningCredentials(signingKey, jwtOptions.LoginService.SigningAlgorithm);
-			var expires = DateTime.UtcNow.AddDays(1);//TODO: Parameterize
+			var expires = DateTime.UtcNow + options.TokenValidity;
 			var claims = new[] {
 				new Claim("keyid", keyCert.PublicKey.CalculateId().ToString() ?? throw new ArgumentNullException()),
 				new Claim("appname", app.Name),
