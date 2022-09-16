@@ -1,11 +1,11 @@
-﻿using Org.BouncyCastle.Asn1.Cmp;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Values;
 using SGL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -49,6 +49,25 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 
 		public void Dispose() {
 			lockObj.Dispose();
+		}
+	}
+
+	public class KeyAuthChallengeStateCleanupService : BackgroundService {
+		private readonly ILogger<KeyAuthChallengeStateCleanupService> logger;
+		private readonly IKeyAuthChallengeStateHolder stateHolder;
+
+		public KeyAuthChallengeStateCleanupService(ILogger<KeyAuthChallengeStateCleanupService> logger, IKeyAuthChallengeStateHolder stateHolder) {
+			this.logger = logger;
+			this.stateHolder = stateHolder;
+		}
+
+		protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+			while (!stoppingToken.IsCancellationRequested) {
+				logger.LogDebug("Performing challenge state cleanup...");
+				await stateHolder.CleanupTimeoutsAsync(stoppingToken);
+				logger.LogDebug("Finished challenge state cleanup.");
+				await Task.Delay(TimeSpan.FromMinutes(5));
+			}
 		}
 	}
 }
