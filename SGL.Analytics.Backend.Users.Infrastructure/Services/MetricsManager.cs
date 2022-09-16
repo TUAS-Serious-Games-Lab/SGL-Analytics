@@ -111,7 +111,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		}
 
 		/// <inheritdoc/>
-		public void HandleUserPropertyValiidationError(string appName) {
+		public void HandleUserPropertyValidationError(string appName) {
 			errorCounter.WithLabels(ERROR_USER_PROP_VALIDATION_FAILED, appName).Inc();
 		}
 

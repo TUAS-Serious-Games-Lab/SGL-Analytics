@@ -128,7 +128,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 			catch (UserPropertyValidationException ex) {
 				logger.LogError(ex, "The validation of app-specific properties failed while attempting to register user {username}.", userRegistration.Username);
-				metrics.HandleUserPropertyValiidationError(userRegistration.AppName);
+				metrics.HandleUserPropertyValidationError(userRegistration.AppName);
 				return BadRequest(ex.Message);
 			}
 			catch (InvalidCryptographicMetadataException ex) {

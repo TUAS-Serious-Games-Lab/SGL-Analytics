@@ -52,7 +52,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// This usually indicates that the application's behavior is not properly in-sync with the app registraiton in the database.
 		/// </summary>
 		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
-		void HandleUserPropertyValiidationError(string appName);
+		void HandleUserPropertyValidationError(string appName);
 		/// <summary>
 		/// Called when an error is caused by a concurrency problem, usually from the database layer.
 		/// </summary>
@@ -138,7 +138,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <inheritdoc/>
 		public void HandleUsernameAlreadyTakenError(string appName) { }
 		/// <inheritdoc/>
-		public void HandleUserPropertyValiidationError(string appName) { }
+		public void HandleUserPropertyValidationError(string appName) { }
 		/// <inheritdoc/>
 		public void UpdateRegisteredUsers(IDictionary<string, int> perAppCounts) { }
 	}
