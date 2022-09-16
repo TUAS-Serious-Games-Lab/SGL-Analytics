@@ -13,6 +13,7 @@ namespace SGL.Analytics.Backend.Users.Application {
 		public static IServiceCollection UseUsersBackendAppplicationLayer(this IServiceCollection services, IConfiguration config) {
 			services.AddSingleton<IKeyAuthChallengeStateHolder, KeyAuthChallengeStateHolder>();
 			services.AddScoped<IUserManager, UserManager>();
+			services.Configure<KeyAuthOptions>(config.GetSection(KeyAuthOptions.ExporterKeyAuth));
 			services.AddScoped<IKeyAuthManager, KeyAuthManager>();
 			return services;
 		}

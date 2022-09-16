@@ -26,6 +26,7 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Backend.Users.Application.Services {
 
 	public class KeyAuthOptions {
+		public const string ExporterKeyAuth = "ExporterKeyAuth";
 		public string? SignerCertificateFile { get; set; } = null;
 
 	}
@@ -36,11 +37,11 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		private readonly IKeyAuthChallengeStateHolder stateHolder;
 		private readonly KeyAuthOptions options;
 
-		public KeyAuthManager(IServiceProvider serviceProvider, ILogger<KeyAuthManager> logger, IKeyAuthChallengeStateHolder stateHolder, KeyAuthOptions options) {
+		public KeyAuthManager(IServiceProvider serviceProvider, ILogger<KeyAuthManager> logger, IKeyAuthChallengeStateHolder stateHolder, IOptions<KeyAuthOptions> options) {
 			this.serviceProvider = serviceProvider;
 			this.logger = logger;
 			this.stateHolder = stateHolder;
-			this.options = options;
+			this.options = options.Value;
 		}
 
 		public async Task<ExporterKeyAuthChallengeDTO> OpenChallengeAsync(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
