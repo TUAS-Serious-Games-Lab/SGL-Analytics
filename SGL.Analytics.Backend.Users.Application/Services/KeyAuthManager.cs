@@ -48,7 +48,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			var randomGenerator = new RandomGenerator();
 			var challengeDto = new ExporterKeyAuthChallengeDTO(Guid.NewGuid(), randomGenerator.GetBytes(16 * 1024/*TODO: Parameterize*/), SignatureDigest.Sha256/*TODO: Parameterize*/);
 			await stateHolder.OpenChallengeAsync(new Values.ChallengeState(requestDto, challengeDto, DateTime.UtcNow.AddMinutes(10)/*TODO: Parameterize*/), ct);
-			logger.LogInformation("Opened challenge for app {appName} and key id {keyId}.", requestDto.AppName, requestDto.KeyId);
+			logger.LogInformation("Opened challenge {id} for app {appName} and key id {keyId}.", challengeDto.ChallengeId, requestDto.AppName, requestDto.KeyId);
 			return challengeDto;
 		}
 		public async Task<ExporterKeyAuthResponseDTO> CompleteChallengeAsync(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct = default) {
