@@ -1,9 +1,7 @@
 ﻿using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Validation;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 
 namespace SGL.Analytics.DTO {
 	public class DownstreamLogMetadataDTO : LogMetadataDTO {
@@ -11,9 +9,16 @@ namespace SGL.Analytics.DTO {
 		/// The time when the log file was uploaded.
 		/// </summary>
 		public DateTime UploadTime { get; private set; }
+		/// <summary>
+		/// The size of the log file in bytes.
+		/// </summary>
+		public long? Size { get; private set; }
 
-		public DownstreamLogMetadataDTO(Guid logFileId, DateTime creationTime, DateTime endTime, DateTime uploadTime, [PlainName(false), StringLength(16)] string nameSuffix, LogContentEncoding logContentEncoding, EncryptionInfo encryptionInfo) : base(logFileId, creationTime, endTime, nameSuffix, logContentEncoding, encryptionInfo) {
+		public DownstreamLogMetadataDTO(Guid logFileId, DateTime creationTime, DateTime endTime, DateTime uploadTime, long? size,
+				[PlainName(false), StringLength(16)] string nameSuffix, LogContentEncoding logContentEncoding, EncryptionInfo encryptionInfo) :
+				base(logFileId, creationTime, endTime, nameSuffix, logContentEncoding, encryptionInfo) {
 			UploadTime = uploadTime;
+			Size = size;
 		}
 	}
 }
