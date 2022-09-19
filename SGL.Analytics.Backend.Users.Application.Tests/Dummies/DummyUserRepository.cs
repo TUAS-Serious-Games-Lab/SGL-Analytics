@@ -2,6 +2,7 @@
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,7 +15,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 		private readonly Dictionary<Guid, UserRegistration> users = new Dictionary<Guid, UserRegistration>();
 		private int nextPropertyInstanceId = 1;
 
-		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, CancellationToken ct = default) {
+		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			if (users.TryGetValue(id, out var user)) {

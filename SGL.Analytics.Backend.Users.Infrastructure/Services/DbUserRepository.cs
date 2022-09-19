@@ -4,6 +4,7 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,14 +28,19 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		}
 
 		/// <inheritdoc/>
-		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, CancellationToken ct = default) {
-			return await context.UserRegistrations
-				.AsSplitQuery()
-				.Include(u => u.App).ThenInclude(a => a.UserProperties)
-				.Include(u => u.AppSpecificProperties).ThenInclude(p => p.Definition)
-				.Include(u => u.PropertyRecipientKeys)
-				.Where(u => u.Id == id)
-				.SingleOrDefaultAsync<UserRegistration?>(ct);
+		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, KeyId? recipientKeyId = null, CancellationToken ct = default) {
+			var query = context.UserRegistrations
+							.AsSplitQuery()
+							.Include(u => u.App).ThenInclude(a => a.UserProperties)
+							.Include(u => u.AppSpecificProperties).ThenInclude(p => p.Definition)
+							.Where(u => u.Id == id);
+			if (recipientKeyId != null) {
+				query = query.Include(u => u.PropertyRecipientKeys.Where(rk => rk.RecipientKeyId == recipientKeyId));
+			}
+			else {
+				query = query.Include(u => u.PropertyRecipientKeys);
+			}
+			return await query.SingleOrDefaultAsync<UserRegistration?>(ct);
 		}
 
 		/// <inheritdoc/>
