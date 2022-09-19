@@ -21,10 +21,10 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 	[Authorize(Policy = "ExporterUser")]
 	public class LogExporterController : ControllerBase {
 		private readonly ILogManager logManager;
-		private readonly ILogger<AnalyticsLogController> logger;
+		private readonly ILogger<LogExporterController> logger;
 		private readonly IMetricsManager metrics;
 
-		public LogExporterController(ILogManager logManager, ILogger<AnalyticsLogController> logger, IMetricsManager metrics) {
+		public LogExporterController(ILogManager logManager, ILogger<LogExporterController> logger, IMetricsManager metrics) {
 			this.logManager = logManager;
 			this.logger = logger;
 			this.metrics = metrics;
