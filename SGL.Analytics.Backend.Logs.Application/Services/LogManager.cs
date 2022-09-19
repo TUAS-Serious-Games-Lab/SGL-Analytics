@@ -6,7 +6,9 @@ using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Crypto.EndToEnd;
+using SGL.Utilities.Crypto.Keys;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -168,6 +170,30 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				logger.LogError(ex, "Log file ingest of file {logId} from user {userId} failed due to exception.", logMetaDTO.LogFileId, userId);
 				throw;
 			}
+		}
+
+		public async Task<IEnumerable<LogFile>> ListLogsAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				logger.LogError("Attempt to list logs from non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, recipientKeyId, exporterDN);
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, recipientKeyId, ct);
+			return logs.Select(log => new LogFile(log, logFileRepo)).ToList();
+		}
+
+		public async Task<LogFile> GetLogByIdAsync(Guid logId, string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				logger.LogError("Attempt to retrieve log file with id {logId} from non-existent application {appName} for recipient {keyId} by exporter {dn}.", logId, appName, recipientKeyId, exporterDN);
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			var log = await logMetaRepo.GetLogMetadataByIdAsync(logId, ct);
+			if (log == null) {
+				logger.LogError("Attempt to retrieve non-existent log file with id {logId} from application {appName} for recipient {keyId} by exporter {dn}.", logId, appName, recipientKeyId, exporterDN);
+				throw new LogNotFoundException($"The log {logId} was not found.", logId);
+			}
+			return new LogFile(log, logFileRepo);
 		}
 	}
 }
