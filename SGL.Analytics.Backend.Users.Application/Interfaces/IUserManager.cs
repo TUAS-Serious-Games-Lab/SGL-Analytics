@@ -1,6 +1,8 @@
 ﻿using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Crypto.Keys;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,9 +16,10 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// Asynchronously obtains the user object with the given id if it exists.
 		/// </summary>
 		/// <param name="userId">The unique id of the user.</param>
+		/// <param name="recipientKeyId">If specified, requests that the recipient key for the encrypted registration properties associated with the given key id is fetched.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The user object if the user exists, or <see langword="null"/> otherwise.</returns>
-		Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default);
+		Task<User?> GetUserByIdAsync(Guid userId, KeyId? recipientKeyId = null, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously obtains the user object with the given username in the application given by name if such a user exists.
 		/// </summary>

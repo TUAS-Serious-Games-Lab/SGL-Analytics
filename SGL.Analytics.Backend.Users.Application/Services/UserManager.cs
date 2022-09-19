@@ -7,7 +7,9 @@ using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Crypto.EndToEnd;
+using SGL.Utilities.Crypto.Keys;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,8 +36,8 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		}
 
 		/// <inheritdoc/>
-		public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default) {
-			var userReg = await userRepo.GetUserByIdAsync(userId, ct);
+		public async Task<User?> GetUserByIdAsync(Guid userId, KeyId? recipientKeyId = null, CancellationToken ct = default) {
+			var userReg = await userRepo.GetUserByIdAsync(userId, recipientKeyId, ct);
 			if (userReg is null) return null;
 			return new User(userReg);
 		}

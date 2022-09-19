@@ -6,6 +6,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities.Backend;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,7 +34,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			}
 		}
 
-		public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default) {
+		public async Task<User?> GetUserByIdAsync(Guid userId, KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			if (users.TryGetValue(userId, out var user)) {
