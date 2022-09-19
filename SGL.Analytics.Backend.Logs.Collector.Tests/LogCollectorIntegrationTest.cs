@@ -479,7 +479,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				}
 				using (var scope = fixture.Services.CreateScope()) {
 					var db = scope.ServiceProvider.GetRequiredService<LogsContext>();
-					var logMd = await db.LogMetadata.Where(lm => lm.LocalLogId == logId && lm.UserId == userId).Include(lm => lm.App).SingleOrDefaultAsync<LogMetadata?>();
+					var logMd = await db.LogMetadata.Where(lm => lm.LocalLogId == logId && lm.UserId == userId)
+						.Include(lm => lm.App).Include(lm => lm.RecipientKeys).SingleOrDefaultAsync<LogMetadata?>();
 					Assert.NotNull(logMd);
 					Assert.NotEqual(logId, logMd?.Id);
 					Assert.Equal(userId, logMd?.UserId);
@@ -549,7 +550,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				}
 				using (var scope = fixture.Services.CreateScope()) {
 					var db = scope.ServiceProvider.GetRequiredService<LogsContext>();
-					var logMd = await db.LogMetadata.Where(lm => lm.LocalLogId == logId && lm.UserId == userId).Include(lm => lm.App).SingleOrDefaultAsync<LogMetadata?>();
+					var logMd = await db.LogMetadata.Where(lm => lm.LocalLogId == logId && lm.UserId == userId)
+						.Include(lm => lm.App).Include(lm => lm.RecipientKeys).SingleOrDefaultAsync<LogMetadata?>();
 					Assert.NotNull(logMd);
 					Assert.NotEqual(logId, logMd?.Id);
 					Assert.Equal(userId, logMd?.UserId);
