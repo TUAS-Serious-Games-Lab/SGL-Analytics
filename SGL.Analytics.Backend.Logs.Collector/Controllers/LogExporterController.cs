@@ -64,7 +64,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		public async Task<ActionResult<IEnumerable<DownstreamLogMetadataDTO>>> GetMetadataForAllLogs([FromQuery] KeyId? recipient = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var keyId, out var exporterDN);
 			if (credResult != null) return credResult;
-			var logs = await logManager.ListLogsAsync(appName, null, exporterDN, ct);
+			var logs = await logManager.ListLogsAsync(appName, recipient, exporterDN, ct);
 			var result = logs.Select(log => ToDto(log)).ToList();
 			return result;
 		}
