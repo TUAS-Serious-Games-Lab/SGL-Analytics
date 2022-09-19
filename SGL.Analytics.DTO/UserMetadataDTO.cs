@@ -37,5 +37,14 @@ namespace SGL.Analytics.DTO {
 		public byte[]? EncryptedProperties { get; private set; }
 		public EncryptionInfo? PropertyEncryptionInfo { get; private set; }
 
+		public UserMetadataDTO(Guid userId, string appName, string username, Dictionary<string, object?> studySpecificProperties,
+				byte[]? encryptedProperties, EncryptionInfo? propertyEncryptionInfo) {
+			UserId = userId;
+			AppName = appName;
+			Username = username;
+			StudySpecificProperties = studySpecificProperties;
+			EncryptedProperties = encryptedProperties;
+			PropertyEncryptionInfo = propertyEncryptionInfo;
+		}
 	}
 }

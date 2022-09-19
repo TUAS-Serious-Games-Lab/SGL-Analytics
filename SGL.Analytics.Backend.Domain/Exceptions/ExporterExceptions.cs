@@ -11,4 +11,10 @@ namespace SGL.Analytics.Backend.Domain.Exceptions {
 		}
 		public Guid LogId { get; }
 	}
+	public class UserNotFoundException : Exception {
+		public UserNotFoundException(string? message, Guid userId, Exception? innerException = null) : base(message, innerException) {
+			UserId = userId;
+		}
+		public Guid UserId { get; }
+	}
 }
