@@ -53,7 +53,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<IEnumerable<Guid>>> GetLogIds(CancellationToken ct = default) {
+		public async Task<ActionResult<IEnumerable<Guid>>> GetLogIdList(CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var keyId, out var exporterDN);
 			if (credResult != null) return credResult;
 			try {
@@ -66,12 +66,12 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 				throw;
 			}
 			catch (ApplicationDoesNotExistException ex) {
-				logger.LogError(ex, "GetLogIds GET request for non-existent application {appName} from exporter {keyId} ({exporterDN}).", appName, keyId, exporterDN);
+				logger.LogError(ex, "GetLogIdList GET request for non-existent application {appName} from exporter {keyId} ({exporterDN}).", appName, keyId, exporterDN);
 				metrics.HandleUnknownAppError(appName);
 				return NotFound($"Application {appName} not found.");
 			}
 			catch (Exception ex) {
-				logger.LogError(ex, "GetLogIds GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
+				logger.LogError(ex, "GetLogIdList GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
 					appName, keyId, exporterDN);
 				metrics.HandleUnexpectedError(appName, ex);
 				throw;
