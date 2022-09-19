@@ -48,14 +48,35 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			return logMetadata;
 		}
 
-		/// <inheritdoc/>
-		public async Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId, CancellationToken ct = default) {
-			return await context.LogMetadata.Include(lmd => lmd.App).Where(lmd => lmd.Id == logId).SingleOrDefaultAsync<LogMetadata?>(ct);
+		private IQueryable<LogMetadata> ApplyQueryOptions(IQueryable<LogMetadata> query, LogMetadataQueryOptions? queryOptions) {
+			if (queryOptions == null) {
+				queryOptions = new LogMetadataQueryOptions();
+			}
+			query = query.Include(lmd => lmd.App);
+			if (queryOptions.FetchRecipientKeys) {
+				query = query.Include(lmd => lmd.RecipientKeys);
+			}
+			else if (queryOptions.FetchRecipientKey != null) {
+				query = query.Include(lmd => lmd.RecipientKeys.Where(rk => rk.RecipientKeyId == queryOptions.FetchRecipientKey));
+			}
+			if (!queryOptions.ForUpdating) {
+				query = query.AsNoTracking();
+			}
+			return query;
 		}
 
 		/// <inheritdoc/>
-		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId, CancellationToken ct = default) {
-			return await context.LogMetadata.Include(lmd => lmd.App).Where(lmd => lmd.AppId == userAppId && lmd.UserId == userId && lmd.LocalLogId == localLogId).SingleOrDefaultAsync<LogMetadata?>(ct);
+		public async Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var query = context.LogMetadata.Where(lmd => lmd.Id == logId);
+			query = ApplyQueryOptions(query, queryOptions);
+			return await query.SingleOrDefaultAsync<LogMetadata?>(ct);
+		}
+
+		/// <inheritdoc/>
+		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var query = context.LogMetadata.Where(lmd => lmd.AppId == userAppId && lmd.UserId == userId && lmd.LocalLogId == localLogId);
+			query = ApplyQueryOptions(query, queryOptions);
+			return await query.SingleOrDefaultAsync<LogMetadata?>(ct);
 		}
 
 		/// <inheritdoc/>
@@ -63,7 +84,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			var query = from lm in context.LogMetadata.Include(lmd => lmd.App)
 						group lm by lm.App.Name into a
 						select new { AppName = a.Key, LogsCount = a.Count() };
-			return await query.ToDictionaryAsync(e => e.AppName, e => e.LogsCount, ct);
+			return await query.AsNoTracking().ToDictionaryAsync(e => e.AppName, e => e.LogsCount, ct);
 		}
 
 		/// <inheritdoc/>
@@ -71,18 +92,16 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			var query = from lm in context.LogMetadata.Include(lmd => lmd.App)
 						group lm.Size by lm.App.Name into a
 						select new { AppName = a.Key, LogSizeAvg = a.Average() };
-			return await query.ToDictionaryAsync(e => e.AppName, e => e.LogSizeAvg ?? 0, ct);
+			return await query.AsNoTracking().ToDictionaryAsync(e => e.AppName, e => e.LogSizeAvg ?? 0, ct);
 		}
 
 		/// <inheritdoc/>
-		public async Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, bool? completenessFilter = null, CancellationToken ct = default) {
+		public async Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var query = context.LogMetadata.Where(lmd => lmd.AppId == appId);
-			if (recipientKeyToFetch != null) {
-				query = query.Include(lmd => lmd.RecipientKeys.Where(rk => rk.RecipientKeyId == recipientKeyToFetch));
-			}
 			if (completenessFilter != null) {
 				query = query.Where(lmd => lmd.Complete == completenessFilter);
 			}
+			query = ApplyQueryOptions(query, queryOptions);
 			return await query.ToListAsync(ct);
 		}
 

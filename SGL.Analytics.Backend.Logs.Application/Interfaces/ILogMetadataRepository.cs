@@ -6,6 +6,12 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
+	public class LogMetadataQueryOptions {
+		public bool FetchRecipientKeys { get; set; } = false;
+		public KeyId? FetchRecipientKey { get; set; } = null;
+		public bool ForUpdating { get; set; } = false;
+	}
+
 	/// <summary>
 	/// Specifies the interface for a repository to store <see cref="LogMetadata"/> objects for analytics logs.
 	/// </summary>
@@ -14,18 +20,20 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// Asynchronously obtains the log metadata entry with the given id if it exists.
 		/// </summary>
 		/// <param name="logId">The unique id of the log.</param>
+		/// <param name="queryOptions">A class that encapsulates options for querying methods, e.g. whether related entities should be fetched.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The log metadata object if the log exists, or <see langword="null"/> otherwise.</returns>
-		Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId, CancellationToken ct = default);
+		Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously obtains the log metadata entry using the given user-local id for the given user if the log exists.
 		/// </summary>
 		/// <param name="userAppId">The application of the user and the log.</param>
 		/// <param name="userId">The user id of the relevant user.</param>
 		/// <param name="localLogId">The user-local id of the log as provided by the client.</param>
+		/// <param name="queryOptions">A class that encapsulates options for querying methods, e.g. whether related entities should be fetched.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The log metadata object if the log exists, or <see langword="null"/> otherwise.</returns>
-		Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId, CancellationToken ct = default);
+		Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously creates the given log metadata entry in the repository.
 		/// </summary>
@@ -41,7 +49,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <returns>A task object representing the operation, providing the updated object as its result.</returns>
 		Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default);
 
-		Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, bool? completenessFilter = null, CancellationToken ct = default);
+		Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default);
 
 		/// <summary>
 		/// Asynchronously obtains the per-application counts of the log files in the database.

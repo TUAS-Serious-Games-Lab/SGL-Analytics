@@ -189,7 +189,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				}
 				using (var scope = fixture.Services.CreateScope()) {
 					var logMdRepo = scope.ServiceProvider.GetRequiredService<ILogMetadataRepository>();
-					var logMd = await logMdRepo.GetLogMetadataByIdAsync(logId);
+					var logMd = await logMdRepo.GetLogMetadataByIdAsync(logId, new LogMetadataQueryOptions { FetchRecipientKeys = true });
 					Assert.NotNull(logMd);
 					Assert.Equal(userId, logMd?.UserId);
 					Assert.Equal(fixture.AppName, logMd?.App.Name);
@@ -416,7 +416,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				using (var scope = fixture.Services.CreateScope()) {
 					// Should be fine now.
 					var logMdRepo = scope.ServiceProvider.GetRequiredService<ILogMetadataRepository>();
-					var logMd = await logMdRepo.GetLogMetadataByIdAsync(logId);
+					var logMd = await logMdRepo.GetLogMetadataByIdAsync(logId, new LogMetadataQueryOptions { FetchRecipientKeys = true });
 					Assert.NotNull(logMd);
 					Assert.Equal(userId, logMd?.UserId);
 					Assert.Equal(fixture.AppName, logMd?.App.Name);

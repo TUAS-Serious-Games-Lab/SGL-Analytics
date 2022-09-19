@@ -79,7 +79,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				throw new ApplicationApiTokenMismatchException(appName, appApiToken);
 			}
 			try {
-				var logMetadata = await logMetaRepo.GetLogMetadataByIdAsync(logMetaDTO.LogFileId, ct);
+				var queryOptions = new LogMetadataQueryOptions { ForUpdating = true, FetchRecipientKeys = true };
+				var logMetadata = await logMetaRepo.GetLogMetadataByIdAsync(logMetaDTO.LogFileId, queryOptions, ct);
 				if (logMetadata is null) {
 					logMetadata = LogMetadata.Create(logMetaDTO.LogFileId, app, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now,
 						logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, size: null, logMetaDTO.EncryptionInfo, complete: false);
@@ -88,7 +89,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				}
 				else if (logMetadata.UserId != userId) {
 					var otherLogMetadata = logMetadata;
-					var oldLogMetadata = await logMetaRepo.GetLogMetadataByUserLocalIdAsync(app.Id, userId, logMetaDTO.LogFileId);
+					var oldLogMetadata = await logMetaRepo.GetLogMetadataByUserLocalIdAsync(app.Id, userId, logMetaDTO.LogFileId, queryOptions, ct);
 					if (oldLogMetadata is null) {
 						logMetadata = LogMetadata.Create(Guid.NewGuid(), app, userId, logMetaDTO.LogFileId, logMetaDTO.CreationTime, logMetaDTO.EndTime, DateTime.Now,
 							logMetaDTO.NameSuffix, logMetaDTO.LogContentEncoding, size: null, logMetaDTO.EncryptionInfo, complete: false);
@@ -178,7 +179,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				logger.LogError("Attempt to list logs from non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, recipientKeyId, exporterDN);
 				throw new ApplicationDoesNotExistException(appName);
 			}
-			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, recipientKeyId, completenessFilter: true, ct);
+			var queryOptions = new LogMetadataQueryOptions { ForUpdating = false, FetchRecipientKey = recipientKeyId };
+			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, queryOptions, ct);
 			return logs.Select(log => new LogFile(log, logFileRepo)).ToList();
 		}
 
@@ -188,7 +190,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				logger.LogError("Attempt to retrieve log file with id {logId} from non-existent application {appName} for recipient {keyId} by exporter {dn}.", logId, appName, recipientKeyId, exporterDN);
 				throw new ApplicationDoesNotExistException(appName);
 			}
-			var log = await logMetaRepo.GetLogMetadataByIdAsync(logId, ct);
+			var queryOptions = new LogMetadataQueryOptions { ForUpdating = false };
+			var log = await logMetaRepo.GetLogMetadataByIdAsync(logId, queryOptions, ct);
 			if (log == null) {
 				logger.LogError("Attempt to retrieve non-existent log file with id {logId} from application {appName} for recipient {keyId} by exporter {dn}.", logId, appName, recipientKeyId, exporterDN);
 				throw new LogNotFoundException($"The log {logId} was not found.", logId);

@@ -23,7 +23,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			return logMetadata;
 		}
 
-		public async Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId, CancellationToken ct = default) {
+		public async Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			if (logs.TryGetValue(logId, out var logMd)) {
@@ -34,7 +34,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			}
 		}
 
-		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId, CancellationToken ct = default) {
+		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			return logs.Values.Where(lm => lm.AppId == userAppId && lm.UserId == userId && lm.LocalLogId == localLogId).SingleOrDefault<LogMetadata?>();
@@ -56,14 +56,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			return query.ToDictionary(e => e.AppName, e => e.LogSizeAvg ?? 0);
 		}
 
-		public Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, bool? completenessFilter = null, CancellationToken ct = default) {
+		public Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var query = logs.Values.Where(lmd => lmd.AppId == appId);
-			if (recipientKeyToFetch != null) {
-				query = query.Select(lmd => new LogMetadata(lmd.Id, lmd.AppId, lmd.UserId, lmd.LocalLogId, lmd.CreationTime, lmd.EndTime, lmd.UploadTime,
-					lmd.FilenameSuffix, lmd.Encoding, lmd.Size, lmd.InitializationVector, lmd.EncryptionMode, lmd.SharedLogPublicKey, lmd.Complete) {
-					RecipientKeys = lmd.RecipientKeys.Where(rk => rk.RecipientKeyId == recipientKeyToFetch).ToList()
-				});
-			}
 			if (completenessFilter != null) {
 				query = query.Where(log => log.Complete == completenessFilter);
 			}
