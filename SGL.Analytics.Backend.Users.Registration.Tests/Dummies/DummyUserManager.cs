@@ -89,5 +89,13 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			userWrap.LoadAppPropertiesFromUnderlying();
 			return user;
 		}
+
+		public Task<IEnumerable<Guid>> ListUserIdsAsync(string appName, string exporterDN, CancellationToken ct) {
+			return Task.FromResult(users.Values.Where(u => u.App.Name == appName).Select(u => u.Id).ToList().AsEnumerable());
+		}
+
+		public Task<IEnumerable<User>> ListUsersAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct) {
+			return Task.FromResult(users.Values.Where(u => u.App.Name == appName).ToList().AsEnumerable());
+		}
 	}
 }
