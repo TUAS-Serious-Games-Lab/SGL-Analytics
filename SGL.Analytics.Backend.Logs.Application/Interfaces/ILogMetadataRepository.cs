@@ -1,4 +1,5 @@
 ﻿using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -39,6 +40,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the updated object as its result.</returns>
 		Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default);
+
+		Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, CancellationToken ct = default);
 
 		/// <summary>
 		/// Asynchronously obtains the per-application counts of the log files in the database.

@@ -1,6 +1,7 @@
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -55,10 +56,22 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			return query.ToDictionary(e => e.AppName, e => e.LogSizeAvg ?? 0);
 		}
 
+		public Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, CancellationToken ct = default) {
+			var query = logs.Values.Where(lmd => lmd.AppId == appId);
+			if (recipientKeyToFetch != null) {
+				query = query.Select(lmd => new LogMetadata(lmd.Id, lmd.AppId, lmd.UserId, lmd.LocalLogId, lmd.CreationTime, lmd.EndTime, lmd.UploadTime,
+					lmd.FilenameSuffix, lmd.Encoding, lmd.Size, lmd.InitializationVector, lmd.EncryptionMode, lmd.SharedLogPublicKey, lmd.Complete) {
+					RecipientKeys = lmd.RecipientKeys.Where(rk => rk.RecipientKeyId == recipientKeyToFetch).ToList()
+				});
+			}
+			return Task.FromResult(query.ToList().AsEnumerable());
+		}
+
 		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			Debug.Assert(logs.ContainsKey(logMetadata.Id));
+			Debug.Assert(logs.ContainsValue(logMetadata));
 			logs[logMetadata.Id] = logMetadata;
 			return logMetadata;
 		}

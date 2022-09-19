@@ -3,6 +3,7 @@ using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -71,6 +72,15 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 						group lm.Size by lm.App.Name into a
 						select new { AppName = a.Key, LogSizeAvg = a.Average() };
 			return await query.ToDictionaryAsync(e => e.AppName, e => e.LogSizeAvg ?? 0, ct);
+		}
+
+		/// <inheritdoc/>
+		public async Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, CancellationToken ct = default) {
+			var query = context.LogMetadata.Where(lmd => lmd.AppId == appId);
+			if (recipientKeyToFetch != null) {
+				query = query.Include(lmd => lmd.RecipientKeys.Where(rk => rk.RecipientKeyId == recipientKeyToFetch));
+			}
+			return await query.ToListAsync(ct);
 		}
 
 		/// <inheritdoc/>
