@@ -23,7 +23,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		[HttpGet("{id:Guid}")]
-		public Task<ActionResult<UserMetadataDTO>> GetUserMetadataById(Guid id, [FromQuery] KeyId? recipient = null) {
+		public Task<ActionResult<UserMetadataDTO>> GetUserMetadataById(Guid id, [FromQuery] KeyId? recipient = null, CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 	}

@@ -24,12 +24,12 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		[HttpGet("{id:Guid}/metadata")]
-		public Task<ActionResult<DownstreamLogMetadataDTO>> GetLogMetadataById(Guid id, [FromQuery] KeyId? recipient = null) {
+		public Task<ActionResult<DownstreamLogMetadataDTO>> GetLogMetadataById(Guid id, [FromQuery] KeyId? recipient = null, CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 
 		[HttpGet("{id:Guid}/content")]
-		public Task<ActionResult> GetLogContentById(Guid id) {
+		public Task<ActionResult> GetLogContentById(Guid id, CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 	}
