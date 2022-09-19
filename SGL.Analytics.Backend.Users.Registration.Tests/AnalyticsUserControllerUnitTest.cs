@@ -63,7 +63,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			Assert.Equal(StatusCodes.Status201Created, res.StatusCode);
 			Guid userId = Assert.IsType<UserRegistrationResultDTO>(res.Value).UserId;
 			Assert.NotEqual(Guid.Empty, userId);
-			var user = await userManager.GetUserByIdAsync(userId);
+			var user = await userManager.GetUserByIdAsync(userId, fetchProperties: true);
 			Assert.NotNull(user);
 			Assert.Equal("Testuser", user!.Username);
 			Assert.Equal(appName, user!.App.Name);

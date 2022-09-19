@@ -71,7 +71,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			if (credResult != null) return credResult;
 			logger.LogInformation("Fetching user metadata for user {userId} in application {appName} with recipient key for {recipientKeyId} for exporter {exporterKeyId} ({exporterDN}).",
 				id, appName, recipientKeyId, exporterKeyId, exporterDN);
-			var user = await userManager.GetUserByIdAsync(id, ct: ct);
+			var user = await userManager.GetUserByIdAsync(id, recipientKeyId, fetchProperties: true, ct: ct);
 			if (user == null) {
 				throw new UserNotFoundException($"User {id} not found.", id);
 			}

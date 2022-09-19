@@ -27,31 +27,44 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			this.context = context;
 		}
 
-		/// <inheritdoc/>
-		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, KeyId? recipientKeyId = null, CancellationToken ct = default) {
-			var query = context.UserRegistrations
-							.AsSplitQuery()
-							.Include(u => u.App).ThenInclude(a => a.UserProperties)
-							.Include(u => u.AppSpecificProperties).ThenInclude(p => p.Definition)
-							.Where(u => u.Id == id);
-			if (recipientKeyId != null) {
-				query = query.Include(u => u.PropertyRecipientKeys.Where(rk => rk.RecipientKeyId == recipientKeyId));
+		private IQueryable<UserRegistration> ApplyQueryOptions(IQueryable<UserRegistration> query, UserQueryOptions? queryOptions) {
+			if (queryOptions == null) {
+				queryOptions = new UserQueryOptions();
 			}
-			else {
+			if (queryOptions.FetchRecipientKeys) {
 				query = query.Include(u => u.PropertyRecipientKeys);
 			}
+			else if (queryOptions.FetchRecipientKey != null) {
+				query = query.Include(u => u.PropertyRecipientKeys.Where(rk => rk.RecipientKeyId == queryOptions.FetchRecipientKey));
+			}
+			if (queryOptions.FetchProperties) {
+				query = query.Include(u => u.App)
+					.ThenInclude(a => a.UserProperties)
+					.Include(u => u.AppSpecificProperties)
+					.ThenInclude(p => p.Definition)
+					.AsSplitQuery();
+			}
+			else {
+				query = query.Include(u => u.App);
+			}
+			if (!queryOptions.ForUpdating) {
+				query = query.AsNoTracking();
+			}
+			return query;
+		}
+
+		/// <inheritdoc/>
+		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var query = context.UserRegistrations.Where(u => u.Id == id);
+			query = ApplyQueryOptions(query, queryOptions);
 			return await query.SingleOrDefaultAsync<UserRegistration?>(ct);
 		}
 
 		/// <inheritdoc/>
-		public async Task<UserRegistration?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default) {
-			return await context.UserRegistrations
-				.AsSplitQuery()
-				.Include(u => u.App).ThenInclude(a => a.UserProperties)
-				.Include(u => u.AppSpecificProperties).ThenInclude(p => p.Definition)
-				.Include(u => u.PropertyRecipientKeys)
-				.Where(u => u.Username == username && u.App.Name == appName)
-				.SingleOrDefaultAsync<UserRegistration?>(ct);
+		public async Task<UserRegistration?> GetUserByUsernameAndAppNameAsync(string username, string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var query = context.UserRegistrations.Where(u => u.Username == username && u.App.Name == appName);
+			query = ApplyQueryOptions(query, queryOptions);
+			return await query.SingleOrDefaultAsync<UserRegistration?>(ct);
 		}
 
 		/// <inheritdoc/>
@@ -106,21 +119,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			var query = from ur in context.UserRegistrations.Include(ur => ur.App)
 						group ur by ur.App.Name into a
 						select new { AppName = a.Key, UsersCount = a.Count() };
-			return await query.ToDictionaryAsync(e => e.AppName, e => e.UsersCount, ct);
+			return await query.AsNoTracking().ToDictionaryAsync(e => e.AppName, e => e.UsersCount, ct);
 		}
 
-		public async Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, KeyId? recipientKeyId = null, CancellationToken ct = default) {
-			var query = context.UserRegistrations
-				.AsSplitQuery()
-				.Include(u => u.App).ThenInclude(a => a.UserProperties)
-				.Include(u => u.AppSpecificProperties).ThenInclude(p => p.Definition)
-				.Where(u => u.App.Name == appName);
-			if (recipientKeyId != null) {
-				query = query.Include(u => u.PropertyRecipientKeys.Where(rk => rk.RecipientKeyId == recipientKeyId));
-			}
-			else {
-				query = query.Include(u => u.PropertyRecipientKeys);
-			}
+		public async Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var query = context.UserRegistrations.Where(u => u.App.Name == appName);
+			query = ApplyQueryOptions(query, queryOptions);
 			return await query.ToListAsync(ct);
 		}
 	}

@@ -6,6 +6,13 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Interfaces {
+	public class UserQueryOptions {
+		public bool FetchProperties { get; set; } = false;
+		public bool FetchRecipientKeys { get; set; } = false;
+		public KeyId? FetchRecipientKey { get; set; } = null;
+		public bool ForUpdating { get; set; } = false;
+	}
+
 	/// <summary>
 	/// Specifies the interface for a repository to store <see cref="UserRegistration"/> objects.
 	/// </summary>
@@ -14,19 +21,20 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// Asynchronously obtains the user registration with the given id if it exists.
 		/// </summary>
 		/// <param name="id">The unique id of the user registration.</param>
-		/// <param name="recipientKeyId">If specified, requests that the recipient key for the encrypted registration properties associated with the given key id is fetched.</param>
+		/// <param name="queryOptions">A class that encapsulates options for querying methods, e.g. whether related entities should be fetched.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The user registration object if the user registration exists, or <see langword="null"/> otherwise.</returns>
-		Task<UserRegistration?> GetUserByIdAsync(Guid id, KeyId? recipientKeyId = null, CancellationToken ct = default);
+		Task<UserRegistration?> GetUserByIdAsync(Guid id, UserQueryOptions? queryOptions = null, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously obtains the user object with the given username in the application given by name if such a user exists.
 		/// </summary>
 		/// <param name="username">The per-application unique username of the user.</param>
 		/// <param name="appName">The application with which the username is associated.</param>
+		/// <param name="queryOptions">A class that encapsulates options for querying methods, e.g. whether related entities should be fetched.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The user registration object if the user registration exists, or <see langword="null"/> otherwise.</returns>
-		Task<UserRegistration?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default);
-		Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, KeyId? recipientKeyId = null, CancellationToken ct = default);
+		Task<UserRegistration?> GetUserByUsernameAndAppNameAsync(string username, string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default);
+		Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously creates the given user registration object in the repository.
 		/// </summary>

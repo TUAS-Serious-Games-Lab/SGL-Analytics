@@ -34,7 +34,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			}
 		}
 
-		public async Task<User?> GetUserByIdAsync(Guid userId, KeyId? recipientKeyId = null, CancellationToken ct = default) {
+		public async Task<User?> GetUserByIdAsync(Guid userId, KeyId? recipientKeyId = null, bool fetchProperties = false, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			if (users.TryGetValue(userId, out var user)) {

@@ -1,17 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
-using SGL.Utilities.Backend.Security;
-using SGL.Utilities.Backend.TestUtilities;
+using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure.Services;
 using SGL.Utilities;
+using SGL.Utilities.Backend;
+using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Backend.TestUtilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
-using SGL.Utilities.Backend;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 	public class DbUserRepositoryUnitTest : IDisposable {
@@ -82,7 +83,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			UserRegistration? userRead;
 			await using (var context = createContext()) {
 				var repo = new DbUserRepository(context);
-				userRead = await repo.GetUserByIdAsync(userId);
+				userRead = await repo.GetUserByIdAsync(userId, new UserQueryOptions { FetchProperties = true });
 			}
 			Assert.NotNull(userRead);
 			Assert.Equal(userId, userRead?.Id);
@@ -148,7 +149,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			Guid guid2 = Guid.NewGuid();
 			await using (var context = createContext()) {
 				var repo = new DbUserRepository(context);
-				var user = await repo.GetUserByIdAsync(userId);
+				var user = await repo.GetUserByIdAsync(userId, new UserQueryOptions { FetchProperties = true, ForUpdating = true });
 				Assert.NotNull(user);
 				user!.SetAppSpecificProperty(propDef1.Name, 1234);
 				user!.SetAppSpecificProperty(propDef2.Name, 987.654);
@@ -163,7 +164,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			UserRegistration? userRead;
 			await using (var context = createContext()) {
 				var repo = new DbUserRepository(context);
-				userRead = await repo.GetUserByIdAsync(userId);
+				userRead = await repo.GetUserByIdAsync(userId, new UserQueryOptions { FetchProperties = true });
 			}
 			Assert.NotNull(userRead);
 			Assert.Equal(userId, userRead?.Id);
@@ -238,7 +239,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
 				var repo = new DbUserRepository(context);
-				var userReg = await repo.GetUserByIdAsync(userId);
+				var userReg = await repo.GetUserByIdAsync(userId, new UserQueryOptions { FetchProperties = true, ForUpdating = true });
 				Assert.NotNull(userReg);
 				userReg!.Username = "TestUser_1";
 				Assert.Equal("Username", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.UpdateUserAsync(userReg))).ConflictingPropertyName);

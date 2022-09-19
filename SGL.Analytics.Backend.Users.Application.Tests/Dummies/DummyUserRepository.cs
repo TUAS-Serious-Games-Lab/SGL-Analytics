@@ -15,7 +15,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 		private readonly Dictionary<Guid, UserRegistration> users = new Dictionary<Guid, UserRegistration>();
 		private int nextPropertyInstanceId = 1;
 
-		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, KeyId? recipientKeyId = null, CancellationToken ct = default) {
+		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			if (users.TryGetValue(id, out var user)) {
@@ -26,7 +26,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			}
 		}
 
-		public async Task<UserRegistration?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default) {
+		public async Task<UserRegistration?> GetUserByUsernameAndAppNameAsync(string username, string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			return users.Values.Where(u => u.Username == username && u.App.Name == appName).SingleOrDefault<UserRegistration?>();
 		}
@@ -39,7 +39,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			return query.ToDictionary(e => e.AppName, e => e.UsersCount);
 		}
 
-		public Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, KeyId? recipientKeyId = null, CancellationToken ct = default) {
+		public Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			return Task.FromResult(users.Values.Where(u => u.App.Name == appName).ToList().AsEnumerable());
 		}
 

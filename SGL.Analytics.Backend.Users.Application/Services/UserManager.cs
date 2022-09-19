@@ -36,29 +36,33 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		}
 
 		/// <inheritdoc/>
-		public async Task<User?> GetUserByIdAsync(Guid userId, KeyId? recipientKeyId = null, CancellationToken ct = default) {
-			var userReg = await userRepo.GetUserByIdAsync(userId, recipientKeyId, ct);
+		public async Task<User?> GetUserByIdAsync(Guid userId, KeyId? recipientKeyId = null, bool fetchProperties = false, CancellationToken ct = default) {
+			var queryOptions = new UserQueryOptions { ForUpdating = true, FetchRecipientKey = recipientKeyId, FetchProperties = fetchProperties };
+			var userReg = await userRepo.GetUserByIdAsync(userId, queryOptions, ct);
 			if (userReg is null) return null;
 			return new User(userReg);
 		}
 
 		/// <inheritdoc/>
 		public async Task<User?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default) {
-			var userReg = await userRepo.GetUserByUsernameAndAppNameAsync(username, appName, ct);
+			var queryOptions = new UserQueryOptions { ForUpdating = true };
+			var userReg = await userRepo.GetUserByUsernameAndAppNameAsync(username, appName, queryOptions, ct);
 			if (userReg is null) return null;
 			return new User(userReg);
 		}
 
 		/// <inheritdoc/>
 		public async Task<IEnumerable<Guid>> ListUserIdsAsync(string appName, string exporterDN, CancellationToken ct) {
-			var userRegs = await userRepo.ListUsersAsync(appName, null, ct);
+			var queryOptions = new UserQueryOptions { ForUpdating = false };
+			var userRegs = await userRepo.ListUsersAsync(appName, queryOptions, ct);
 			var result = userRegs.Select(u => u.Id).ToList();
 			return result;
 		}
 
 		/// <inheritdoc/>
 		public async Task<IEnumerable<User>> ListUsersAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct) {
-			var userRegs = await userRepo.ListUsersAsync(appName, null, ct);
+			var queryOptions = new UserQueryOptions { ForUpdating = false, FetchRecipientKey = recipientKeyId, FetchProperties = true };
+			var userRegs = await userRepo.ListUsersAsync(appName, queryOptions, ct);
 			var result = userRegs.Select(u => new User(u)).ToList();
 			return result;
 		}
