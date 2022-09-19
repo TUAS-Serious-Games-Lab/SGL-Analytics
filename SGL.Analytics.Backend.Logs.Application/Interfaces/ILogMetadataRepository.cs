@@ -41,7 +41,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <returns>A task object representing the operation, providing the updated object as its result.</returns>
 		Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default);
 
-		Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, CancellationToken ct = default);
+		Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, bool? completenessFilter = null, CancellationToken ct = default);
 
 		/// <summary>
 		/// Asynchronously obtains the per-application counts of the log files in the database.

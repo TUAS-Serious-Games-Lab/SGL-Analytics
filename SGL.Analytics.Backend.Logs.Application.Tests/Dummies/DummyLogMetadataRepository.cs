@@ -56,13 +56,16 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			return query.ToDictionary(e => e.AppName, e => e.LogSizeAvg ?? 0);
 		}
 
-		public Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, CancellationToken ct = default) {
+		public Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, bool? completenessFilter = null, CancellationToken ct = default) {
 			var query = logs.Values.Where(lmd => lmd.AppId == appId);
 			if (recipientKeyToFetch != null) {
 				query = query.Select(lmd => new LogMetadata(lmd.Id, lmd.AppId, lmd.UserId, lmd.LocalLogId, lmd.CreationTime, lmd.EndTime, lmd.UploadTime,
 					lmd.FilenameSuffix, lmd.Encoding, lmd.Size, lmd.InitializationVector, lmd.EncryptionMode, lmd.SharedLogPublicKey, lmd.Complete) {
 					RecipientKeys = lmd.RecipientKeys.Where(rk => rk.RecipientKeyId == recipientKeyToFetch).ToList()
 				});
+			}
+			if (completenessFilter != null) {
+				query = query.Where(log => log.Complete == completenessFilter);
 			}
 			return Task.FromResult(query.ToList().AsEnumerable());
 		}

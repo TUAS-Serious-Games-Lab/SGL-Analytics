@@ -75,10 +75,13 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		/// <inheritdoc/>
-		public async Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, CancellationToken ct = default) {
+		public async Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, KeyId? recipientKeyToFetch, bool? completenessFilter = null, CancellationToken ct = default) {
 			var query = context.LogMetadata.Where(lmd => lmd.AppId == appId);
 			if (recipientKeyToFetch != null) {
 				query = query.Include(lmd => lmd.RecipientKeys.Where(rk => rk.RecipientKeyId == recipientKeyToFetch));
+			}
+			if (completenessFilter != null) {
+				query = query.Where(lmd => lmd.Complete == completenessFilter);
 			}
 			return await query.ToListAsync(ct);
 		}
