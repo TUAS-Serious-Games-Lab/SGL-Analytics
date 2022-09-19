@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
@@ -64,6 +65,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			catch (OperationCanceledException) {
 				throw;
 			}
+			catch (ApplicationDoesNotExistException ex) {
+				logger.LogError(ex, "GetLogIds GET request for non-existent application {appName} from exporter {keyId} ({exporterDN}).", appName, keyId, exporterDN);
+				metrics.HandleUnknownAppError(appName);
+				return NotFound($"Application {appName} not found.");
+			}
 			catch (Exception ex) {
 				logger.LogError(ex, "GetLogIds GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
 					appName, keyId, exporterDN);
@@ -85,6 +91,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 			catch (OperationCanceledException) {
 				throw;
+			}
+			catch (ApplicationDoesNotExistException ex) {
+				logger.LogError(ex, "GetMetadataForAllLogs GET request for non-existent application {appName} from exporter {keyId} ({exporterDN}).", appName, exporterKeyId, exporterDN);
+				metrics.HandleUnknownAppError(appName);
+				return NotFound($"Application {appName} not found.");
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "GetMetadataForAllLogs GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
@@ -108,6 +119,17 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			catch (OperationCanceledException) {
 				throw;
 			}
+			catch (ApplicationDoesNotExistException ex) {
+				logger.LogError(ex, "GetLogMetadataById GET request for non-existent application {appName} from exporter {keyId} ({exporterDN}).", appName, exporterKeyId, exporterDN);
+				metrics.HandleUnknownAppError(appName);
+				return NotFound($"Application {appName} not found.");
+			}
+			catch (LogNotFoundException ex) {
+				logger.LogError(ex, "GetLogMetadataById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed because the requested log {logId} was not found.",
+					appName, exporterKeyId, exporterDN, id);
+				metrics.HandleLogNotFoundError(appName);
+				return NotFound($"Log {id} not found.");
+			}
 			catch (Exception ex) {
 				logger.LogError(ex, "GetLogMetadataById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
 					appName, exporterKeyId, exporterDN);
@@ -129,6 +151,17 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 			catch (OperationCanceledException) {
 				throw;
+			}
+			catch (ApplicationDoesNotExistException ex) {
+				logger.LogError(ex, "GetLogContentById GET request for non-existent application {appName} from exporter {keyId} ({exporterDN}).", appName, exporterKeyId, exporterDN);
+				metrics.HandleUnknownAppError(appName);
+				return NotFound($"Application {appName} not found.");
+			}
+			catch (LogNotFoundException ex) {
+				logger.LogError(ex, "GetLogContentById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed because the requested log {logId} was not found.",
+					appName, exporterKeyId, exporterDN, id);
+				metrics.HandleLogNotFoundError(appName);
+				return NotFound($"Log {id} not found.");
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "GetLogContentById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
