@@ -61,26 +61,26 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		[HttpGet("all")]
-		public async Task<ActionResult<IEnumerable<DownstreamLogMetadataDTO>>> GetMetadataForAllLogs([FromQuery] KeyId? recipient = null, CancellationToken ct = default) {
-			var credResult = GetCredentials(out var appName, out var keyId, out var exporterDN);
+		public async Task<ActionResult<IEnumerable<DownstreamLogMetadataDTO>>> GetMetadataForAllLogs([FromQuery] KeyId? recipientKeyId = null, CancellationToken ct = default) {
+			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
 			if (credResult != null) return credResult;
-			var logs = await logManager.ListLogsAsync(appName, recipient, exporterDN, ct);
+			var logs = await logManager.ListLogsAsync(appName, recipientKeyId, exporterDN, ct);
 			var result = logs.Select(log => ToDto(log)).ToList();
 			return result;
 		}
 
 		[HttpGet("{id:Guid}/metadata")]
-		public async Task<ActionResult<DownstreamLogMetadataDTO>> GetLogMetadataById(Guid id, [FromQuery] KeyId? recipient = null, CancellationToken ct = default) {
-			var credResult = GetCredentials(out var appName, out var keyId, out var exporterDN);
+		public async Task<ActionResult<DownstreamLogMetadataDTO>> GetLogMetadataById(Guid id, [FromQuery] KeyId? recipientKeyId = null, CancellationToken ct = default) {
+			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
 			if (credResult != null) return credResult;
-			var log = await logManager.GetLogByIdAsync(id, appName, recipient, exporterDN, ct);
+			var log = await logManager.GetLogByIdAsync(id, appName, recipientKeyId, exporterDN, ct);
 			var result = ToDto(log);
 			return result;
 		}
 
 		[HttpGet("{id:Guid}/content")]
 		public async Task<ActionResult> GetLogContentById(Guid id, CancellationToken ct = default) {
-			var credResult = GetCredentials(out var appName, out var keyId, out var exporterDN);
+			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
 			if (credResult != null) return credResult;
 			var log = await logManager.GetLogByIdAsync(id, appName, null, exporterDN, ct);
 			var content = await log.OpenReadAsync(ct);
