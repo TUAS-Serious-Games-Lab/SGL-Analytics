@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -18,12 +19,12 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		[HttpGet("all")]
-		public Task<ActionResult<IEnumerable<DownstreamLogMetadataDTO>>> GetMetadataForAllLogs(CancellationToken ct = default) {
+		public Task<ActionResult<IEnumerable<DownstreamLogMetadataDTO>>> GetMetadataForAllLogs([FromQuery] KeyId? recipient = null, CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 
 		[HttpGet("{id:Guid}/metadata")]
-		public Task<ActionResult<DownstreamLogMetadataDTO>> GetLogMetadataById(Guid id) {
+		public Task<ActionResult<DownstreamLogMetadataDTO>> GetLogMetadataById(Guid id, [FromQuery] KeyId? recipient = null) {
 			throw new NotImplementedException();
 		}
 

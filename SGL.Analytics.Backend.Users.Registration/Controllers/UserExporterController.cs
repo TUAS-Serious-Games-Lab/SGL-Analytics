@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -17,12 +18,12 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		[HttpGet("all")]
-		public Task<ActionResult<IEnumerable<UserMetadataDTO>>> GetMetadataForAllUsers(CancellationToken ct = default) {
+		public Task<ActionResult<IEnumerable<UserMetadataDTO>>> GetMetadataForAllUsers([FromQuery] KeyId? recipient = null, CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 
 		[HttpGet("{id:Guid}")]
-		public Task<ActionResult<UserMetadataDTO>> GetUserMetadataById(Guid id) {
+		public Task<ActionResult<UserMetadataDTO>> GetUserMetadataById(Guid id, [FromQuery] KeyId? recipient = null) {
 			throw new NotImplementedException();
 		}
 	}
