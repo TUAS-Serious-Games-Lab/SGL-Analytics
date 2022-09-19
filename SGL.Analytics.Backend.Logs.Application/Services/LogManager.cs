@@ -178,7 +178,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				logger.LogError("Attempt to list logs from non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, recipientKeyId, exporterDN);
 				throw new ApplicationDoesNotExistException(appName);
 			}
-			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, recipientKeyId, ct);
+			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, recipientKeyId, completenessFilter: true, ct);
 			return logs.Select(log => new LogFile(log, logFileRepo)).ToList();
 		}
 
