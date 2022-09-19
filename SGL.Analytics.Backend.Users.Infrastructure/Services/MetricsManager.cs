@@ -17,6 +17,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		private const string ERROR_NONEXISTENT_USERNAME = "Nonexistent username";
 		private const string ERROR_NONEXISTENT_USERID = "Nonexistent userid";
 		private const string ERROR_INCORRECT_USER_SECRET = "Incorrect user secret";
+		private const string ERROR_INCORRECT_SECURITY_TOKEN_CLAIMS = "Incorrect security token claims";
 		private const string ERROR_UNKNOWN_APP = "Unknown app";
 		private const string ERROR_INCORRECT_APP_API_TOKEN = "Incorrect app API token";
 		private const string ERROR_INVALID_CRYPTO_METADATA = "Invalid cryptographic metadata";
@@ -48,6 +49,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			errorCounter.WithLabels(ERROR_USER_PROP_VALIDATION_FAILED, appName);
 			errorCounter.WithLabels(ERROR_INVALID_CRYPTO_METADATA, appName);
 			loginCounter.WithLabels(appName);
+		}
+		/// <inheritdoc/>
+		public void HandleIncorrectSecurityTokenClaimsError() {
+			errorCounter.WithLabels(ERROR_INCORRECT_SECURITY_TOKEN_CLAIMS, "").Inc();
 		}
 		/// <inheritdoc/>
 		public void HandleConcurrencyConflictError(string appName) {
