@@ -19,7 +19,7 @@ namespace SGL.Analytics.DTO {
 		/// <summary>
 		/// A username that can optionally be used by the client application.
 		/// If it is left out, the application should perform logins using the user id obtained from the <see cref="UserRegistrationResultDTO"/> returned from the registration API call.
-		/// If it is specified, both optioons, user id as well as username can be used later.
+		/// If it is specified, both options, user id as well as username can be used later.
 		/// </summary>
 		[PlainName(allowBrackets: true)]
 		[StringLength(64, MinimumLength = 1)]

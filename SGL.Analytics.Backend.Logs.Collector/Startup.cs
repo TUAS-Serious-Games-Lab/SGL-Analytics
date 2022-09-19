@@ -47,6 +47,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			services.AddAuthorization(options => {
 				options.AddPolicy("AuthenticatedAppUser", p => p.RequireClaim("userid").RequireClaim("appname"));
 				options.DefaultPolicy = options.GetPolicy("AuthenticatedAppUser") ?? throw new InvalidOperationException("Couldn't find AuthenticatedAppUser policy.");
+				options.AddPolicy("ExporterUser", p => p.RequireClaim("keyid").RequireClaim("appname").RequireClaim("exporter-dn"));
 			});
 
 			services.UseLogsBackendInfrastructure(Configuration);

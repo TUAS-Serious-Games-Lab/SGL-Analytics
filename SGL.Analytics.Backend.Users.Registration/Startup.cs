@@ -14,6 +14,7 @@ using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Crypto.AspNetCore;
 using SGL.Utilities.Logging.FileLogging;
+using System;
 
 namespace SGL.Analytics.Backend.Users.Registration {
 	/// <summary>
@@ -45,6 +46,10 @@ namespace SGL.Analytics.Backend.Users.Registration {
 			services.UseUsersBackendInfrastructure(Configuration);
 			services.UseUsersBackendAppplicationLayer(Configuration);
 			services.UseJwtLoginService(Configuration);
+			services.UseJwtBearerAuthentication(Configuration);
+			services.AddAuthorization(options => {
+				options.AddPolicy("ExporterUser", p => p.RequireClaim("keyid").RequireClaim("appname").RequireClaim("exporter-dn"));
+			});
 
 			services.AddModelStateValidationErrorLogging((err, ctx) =>
 				ctx.HttpContext.RequestServices.GetService<IMetricsManager>()?
