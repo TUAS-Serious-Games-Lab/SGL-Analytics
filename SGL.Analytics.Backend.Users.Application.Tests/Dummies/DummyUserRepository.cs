@@ -39,6 +39,10 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			return query.ToDictionary(e => e.AppName, e => e.UsersCount);
 		}
 
+		public Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, KeyId? recipientKeyId = null, CancellationToken ct = default) {
+			return Task.FromResult(users.Values.Where(u => u.App.Name == appName).ToList().AsEnumerable());
+		}
+
 		public async Task<UserRegistration> RegisterUserAsync(UserRegistration userReg, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			if (userReg.Id == Guid.Empty) userReg.Id = Guid.NewGuid();

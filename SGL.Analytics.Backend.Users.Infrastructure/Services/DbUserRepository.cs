@@ -108,5 +108,20 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 						select new { AppName = a.Key, UsersCount = a.Count() };
 			return await query.ToDictionaryAsync(e => e.AppName, e => e.UsersCount, ct);
 		}
+
+		public async Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, KeyId? recipientKeyId = null, CancellationToken ct = default) {
+			var query = context.UserRegistrations
+				.AsSplitQuery()
+				.Include(u => u.App).ThenInclude(a => a.UserProperties)
+				.Include(u => u.AppSpecificProperties).ThenInclude(p => p.Definition)
+				.Where(u => u.App.Name == appName);
+			if (recipientKeyId != null) {
+				query = query.Include(u => u.PropertyRecipientKeys.Where(rk => rk.RecipientKeyId == recipientKeyId));
+			}
+			else {
+				query = query.Include(u => u.PropertyRecipientKeys);
+			}
+			return await query.ToListAsync(ct);
+		}
 	}
 }
