@@ -71,8 +71,11 @@ namespace SGL.Analytics.DTO {
 	public class ExporterKeyAuthResponseDTO {
 		public AuthorizationToken Token { get; private set; }
 
-		public ExporterKeyAuthResponseDTO(AuthorizationToken token) {
+		public DateTime TokenExpiry { get; private set; }
+
+		public ExporterKeyAuthResponseDTO(AuthorizationToken token, DateTime tokenExpiry) {
 			Token = token;
+			TokenExpiry = tokenExpiry;
 		}
 	}
 }
