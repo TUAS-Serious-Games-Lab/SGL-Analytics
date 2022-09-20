@@ -46,6 +46,15 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		public KeyPair ExporterKeyPair = null!;
 		public Certificate ExporterCertificate = null!;
 
+		public byte[] User1Props = null!;
+		public byte[] User2Props = null!;
+		public byte[] User3Props = null!;
+
+		public Guid User1Id;
+		public Guid User2Id;
+		public Guid User3Id;
+		public Guid OtherAppUserId;
+
 		public UserExporterIntegrationTestFixture() {
 			Config = new() {
 				["Jwt:Audience"] = JwtOptions.Audience,
@@ -101,7 +110,33 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			app2.AddRecipient("other test recipient 1", createCertificatePem("Other Test 1", null));
 			app2.AddRecipient("other test recipient 2", createCertificatePem("Other Test 2", null));
 			context.Applications.Add(app2);
+
+			var user1 = createUserRegistration(app, out User1Id, out User1Props);
+			var user2 = createUserRegistration(app, out User2Id, out User2Props, "testuser1");
+			var user3 = createUserRegistration(app, out User3Id, out User3Props);
+			context.UserRegistrations.Add(user1);
+			context.UserRegistrations.Add(user2);
+			context.UserRegistrations.Add(user3);
+			var otherAppUser = createUserRegistration(app2, out OtherAppUserId, out _, "otherAppUser");
+			context.UserRegistrations.Add(otherAppUser);
 			context.SaveChanges();
+		}
+
+		private UserRegistration createUserRegistration(ApplicationWithUserProperties app, out Guid id, out byte[] userProps, string? username = null) {
+			var userPw = StringGenerator.GenerateRandomWord(16);
+			userProps = Random.GetBytes(512);
+			var keyEncryptor = new KeyEncryptor(app.DataRecipients.Select(dr => dr.Certificate.PublicKey), Random, true);
+			var dataEncryptor = new DataEncryptor(Random, 1);
+			var encryptedUserProps = dataEncryptor.EncryptData(userProps, 0);
+			UserRegistration user;
+			if (username != null) {
+				user = UserRegistration.Create(app, username, SecretHashing.CreateHashedSecret(userPw), encryptedUserProps, dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
+			}
+			else {
+				user = UserRegistration.Create(app, SecretHashing.CreateHashedSecret(userPw), encryptedUserProps, dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
+			}
+			id = user.Id;
+			return user;
 		}
 
 		protected override IHostBuilder CreateHostBuilder() {
@@ -130,6 +165,21 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Equal(fixture.ExporterKeyPair.Public.CalculateId(), principal.GetClaim<KeyId>("keyid", KeyId.TryParse!));
 				Assert.Equal(fixture.ExporterCertificate.SubjectDN.ToString(), principal.GetClaim("exporter-dn"));
 				Assert.Equal(fixture.AppName, principal.GetClaim("appname"));
+			}
+		}
+
+		[Fact]
+		public async Task GetUserIdListReturnsIdsOfAllUsersOfCurrentAppAndOnlyThose() {
+			using (var httpClient = fixture.CreateClient()) {
+				var authenticator = new ExporterKeyPairAuthenticator(httpClient, fixture.ExporterKeyPair, fixture.Services.GetRequiredService<ILogger<ExporterKeyPairAuthenticator>>(), fixture.Random);
+				var authData = await authenticator.AuthenticateAsync(fixture.AppName);
+				var (principal, validatedToken) = fixture.TokenValidator.Validate(authData.Token.Value);
+				var exporterClient = new UserExporterApiClient(httpClient, authData);
+				var userIds = await exporterClient.GetUserIdListAsync();
+				Assert.Contains(fixture.User1Id, userIds);
+				Assert.Contains(fixture.User2Id, userIds);
+				Assert.Contains(fixture.User3Id, userIds);
+				Assert.DoesNotContain(fixture.OtherAppUserId, userIds);
 			}
 		}
 	}
