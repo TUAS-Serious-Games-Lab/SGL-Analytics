@@ -101,6 +101,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <param name="perAppCounts">A dictionary mapping the application names to corresponding numbers of users.</param>
 		void UpdateRegisteredUsers(IDictionary<string, int> perAppCounts);
 		void HandleIncorrectSecurityTokenClaimsError();
+		void HandleUserNotFoundError(string appName);
 	}
 	/// <summary>
 	/// Provides a null implementation of <see cref="IMetricsManager"/> where the methods do nothing and thus no metrics are actually collected.
@@ -112,10 +113,10 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		public void EnsureMetricsExist(string appName) { }
 		/// <inheritdoc/>
 		public void HandleConcurrencyConflictError(string appName) { }
-
 		/// <inheritdoc/>
 		public void HandleCryptoMetadataError(string appName) { }
-
+		/// <inheritdoc/>
+		public void HandleUserNotFoundError(string appName) { }
 		/// <inheritdoc/>
 		public void HandleIncorrectAppApiTokenError(string appName) { }
 		/// <inheritdoc/>

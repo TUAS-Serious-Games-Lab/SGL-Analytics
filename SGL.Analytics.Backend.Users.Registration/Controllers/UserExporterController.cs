@@ -48,35 +48,89 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		public async Task<ActionResult<IEnumerable<Guid>>> GetUserIdList(CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
 			if (credResult != null) return credResult;
-			logger.LogInformation("Listing user ids in application {appName} for exporter {keyId} ({exporterDN}).", appName, exporterKeyId, exporterDN);
-			var userIds = await userManager.ListUserIdsAsync(appName, exporterDN, ct);
-			var result = userIds.ToList();
-			return result;
+			try {
+				logger.LogInformation("Listing user ids in application {appName} for exporter {keyId} ({exporterDN}).", appName, exporterKeyId, exporterDN);
+				var userIds = await userManager.ListUserIdsAsync(appName, exporterDN, ct);
+				var result = userIds.ToList();
+				return result;
+			}
+			catch (OperationCanceledException) {
+				throw;
+			}
+			catch (ApplicationDoesNotExistException ex) {
+				logger.LogError(ex, "GetUserIdList GET request for non-existent application {appName} from exporter {keyId} ({exporterDN}).", appName, exporterKeyId, exporterDN);
+				metrics.HandleUnknownAppError(appName);
+				return NotFound($"Application {appName} not found.");
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "GetUserIdList GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
+					appName, exporterKeyId, exporterDN);
+				metrics.HandleUnexpectedError(appName, ex);
+				throw;
+			}
 		}
 
 		[HttpGet("all")]
 		public async Task<ActionResult<IEnumerable<UserMetadataDTO>>> GetMetadataForAllUsers([FromQuery] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
 			if (credResult != null) return credResult;
-			logger.LogInformation("Listing user metadata for all users in application {appName} with recipient keys for {recipientKeyId} for exporter {exporterKeyId} ({exporterDN}).",
+			try {
+				logger.LogInformation("Listing user metadata for all users in application {appName} with recipient keys for {recipientKeyId} for exporter {exporterKeyId} ({exporterDN}).",
 				appName, recipientKeyId, exporterKeyId, exporterDN);
-			var users = await userManager.ListUsersAsync(appName, recipientKeyId, exporterDN, ct);
-			var result = users.Select(user => ToDto(user)).ToList();
-			return result;
+				var users = await userManager.ListUsersAsync(appName, recipientKeyId, exporterDN, ct);
+				var result = users.Select(user => ToDto(user)).ToList();
+				return result;
+			}
+			catch (OperationCanceledException) {
+				throw;
+			}
+			catch (ApplicationDoesNotExistException ex) {
+				logger.LogError(ex, "GetMetadataForAllUsers GET request for non-existent application {appName} from exporter {keyId} ({exporterDN}).", appName, exporterKeyId, exporterDN);
+				metrics.HandleUnknownAppError(appName);
+				return NotFound($"Application {appName} not found.");
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "GetMetadataForAllUsers GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
+					appName, exporterKeyId, exporterDN);
+				metrics.HandleUnexpectedError(appName, ex);
+				throw;
+			}
 		}
 
 		[HttpGet("{id:Guid}")]
 		public async Task<ActionResult<UserMetadataDTO>> GetUserMetadataById(Guid id, [FromQuery] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
 			if (credResult != null) return credResult;
-			logger.LogInformation("Fetching user metadata for user {userId} in application {appName} with recipient key for {recipientKeyId} for exporter {exporterKeyId} ({exporterDN}).",
+			try {
+				logger.LogInformation("Fetching user metadata for user {userId} in application {appName} with recipient key for {recipientKeyId} for exporter {exporterKeyId} ({exporterDN}).",
 				id, appName, recipientKeyId, exporterKeyId, exporterDN);
-			var user = await userManager.GetUserByIdAsync(id, recipientKeyId, fetchProperties: true, ct: ct);
-			if (user == null) {
-				throw new UserNotFoundException($"User {id} not found.", id);
+				var user = await userManager.GetUserByIdAsync(id, recipientKeyId, fetchProperties: true, ct: ct);
+				if (user == null) {
+					throw new UserNotFoundException($"User {id} not found.", id);
+				}
+				var result = ToDto(user);
+				return result;
 			}
-			var result = ToDto(user);
-			return result;
+			catch (OperationCanceledException) {
+				throw;
+			}
+			catch (ApplicationDoesNotExistException ex) {
+				logger.LogError(ex, "GetUserMetadataById GET request for non-existent application {appName} from exporter {keyId} ({exporterDN}).", appName, exporterKeyId, exporterDN);
+				metrics.HandleUnknownAppError(appName);
+				return NotFound($"Application {appName} not found.");
+			}
+			catch (UserNotFoundException ex) {
+				logger.LogError(ex, "GetUserMetadataById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed because the requested user {userId} was not found.",
+					appName, exporterKeyId, exporterDN, id);
+				metrics.HandleUserNotFoundError(appName);
+				return NotFound($"User {id} not found.");
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "GetUserMetadataById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
+					appName, exporterKeyId, exporterDN);
+				metrics.HandleUnexpectedError(appName, ex);
+				throw;
+			}
 		}
 	}
 }
