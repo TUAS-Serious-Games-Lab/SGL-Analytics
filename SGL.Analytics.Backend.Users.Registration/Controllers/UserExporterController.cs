@@ -23,6 +23,12 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		private readonly ILogger<UserExporterController> logger;
 		private readonly IMetricsManager metrics;
 
+		public UserExporterController(IUserManager userManager, ILogger<UserExporterController> logger, IMetricsManager metrics) {
+			this.userManager = userManager;
+			this.logger = logger;
+			this.metrics = metrics;
+		}
+
 		private ActionResult? GetCredentials(out string appName, out KeyId keyId, out string exporterDN) {
 			try {
 				appName = User.GetClaim("appname");
