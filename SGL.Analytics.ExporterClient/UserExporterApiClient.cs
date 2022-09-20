@@ -14,7 +14,7 @@ namespace SGL.Analytics.ExporterClient {
 	public class UserExporterApiClient : HttpApiClientBase, IUserExporterApiClient {
 		private static readonly MediaTypeWithQualityHeaderValue jsonMT = MediaTypeWithQualityHeaderValue.Parse("application/json");
 
-		public UserExporterApiClient(HttpClient httpClient, AuthorizationData? authorization) : base(httpClient, authorization, "/api/analytics/user/v1") { }
+		public UserExporterApiClient(HttpClient httpClient, AuthorizationData authorization) : base(httpClient, authorization, "/api/analytics/user/v1") { }
 
 		public async Task<IEnumerable<Guid>> GetUserIdListAsync(CancellationToken ct = default) {
 			using var response = await SendRequest(HttpMethod.Get, "", null, req => { }, accept: jsonMT, ct);
