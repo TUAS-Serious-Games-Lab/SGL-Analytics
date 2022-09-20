@@ -7,6 +7,6 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.ExporterClient {
 	public interface IExporterAuthenticator {
-		Task<AuthorizationToken> AuthenticateAsync(string appName, CancellationToken ct = default);
+		Task<AuthorizationData> AuthenticateAsync(string appName, CancellationToken ct = default);
 	}
 }
