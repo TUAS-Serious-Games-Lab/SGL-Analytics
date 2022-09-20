@@ -71,7 +71,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		[HttpGet("all")]
-		public async Task<ActionResult<IEnumerable<UserMetadataDTO>>> GetMetadataForAllUsers([FromQuery] KeyId? recipientKeyId = null, CancellationToken ct = default) {
+		public async Task<ActionResult<IEnumerable<UserMetadataDTO>>> GetMetadataForAllUsers([FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
 			if (credResult != null) return credResult;
 			try {
@@ -98,7 +98,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		[HttpGet("{id:Guid}")]
-		public async Task<ActionResult<UserMetadataDTO>> GetUserMetadataById(Guid id, [FromQuery] KeyId? recipientKeyId = null, CancellationToken ct = default) {
+		public async Task<ActionResult<UserMetadataDTO>> GetUserMetadataById(Guid id, [FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
 			if (credResult != null) return credResult;
 			try {

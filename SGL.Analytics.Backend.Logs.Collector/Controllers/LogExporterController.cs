@@ -79,7 +79,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		[HttpGet("all")]
-		public async Task<ActionResult<IEnumerable<DownstreamLogMetadataDTO>>> GetMetadataForAllLogs([FromQuery] KeyId? recipientKeyId = null, CancellationToken ct = default) {
+		public async Task<ActionResult<IEnumerable<DownstreamLogMetadataDTO>>> GetMetadataForAllLogs([FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
 			if (credResult != null) return credResult;
 			try {
@@ -106,7 +106,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		[HttpGet("{id:Guid}/metadata")]
-		public async Task<ActionResult<DownstreamLogMetadataDTO>> GetLogMetadataById(Guid id, [FromQuery] KeyId? recipientKeyId = null, CancellationToken ct = default) {
+		public async Task<ActionResult<DownstreamLogMetadataDTO>> GetLogMetadataById(Guid id, [FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
 			if (credResult != null) return credResult;
 			try {
