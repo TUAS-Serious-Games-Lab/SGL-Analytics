@@ -80,6 +80,7 @@ namespace SGL.Analytics.Backend.Users.Registration {
 
 			app.UseHttpMetrics();
 
+			app.UseAuthentication();
 			app.UseAuthorization();
 
 			app.UseEndpoints(endpoints => {
