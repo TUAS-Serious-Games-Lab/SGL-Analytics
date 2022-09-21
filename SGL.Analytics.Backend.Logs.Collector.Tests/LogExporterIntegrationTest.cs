@@ -279,5 +279,19 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				await Assert.ThrowsAnyAsync<Exception>(() => exporterClient.GetLogMetadataByIdAsync(fixture.OtherAppLogId));
 			}
 		}
+		[Fact]
+		public async Task GetLogMetadataByIdProvidesCorrectEncryptionInfoForTheGivenRecipientKeyId() {
+			var authData = fixture.GetAuthData(fixture.ExporterCert);
+			using (var httpClient = fixture.CreateClient()) {
+				var exporterClient = new LogExporterApiClient(httpClient, authData);
+				KeyId recipientKeyId = fixture.RecipientKeyPair2.Public.CalculateId();
+				var log2 = await exporterClient.GetLogMetadataByIdAsync(fixture.Log2Id, recipientKeyId);
+				Assert.Equal(fixture.Log2Id, log2.LogFileId);
+				Assert.Equal(fixture.User1Id, log2.UserId);
+				var keyDecryptor = new KeyDecryptor(fixture.RecipientKeyPair2);
+				var log2Content = await downloadAndDecryptLog(exporterClient, keyDecryptor, log2);
+				Assert.Equal(fixture.Log2Content, log2Content);
+			}
+		}
 	}
 }
