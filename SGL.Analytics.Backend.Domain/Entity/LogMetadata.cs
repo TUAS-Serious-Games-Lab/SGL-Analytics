@@ -116,6 +116,9 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 
 		public EncryptionInfo EncryptionInfo {
 			get {
+				if (RecipientKeys == null) {
+					return null!;
+				}
 				return new EncryptionInfo {
 					DataMode = EncryptionMode,
 					IVs = new List<byte[]> { InitializationVector },
