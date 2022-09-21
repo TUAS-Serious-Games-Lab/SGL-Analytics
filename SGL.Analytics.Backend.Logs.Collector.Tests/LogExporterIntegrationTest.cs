@@ -246,5 +246,19 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				Assert.Equal(fixture.Log5Content, log5Content);
 			}
 		}
+		[Fact]
+		public async Task GetMetadataForAllLogsProvidesEncryptionInfosOnlyForTheGivenRecipientKeyId() {
+			var authData = fixture.GetAuthData(fixture.ExporterCert);
+			using (var httpClient = fixture.CreateClient()) {
+				var exporterClient = new LogExporterApiClient(httpClient, authData);
+				KeyId recipientKeyId = fixture.RecipientKeyPair2.Public.CalculateId();
+				var logs = await exporterClient.GetMetadataForAllLogsAsync(recipientKeyId);
+				Assert.All(logs, log => {
+					Assert.NotNull(log.EncryptionInfo);
+					var dk = Assert.Single(log.EncryptionInfo.DataKeys);
+					Assert.Equal(recipientKeyId, dk.Key);
+				});
+			}
+		}
 	}
 }
