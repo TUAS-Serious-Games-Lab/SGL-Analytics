@@ -182,5 +182,19 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			fixture.Output = output;
 		}
 
+		[Fact]
+		public async Task GetLogIdListReturnsIdsOfAllLogsOfCurrentAppAndOnlyThose() {
+			var authData = fixture.GetAuthData(fixture.ExporterCert);
+			using (var httpClient = fixture.CreateClient()) {
+				var exporterClient = new LogExporterApiClient(httpClient, authData);
+				var logIds = await exporterClient.GetLogIdListAsync();
+				Assert.Contains(fixture.Log1Id, logIds);
+				Assert.Contains(fixture.Log2Id, logIds);
+				Assert.Contains(fixture.Log3Id, logIds);
+				Assert.Contains(fixture.Log4Id, logIds);
+				Assert.Contains(fixture.Log5Id, logIds);
+				Assert.DoesNotContain(fixture.OtherAppLogId, logIds);
+			}
+		}
 	}
 }
