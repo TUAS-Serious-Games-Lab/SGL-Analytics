@@ -271,5 +271,13 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				Assert.Equal(LogContentEncoding.Plain, log.LogContentEncoding);
 			}
 		}
+		[Fact]
+		public async Task GetLogMetadataByIdDoesNotReturnDataForUsersOfOtherApps() {
+			var authData = fixture.GetAuthData(fixture.ExporterCert);
+			using (var httpClient = fixture.CreateClient()) {
+				var exporterClient = new LogExporterApiClient(httpClient, authData);
+				await Assert.ThrowsAnyAsync<Exception>(() => exporterClient.GetLogMetadataByIdAsync(fixture.OtherAppLogId));
+			}
+		}
 	}
 }
