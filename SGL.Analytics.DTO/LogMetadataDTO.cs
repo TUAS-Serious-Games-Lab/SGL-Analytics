@@ -13,7 +13,7 @@ namespace SGL.Analytics.DTO {
 		/// <summary>
 		/// The log file content is uploaded as plain text JSON.
 		/// </summary>
-		Plain = 0,
+		Plain = 2,
 		/// <summary>
 		/// The content as it would be for <see cref="Plain"/>, but compressed using the gzip algorithm.
 		/// </summary>
