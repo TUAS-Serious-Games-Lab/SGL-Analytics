@@ -14,7 +14,7 @@ namespace SGL.Analytics.ExporterClient {
 	public class LogExporterApiClient : HttpApiClientBase, ILogExporterApiClient {
 		private static readonly MediaTypeWithQualityHeaderValue octetStreamMT = MediaTypeWithQualityHeaderValue.Parse("application/octet-stream");
 		private static readonly MediaTypeWithQualityHeaderValue jsonMT = MediaTypeWithQualityHeaderValue.Parse("application/json");
-		public LogExporterApiClient(HttpClient httpClient, AuthorizationData authorization) : base(httpClient, authorization, "/api/analytics/user/v1") { }
+		public LogExporterApiClient(HttpClient httpClient, AuthorizationData authorization) : base(httpClient, authorization, "/api/analytics/log/v2") { }
 
 		public async Task<Stream> GetLogContentByIdAsync(Guid id, CancellationToken ct = default) {
 			var response = await SendRequest(HttpMethod.Get, $"{id}/content", null, req => { }, accept: octetStreamMT, ct);
