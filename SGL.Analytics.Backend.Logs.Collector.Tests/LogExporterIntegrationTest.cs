@@ -196,5 +196,19 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				Assert.DoesNotContain(fixture.OtherAppLogId, logIds);
 			}
 		}
+		[Fact]
+		public async Task GetMetadataForAllLogsReturnsMetadataOfAllLogsOfCurrentAppAndOnlyThose() {
+			var authData = fixture.GetAuthData(fixture.ExporterCert);
+			using (var httpClient = fixture.CreateClient()) {
+				var exporterClient = new LogExporterApiClient(httpClient, authData);
+				var logs = await exporterClient.GetMetadataForAllLogsAsync();
+				Assert.Contains(logs, log => log.LogFileId == fixture.Log1Id && log.UserId == fixture.User1Id);
+				Assert.Contains(logs, log => log.LogFileId == fixture.Log2Id && log.UserId == fixture.User1Id);
+				Assert.Contains(logs, log => log.LogFileId == fixture.Log3Id && log.UserId == fixture.User1Id);
+				Assert.Contains(logs, log => log.LogFileId == fixture.Log4Id && log.UserId == fixture.User2Id);
+				Assert.Contains(logs, log => log.LogFileId == fixture.Log5Id && log.UserId == fixture.User2Id);
+				Assert.DoesNotContain(logs, log => log.LogFileId == fixture.OtherAppLogId);
+			}
+		}
 	}
 }
