@@ -43,6 +43,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		public List<Certificate> Certificates = new List<Certificate>();
 		public DistinguishedName SignerIdentity { get; } = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Utility"), new("ou", "Tests"), new("cn", "Test Signer") });
 
+		public KeyPair RecipientKeyPair = null!;
 		public KeyPair ExporterKeyPair = null!;
 		public Certificate ExporterCertificate = null!;
 
@@ -76,8 +77,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			signerKeyPair = KeyPair.GenerateEllipticCurves(Random, 521);
 		}
 
-		private string createCertificatePem(string cn, List<Certificate>? certificateList) {
-			var keyPair = KeyPair.GenerateEllipticCurves(Random, 521);
+		private string createCertificatePem(string cn, List<Certificate>? certificateList, out KeyPair keyPair) {
+			keyPair = KeyPair.GenerateEllipticCurves(Random, 521);
 			var identity = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Utility"), new("ou", "Tests"), new("cn", cn) });
 			var certificate = Certificate.Generate(SignerIdentity, signerKeyPair.Private, identity, keyPair.Public, TimeSpan.FromHours(1), Random, 128, keyUsages: KeyUsages.KeyEncipherment);
 			using var writer = new StringWriter();
@@ -99,21 +100,21 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			var app = ApplicationWithUserProperties.Create(AppName, AppApiToken);
 			app.AddProperty("Foo", UserPropertyType.String, true);
 			app.AddProperty("Bar", UserPropertyType.String);
-			app.AddRecipient("test recipient 1", createCertificatePem("Test 1", Certificates));
-			app.AddRecipient("test recipient 2", createCertificatePem("Test 2", Certificates));
-			app.AddRecipient("test recipient 3", createCertificatePem("Test 3", Certificates));
+			app.AddRecipient("test recipient 1", createCertificatePem("Test 1", Certificates, out RecipientKeyPair));
+			app.AddRecipient("test recipient 2", createCertificatePem("Test 2", Certificates, out _));
+			app.AddRecipient("test recipient 3", createCertificatePem("Test 3", Certificates, out _));
 			app.AddAuthorizedExporter("test exporter 1", createKeyAuthCertificatePem("Exporter 1", out ExporterKeyPair, out ExporterCertificate));
 			context.Applications.Add(app);
 			var app2 = ApplicationWithUserProperties.Create(AppName + "_2", AppApiToken + "_2");
 			app2.AddProperty("Foo", UserPropertyType.String, true);
 			app2.AddProperty("Bar", UserPropertyType.String);
-			app2.AddRecipient("other test recipient 1", createCertificatePem("Other Test 1", null));
-			app2.AddRecipient("other test recipient 2", createCertificatePem("Other Test 2", null));
+			app2.AddRecipient("other test recipient 1", createCertificatePem("Other Test 1", null, out _));
+			app2.AddRecipient("other test recipient 2", createCertificatePem("Other Test 2", null, out _));
 			context.Applications.Add(app2);
 
-			var user1 = createUserRegistration(app, out User1Id, out User1Props);
-			var user2 = createUserRegistration(app, out User2Id, out User2Props, "testuser1");
-			var user3 = createUserRegistration(app, out User3Id, out User3Props);
+			var user1 = createUserRegistration(app, out User1Id, out User1Props, "test user 1");
+			var user2 = createUserRegistration(app, out User2Id, out User2Props, "test user 2", "testuser2");
+			var user3 = createUserRegistration(app, out User3Id, out User3Props, "test user 3");
 			context.UserRegistrations.Add(user1);
 			context.UserRegistrations.Add(user2);
 			context.UserRegistrations.Add(user3);
@@ -122,7 +123,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			context.SaveChanges();
 		}
 
-		private UserRegistration createUserRegistration(ApplicationWithUserProperties app, out Guid id, out byte[] userProps, string? username = null) {
+		private UserRegistration createUserRegistration(ApplicationWithUserProperties app, out Guid id, out byte[] userProps, string fooProp, string? username = null) {
 			var userPw = StringGenerator.GenerateRandomWord(16);
 			userProps = Random.GetBytes(512);
 			var keyEncryptor = new KeyEncryptor(app.DataRecipients.Select(dr => dr.Certificate.PublicKey), Random, true);
@@ -135,6 +136,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			else {
 				user = UserRegistration.Create(app, SecretHashing.CreateHashedSecret(userPw), encryptedUserProps, dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
 			}
+			user.SetAppSpecificProperty("Foo", fooProp);
 			id = user.Id;
 			return user;
 		}
@@ -180,6 +182,20 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Contains(fixture.User2Id, userIds);
 				Assert.Contains(fixture.User3Id, userIds);
 				Assert.DoesNotContain(fixture.OtherAppUserId, userIds);
+			}
+		}
+		[Fact]
+		public async Task GetMetadataForAllUsersReturnsMetadataOfAllUsersOfCurrentAppAndOnlyThose() {
+			using (var httpClient = fixture.CreateClient()) {
+				var authenticator = new ExporterKeyPairAuthenticator(httpClient, fixture.ExporterKeyPair, fixture.Services.GetRequiredService<ILogger<ExporterKeyPairAuthenticator>>(), fixture.Random);
+				var authData = await authenticator.AuthenticateAsync(fixture.AppName);
+				var (principal, validatedToken) = fixture.TokenValidator.Validate(authData.Token.Value);
+				var exporterClient = new UserExporterApiClient(httpClient, authData);
+				var users = await exporterClient.GetMetadataForAllUsersAsync();
+				Assert.Contains(users, user => user.UserId == fixture.User1Id && (user.StudySpecificProperties["Foo"]?.Equals("test user 1") ?? false));
+				Assert.Contains(users, user => user.UserId == fixture.User2Id && (user.StudySpecificProperties["Foo"]?.Equals("test user 2") ?? false) && user.Username == "testuser2");
+				Assert.Contains(users, user => user.UserId == fixture.User3Id && (user.StudySpecificProperties["Foo"]?.Equals("test user 3") ?? false));
+				Assert.DoesNotContain(users, user => user.UserId == fixture.OtherAppUserId);
 			}
 		}
 	}
