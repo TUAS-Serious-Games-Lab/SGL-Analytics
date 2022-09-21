@@ -11,6 +11,7 @@ nuget-package:
     GIT_DEPTH: 0
   script:
     - VERSION="$(./get_version_from_git.sh)${CI_COMMIT_BRANCH:+-${CI_COMMIT_BRANCH:0:12}}"
+    - VERSION="$(./increment_prerelease_version.sh $VERSION)"
     - 'echo Building package version ${VERSION} ...'
     - 'dotnet pack --no-restore -c Release -p:Version="${VERSION}" SGL.Analytics.Client'
     - 'dotnet nuget update source SGL --username gitlab-ci-token --password $CI_JOB_TOKEN --store-password-in-clear-text'
