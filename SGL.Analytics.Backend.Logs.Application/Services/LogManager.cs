@@ -196,6 +196,11 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				logger.LogError("Attempt to retrieve non-existent log file with id {logId} from application {appName} for recipient {keyId} by exporter {dn}.", logId, appName, recipientKeyId, exporterDN);
 				throw new LogNotFoundException($"The log {logId} was not found.", logId);
 			}
+			if (log.AppId != app.Id) {
+				logger.LogError("Attempt to retrieve log file with id {logId} from application {appName} for recipient {keyId} by exporter {dn}, but the file actually belongs to application {actualAppName}.",
+					logId, appName, recipientKeyId, exporterDN, log.App.Name);
+				throw new LogNotFoundException($"The log {logId} was not found in application {appName}.", logId);
+			}
 			return new LogFile(log, logFileRepo);
 		}
 	}

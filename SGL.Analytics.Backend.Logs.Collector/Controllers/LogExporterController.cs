@@ -128,7 +128,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 				logger.LogError(ex, "GetLogMetadataById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed because the requested log {logId} was not found.",
 					appName, exporterKeyId, exporterDN, id);
 				metrics.HandleLogNotFoundError(appName);
-				return NotFound($"Log {id} not found.");
+				return NotFound($"Log {id} not found in the application {appName}.");
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "GetLogMetadataById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
@@ -161,7 +161,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 				logger.LogError(ex, "GetLogContentById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed because the requested log {logId} was not found.",
 					appName, exporterKeyId, exporterDN, id);
 				metrics.HandleLogNotFoundError(appName);
-				return NotFound($"Log {id} not found.");
+				return NotFound($"Log {id} not found in the application {appName}.");
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "GetLogContentById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
