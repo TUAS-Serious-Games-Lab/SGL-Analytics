@@ -190,7 +190,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				logger.LogError("Attempt to retrieve log file with id {logId} from non-existent application {appName} for recipient {keyId} by exporter {dn}.", logId, appName, recipientKeyId, exporterDN);
 				throw new ApplicationDoesNotExistException(appName);
 			}
-			var queryOptions = new LogMetadataQueryOptions { ForUpdating = false };
+			var queryOptions = new LogMetadataQueryOptions { ForUpdating = false, FetchRecipientKey = recipientKeyId };
 			var log = await logMetaRepo.GetLogMetadataByIdAsync(logId, queryOptions, ct);
 			if (log == null) {
 				logger.LogError("Attempt to retrieve non-existent log file with id {logId} from application {appName} for recipient {keyId} by exporter {dn}.", logId, appName, recipientKeyId, exporterDN);
