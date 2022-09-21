@@ -31,7 +31,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		private static DownstreamLogMetadataDTO ToDto(LogFile log) {
-			return new DownstreamLogMetadataDTO(log.Id, log.CreationTime, log.EndTime, log.UploadTime, log.Size,
+			return new DownstreamLogMetadataDTO(log.Id, log.UserId, log.CreationTime, log.EndTime, log.UploadTime, log.Size,
 							log.FilenameSuffix, log.Encoding, log.EncryptionInfo);
 		}
 
