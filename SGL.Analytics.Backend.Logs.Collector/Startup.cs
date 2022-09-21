@@ -41,7 +41,7 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			});
 
 			services.UseConfigurableUploadLimit(Configuration, "AnalyticsLog");
-			services.AddControllers(options => options.AddPemFormatters());
+			services.AddControllers(options => options.AddPemFormatters().AddKeyIdModelBinding());
 
 			services.UseJwtBearerAuthentication(Configuration);
 			services.AddAuthorization(options => {

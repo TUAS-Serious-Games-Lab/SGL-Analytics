@@ -41,7 +41,7 @@ namespace SGL.Analytics.Backend.Users.Registration {
 				config.Constants.TryAdd("ServiceName", "SGL.Analytics.UserRegistration");
 			});
 
-			services.AddControllers(options => options.AddPemFormatters());
+			services.AddControllers(options => options.AddPemFormatters().AddKeyIdModelBinding());
 
 			services.UseUsersBackendInfrastructure(Configuration);
 			services.UseUsersBackendAppplicationLayer(Configuration);
