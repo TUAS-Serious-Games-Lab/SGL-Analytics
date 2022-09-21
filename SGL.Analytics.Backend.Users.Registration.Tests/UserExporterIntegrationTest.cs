@@ -260,5 +260,15 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Equal("test user 2", user.StudySpecificProperties["Foo"]);
 			}
 		}
+		[Fact]
+		public async Task GetUserMetadataByIdDoesNotReturnDataForUsersOfOtherApps() {
+			using (var httpClient = fixture.CreateClient()) {
+				var authenticator = new ExporterKeyPairAuthenticator(httpClient, fixture.ExporterKeyPair, fixture.Services.GetRequiredService<ILogger<ExporterKeyPairAuthenticator>>(), fixture.Random);
+				var authData = await authenticator.AuthenticateAsync(fixture.AppName);
+				var (principal, validatedToken) = fixture.TokenValidator.Validate(authData.Token.Value);
+				var exporterClient = new UserExporterApiClient(httpClient, authData);
+				await Assert.ThrowsAnyAsync<Exception>(() => exporterClient.GetUserMetadataByIdAsync(fixture.OtherAppUserId));
+			}
+		}
 	}
 }
