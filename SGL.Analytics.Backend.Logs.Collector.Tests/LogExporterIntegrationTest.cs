@@ -210,5 +210,41 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				Assert.DoesNotContain(logs, log => log.LogFileId == fixture.OtherAppLogId);
 			}
 		}
+
+		private async Task<byte[]> downloadAndDecryptLog(LogExporterApiClient exporterClient, KeyDecryptor keyDecryptor, DownstreamLogMetadataDTO metadata) {
+			Assert.NotNull(metadata.EncryptionInfo);
+			var logDecryptor = DataDecryptor.FromEncryptionInfo(metadata.EncryptionInfo, keyDecryptor);
+			Assert.NotNull(logDecryptor);
+			using var contentStream = await exporterClient.GetLogContentByIdAsync(metadata.LogFileId);
+			using var decryptionStream = logDecryptor.OpenDecryptionReadStream(contentStream, 0);
+			using var buffer = new MemoryStream();
+			await decryptionStream.CopyToAsync(buffer);
+			return buffer.ToArray();
+		}
+		[Fact]
+		public async Task GetMetadataForAllLogsProvidesCorrectEncryptionInfosForTheGivenRecipientKeyId() {
+			var authData = fixture.GetAuthData(fixture.ExporterCert);
+			using (var httpClient = fixture.CreateClient()) {
+				var exporterClient = new LogExporterApiClient(httpClient, authData);
+				KeyId recipientKeyId = fixture.RecipientKeyPair2.Public.CalculateId();
+				var logs = await exporterClient.GetMetadataForAllLogsAsync(recipientKeyId);
+				var log1 = logs.Single(u => u.LogFileId == fixture.Log1Id);
+				var log2 = logs.Single(u => u.LogFileId == fixture.Log2Id);
+				var log3 = logs.Single(u => u.LogFileId == fixture.Log3Id);
+				var log4 = logs.Single(u => u.LogFileId == fixture.Log4Id);
+				var log5 = logs.Single(u => u.LogFileId == fixture.Log5Id);
+				var keyDecryptor = new KeyDecryptor(fixture.RecipientKeyPair2);
+				var log1Content = await downloadAndDecryptLog(exporterClient, keyDecryptor, log1);
+				var log2Content = await downloadAndDecryptLog(exporterClient, keyDecryptor, log2);
+				var log3Content = await downloadAndDecryptLog(exporterClient, keyDecryptor, log3);
+				var log4Content = await downloadAndDecryptLog(exporterClient, keyDecryptor, log4);
+				var log5Content = await downloadAndDecryptLog(exporterClient, keyDecryptor, log5);
+				Assert.Equal(fixture.Log1Content, log1Content);
+				Assert.Equal(fixture.Log2Content, log2Content);
+				Assert.Equal(fixture.Log3Content, log3Content);
+				Assert.Equal(fixture.Log4Content, log4Content);
+				Assert.Equal(fixture.Log5Content, log5Content);
+			}
+		}
 	}
 }
