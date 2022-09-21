@@ -270,5 +270,24 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				await Assert.ThrowsAnyAsync<Exception>(() => exporterClient.GetUserMetadataByIdAsync(fixture.OtherAppUserId));
 			}
 		}
+		[Fact]
+		public async Task GetUserMetadataByIdProvidesCorrectEncryptionInfoForTheGivenRecipientKeyId() {
+			using (var httpClient = fixture.CreateClient()) {
+				var authenticator = new ExporterKeyPairAuthenticator(httpClient, fixture.ExporterKeyPair, fixture.Services.GetRequiredService<ILogger<ExporterKeyPairAuthenticator>>(), fixture.Random);
+				var authData = await authenticator.AuthenticateAsync(fixture.AppName);
+				var (principal, validatedToken) = fixture.TokenValidator.Validate(authData.Token.Value);
+				var exporterClient = new UserExporterApiClient(httpClient, authData);
+				KeyId recipientKeyId = fixture.RecipientKeyPair.Public.CalculateId();
+				var user2 = await exporterClient.GetUserMetadataByIdAsync(fixture.User2Id, recipientKeyId);
+				var keyDecryptor = new KeyDecryptor(fixture.RecipientKeyPair);
+				Assert.Equal(fixture.User2Id, user2.UserId);
+				Assert.NotNull(user2.EncryptedProperties);
+				Assert.NotNull(user2.PropertyEncryptionInfo);
+				var user2Decryptor = DataDecryptor.FromEncryptionInfo(user2.PropertyEncryptionInfo, keyDecryptor);
+				Assert.NotNull(user2Decryptor);
+				var user2Props = user2Decryptor.DecryptData(user2.EncryptedProperties, 0);
+				Assert.Equal(fixture.User2Props, user2Props);
+			}
+		}
 	}
 }
