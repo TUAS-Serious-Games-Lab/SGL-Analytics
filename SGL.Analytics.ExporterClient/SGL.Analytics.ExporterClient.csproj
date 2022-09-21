@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SGL.Utilities.Crypto" Version="0.10.0-2-gf5074bf-main" />
+    <PackageReference Include="SGL.Utilities.Crypto" Version="0.10.1" />
   </ItemGroup>
 
   <ItemGroup>
