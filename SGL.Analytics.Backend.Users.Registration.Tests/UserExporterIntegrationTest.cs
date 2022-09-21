@@ -231,5 +231,20 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Equal(fixture.User3Props, user3Props);
 			}
 		}
+		[Fact]
+		public async Task GetMetadataForAllUsersProvidesEncryptionInfosOnlyForTheGivenRecipientKeyId() {
+			using (var httpClient = fixture.CreateClient()) {
+				var authenticator = new ExporterKeyPairAuthenticator(httpClient, fixture.ExporterKeyPair, fixture.Services.GetRequiredService<ILogger<ExporterKeyPairAuthenticator>>(), fixture.Random);
+				var authData = await authenticator.AuthenticateAsync(fixture.AppName);
+				var (principal, validatedToken) = fixture.TokenValidator.Validate(authData.Token.Value);
+				var exporterClient = new UserExporterApiClient(httpClient, authData);
+				KeyId recipientKeyId = fixture.RecipientKeyPair.Public.CalculateId();
+				var users = await exporterClient.GetMetadataForAllUsersAsync(recipientKeyId);
+				Assert.All(users, user => {
+					var dk = Assert.Single(user.PropertyEncryptionInfo.DataKeys);
+					Assert.Equal(recipientKeyId, dk.Key);
+				});
+			}
+		}
 	}
 }
