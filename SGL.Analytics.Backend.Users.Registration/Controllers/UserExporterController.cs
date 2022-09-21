@@ -112,7 +112,16 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				id, appName, recipientKeyId, exporterKeyId, exporterDN);
 				var user = await userManager.GetUserByIdAsync(id, recipientKeyId, fetchProperties: true, ct: ct);
 				if (user == null) {
+					logger.LogError("GetUserMetadataById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed because the requested user {userId} was not found.",
+						appName, exporterKeyId, exporterDN, id);
+					metrics.HandleUserNotFoundError(appName);
 					throw new UserNotFoundException($"User {id} not found.", id);
+				}
+				if (user.App.Name != appName) {
+					logger.LogError("GetUserMetadataById GET request for user {userId} failed because the retrieved user is not associated with the application indicated by the auth token {reqAppName}, but with {userAppName}.",
+						user.Id, appName, user.App.Name);
+					metrics.HandleUserIdAppMismatchError(appName);
+					throw new UserNotFoundException($"User {id} not found in app {appName}.", id);
 				}
 				var result = ToDto(user);
 				return result;
@@ -125,11 +134,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				metrics.HandleUnknownAppError(appName);
 				return NotFound($"Application {appName} not found.");
 			}
-			catch (UserNotFoundException ex) {
-				logger.LogError(ex, "GetUserMetadataById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed because the requested user {userId} was not found.",
-					appName, exporterKeyId, exporterDN, id);
-				metrics.HandleUserNotFoundError(appName);
-				return NotFound($"User {id} not found.");
+			catch (UserNotFoundException) {
+				return NotFound($"User {id} not found in app {appName}.");
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "GetUserMetadataById GET request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
