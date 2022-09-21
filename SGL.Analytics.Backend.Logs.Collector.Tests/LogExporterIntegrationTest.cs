@@ -260,5 +260,16 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				});
 			}
 		}
+		[Fact]
+		public async Task GetLogMetadataByIdReturnsMetadataOfRequestedUser() {
+			var authData = fixture.GetAuthData(fixture.ExporterCert);
+			using (var httpClient = fixture.CreateClient()) {
+				var exporterClient = new LogExporterApiClient(httpClient, authData);
+				var log = await exporterClient.GetLogMetadataByIdAsync(fixture.Log2Id);
+				Assert.Equal(fixture.Log2Id, log.LogFileId);
+				Assert.Equal(fixture.User1Id, log.UserId);
+				Assert.Equal(LogContentEncoding.Plain, log.LogContentEncoding);
+			}
+		}
 	}
 }
