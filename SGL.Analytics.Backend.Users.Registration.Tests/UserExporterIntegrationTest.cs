@@ -247,5 +247,18 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				});
 			}
 		}
+		[Fact]
+		public async Task GetUserMetadataByIdReturnsMetadataOfRequestedUser() {
+			using (var httpClient = fixture.CreateClient()) {
+				var authenticator = new ExporterKeyPairAuthenticator(httpClient, fixture.ExporterKeyPair, fixture.Services.GetRequiredService<ILogger<ExporterKeyPairAuthenticator>>(), fixture.Random);
+				var authData = await authenticator.AuthenticateAsync(fixture.AppName);
+				var (principal, validatedToken) = fixture.TokenValidator.Validate(authData.Token.Value);
+				var exporterClient = new UserExporterApiClient(httpClient, authData);
+				var user = await exporterClient.GetUserMetadataByIdAsync(fixture.User2Id);
+				Assert.Equal(fixture.User2Id, user.UserId);
+				Assert.Equal("testuser2", user.Username);
+				Assert.Equal("test user 2", user.StudySpecificProperties["Foo"]);
+			}
+		}
 	}
 }
