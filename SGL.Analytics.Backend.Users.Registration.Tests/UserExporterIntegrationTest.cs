@@ -198,5 +198,38 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.DoesNotContain(users, user => user.UserId == fixture.OtherAppUserId);
 			}
 		}
+		[Fact]
+		public async Task GetMetadataForAllUsersProvidesCorrectEncryptionInfosForTheGivenRecipientKeyId() {
+			using (var httpClient = fixture.CreateClient()) {
+				var authenticator = new ExporterKeyPairAuthenticator(httpClient, fixture.ExporterKeyPair, fixture.Services.GetRequiredService<ILogger<ExporterKeyPairAuthenticator>>(), fixture.Random);
+				var authData = await authenticator.AuthenticateAsync(fixture.AppName);
+				var (principal, validatedToken) = fixture.TokenValidator.Validate(authData.Token.Value);
+				var exporterClient = new UserExporterApiClient(httpClient, authData);
+				KeyId recipientKeyId = fixture.RecipientKeyPair.Public.CalculateId();
+				var users = await exporterClient.GetMetadataForAllUsersAsync(recipientKeyId);
+				var user1 = users.Single(u => u.UserId == fixture.User1Id);
+				var user2 = users.Single(u => u.UserId == fixture.User2Id);
+				var user3 = users.Single(u => u.UserId == fixture.User3Id);
+				var keyDecryptor = new KeyDecryptor(fixture.RecipientKeyPair);
+				Assert.NotNull(user1.EncryptedProperties);
+				Assert.NotNull(user2.EncryptedProperties);
+				Assert.NotNull(user3.EncryptedProperties);
+				Assert.NotNull(user1.PropertyEncryptionInfo);
+				Assert.NotNull(user2.PropertyEncryptionInfo);
+				Assert.NotNull(user3.PropertyEncryptionInfo);
+				var user1Decryptor = DataDecryptor.FromEncryptionInfo(user1.PropertyEncryptionInfo, keyDecryptor);
+				var user2Decryptor = DataDecryptor.FromEncryptionInfo(user2.PropertyEncryptionInfo, keyDecryptor);
+				var user3Decryptor = DataDecryptor.FromEncryptionInfo(user3.PropertyEncryptionInfo, keyDecryptor);
+				Assert.NotNull(user1Decryptor);
+				Assert.NotNull(user2Decryptor);
+				Assert.NotNull(user3Decryptor);
+				var user1Props = user1Decryptor.DecryptData(user1.EncryptedProperties, 0);
+				var user2Props = user2Decryptor.DecryptData(user2.EncryptedProperties, 0);
+				var user3Props = user3Decryptor.DecryptData(user3.EncryptedProperties, 0);
+				Assert.Equal(fixture.User1Props, user1Props);
+				Assert.Equal(fixture.User2Props, user2Props);
+				Assert.Equal(fixture.User3Props, user3Props);
+			}
+		}
 	}
 }
