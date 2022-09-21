@@ -241,6 +241,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				KeyId recipientKeyId = fixture.RecipientKeyPair.Public.CalculateId();
 				var users = await exporterClient.GetMetadataForAllUsersAsync(recipientKeyId);
 				Assert.All(users, user => {
+					Assert.NotNull(user.PropertyEncryptionInfo);
 					var dk = Assert.Single(user.PropertyEncryptionInfo.DataKeys);
 					Assert.Equal(recipientKeyId, dk.Key);
 				});
