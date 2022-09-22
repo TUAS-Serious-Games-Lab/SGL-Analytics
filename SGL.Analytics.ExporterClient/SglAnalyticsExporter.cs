@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.Keys;
 using System.Runtime.CompilerServices;
@@ -19,11 +20,17 @@ namespace SGL.Analytics.ExporterClient {
 		/// The <see cref="ILoggerFactory"/> object that this client uses for logging.
 		/// </summary>
 		public ILoggerFactory LoggerFactory { get; }
-		public (KeyId AuthenticationKey, KeyId DecryptionKey, Certificate AuthenticationCertificate, Certificate DecryptionCertificate)? CurrentKeys { get; private set; } = null;
+		public (KeyId AuthenticationKeyId, KeyId DecryptionKeyId)? CurrentKeyIds { get; private set; } = null;
+		public (Certificate AuthenticationCertificate, Certificate DecryptionCertificate)? CurrentKeyCertificates { get; private set; } = null;
 		public string? CurrentAppName { get; private set; } = null;
 
-		public async Task UseKeyFileAsync(TextReader reader, string sourceName, CancellationToken ct = default) {
-			throw new NotImplementedException();
+		public async Task UseKeyFileAsync(TextReader reader, string sourceName, Func<char[]> getPassword, CancellationToken ct = default) {
+			var pemReader = new PemObjectReader(reader, getPassword);
+			var result = await Task.Run(() => ReadKeyFile(pemReader, sourceName, ct), ct);
+			authenticationKeyPair = result.AuthenticationKeyPair;
+			recipientKeyPair = result.RecipientKeyPair;
+			CurrentKeyIds = (result.AuthenticationKeyId, result.RecipientKeyId);
+			CurrentKeyCertificates = (result.AuthenticationCertificate, result.RecipientCertificate);
 		}
 
 		public async Task SwitchToApplicationAsync(string appName, CancellationToken ct = default) {
