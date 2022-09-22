@@ -36,6 +36,13 @@ namespace SGL.Analytics.ExporterClient {
 			return customArgumentFactories.GetCustomArgument<T>(this);
 		}
 
+		internal SglAnalyticsExporterConfiguratorFactoryArguments(HttpClient httpClient, ILoggerFactory loggerFactory, RandomGenerator random,
+				ConfiguratorCustomArgumentFactoryContainer<SglAnalyticsExporterConfiguratorFactoryArguments, SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments> customArgumentFactories) {
+			HttpClient = httpClient;
+			LoggerFactory = loggerFactory;
+			Random = random;
+			this.customArgumentFactories = customArgumentFactories;
+		}
 	}
 
 	public class SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments : SglAnalyticsExporterConfiguratorFactoryArguments {
@@ -52,6 +59,16 @@ namespace SGL.Analytics.ExporterClient {
 		public Certificate AuthenticationCertificate { get; }
 		public KeyId DecryptionKeyId { get; }
 		public Certificate DecryptionCertificate { get; }
+
+		internal SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments(HttpClient httpClient, ILoggerFactory loggerFactory, RandomGenerator random, ConfiguratorCustomArgumentFactoryContainer<SglAnalyticsExporterConfiguratorFactoryArguments, SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments> customArgumentFactories, string appName, AuthorizationData authorization, KeyId authenticationKeyId, Certificate authenticationCertificate, KeyId decryptionKeyId, Certificate decryptionCertificate) : base(httpClient, loggerFactory, random, customArgumentFactories) {
+			AppName = appName;
+			Authorization = authorization;
+			AuthenticationKeyId = authenticationKeyId;
+			AuthenticationCertificate = authenticationCertificate;
+			DecryptionKeyId = decryptionKeyId;
+			DecryptionCertificate = decryptionCertificate;
+		}
+
 	}
 
 	public interface ISglAnalyticsExporterConfigurator {
@@ -69,7 +86,7 @@ namespace SGL.Analytics.ExporterClient {
 		/// <returns>A reference to this <see cref="ISglAnalyticsExporterConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsExporterConfigurator UseLoggerFactory(Func<SglAnalyticsExporterConfiguratorFactoryArguments, ILoggerFactory> loggerFactoryFactory, bool dispose = true);
 
-		ISglAnalyticsExporterConfigurator UseAuthenticator(Func<SglAnalyticsExporterConfiguratorFactoryArguments, IExporterAuthenticator> authenticatorFactory, bool dispose = true);
+		ISglAnalyticsExporterConfigurator UseAuthenticator(Func<SglAnalyticsExporterConfiguratorFactoryArguments, KeyPair, IExporterAuthenticator> authenticatorFactory, bool dispose = true);
 		ISglAnalyticsExporterConfigurator UseUserApiClient(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, IUserExporterApiClient> userExporterFactory, bool dispose = true);
 		ISglAnalyticsExporterConfigurator UseLogApiClient(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, ILogExporterApiClient> logExporterFactory, bool dispose = true);
 		ISglAnalyticsExporterConfigurator UseUserSink(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, IUserRegistrationSink> userSinkFactory, bool dispose = true);
