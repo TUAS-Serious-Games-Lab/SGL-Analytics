@@ -13,7 +13,7 @@ namespace SGL.Analytics.ExporterClient {
 		private class SglAnalyticsExporterConfigurator : ISglAnalyticsExporterConfigurator {
 			internal SglAnalyticsExporterConfigurator() {
 				SynchronizationContextGetter = () => SynchronizationContext.Current ?? throw new InvalidOperationException("No SynchronizationContext set. " +
-	"SGL Analytics requires a synchronized SynchronizationContext that can be used to dispatch event handler invocations to the main thread.");
+					"SGL Analytics requires a synchronized SynchronizationContext that can be used to dispatch event handler invocations to the main thread.");
 				LoggerFactory = (args => NullLoggerFactory.Instance, true);
 				Authenticator = ((args, keyPair) => new ExporterKeyPairAuthenticator(args.HttpClient, keyPair, args.LoggerFactory.CreateLogger<ExporterKeyPairAuthenticator>(), args.Random), true);
 				LogApiClient = (args => new LogExporterApiClient(args.HttpClient, args.Authorization), true);

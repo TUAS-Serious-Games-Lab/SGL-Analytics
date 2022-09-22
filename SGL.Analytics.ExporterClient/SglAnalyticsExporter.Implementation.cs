@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.ExporterClient {
 	public partial class SglAnalyticsExporter {
+		private SynchronizationContext mainSyncContext;
 		private HttpClient httpClient;
 		private SglAnalyticsExporterConfigurator configurator = new SglAnalyticsExporterConfigurator();
 		private RandomGenerator randomGenerator = new RandomGenerator();
