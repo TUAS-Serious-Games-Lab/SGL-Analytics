@@ -1,19 +1,19 @@
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Analytics.Backend.Users.Application.Tests.Dummies;
 using SGL.Analytics.DTO;
-using SGL.Utilities.TestUtilities.XUnit;
 using SGL.Utilities;
+using SGL.Utilities.Backend.TestUtilities.Applications;
+using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
-using SGL.Utilities.Backend.TestUtilities.Applications;
-using SGL.Analytics.Backend.Domain.Exceptions;
 
 namespace SGL.Analytics.Backend.Users.Application.Tests {
 	public class UserManagerUnitTest {
@@ -178,7 +178,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			userClone.AppSpecificProperties["Test"] = "Hello World";
 			userClone.AppSpecificProperties["XYZ"] = 42;
 			await userMgr.UpdateUserAsync(userClone);
-			var userRead = await userMgr.GetUserByIdAsync(userClone.Id);
+			var userRead = await userMgr.GetUserByIdAsync(userClone.Id, fetchProperties: true);
 
 			Assert.NotNull(userRead);
 			Assert.Equal("NewName", userRead!.Username);

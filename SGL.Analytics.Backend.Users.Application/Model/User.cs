@@ -57,8 +57,8 @@ namespace SGL.Analytics.Backend.Users.Application.Model {
 		/// </summary>
 		public Dictionary<string, object?> AppSpecificProperties { get; private set; }
 
-		public byte[] EncryptedProperties { get; set; }
-		public EncryptionInfo PropertyEncryptionInfo { get; set; }
+		public byte[] EncryptedProperties { get; set; } = null!;
+		public EncryptionInfo PropertyEncryptionInfo { get; set; } = null!;
 
 		UserRegistration IUserRegistrationWrapper.Underlying { get => userReg; set => userReg = value; }
 
@@ -83,13 +83,17 @@ namespace SGL.Analytics.Backend.Users.Application.Model {
 
 		void IUserRegistrationWrapper.LoadAppPropertiesFromUnderlying() {
 			AppSpecificProperties = loadAppProperties();
-			EncryptedProperties = userReg.EncryptedProperties;
-			PropertyEncryptionInfo = userReg.PropertyEncryptionInfo;
+			if (userReg.PropertyRecipientKeys != null) {
+				EncryptedProperties = userReg.EncryptedProperties;
+				PropertyEncryptionInfo = userReg.PropertyEncryptionInfo;
+			}
 		}
 
 		void IUserRegistrationWrapper.StoreAppPropertiesToUnderlying() {
-			userReg.EncryptedProperties = EncryptedProperties;
-			userReg.PropertyEncryptionInfo = PropertyEncryptionInfo;
+			if (PropertyEncryptionInfo != null && EncryptedProperties != null) {
+				userReg.EncryptedProperties = EncryptedProperties;
+				userReg.PropertyEncryptionInfo = PropertyEncryptionInfo;
+			}
 			foreach (var dictProp in AppSpecificProperties) {
 				userReg.SetAppSpecificProperty(dictProp.Key, dictProp.Value);
 			}

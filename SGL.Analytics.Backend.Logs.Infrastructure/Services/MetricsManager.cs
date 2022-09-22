@@ -18,6 +18,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			"A histogram of the sizes of log files ingested by this SGL Analytics Log Collector service process.",
 			new HistogramConfiguration { Buckets = Histogram.ExponentialBuckets(512, 2, 20), LabelNames = new[] { "app" } });
 		private const string ERROR_LOG_FILE_TOO_LARGE = "Log file too large";
+		private const string ERROR_LOG_NOT_FOUND = "Log file not found";
 		private const string ERROR_UNKNOWN_APP = "Unknown app";
 		private const string ERROR_INVALID_CRYPTO_METADATA = "Invalid cryptographic metadata";
 		private const string ERROR_INCORRECT_APP_API_TOKEN = "Incorrect app API token";
@@ -44,6 +45,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			logSizes.WithLabels(appName);
 			errorCounter.WithLabels(ERROR_INCORRECT_APP_API_TOKEN, appName);
 			errorCounter.WithLabels(ERROR_LOG_FILE_TOO_LARGE, appName);
+			errorCounter.WithLabels(ERROR_LOG_NOT_FOUND, appName);
 			errorCounter.WithLabels(ERROR_INVALID_CRYPTO_METADATA, appName);
 			warningCounter.WithLabels(WARNING_LOG_ID_CONFLICT, appName);
 			warningCounter.WithLabels(WARNING_LOG_UPLOAD_RETRY, appName);
@@ -80,6 +82,11 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		/// <inheritdoc/>
 		public void HandleUnknownAppError(string appName) {
 			errorCounter.WithLabels(ERROR_UNKNOWN_APP, appName).Inc();
+		}
+
+		/// <inheritdoc/>
+		public void HandleLogNotFoundError(string appName) {
+			errorCounter.WithLabels(ERROR_LOG_NOT_FOUND, appName).Inc();
 		}
 
 		/// <inheritdoc/>

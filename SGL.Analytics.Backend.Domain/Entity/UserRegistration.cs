@@ -68,6 +68,9 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// </summary>
 		public EncryptionInfo PropertyEncryptionInfo {
 			get {
+				if (PropertyRecipientKeys == null) {
+					return null!;
+				}
 				return new EncryptionInfo {
 					DataMode = PropertyEncryptionMode,
 					IVs = new List<byte[]> { PropertyInitializationVector },

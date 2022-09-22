@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Logs.Infrastructure.Services;
 using SGL.Utilities.Backend;
@@ -53,7 +54,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			LogMetadata? logMdRead;
 			await using (var context = createContext()) {
 				var repo = new DbLogMetadataRepository(context);
-				logMdRead = await repo.GetLogMetadataByIdAsync(logId);
+				logMdRead = await repo.GetLogMetadataByIdAsync(logId, new LogMetadataQueryOptions { FetchRecipientKeys = true });
 			}
 			Assert.NotNull(logMdRead);
 			Assert.Equal(logId, logMdRead?.Id);
@@ -114,7 +115,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			LogMetadata? logMd2;
 			await using (var context = createContext()) {
 				var repo = new DbLogMetadataRepository(context);
-				logMd2 = await repo.GetLogMetadataByIdAsync(logId);
+				logMd2 = await repo.GetLogMetadataByIdAsync(logId, new LogMetadataQueryOptions { FetchRecipientKeys = true, ForUpdating = true });
 				Assert.NotNull(logMd2);
 				if (logMd2 is null) throw new NotNullException();
 				encryptionInfo.IVs[0] = Encoding.UTF8.GetBytes("Changed IV");
@@ -133,7 +134,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			LogMetadata? logMdRead;
 			await using (var context = createContext()) {
 				var repo = new DbLogMetadataRepository(context);
-				logMdRead = await repo.GetLogMetadataByIdAsync(logId);
+				logMdRead = await repo.GetLogMetadataByIdAsync(logId, new LogMetadataQueryOptions { FetchRecipientKeys = true });
 			}
 			Assert.NotNull(logMdRead);
 			Assert.Equal(logId, logMdRead?.Id);

@@ -6,6 +6,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities.Backend;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,7 +34,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			}
 		}
 
-		public async Task<User?> GetUserByIdAsync(Guid userId, CancellationToken ct = default) {
+		public async Task<User?> GetUserByIdAsync(Guid userId, KeyId? recipientKeyId = null, bool fetchProperties = false, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			if (users.TryGetValue(userId, out var user)) {
@@ -87,6 +88,14 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			users[user.Id] = user;
 			userWrap.LoadAppPropertiesFromUnderlying();
 			return user;
+		}
+
+		public Task<IEnumerable<Guid>> ListUserIdsAsync(string appName, string exporterDN, CancellationToken ct) {
+			return Task.FromResult(users.Values.Where(u => u.App.Name == appName).Select(u => u.Id).ToList().AsEnumerable());
+		}
+
+		public Task<IEnumerable<User>> ListUsersAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct) {
+			return Task.FromResult(users.Values.Where(u => u.App.Name == appName).ToList().AsEnumerable());
 		}
 	}
 }

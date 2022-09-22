@@ -1,9 +1,12 @@
+using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.Applications;
+using SGL.Utilities.Crypto.Keys;
+using SQLitePCL;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -55,6 +58,32 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		public void Dispose() {
 			Ingests.ForEach(i => i.LogContent.Dispose());
+		}
+
+		public async Task<IEnumerable<LogFile>> ListLogsAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			var logsQuery = Ingests.Where(ig => ig.LogMetadata.App.Name == appName)
+				.Select(ig => new LogFile(ig.LogMetadata,
+					new SingleLogFileRepository(ig.LogMetadata.App.Name, ig.LogMetadata.UserId, ig.LogMetadata.Id, ig.LogMetadata.FilenameSuffix, ig.LogContent)));
+			return logsQuery.ToList();
+		}
+
+		public async Task<LogFile> GetLogByIdAsync(Guid logId, string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			var logQuery = Ingests.Where(ig => ig.LogMetadata.App.Name == appName && ig.LogMetadata.Id == logId)
+				.Select(ig => new LogFile(ig.LogMetadata,
+					new SingleLogFileRepository(ig.LogMetadata.App.Name, ig.LogMetadata.UserId, ig.LogMetadata.Id, ig.LogMetadata.FilenameSuffix, ig.LogContent)));
+			var log = logQuery.SingleOrDefault();
+			if (log == null) {
+				throw new LogNotFoundException($"The log {logId} was not found.", logId);
+			}
+			return log;
 		}
 
 		class SingleLogFileRepository : ILogFileRepository, IDisposable {

@@ -41,8 +41,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 				rk.Property(mrk => mrk.RecipientKeyId).IsStoredAsByteArray().HasMaxLength(34);
 				rk.HasKey(mrk => new { mrk.LogId, mrk.RecipientKeyId });
 			});
-			// TODO: Reactivate if we need QueryOptions for log metadata.
-			//logMetadata.Navigation(lm => lm.RecipientKeys).AutoInclude(false);
+			logMetadata.Navigation(lm => lm.RecipientKeys).AutoInclude(false);
 
 			var application = modelBuilder.Entity<Domain.Entity.Application>();
 			application.Property(a => a.Name).HasMaxLength(128);

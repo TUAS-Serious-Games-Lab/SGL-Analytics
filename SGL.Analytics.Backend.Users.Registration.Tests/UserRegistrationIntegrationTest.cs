@@ -475,16 +475,5 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 			}
 		}
-		[Fact]
-		public async Task KeyAuthWithValidKeyPairWorksCorrectly() {
-			using (var client = fixture.CreateClient()) {
-				var authenticator = new ExporterKeyPairAuthenticator(client, fixture.ExporterKeyPair, fixture.Services.GetRequiredService<ILogger<ExporterKeyPairAuthenticator>>(), fixture.Random);
-				var token = await authenticator.AuthenticateAsync(fixture.AppName);
-				var (principal, validatedToken) = fixture.TokenValidator.Validate(token.Value);
-				Assert.Equal(fixture.ExporterKeyPair.Public.CalculateId(), principal.GetClaim<KeyId>("keyid", KeyId.TryParse));
-				Assert.Equal(fixture.ExporterCertificate.SubjectDN.ToString(), principal.GetClaim("exporter-dn"));
-				Assert.Equal(fixture.AppName, principal.GetClaim("appname"));
-			}
-		}
 	}
 }

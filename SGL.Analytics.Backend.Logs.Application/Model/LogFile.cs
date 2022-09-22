@@ -1,6 +1,7 @@
 ﻿using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Crypto.EndToEnd;
 using System;
 using System.IO;
 using System.Threading;
@@ -66,11 +67,16 @@ namespace SGL.Analytics.Backend.Logs.Application.Model {
 		/// The encoding used for the contents of the log file.
 		/// </summary>
 		public LogContentEncoding Encoding => metadata.Encoding;
+
+		public long? Size => metadata.Size;
+
 		/// <summary>
 		/// Indicates whether the log was uploaded completely.
 		/// If this is <see langword="false"/>, it may indicate, that the upload is still running or that it was interrupted and may be reattempted.
 		/// </summary>
 		public bool Complete => metadata.Complete;
+
+		public EncryptionInfo EncryptionInfo => metadata.EncryptionInfo;
 
 		/// <summary>
 		/// Asynchronously opens the log contents for reading.

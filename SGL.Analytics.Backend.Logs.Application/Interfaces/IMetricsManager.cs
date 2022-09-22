@@ -99,6 +99,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// </summary>
 		/// <param name="perAppSizes">A dictionary mapping the application names to corresponding average size.</param>
 		void UpdateAvgLogSize(IDictionary<string, double> perAppSizes);
+		void HandleLogNotFoundError(string appName);
 	}
 
 	/// <summary>
@@ -130,6 +131,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		public void HandleUnexpectedError(string appName, Exception ex) { }
 		/// <inheritdoc/>
 		public void HandleUnknownAppError(string appName) { }
+		/// <inheritdoc/>
+		public void HandleLogNotFoundError(string appName) { }
 		/// <inheritdoc/>
 		public void HandleUploadRetryChangedEncodingWarning(string appName) { }
 		/// <inheritdoc/>

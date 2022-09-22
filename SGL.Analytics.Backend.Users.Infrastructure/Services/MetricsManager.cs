@@ -17,6 +17,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		private const string ERROR_NONEXISTENT_USERNAME = "Nonexistent username";
 		private const string ERROR_NONEXISTENT_USERID = "Nonexistent userid";
 		private const string ERROR_INCORRECT_USER_SECRET = "Incorrect user secret";
+		private const string ERROR_INCORRECT_SECURITY_TOKEN_CLAIMS = "Incorrect security token claims";
 		private const string ERROR_UNKNOWN_APP = "Unknown app";
 		private const string ERROR_INCORRECT_APP_API_TOKEN = "Incorrect app API token";
 		private const string ERROR_INVALID_CRYPTO_METADATA = "Invalid cryptographic metadata";
@@ -26,6 +27,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		private const string ERROR_UNIQUENESS_CONFLICT = "Uniqueness conflict";
 		private const string ERROR_USERNAME_ALREADY_TAKEN = "Username is already taken";
 		private const string ERROR_MODEL_STATE_VALIDATION_FAILED = "Model state validation failed";
+		private const string ERROR_USER_NOT_FOUND = "User not found";
 
 		/// <summary>
 		/// Initializes counter objects not associated with a specific app.
@@ -47,7 +49,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			errorCounter.WithLabels(ERROR_USERNAME_ALREADY_TAKEN, appName);
 			errorCounter.WithLabels(ERROR_USER_PROP_VALIDATION_FAILED, appName);
 			errorCounter.WithLabels(ERROR_INVALID_CRYPTO_METADATA, appName);
+			errorCounter.WithLabels(ERROR_USER_NOT_FOUND, appName);
 			loginCounter.WithLabels(appName);
+		}
+		/// <inheritdoc/>
+		public void HandleIncorrectSecurityTokenClaimsError() {
+			errorCounter.WithLabels(ERROR_INCORRECT_SECURITY_TOKEN_CLAIMS, "").Inc();
 		}
 		/// <inheritdoc/>
 		public void HandleConcurrencyConflictError(string appName) {
@@ -67,6 +74,11 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		/// <inheritdoc/>
 		public void HandleIncorrectUserSecretError(string appName) {
 			errorCounter.WithLabels(ERROR_INCORRECT_USER_SECRET, appName).Inc();
+		}
+
+		/// <inheritdoc/>
+		public void HandleUserNotFoundError(string appName) {
+			errorCounter.WithLabels(ERROR_USER_NOT_FOUND, appName).Inc();
 		}
 
 		/// <inheritdoc/>

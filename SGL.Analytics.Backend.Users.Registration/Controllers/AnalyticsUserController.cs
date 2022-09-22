@@ -171,7 +171,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				if (loginRequest is IdBasedLoginRequestDTO idBased) {
 					userid = idBased.UserId;
 					getUser = async uid => {
-						user = await userManager.GetUserByIdAsync(userid, ct);
+						user = await userManager.GetUserByIdAsync(userid, ct: ct);
 						if (user == null) {
 							metrics.HandleNonexistentUserIdError(loginRequest.AppName);
 						}

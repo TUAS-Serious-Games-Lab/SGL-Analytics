@@ -41,12 +41,13 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			});
 
 			services.UseConfigurableUploadLimit(Configuration, "AnalyticsLog");
-			services.AddControllers(options => options.AddPemFormatters());
+			services.AddControllers(options => options.AddPemFormatters().AddKeyIdModelBinding());
 
 			services.UseJwtBearerAuthentication(Configuration);
 			services.AddAuthorization(options => {
 				options.AddPolicy("AuthenticatedAppUser", p => p.RequireClaim("userid").RequireClaim("appname"));
 				options.DefaultPolicy = options.GetPolicy("AuthenticatedAppUser") ?? throw new InvalidOperationException("Couldn't find AuthenticatedAppUser policy.");
+				options.AddPolicy("ExporterUser", p => p.RequireClaim("keyid").RequireClaim("appname").RequireClaim("exporter-dn"));
 			});
 
 			services.UseLogsBackendInfrastructure(Configuration);

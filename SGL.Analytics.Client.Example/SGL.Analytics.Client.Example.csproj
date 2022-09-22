@@ -11,7 +11,7 @@
 		<PackageReference Include="CommandLineParser" Version="2.9.1" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
-		<PackageReference Include="SGL.Utilities" Version="0.10.0" />
+		<PackageReference Include="SGL.Utilities" Version="0.10.2" />
 	</ItemGroup>
 
 	<ItemGroup>

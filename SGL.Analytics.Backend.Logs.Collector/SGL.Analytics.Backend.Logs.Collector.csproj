@@ -32,11 +32,11 @@
 		<PackageReference Include="NSwag.AspNetCore" Version="13.16.1" />
 		<PackageReference Include="prometheus-net.AspNetCore" Version="6.0.0" />
 		<PackageReference Include="prometheus-net.AspNetCore.HealthChecks" Version="6.0.0" />
-		<PackageReference Include="SGL.Utilities" Version="0.10.0" />
-		<PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.10.0" />
-		<PackageReference Include="SGL.Utilities.Backend.Security" Version="0.10.0" />
-		<PackageReference Include="SGL.Utilities.Crypto.AspNetCore" Version="0.10.0" />
-		<PackageReference Include="SGL.Utilities.Logging" Version="0.10.0" />
+		<PackageReference Include="SGL.Utilities" Version="0.10.2" />
+		<PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.10.2" />
+		<PackageReference Include="SGL.Utilities.Backend.Security" Version="0.10.2" />
+		<PackageReference Include="SGL.Utilities.Crypto.AspNetCore" Version="0.10.2" />
+		<PackageReference Include="SGL.Utilities.Logging" Version="0.10.2" />
 	</ItemGroup>
 
 	<ItemGroup>

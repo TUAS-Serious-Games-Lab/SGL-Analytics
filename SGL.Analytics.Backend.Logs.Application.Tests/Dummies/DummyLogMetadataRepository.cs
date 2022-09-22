@@ -1,6 +1,7 @@
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Utilities.Backend;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,7 +23,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			return logMetadata;
 		}
 
-		public async Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId, CancellationToken ct = default) {
+		public async Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			if (logs.TryGetValue(logId, out var logMd)) {
@@ -33,7 +34,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			}
 		}
 
-		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId, CancellationToken ct = default) {
+		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			return logs.Values.Where(lm => lm.AppId == userAppId && lm.UserId == userId && lm.LocalLogId == localLogId).SingleOrDefault<LogMetadata?>();
@@ -55,10 +56,19 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			return query.ToDictionary(e => e.AppName, e => e.LogSizeAvg ?? 0);
 		}
 
+		public Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var query = logs.Values.Where(lmd => lmd.AppId == appId);
+			if (completenessFilter != null) {
+				query = query.Where(log => log.Complete == completenessFilter);
+			}
+			return Task.FromResult(query.ToList().AsEnumerable());
+		}
+
 		public async Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
 			Debug.Assert(logs.ContainsKey(logMetadata.Id));
+			Debug.Assert(logs.ContainsValue(logMetadata));
 			logs[logMetadata.Id] = logMetadata;
 			return logMetadata;
 		}

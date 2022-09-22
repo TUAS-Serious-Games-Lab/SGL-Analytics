@@ -29,7 +29,7 @@ namespace SGL.Analytics.ExporterClient {
 			this.randomGenerator = randomGenerator;
 		}
 
-		public async Task<AuthorizationToken> AuthenticateAsync(string appName, CancellationToken ct = default) {
+		public async Task<AuthorizationData> AuthenticateAsync(string appName, CancellationToken ct = default) {
 			var openRequest = new HttpRequestMessage(HttpMethod.Post, "api/analytics/user/v1/exporter-key-auth/open-challenge");
 			var requestDto = new ExporterKeyAuthRequestDTO(appName, keyPair.Public.CalculateId());
 			openRequest.Content = JsonContent.Create(requestDto, jsonContentType, jsonOptions);
@@ -55,7 +55,7 @@ namespace SGL.Analytics.ExporterClient {
 			if (responseDto == null) {
 				throw new InvalidDataException("Received null JSON from server.");
 			}
-			return responseDto.Token;
+			return new AuthorizationData(responseDto.Token, responseDto.TokenExpiry.ToUniversalTime());
 		}
 	}
 }
