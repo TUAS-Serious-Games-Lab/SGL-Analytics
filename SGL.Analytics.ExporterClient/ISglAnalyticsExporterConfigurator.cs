@@ -89,9 +89,6 @@ namespace SGL.Analytics.ExporterClient {
 		ISglAnalyticsExporterConfigurator UseAuthenticator(Func<SglAnalyticsExporterConfiguratorFactoryArguments, KeyPair, IExporterAuthenticator> authenticatorFactory, bool dispose = true);
 		ISglAnalyticsExporterConfigurator UseUserApiClient(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, IUserExporterApiClient> userExporterFactory, bool dispose = true);
 		ISglAnalyticsExporterConfigurator UseLogApiClient(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, ILogExporterApiClient> logExporterFactory, bool dispose = true);
-		ISglAnalyticsExporterConfigurator UseUserSink(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, IUserRegistrationSink> userSinkFactory, bool dispose = true);
-		ISglAnalyticsExporterConfigurator UseLogSink(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, ILogFileSink> logSinkFactory, bool dispose = true);
-
 
 		/// <summary>
 		/// Installs a factory for custom arguments of type <typeparamref name="T"/> that will be made available to other factories through <see cref="SglAnalyticsExporterConfiguratorFactoryArguments.GetCustomArgument{T}"/>.

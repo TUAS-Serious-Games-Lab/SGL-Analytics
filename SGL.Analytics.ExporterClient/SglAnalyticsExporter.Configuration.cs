@@ -29,9 +29,6 @@ namespace SGL.Analytics.ExporterClient {
 			internal (Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, ILogExporterApiClient> Factory, bool Dispose) LogApiClient { get; private set; }
 			internal (Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, IUserExporterApiClient> Factory, bool Dispose) UserApiClient { get; private set; }
 
-			internal (Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, ILogFileSink> Factory, bool Dispose) LogSink { get; private set; }
-			internal (Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, IUserRegistrationSink> Factory, bool Dispose) UserSink { get; private set; }
-
 			internal ConfiguratorCustomArgumentFactoryContainer<SglAnalyticsExporterConfiguratorFactoryArguments, SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments> CustomArgumentFactories { get; private set; } =
 				new ConfiguratorCustomArgumentFactoryContainer<SglAnalyticsExporterConfiguratorFactoryArguments, SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments>();
 
@@ -55,15 +52,6 @@ namespace SGL.Analytics.ExporterClient {
 			}
 			public ISglAnalyticsExporterConfigurator UseUserApiClient(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, IUserExporterApiClient> userExporterFactory, bool dispose = true) {
 				UserApiClient = (userExporterFactory, dispose);
-				return this;
-			}
-
-			public ISglAnalyticsExporterConfigurator UseLogSink(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, ILogFileSink> logSinkFactory, bool dispose = true) {
-				LogSink = (logSinkFactory, dispose);
-				return this;
-			}
-			public ISglAnalyticsExporterConfigurator UseUserSink(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, IUserRegistrationSink> userSinkFactory, bool dispose = true) {
-				UserSink = (userSinkFactory, dispose);
 				return this;
 			}
 
