@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
-using Org.BouncyCastle.Crypto.Tls;
 using SGL.Utilities;
 using SGL.Utilities.Crypto;
+using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
