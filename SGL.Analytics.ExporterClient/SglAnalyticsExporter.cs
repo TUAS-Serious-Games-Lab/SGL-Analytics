@@ -37,11 +37,11 @@ namespace SGL.Analytics.ExporterClient {
 			throw new NotImplementedException();
 		}
 
-		public async IAsyncEnumerable<(LogFileMetadata Metadata, Stream Content)> GetDecryptedLogFilesAsync(Func<DownstreamLogMetadataDTO, bool> filter, [EnumeratorCancellation] CancellationToken ct = default) {
+		public IAsyncEnumerable<(LogFileMetadata Metadata, Stream Content)> GetDecryptedLogFilesAsync(Func<DownstreamLogMetadataDTO, bool> filter, [EnumeratorCancellation] CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 
-		public async IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsync(Func<UserMetadataDTO, bool> filter, [EnumeratorCancellation] CancellationToken ct = default) {
+		public IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsync(Func<UserMetadataDTO, bool> filter, [EnumeratorCancellation] CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 	}
