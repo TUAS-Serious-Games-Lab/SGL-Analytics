@@ -1,4 +1,5 @@
-﻿using SGL.Utilities.Crypto;
+﻿using SGL.Utilities;
+using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.Keys;
 using System;
@@ -15,6 +16,8 @@ namespace SGL.Analytics.ExporterClient {
 		private RandomGenerator randomGenerator = new RandomGenerator();
 		private KeyPair? authenticationKeyPair;
 		private KeyPair? recipientKeyPair;
+		private IExporterAuthenticator? authenticator = null;
+		private Dictionary<string, PerAppState> perAppStates = new Dictionary<string, PerAppState>();
 
 		private static (Certificate AuthenticationCertificate, Certificate RecipientCertificate, KeyPair AuthenticationKeyPair, KeyPair RecipientKeyPair,
 				 KeyId AuthenticationKeyId, KeyId RecipientKeyId) ReadKeyFile(PemObjectReader reader, string sourceName, CancellationToken ct = default) {
@@ -52,5 +55,54 @@ namespace SGL.Analytics.ExporterClient {
 			return (authCert, recipientCert, authKeyPair, recipientKeyPair, authKeyId, recipientKeyId);
 		}
 
+		private class PerAppState {
+			internal AuthorizationData AuthData { get; set; }
+			internal ILogExporterApiClient LogExporterApiClient { get; set; }
+			internal IUserExporterApiClient UserExporterApiClient { get; set; }
+
+			internal PerAppState(AuthorizationData authData, ILogExporterApiClient logExporterApiClient, IUserExporterApiClient userExporterApiClient) {
+				AuthData = authData;
+				LogExporterApiClient = logExporterApiClient;
+				UserExporterApiClient = userExporterApiClient;
+			}
+		}
+
+		private async Task<PerAppState> GetPerAppStateAsync(CancellationToken ct) {
+			if (CurrentAppName == null) {
+				throw new InvalidOperationException("No current app selected.");
+			}
+			string appName = CurrentAppName;
+			if (perAppStates.TryGetValue(CurrentAppName, out var currentAppState)) {
+				if (!currentAppState.AuthData.Valid) {
+					if (authenticator == null) {
+						throw new InvalidOperationException("No authenticator present.");
+					}
+					currentAppState.AuthData = await authenticator.AuthenticateAsync(appName, ct);
+					currentAppState.LogExporterApiClient.Authorization = currentAppState.AuthData;
+					currentAppState.UserExporterApiClient.Authorization = currentAppState.AuthData;
+				}
+				return currentAppState;
+			}
+			else {
+				if (authenticator == null) {
+					throw new InvalidOperationException("No authenticator present.");
+				}
+				var authData = await authenticator.AuthenticateAsync(appName, ct);
+				if (CurrentKeyIds == null) {
+					throw new InvalidOperationException("No current key id.");
+				}
+				if (CurrentKeyCertificates == null) {
+					throw new InvalidOperationException("No current key certificate.");
+				}
+				var args = new SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments(httpClient, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories,
+					appName, authData, CurrentKeyIds.Value.AuthenticationKeyId, CurrentKeyCertificates.Value.AuthenticationCertificate,
+					CurrentKeyIds.Value.DecryptionKeyId, CurrentKeyCertificates.Value.DecryptionCertificate);
+				var logClient = configurator.LogApiClient.Factory(args);
+				var userClient = configurator.UserApiClient.Factory(args);
+				PerAppState perAppState = new PerAppState(authData, logClient, userClient);
+				perAppStates[appName] = perAppState;
+				return perAppState;
+			}
+		}
 	}
 }

@@ -31,10 +31,14 @@ namespace SGL.Analytics.ExporterClient {
 			recipientKeyPair = result.RecipientKeyPair;
 			CurrentKeyIds = (result.AuthenticationKeyId, result.RecipientKeyId);
 			CurrentKeyCertificates = (result.AuthenticationCertificate, result.RecipientCertificate);
+			var args = new SglAnalyticsExporterConfiguratorFactoryArguments(httpClient, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories);
+			authenticator = configurator.Authenticator.Factory(args, authenticationKeyPair);
 		}
 
 		public async Task SwitchToApplicationAsync(string appName, CancellationToken ct = default) {
-			throw new NotImplementedException();
+			CurrentAppName = appName;
+			// Create per-app state eagerly, if not cached:
+			await GetPerAppStateAsync(ct);
 		}
 
 		public IAsyncEnumerable<(LogFileMetadata Metadata, Stream Content)> GetDecryptedLogFilesAsync(Func<DownstreamLogMetadataDTO, bool> filter, [EnumeratorCancellation] CancellationToken ct = default) {
