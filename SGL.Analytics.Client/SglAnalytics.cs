@@ -46,13 +46,6 @@ namespace SGL.Analytics.Client {
 	/// </summary>
 	public partial class SglAnalytics : IAsyncDisposable {
 		/// <summary>
-		/// Acts as the default value for the <c>backendBaseUri</c> parameter of the constructor and can be set before instantiating the object.
-		/// It defaults to localhost for testing. Thus, released applications need to either set this property before instantiating SGL Analytics or pass a <c>backendBaseUri</c> to the constructor.
-		/// </summary>
-		public static Uri DefaultBackendBaseUri { get; set; } = new Uri("https://localhost/");
-		// TODO: Replace default URL with registered URL of Prod backend when available.
-
-		/// <summary>
 		/// Instantiates a client facade object using the given app credentials and http client, configured by the given <paramref name="configuration"/> function.
 		/// </summary>
 		/// <param name="appName">The technical name of the application for which analytics logs are recorded. This is used for identifying the application in the backend and the application must be registered there for log collection and user registration to work properly.</param>
