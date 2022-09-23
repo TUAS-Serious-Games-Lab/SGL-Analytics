@@ -41,11 +41,11 @@ namespace SGL.Analytics.ExporterClient {
 			await GetPerAppStateAsync(ct);
 		}
 
-		public IAsyncEnumerable<(LogFileMetadata Metadata, Stream Content)> GetDecryptedLogFilesAsync(Func<DownstreamLogMetadataDTO, bool> filter, [EnumeratorCancellation] CancellationToken ct = default) {
+		public IAsyncEnumerable<(LogFileMetadata Metadata, Stream Content)> GetDecryptedLogFilesAsync(Action<ILogFileQuery> query, [EnumeratorCancellation] CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 
-		public IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsync(Func<UserMetadataDTO, bool> filter, [EnumeratorCancellation] CancellationToken ct = default) {
+		public IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsync(Action<IUserRegistrationQuery> query, [EnumeratorCancellation] CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 	}
