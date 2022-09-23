@@ -42,28 +42,26 @@ namespace SGL.Analytics.ExporterClient {
 			await GetPerAppStateAsync(ct);
 		}
 
-		public async Task<IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)>> GetDecryptedLogFilesAsync(Action<ILogFileQuery> query, CancellationToken ct = default) {
+		public async Task<IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)>> GetDecryptedLogFilesAsync(Func<ILogFileQuery, ILogFileQuery> query, CancellationToken ct = default) {
 			if (CurrentKeyIds == null) {
 				throw new InvalidOperationException("No current key id.");
 			}
 			if (recipientKeyPair == null) {
 				throw new InvalidOperationException("No current decryption key pair.");
 			}
-			var queryParams = new LogFileQuery();
-			query(queryParams);
+			var queryParams = (LogFileQuery)query(new LogFileQuery());
 			var perAppState = await GetPerAppStateAsync(ct);
 			return GetDecryptedLogFilesAsyncImpl(perAppState, CurrentKeyIds.Value.DecryptionKeyId, recipientKeyPair, queryParams, ct);
 		}
 
-		public async Task<IAsyncEnumerable<UserRegistrationData>> GetDecryptedUserRegistrationsAsync(Action<IUserRegistrationQuery> query, CancellationToken ct = default) {
+		public async Task<IAsyncEnumerable<UserRegistrationData>> GetDecryptedUserRegistrationsAsync(Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default) {
 			if (CurrentKeyIds == null) {
 				throw new InvalidOperationException("No current key id.");
 			}
 			if (recipientKeyPair == null) {
 				throw new InvalidOperationException("No current decryption key pair.");
 			}
-			var queryParams = new UserRegistrationQuery();
-			query(queryParams);
+			var queryParams = (UserRegistrationQuery)query(new UserRegistrationQuery());
 			var perAppState = await GetPerAppStateAsync(ct);
 			return GetDecryptedUserRegistrationsAsyncImpl(perAppState, CurrentKeyIds.Value.DecryptionKeyId, recipientKeyPair, queryParams, ct);
 		}
