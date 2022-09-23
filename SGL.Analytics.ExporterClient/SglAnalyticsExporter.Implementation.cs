@@ -5,6 +5,7 @@ using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -104,5 +105,18 @@ namespace SGL.Analytics.ExporterClient {
 				return perAppState;
 			}
 		}
+
+		private IAsyncEnumerable<(LogFileMetadata Metadata, Stream Content)> GetDecryptedLogFilesAsyncImpl(PerAppState perAppState, LogFileQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
+			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
+			var ct = cts.Token;
+			throw new NotImplementedException();
+		}
+
+		private IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsyncImpl(PerAppState perAppState, UserRegistrationQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
+			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
+			var ct = cts.Token;
+			throw new NotImplementedException();
+		}
+
 	}
 }

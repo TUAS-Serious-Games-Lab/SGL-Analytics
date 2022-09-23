@@ -41,12 +41,18 @@ namespace SGL.Analytics.ExporterClient {
 			await GetPerAppStateAsync(ct);
 		}
 
-		public IAsyncEnumerable<(LogFileMetadata Metadata, Stream Content)> GetDecryptedLogFilesAsync(Action<ILogFileQuery> query, [EnumeratorCancellation] CancellationToken ct = default) {
-			throw new NotImplementedException();
+		public async Task<IAsyncEnumerable<(LogFileMetadata Metadata, Stream Content)>> GetDecryptedLogFilesAsync(Action<ILogFileQuery> query, CancellationToken ct = default) {
+			var queryParams = new LogFileQuery();
+			query(queryParams);
+			var perAppState = await GetPerAppStateAsync(ct);
+			return GetDecryptedLogFilesAsyncImpl(perAppState, queryParams, ct);
 		}
 
-		public IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsync(Action<IUserRegistrationQuery> query, [EnumeratorCancellation] CancellationToken ct = default) {
-			throw new NotImplementedException();
+		public async Task<IAsyncEnumerable<UserRegistrationData>> GetDecryptedUserRegistrationsAsync(Action<IUserRegistrationQuery> query, CancellationToken ct = default) {
+			var queryParams = new UserRegistrationQuery();
+			query(queryParams);
+			var perAppState = await GetPerAppStateAsync(ct);
+			return GetDecryptedUserRegistrationsAsyncImpl(perAppState, queryParams, ct);
 		}
 	}
 }
