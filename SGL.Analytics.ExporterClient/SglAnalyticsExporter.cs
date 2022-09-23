@@ -53,7 +53,12 @@ namespace SGL.Analytics.ExporterClient {
 			var perAppState = await GetPerAppStateAsync(ct);
 			return GetDecryptedLogFilesAsyncImpl(perAppState, CurrentKeyIds.Value.DecryptionKeyId, recipientKeyPair, queryParams, ct);
 		}
-
+		public async Task GetDecryptedLogFilesAsync(ILogFileSink sink, Func<ILogFileQuery, ILogFileQuery> query, CancellationToken ct = default) {
+			var logs = await GetDecryptedLogFilesAsync(query, ct);
+			await foreach (var (metadata, content) in logs.ConfigureAwait(false).WithCancellation(ct)) {
+				await sink.ProcessLogFileAsync(metadata, content, ct);
+			}
+		}
 		public async Task<IAsyncEnumerable<UserRegistrationData>> GetDecryptedUserRegistrationsAsync(Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default) {
 			if (CurrentKeyIds == null) {
 				throw new InvalidOperationException("No current key id.");
@@ -64,6 +69,12 @@ namespace SGL.Analytics.ExporterClient {
 			var queryParams = (UserRegistrationQuery)query(new UserRegistrationQuery());
 			var perAppState = await GetPerAppStateAsync(ct);
 			return GetDecryptedUserRegistrationsAsyncImpl(perAppState, CurrentKeyIds.Value.DecryptionKeyId, recipientKeyPair, queryParams, ct);
+		}
+		public async Task GetDecryptedUserRegistrationsAsync(IUserRegistrationSink sink, Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default) {
+			var users = await GetDecryptedUserRegistrationsAsync(query, ct);
+			await foreach (var user in users.ConfigureAwait(false).WithCancellation(ct)) {
+				await sink.ProcessUserRegistrationAsync(user, ct);
+			}
 		}
 	}
 }

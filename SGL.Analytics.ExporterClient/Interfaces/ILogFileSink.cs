@@ -6,6 +6,6 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.ExporterClient {
 	public interface ILogFileSink {
-		Task ProcessLogFileAsync(LogFileMetadata metadata, Stream content, CancellationToken ct);
+		Task ProcessLogFileAsync(LogFileMetadata metadata, Stream? content, CancellationToken ct);
 	}
 }
