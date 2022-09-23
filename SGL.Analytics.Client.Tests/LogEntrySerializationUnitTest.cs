@@ -1,3 +1,4 @@
+using SGL.Analytics.DTO;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using Xunit.Abstractions;
 namespace SGL.Analytics.Client.Tests {
 	public class LogEntrySerializationUnitTest {
 		private ITestOutputHelper output;
-		private JsonSerializerOptions options = new JsonSerializerOptions() { WriteIndented = true };
+		private JsonSerializerOptions options = new JsonSerializerOptions(JsonOptions.LogEntryOptions);
 
 		public LogEntrySerializationUnitTest(ITestOutputHelper output) {
 			this.output = output;

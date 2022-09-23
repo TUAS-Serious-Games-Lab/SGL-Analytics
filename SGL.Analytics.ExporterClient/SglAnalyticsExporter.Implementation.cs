@@ -11,9 +11,9 @@ using System.IO.Compression;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace SGL.Analytics.ExporterClient {
 	public partial class SglAnalyticsExporter {
@@ -152,11 +152,7 @@ namespace SGL.Analytics.ExporterClient {
 			// TODO: Apply filters from query.
 			var userDTOs = await userClient.GetMetadataForAllUsersAsync(recipientKeyId, ct);
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
-			var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
-				WriteIndented = true,
-				DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-			};
-			jsonOptions.Converters.Add(new ObjectDictionaryJsonConverter());
+			var propertyJsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertiesOptions);
 			foreach (var udto in userDTOs) {
 				if (udto.EncryptedProperties == null) {
 					logger.LogTrace("User registration {id} has no encrypted properties, providing empty properties dictionary.", udto.UserId);
@@ -177,7 +173,7 @@ namespace SGL.Analytics.ExporterClient {
 						else {
 							var decryptedBytes = dataDecryptor.DecryptData(udto.EncryptedProperties, 0);
 							using var propStream = new MemoryStream(decryptedBytes, writable: false);
-							var props = await JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(propStream, jsonOptions, ct);
+							var props = await JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(propStream, propertyJsonOptions, ct);
 							if (props == null) {
 								logger.LogError("Read null value from encrypted properties for user registration {id}.", udto.UserId);
 							}

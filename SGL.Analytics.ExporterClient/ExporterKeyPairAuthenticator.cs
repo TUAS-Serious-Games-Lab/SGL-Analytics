@@ -20,7 +20,7 @@ namespace SGL.Analytics.ExporterClient {
 		private readonly ILogger<ExporterKeyPairAuthenticator> logger;
 		private readonly RandomGenerator randomGenerator;
 		private readonly MediaTypeHeaderValue? jsonContentType = new MediaTypeHeaderValue("application/json");
-		private readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true };
+		private readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonOptions.RestOptions);
 
 		public ExporterKeyPairAuthenticator(HttpClient httpClient, KeyPair keyPair, ILogger<ExporterKeyPairAuthenticator> logger, RandomGenerator randomGenerator) {
 			this.httpClient = httpClient;

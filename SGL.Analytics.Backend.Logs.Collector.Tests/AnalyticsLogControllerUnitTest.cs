@@ -30,7 +30,6 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		private DummyLogManager logManager;
 		private ILoggerFactory loggerFactory;
 		private AnalyticsLogController controller;
-		private JsonSerializerOptions jsonOptions;
 		private string apiToken = StringGenerator.GenerateRandomWord(32);
 
 		public AnalyticsLogControllerUnitTest(ITestOutputHelper output) {
@@ -39,10 +38,6 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			logManager = new DummyLogManager(appRepo);
 			appRepo.AddApplicationAsync(new Domain.Entity.Application(Guid.NewGuid(), nameof(AnalyticsLogControllerUnitTest), apiToken)).Wait();
 			controller = new AnalyticsLogController(logManager, appRepo, loggerFactory.CreateLogger<AnalyticsLogController>(), new NullMetricsManager());
-			jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
-				WriteIndented = true,
-				DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-			};
 		}
 
 		private Task<ControllerContext> createControllerContext(string appNameClaim, Guid userIdClaim, LogMetadataDTO metadata) {
@@ -51,7 +46,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		private async Task<ControllerContext> createControllerContext(string appNameClaim, Guid userIdClaim, LogMetadataDTO metadata, Stream content) {
 			var multipartBodyObj = new MultipartFormDataContent();
-			multipartBodyObj.Add(JsonContent.Create(metadata, MediaTypeHeaderValue.Parse("application/json"), jsonOptions), "metadata");
+			multipartBodyObj.Add(JsonContent.Create(metadata, MediaTypeHeaderValue.Parse("application/json"), DTO.JsonOptions.RestOptions), "metadata");
 			var contentObj = new StreamContent(content);
 			contentObj.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
 			multipartBodyObj.Add(contentObj, "content");

@@ -171,10 +171,6 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 	public class LogExporterIntegrationTest : IClassFixture<LogExporterIntegrationTestFixture> {
 		private readonly LogExporterIntegrationTestFixture fixture;
 		private readonly ITestOutputHelper output;
-		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
-			WriteIndented = true,
-			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-		};
 
 		public LogExporterIntegrationTest(LogExporterIntegrationTestFixture fixture, ITestOutputHelper output) {
 			this.fixture = fixture;

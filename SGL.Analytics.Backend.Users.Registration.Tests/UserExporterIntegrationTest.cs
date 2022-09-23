@@ -150,7 +150,6 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 	public class UserExporterIntegrationTest : IClassFixture<UserExporterIntegrationTestFixture> {
 		private UserExporterIntegrationTestFixture fixture;
 		private ITestOutputHelper output;
-		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
 		public UserExporterIntegrationTest(UserExporterIntegrationTestFixture fixture, ITestOutputHelper output) {
 			this.fixture = fixture;

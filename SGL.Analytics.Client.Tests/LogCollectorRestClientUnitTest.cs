@@ -62,7 +62,7 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Equal("application/json", contentParts[0].SectionHeaders["Content-Type"]);
 			Assert.Equal("form-data; name=metadata", contentParts[0].SectionHeaders["Content-Disposition"]);
 			using var metadataStream = new MemoryStream(contentParts[0].Content, writable: false);
-			var metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+			var metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, JsonOptions.RestOptions);
 
 			Assert.Equal("application/octet-stream", contentParts[1].SectionHeaders["Content-Type"]);
 			Assert.Equal("form-data; name=content", contentParts[1].SectionHeaders["Content-Disposition"]);

@@ -120,10 +120,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 	public class LogCollectorIntegrationTest : IClassFixture<LogCollectorIntegrationTestFixture> {
 		private readonly LogCollectorIntegrationTestFixture fixture;
 		private readonly ITestOutputHelper output;
-		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
-			WriteIndented = true,
-			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-		};
+		private JsonSerializerOptions restJsonOptions = new JsonSerializerOptions(DTO.JsonOptions.RestOptions);
 
 		public LogCollectorIntegrationTest(LogCollectorIntegrationTestFixture fixture, ITestOutputHelper output) {
 			this.fixture = fixture;
@@ -161,7 +158,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		private HttpRequestMessage buildUploadRequest(Stream logContent, LogMetadataDTO logMDTO, Guid userId, string appName, string? appApiToken = null) {
 			var content = new StreamContent(logContent);
 			content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-			var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+			var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), restJsonOptions);
 			var multipartContent = new MultipartFormDataContent();
 			multipartContent.Add(metadata, "metadata");
 			multipartContent.Add(content, "content");
@@ -237,7 +234,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var content = new StreamContent(logContent);
 				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted());
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), restJsonOptions);
 				var multipartContent = new MultipartFormDataContent();
 				multipartContent.Add(metadata, "metadata");
 				multipartContent.Add(content, "content");
@@ -261,7 +258,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var content = new StreamContent(logContent);
 				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted());
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), restJsonOptions);
 				var multipartContent = new MultipartFormDataContent();
 				multipartContent.Add(metadata, "metadata");
 				multipartContent.Add(content, "content");
@@ -284,7 +281,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var content = new StreamContent(logContent);
 				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted());
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), restJsonOptions);
 				var multipartContent = new MultipartFormDataContent();
 				multipartContent.Add(metadata, "metadata");
 				multipartContent.Add(content, "content");
@@ -310,7 +307,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var content = new StreamContent(logContent);
 				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted());
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), restJsonOptions);
 				var multipartContent = new MultipartFormDataContent();
 				multipartContent.Add(metadata, "metadata");
 				multipartContent.Add(content, "content");
@@ -336,7 +333,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				var content = new StreamContent(logContent);
 				LogMetadataDTO logMDTO = new LogMetadataDTO(logId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), ".log.gz", LogContentEncoding.GZipCompressed, EncryptionInfo.CreateUnencrypted());
 				content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+				var metadata = JsonContent.Create(logMDTO, MediaTypeHeaderValue.Parse("application/json"), restJsonOptions);
 				var multipartContent = new MultipartFormDataContent();
 				multipartContent.Add(metadata, "metadata");
 				multipartContent.Add(content, "content");

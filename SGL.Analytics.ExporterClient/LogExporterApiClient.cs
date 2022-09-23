@@ -14,6 +14,8 @@ namespace SGL.Analytics.ExporterClient {
 	public class LogExporterApiClient : HttpApiClientBase, ILogExporterApiClient {
 		private static readonly MediaTypeWithQualityHeaderValue octetStreamMT = MediaTypeWithQualityHeaderValue.Parse("application/octet-stream");
 		private static readonly MediaTypeWithQualityHeaderValue jsonMT = MediaTypeWithQualityHeaderValue.Parse("application/json");
+		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonOptions.RestOptions);
+
 		public LogExporterApiClient(HttpClient httpClient, AuthorizationData authorization) : base(httpClient, authorization, "/api/analytics/log/v2") { }
 
 		public async Task<Stream> GetLogContentByIdAsync(Guid id, CancellationToken ct = default) {
@@ -23,7 +25,7 @@ namespace SGL.Analytics.ExporterClient {
 
 		public async Task<IEnumerable<Guid>> GetLogIdListAsync(CancellationToken ct = default) {
 			using var response = await SendRequest(HttpMethod.Get, "", null, req => { }, accept: jsonMT, ct);
-			return (await response.Content.ReadFromJsonAsync<List<Guid>>()) ?? Enumerable.Empty<Guid>();
+			return (await response.Content.ReadFromJsonAsync<List<Guid>>(jsonOptions, ct)) ?? Enumerable.Empty<Guid>();
 		}
 		public async Task<IEnumerable<DownstreamLogMetadataDTO>> GetMetadataForAllLogsAsync(KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var queryParameters = Enumerable.Empty<KeyValuePair<string, string>>();
@@ -31,7 +33,7 @@ namespace SGL.Analytics.ExporterClient {
 				queryParameters = new List<KeyValuePair<string, string>> { new("recipient", recipientKeyId.ToString() ?? "") };
 			}
 			using var response = await SendRequest(HttpMethod.Get, "all", queryParameters, null, req => { }, accept: jsonMT, ct: ct);
-			return (await response.Content.ReadFromJsonAsync<List<DownstreamLogMetadataDTO>>()) ?? Enumerable.Empty<DownstreamLogMetadataDTO>();
+			return (await response.Content.ReadFromJsonAsync<List<DownstreamLogMetadataDTO>>(jsonOptions, ct)) ?? Enumerable.Empty<DownstreamLogMetadataDTO>();
 		}
 
 		public async Task<DownstreamLogMetadataDTO> GetLogMetadataByIdAsync(Guid id, KeyId? recipientKeyId = null, CancellationToken ct = default) {
@@ -40,7 +42,7 @@ namespace SGL.Analytics.ExporterClient {
 				queryParameters = new List<KeyValuePair<string, string>> { new("recipient", recipientKeyId.ToString() ?? "") };
 			}
 			using var response = await SendRequest(HttpMethod.Get, $"{id}/metadata", queryParameters, null, req => { }, accept: jsonMT, ct);
-			return (await response.Content.ReadFromJsonAsync<DownstreamLogMetadataDTO>()) ?? throw new JsonException("Got null from response.");
+			return (await response.Content.ReadFromJsonAsync<DownstreamLogMetadataDTO>(jsonOptions, ct)) ?? throw new JsonException("Got null from response.");
 		}
 	}
 }

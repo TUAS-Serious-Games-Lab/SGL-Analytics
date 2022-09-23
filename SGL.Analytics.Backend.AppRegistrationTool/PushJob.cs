@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Logs.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
+using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Backend;
 using SGL.Utilities.Crypto.Certificates;
@@ -92,14 +93,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 
 		}
 
-		private class EnumNamingPolicy : JsonNamingPolicy {
-			public override string ConvertName(string name) => name;
-		}
-
-		private readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions() {
-			WriteIndented = true,
-			Converters = { new JsonStringEnumConverter(new EnumNamingPolicy()) }
-		};
+		private readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions(JsonOptions.AppDefinitionOptions);
 
 		private async Task<ApplicationWithUserProperties?> readDefinitionAsync(string filename, CancellationToken ct = default) {
 			var definition = await Task.Run(async () => {

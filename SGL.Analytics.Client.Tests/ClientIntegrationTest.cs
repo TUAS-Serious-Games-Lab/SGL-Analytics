@@ -228,7 +228,7 @@ namespace SGL.Analytics.Client.Tests {
 				output.WriteLine("Registration:");
 				output.WriteStreamContents(stream);
 				stream.Position = 0;
-				var userReg = await JsonSerializer.DeserializeAsync<UserRegistrationDTO>(stream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+				var userReg = await JsonSerializer.DeserializeAsync<UserRegistrationDTO>(stream, JsonOptions.RestOptions);
 				Assert.NotNull(userReg);
 				Assert.Equal(user.Username, userReg.Username);
 				var studyAttr = userReg.StudySpecificProperties as IDictionary<string, object?> ?? new Dictionary<string, object?> { };
@@ -244,11 +244,9 @@ namespace SGL.Analytics.Client.Tests {
 					propDataDecryptor.OpenDecryptionReadStream(
 						new MemoryStream(userReg.EncryptedProperties, writable: false), 0),
 					CompressionMode.Decompress);
-				var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true };
-				options.Converters.Add(new ObjectDictionaryJsonConverter());
-				var encryptedProps = await JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(propDecrStream, options);
+				var encryptedProps = await JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(propDecrStream, JsonOptions.UserPropertiesOptions);
 				using var encPropOutBuff = new MemoryStream();
-				await JsonSerializer.SerializeAsync(encPropOutBuff, encryptedProps, options);
+				await JsonSerializer.SerializeAsync(encPropOutBuff, encryptedProps, JsonOptions.UserPropertiesOptions);
 				encPropOutBuff.Position = 0;
 				output.WriteLine("");
 				output.WriteLine("Decrypted user properties:");
@@ -270,7 +268,7 @@ namespace SGL.Analytics.Client.Tests {
 			output.WriteLine("=== Metadata ===");
 			output.WriteStreamContents(metadataStream);
 			metadataStream.Position = 0;
-			var metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+			var metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, JsonOptions.RestOptions);
 			Assert.NotNull(metadata);
 			Assert.InRange(metadata.CreationTime.ToUniversalTime(), startTime, endTime);
 			Assert.InRange(metadata.EndTime.ToUniversalTime(), startTime, endTime);
@@ -301,7 +299,7 @@ namespace SGL.Analytics.Client.Tests {
 			output.WriteLine("=== Metadata ===");
 			output.WriteStreamContents(metadataStream);
 			metadataStream.Position = 0;
-			metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+			metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, JsonOptions.RestOptions);
 			Assert.NotNull(metadata);
 			Assert.InRange(metadata.CreationTime.ToUniversalTime(), startTime, endTime);
 			Assert.InRange(metadata.EndTime.ToUniversalTime(), startTime, endTime);
@@ -331,7 +329,7 @@ namespace SGL.Analytics.Client.Tests {
 			output.WriteLine("=== Metadata ===");
 			output.WriteStreamContents(metadataStream);
 			metadataStream.Position = 0;
-			metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+			metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(metadataStream, JsonOptions.RestOptions);
 			Assert.NotNull(metadata);
 			Assert.InRange(metadata.CreationTime.ToUniversalTime(), startTime, endTime);
 			Assert.InRange(metadata.EndTime.ToUniversalTime(), startTime, endTime);

@@ -117,7 +117,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 	public class UserRegistrationIntegrationTest : IClassFixture<UserRegistrationIntegrationTestFixture> {
 		private UserRegistrationIntegrationTestFixture fixture;
 		private ITestOutputHelper output;
-		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+		private JsonSerializerOptions restJsonOptions = new JsonSerializerOptions(DTO.JsonOptions.RestOptions);
 
 		public UserRegistrationIntegrationTest(UserRegistrationIntegrationTestFixture fixture, ITestOutputHelper output) {
 			this.fixture = fixture;
@@ -339,7 +339,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				response.EnsureSuccessStatusCode();
 				Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-				var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(jsonOptions);
+				var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(restJsonOptions);
 				Assert.NotNull(result);
 				var token = result!.Token;
 				var (principal, validatedToken) = fixture.TokenValidator.Validate(token.Value);
@@ -415,7 +415,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 				var response = await client.PostAsJsonAsync("/api/analytics/user/v1/login", loginReqDTO);
 				response.EnsureSuccessStatusCode();
 				Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-				var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(jsonOptions);
+				var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(restJsonOptions);
 				Assert.NotNull(result);
 				var token = result!.Token;
 				var (principal, validatedToken) = fixture.TokenValidator.Validate(token.Value);
