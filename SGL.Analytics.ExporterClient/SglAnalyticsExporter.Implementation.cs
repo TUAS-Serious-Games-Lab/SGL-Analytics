@@ -149,8 +149,8 @@ namespace SGL.Analytics.ExporterClient {
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
 			var ct = cts.Token;
 			var userClient = perAppState.UserExporterApiClient;
-			// TODO: Apply filters from query.
 			var userDTOs = await userClient.GetMetadataForAllUsersAsync(recipientKeyId, ct);
+			userDTOs = query.ApplyTo(userDTOs);
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
 			var propertyJsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertiesOptions);
 			foreach (var udto in userDTOs) {
