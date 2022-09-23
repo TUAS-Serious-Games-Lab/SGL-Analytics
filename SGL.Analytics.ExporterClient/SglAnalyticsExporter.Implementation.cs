@@ -1,9 +1,13 @@
-﻿using SGL.Utilities;
+﻿using Microsoft.Extensions.Logging;
+using SGL.Analytics.DTO;
+using SGL.Utilities;
 using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -19,6 +23,7 @@ namespace SGL.Analytics.ExporterClient {
 		private KeyPair? recipientKeyPair;
 		private IExporterAuthenticator? authenticator = null;
 		private Dictionary<string, PerAppState> perAppStates = new Dictionary<string, PerAppState>();
+		private ILogger<SglAnalyticsExporter> logger;
 
 		private static (Certificate AuthenticationCertificate, Certificate RecipientCertificate, KeyPair AuthenticationKeyPair, KeyPair RecipientKeyPair,
 				 KeyId AuthenticationKeyId, KeyId RecipientKeyId) ReadKeyFile(PemObjectReader reader, string sourceName, CancellationToken ct = default) {
@@ -106,13 +111,39 @@ namespace SGL.Analytics.ExporterClient {
 			}
 		}
 
-		private IAsyncEnumerable<(LogFileMetadata Metadata, Stream Content)> GetDecryptedLogFilesAsyncImpl(PerAppState perAppState, LogFileQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
+		private async IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)> GetDecryptedLogFilesAsyncImpl(PerAppState perAppState, KeyId recipientKeyId, KeyPair recipientKeyPair, LogFileQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
 			var ct = cts.Token;
-			throw new NotImplementedException();
+			var logClient = perAppState.LogExporterApiClient;
+			// TODO: Apply filters from query.
+			var metaDTOs = await logClient.GetMetadataForAllLogsAsync(recipientKeyId, ct);
+			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
+			var logs = metaDTOs.MapBufferedAsync<DownstreamLogMetadataDTO, (LogFileMetadata Metadata, Stream? Content)>(16, async mdto => {
+				var encryptedContent = await logClient.GetLogContentByIdAsync(mdto.LogFileId, ct);
+				var metadata = new LogFileMetadata(mdto.LogFileId, mdto.UserId, mdto.CreationTime, mdto.EndTime, mdto.UploadTime, mdto.NameSuffix, mdto.LogContentEncoding, mdto.Size);
+				var dataDecryptor = DataDecryptor.FromEncryptionInfo(mdto.EncryptionInfo, keyDecryptor);
+				if (dataDecryptor == null) {
+					logger.LogError("No recipient key for the current decryption key pair {keyId} for log file {logId}, can't decrypt.", recipientKeyId, mdto.LogFileId);
+					return (metadata, null);
+				}
+				try {
+					Stream? content = dataDecryptor.OpenDecryptionReadStream(encryptedContent, 0, leaveOpen: false);
+					if (mdto.LogContentEncoding == LogContentEncoding.GZipCompressed) {
+						content = new GZipStream(content, CompressionMode.Decompress, leaveOpen: false);
+					}
+					return (metadata, content);
+				}
+				catch (Exception ex) {
+					logger.LogError(ex, "Couldn't decrypt log file {logId} using key pair {keyId}.", mdto.LogFileId, recipientKeyId);
+					return (metadata, null);
+				}
+			}, ct);
+			await foreach (var log in logs.ConfigureAwait(false).WithCancellation(ct)) {
+				yield return log;
+			}
 		}
 
-		private IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsyncImpl(PerAppState perAppState, UserRegistrationQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
+		private IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsyncImpl(PerAppState perAppState, KeyId recipientKeyId, KeyPair recipientKeyPair, UserRegistrationQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
 			var ct = cts.Token;
 			throw new NotImplementedException();

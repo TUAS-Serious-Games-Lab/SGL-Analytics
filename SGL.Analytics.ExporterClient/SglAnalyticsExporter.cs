@@ -14,6 +14,7 @@ namespace SGL.Analytics.ExporterClient {
 			mainSyncContext = configurator.SynchronizationContextGetter();
 			var loggerFactoryBootstrapArgs = new SglAnalyticsExporterConfiguratorFactoryArguments(httpClient, NullLoggerFactory.Instance, randomGenerator, configurator.CustomArgumentFactories);
 			LoggerFactory = loggerFactoryBootstrapArgs.LoggerFactory;
+			logger = LoggerFactory.CreateLogger<SglAnalyticsExporter>();
 		}
 
 		/// <summary>
@@ -41,18 +42,30 @@ namespace SGL.Analytics.ExporterClient {
 			await GetPerAppStateAsync(ct);
 		}
 
-		public async Task<IAsyncEnumerable<(LogFileMetadata Metadata, Stream Content)>> GetDecryptedLogFilesAsync(Action<ILogFileQuery> query, CancellationToken ct = default) {
+		public async Task<IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)>> GetDecryptedLogFilesAsync(Action<ILogFileQuery> query, CancellationToken ct = default) {
+			if (CurrentKeyIds == null) {
+				throw new InvalidOperationException("No current key id.");
+			}
+			if (recipientKeyPair == null) {
+				throw new InvalidOperationException("No current decryption key pair.");
+			}
 			var queryParams = new LogFileQuery();
 			query(queryParams);
 			var perAppState = await GetPerAppStateAsync(ct);
-			return GetDecryptedLogFilesAsyncImpl(perAppState, queryParams, ct);
+			return GetDecryptedLogFilesAsyncImpl(perAppState, CurrentKeyIds.Value.DecryptionKeyId, recipientKeyPair, queryParams, ct);
 		}
 
 		public async Task<IAsyncEnumerable<UserRegistrationData>> GetDecryptedUserRegistrationsAsync(Action<IUserRegistrationQuery> query, CancellationToken ct = default) {
+			if (CurrentKeyIds == null) {
+				throw new InvalidOperationException("No current key id.");
+			}
+			if (recipientKeyPair == null) {
+				throw new InvalidOperationException("No current decryption key pair.");
+			}
 			var queryParams = new UserRegistrationQuery();
 			query(queryParams);
 			var perAppState = await GetPerAppStateAsync(ct);
-			return GetDecryptedUserRegistrationsAsyncImpl(perAppState, queryParams, ct);
+			return GetDecryptedUserRegistrationsAsyncImpl(perAppState, CurrentKeyIds.Value.DecryptionKeyId, recipientKeyPair, queryParams, ct);
 		}
 	}
 }
