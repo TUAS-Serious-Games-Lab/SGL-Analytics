@@ -12,6 +12,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SGL.Analytics.ExporterClient {
 	public partial class SglAnalyticsExporter {
@@ -143,10 +145,52 @@ namespace SGL.Analytics.ExporterClient {
 			}
 		}
 
-		private IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsyncImpl(PerAppState perAppState, KeyId recipientKeyId, KeyPair recipientKeyPair, UserRegistrationQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
+		private async IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsyncImpl(PerAppState perAppState, KeyId recipientKeyId, KeyPair recipientKeyPair, UserRegistrationQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
 			var ct = cts.Token;
-			throw new NotImplementedException();
+			var userClient = perAppState.UserExporterApiClient;
+			// TODO: Apply filters from query.
+			var userDTOs = await userClient.GetMetadataForAllUsersAsync(recipientKeyId, ct);
+			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
+			var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
+				WriteIndented = true,
+				DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+			};
+			jsonOptions.Converters.Add(new ObjectDictionaryJsonConverter());
+			foreach (var udto in userDTOs) {
+				if (udto.EncryptedProperties == null) {
+					logger.LogTrace("User registration {id} has no encrypted properties, providing empty properties dictionary.", udto.UserId);
+					yield return new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, new Dictionary<string, object?>());
+				}
+				else if (udto.PropertyEncryptionInfo == null) {
+					logger.LogError("No encryption info for encrypted properties on user registration {id}, can't decrypt.", udto.UserId);
+					yield return new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, null);
+				}
+				else {
+					UserRegistrationData result;
+					try {
+						var dataDecryptor = DataDecryptor.FromEncryptionInfo(udto.PropertyEncryptionInfo, keyDecryptor);
+						if (dataDecryptor == null) {
+							logger.LogError("No recipient key for the current decryption key pair {keyId} for encrypted properties on user registration {id}, can't decrypt.", recipientKeyId, udto.UserId);
+							result = new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, null);
+						}
+						else {
+							var decryptedBytes = dataDecryptor.DecryptData(udto.EncryptedProperties, 0);
+							using var propStream = new MemoryStream(decryptedBytes, writable: false);
+							var props = await JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(propStream, jsonOptions, ct);
+							if (props == null) {
+								logger.LogError("Read null value from encrypted properties for user registration {id}.", udto.UserId);
+							}
+							result = new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, props);
+						}
+					}
+					catch (Exception ex) {
+						logger.LogError(ex, "Couldn't decrypt and read encrypted properties of user {id} using key pair {keyid}.", udto.UserId, recipientKeyId);
+						result = new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, null);
+					}
+					yield return result;
+				}
+			}
 		}
 
 	}
