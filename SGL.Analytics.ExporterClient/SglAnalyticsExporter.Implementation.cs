@@ -117,8 +117,8 @@ namespace SGL.Analytics.ExporterClient {
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
 			var ct = cts.Token;
 			var logClient = perAppState.LogExporterApiClient;
-			// TODO: Apply filters from query.
 			var metaDTOs = await logClient.GetMetadataForAllLogsAsync(recipientKeyId, ct);
+			metaDTOs = query.ApplyTo(metaDTOs);
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
 			var logs = metaDTOs.MapBufferedAsync<DownstreamLogMetadataDTO, (LogFileMetadata Metadata, Stream? Content)>(16, async mdto => {
 				var encryptedContent = await logClient.GetLogContentByIdAsync(mdto.LogFileId, ct);
