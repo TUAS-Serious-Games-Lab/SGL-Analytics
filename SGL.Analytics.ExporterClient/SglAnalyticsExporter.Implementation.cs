@@ -27,6 +27,23 @@ namespace SGL.Analytics.ExporterClient {
 		private Dictionary<string, PerAppState> perAppStates = new Dictionary<string, PerAppState>();
 		private ILogger<SglAnalyticsExporter> logger;
 
+		public async ValueTask DisposeAsync() {
+			foreach (var appState in perAppStates.Values) {
+				if (configurator.UserApiClient.Dispose) await disposeIfDisposable(appState.UserExporterApiClient);
+				if (configurator.LogApiClient.Dispose) await disposeIfDisposable(appState.LogExporterApiClient);
+			}
+			if (configurator.Authenticator.Dispose && authenticator != null) await disposeIfDisposable(authenticator);
+			configurator.CustomArgumentFactories.Dispose();
+			if (configurator.LoggerFactory.Dispose) await disposeIfDisposable(LoggerFactory);
+		}
+		private async Task disposeIfDisposable(object obj) {
+			if (obj is IAsyncDisposable ad) {
+				await ad.DisposeAsync().AsTask();
+			}
+			if (obj is IDisposable d) {
+				d.Dispose();
+			}
+		}
 		private static (Certificate AuthenticationCertificate, Certificate RecipientCertificate, KeyPair AuthenticationKeyPair, KeyPair RecipientKeyPair,
 				 KeyId AuthenticationKeyId, KeyId RecipientKeyId) ReadKeyFile(PemObjectReader reader, string sourceName, CancellationToken ct = default) {
 			List<object> pemObjects;

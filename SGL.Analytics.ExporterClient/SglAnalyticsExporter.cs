@@ -7,7 +7,7 @@ using SGL.Utilities.Crypto.Keys;
 using System.Runtime.CompilerServices;
 
 namespace SGL.Analytics.ExporterClient {
-	public partial class SglAnalyticsExporter {
+	public partial class SglAnalyticsExporter : IAsyncDisposable {
 		public SglAnalyticsExporter(HttpClient httpClient, Action<ISglAnalyticsExporterConfigurator> configuration) {
 			this.httpClient = httpClient;
 			configuration(configurator);
