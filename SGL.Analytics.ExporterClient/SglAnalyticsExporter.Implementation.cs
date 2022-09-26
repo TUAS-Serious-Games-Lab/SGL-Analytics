@@ -172,7 +172,7 @@ namespace SGL.Analytics.ExporterClient {
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
 			var propertyJsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertiesOptions);
 			foreach (var udto in userDTOs) {
-				if (udto.EncryptedProperties == null) {
+				if (udto.EncryptedProperties == null || udto.EncryptedProperties.Length == 0) {
 					logger.LogTrace("User registration {id} has no encrypted properties, providing empty properties dictionary.", udto.UserId);
 					yield return new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, new Dictionary<string, object?>());
 				}
