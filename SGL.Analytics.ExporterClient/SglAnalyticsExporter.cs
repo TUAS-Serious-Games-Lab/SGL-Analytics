@@ -13,7 +13,7 @@ namespace SGL.Analytics.ExporterClient {
 			configuration(configurator);
 			mainSyncContext = configurator.SynchronizationContextGetter();
 			var loggerFactoryBootstrapArgs = new SglAnalyticsExporterConfiguratorFactoryArguments(httpClient, NullLoggerFactory.Instance, randomGenerator, configurator.CustomArgumentFactories);
-			LoggerFactory = loggerFactoryBootstrapArgs.LoggerFactory;
+			LoggerFactory = configurator.LoggerFactory.Factory(loggerFactoryBootstrapArgs);
 			logger = LoggerFactory.CreateLogger<SglAnalyticsExporter>();
 		}
 
