@@ -2,6 +2,7 @@
 using CommandLine.Text;
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.ExporterClient;
+using SGL.Analytics.ExporterClient.Implementations;
 using SGL.Utilities;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -59,22 +60,11 @@ class Program {
 		}
 		await exporter.UseKeyFileAsync(opts.KeyFile, () => keyPassphrase, ct);
 		await exporter.SwitchToApplicationAsync(opts.AppName, ct);
-		await Console.Out.WriteLineAsync();
-		await Console.Out.WriteLineAsync("Users:");
-		await foreach (var userReg in await exporter.GetDecryptedUserRegistrationsAsync(q => q, ct)) {
-			await Console.Out.WriteLineAsync($"{userReg.UserId}\t{userReg.Username}");
-		}
-		await Console.Out.WriteLineAsync();
-		await Console.Out.WriteLineAsync("Logs:");
-		await foreach (var logFile in await exporter.GetDecryptedLogFilesAsync(q => q, ct)) {
-			await Console.Out.WriteLineAsync($"{logFile.Metadata.LogFileId}\t{logFile.Metadata.UserId}\t{logFile.Metadata.Size}\t{logFile.Metadata.CreationTime}\t{logFile.Metadata.EndTime}\t{logFile.Metadata.UploadTime}");
-			if (logFile.Content == null) {
-				await Console.Out.WriteLineAsync("[No decrypted content available]");
-				continue;
-			}
-			using var content = new StreamReader(logFile.Content);
-			var text = await content.ReadToEndAsync();
-			await Console.Out.WriteLineAsync(text);
-		}
+		var userRegSink = new SimpleDirectoryUserRegistrationSink();
+		if (opts.UsersOutputDir != null) userRegSink.DirectoryPath = opts.UsersOutputDir;
+		await exporter.GetDecryptedUserRegistrationsAsync(userRegSink, q => q, ct);
+		var logsSink = new SimpleDirectoryLogFileSink();
+		if (opts.LogsOutputDir != null) logsSink.DirectoryPath = opts.LogsOutputDir;
+		await exporter.GetDecryptedLogFilesAsync(logsSink, q => q, ct);
 	}
 }
