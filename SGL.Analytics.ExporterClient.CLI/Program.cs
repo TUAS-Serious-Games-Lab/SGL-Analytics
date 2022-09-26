@@ -24,7 +24,7 @@ class Program {
 			"If $SGL_ANALYTICS_EXPORTER_KEY_PASSPHRASE is set, the passphrase for this file will be taken from it, otherwise the passphrase will be prompted.")]
 		public string KeyFile { get; set; } = null!;
 		[Option('j', "request-concurrency", HelpText = "Specify how many concurrent requests an opertation that needs to perform many requests is allowed to perform.")]
-		public int RequestConcurrency { get; set; }
+		public int RequestConcurrency { get; set; } = 16;
 	}
 	async static Task Main(string[] args) => await ((Func<ParserResult<Options>, Task>)(res => res.MapResult(RealMain, async errs => await DisplayHelp(res, errs))))(new Parser(c => c.HelpWriter = null).ParseArguments<Options>(args));
 
