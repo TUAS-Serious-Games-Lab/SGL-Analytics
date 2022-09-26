@@ -20,14 +20,35 @@ namespace SGL.Analytics.ExporterClient {
 			return new LogFileQuery(queryApplicator: q => current(prev(q)));
 		}
 
-		public ILogFileQuery StartedBefore(DateTime timestamp) => appendToQuery(q => q.Where(mdto => mdto.CreationTime > timestamp));
-		public ILogFileQuery StartedAfter(DateTime timestamp) => appendToQuery(q => q.Where(mdto => mdto.CreationTime > timestamp));
+		public ILogFileQuery StartedBefore(DateTime timestamp) {
+			var utcTimestamp = timestamp.ToUniversalTime();
+			return appendToQuery(q => q.Where(mdto => mdto.CreationTime > utcTimestamp));
+		}
 
-		public ILogFileQuery EndedBefore(DateTime timestamp) => appendToQuery(q => q.Where(mdto => mdto.EndTime < timestamp));
-		public ILogFileQuery EndedAfter(DateTime timestamp) => appendToQuery(q => q.Where(mdto => mdto.EndTime > timestamp));
+		public ILogFileQuery StartedAfter(DateTime timestamp) {
+			var utcTimestamp = timestamp.ToUniversalTime();
+			return appendToQuery(q => q.Where(mdto => mdto.CreationTime > utcTimestamp));
+		}
 
-		public ILogFileQuery UploadedBefore(DateTime timestamp) => appendToQuery(q => q.Where(mdto => mdto.UploadTime < timestamp));
-		public ILogFileQuery UploadedAfter(DateTime timestamp) => appendToQuery(q => q.Where(mdto => mdto.UploadTime > timestamp));
+		public ILogFileQuery EndedBefore(DateTime timestamp) {
+			var utcTimestamp = timestamp.ToUniversalTime();
+			return appendToQuery(q => q.Where(mdto => mdto.EndTime < utcTimestamp));
+		}
+
+		public ILogFileQuery EndedAfter(DateTime timestamp) {
+			var utcTimestamp = timestamp.ToUniversalTime();
+			return appendToQuery(q => q.Where(mdto => mdto.EndTime > utcTimestamp));
+		}
+
+		public ILogFileQuery UploadedBefore(DateTime timestamp) {
+			var utcTimestamp = timestamp.ToUniversalTime();
+			return appendToQuery(q => q.Where(mdto => mdto.UploadTime < utcTimestamp));
+		}
+
+		public ILogFileQuery UploadedAfter(DateTime timestamp) {
+			var utcTimestamp = timestamp.ToUniversalTime();
+			return appendToQuery(q => q.Where(mdto => mdto.UploadTime > utcTimestamp));
+		}
 
 		public ILogFileQuery UserOneOf(IEnumerable<Guid> userIds) {
 			var ids = userIds.ToHashSet();
