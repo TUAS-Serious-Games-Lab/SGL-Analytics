@@ -55,5 +55,11 @@ class Program {
 			keyPassphrase = PasswordReader.PromptPassword("Please enter key file passphrase");
 		}
 		await exporter.UseKeyFileAsync(opts.KeyFile, () => keyPassphrase, ct);
+		await exporter.SwitchToApplicationAsync(opts.AppName, ct);
+		await Console.Out.WriteLineAsync();
+		await Console.Out.WriteLineAsync("Users:");
+		await foreach (var userReg in await exporter.GetDecryptedUserRegistrationsAsync(q => q, ct)) {
+			await Console.Out.WriteLineAsync($"{userReg.UserId}\t{userReg.Username}");
+		}
 	}
 }
