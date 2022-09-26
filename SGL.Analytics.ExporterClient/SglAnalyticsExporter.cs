@@ -61,7 +61,12 @@ namespace SGL.Analytics.ExporterClient {
 			var logs = await GetDecryptedLogFilesAsync(query, ct);
 			await foreach (var (metadata, content) in logs.ConfigureAwait(false).WithCancellation(ct)) {
 				try {
+					logger.LogTrace("Procesing log file {id} from user {userId}.", metadata.LogFileId, metadata.UserId);
 					await sink.ProcessLogFileAsync(metadata, content, ct);
+				}
+				catch (Exception ex) {
+					logger.LogError(ex, "Encountered error while procesing log file {id} from user {userId}.", metadata.LogFileId, metadata.UserId);
+					throw;
 				}
 				finally {
 					await (content?.DisposeAsync() ?? ValueTask.CompletedTask);
@@ -82,7 +87,14 @@ namespace SGL.Analytics.ExporterClient {
 		public async Task GetDecryptedUserRegistrationsAsync(IUserRegistrationSink sink, Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default) {
 			var users = await GetDecryptedUserRegistrationsAsync(query, ct);
 			await foreach (var user in users.ConfigureAwait(false).WithCancellation(ct)) {
-				await sink.ProcessUserRegistrationAsync(user, ct);
+				try {
+					logger.LogTrace("Processing user registration {id}.", user.UserId);
+					await sink.ProcessUserRegistrationAsync(user, ct);
+				}
+				catch (Exception ex) {
+					logger.LogError(ex, "Encountered error while processing user registration {id}.", user.UserId);
+					throw;
+				}
 			}
 		}
 	}
