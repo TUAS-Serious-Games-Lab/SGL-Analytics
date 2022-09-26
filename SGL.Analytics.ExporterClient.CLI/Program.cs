@@ -20,6 +20,9 @@ class Program {
 		public string? LogsOutputDir { get; set; } = null;
 		[Option('u', "user-output", HelpText = "The directory to which the user registration files shall be written.")]
 		public string? UsersOutputDir { get; set; } = null;
+		[Option('k', "key-file", Required = true, HelpText = "The file containing the authentication and decryption key pairs (with their associated certificates for identification).\n" +
+			"If $SGL_ANALYTICS_EXPORTER_KEY_PASSPHRASE is set, the passphrase for this file will be taken from it, otherwise the passphrase will be prompted.")]
+		public string KeyFile { get; set; } = null!;
 	}
 	async static Task Main(string[] args) => await ((Func<ParserResult<Options>, Task>)(res => res.MapResult(RealMain, async errs => await DisplayHelp(res, errs))))(new Parser(c => c.HelpWriter = null).ParseArguments<Options>(args));
 
@@ -47,5 +50,10 @@ class Program {
 		await using SglAnalyticsExporter exporter = new SglAnalyticsExporter(httpClient, config => {
 			config.UseLoggerFactory(_ => loggerFactory, false);
 		});
+		var keyPassphrase = Environment.GetEnvironmentVariable("SGL_ANALYTICS_EXPORTER_KEY_PASSPHRASE")?.ToCharArray();
+		if (keyPassphrase == null) {
+			keyPassphrase = PasswordReader.PromptPassword("Please enter key file passphrase");
+		}
+		await exporter.UseKeyFileAsync(opts.KeyFile, () => keyPassphrase, ct);
 	}
 }
