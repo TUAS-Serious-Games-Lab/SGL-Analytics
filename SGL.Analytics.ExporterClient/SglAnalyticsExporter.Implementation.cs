@@ -137,7 +137,8 @@ namespace SGL.Analytics.ExporterClient {
 			var metaDTOs = await logClient.GetMetadataForAllLogsAsync(recipientKeyId, ct);
 			metaDTOs = query.ApplyTo(metaDTOs);
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
-			var logs = metaDTOs.MapBufferedAsync<DownstreamLogMetadataDTO, (LogFileMetadata Metadata, Stream? Content)>(16, async mdto => {
+			var requestConcurrency = configurator.RequestConcurrencyGetter();
+			var logs = metaDTOs.MapBufferedAsync<DownstreamLogMetadataDTO, (LogFileMetadata Metadata, Stream? Content)>(requestConcurrency, async mdto => {
 				var encryptedContent = await logClient.GetLogContentByIdAsync(mdto.LogFileId, ct);
 				var metadata = new LogFileMetadata(mdto.LogFileId, mdto.UserId, mdto.CreationTime, mdto.EndTime, mdto.UploadTime, mdto.NameSuffix, mdto.LogContentEncoding, mdto.Size);
 				var dataDecryptor = DataDecryptor.FromEncryptionInfo(mdto.EncryptionInfo, keyDecryptor);

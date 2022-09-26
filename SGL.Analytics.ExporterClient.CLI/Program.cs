@@ -23,6 +23,8 @@ class Program {
 		[Option('k', "key-file", Required = true, HelpText = "The file containing the authentication and decryption key pairs (with their associated certificates for identification).\n" +
 			"If $SGL_ANALYTICS_EXPORTER_KEY_PASSPHRASE is set, the passphrase for this file will be taken from it, otherwise the passphrase will be prompted.")]
 		public string KeyFile { get; set; } = null!;
+		[Option('j', "request-concurrency", HelpText = "Specify how many concurrent requests an opertation that needs to perform many requests is allowed to perform.")]
+		public int RequestConcurrency { get; set; }
 	}
 	async static Task Main(string[] args) => await ((Func<ParserResult<Options>, Task>)(res => res.MapResult(RealMain, async errs => await DisplayHelp(res, errs))))(new Parser(c => c.HelpWriter = null).ParseArguments<Options>(args));
 
@@ -49,6 +51,7 @@ class Program {
 		httpClient.BaseAddress = opts.Backend;
 		await using SglAnalyticsExporter exporter = new SglAnalyticsExporter(httpClient, config => {
 			config.UseLoggerFactory(_ => loggerFactory, false);
+			config.UseRequestConcurrency(() => opts.RequestConcurrency);
 		});
 		var keyPassphrase = Environment.GetEnvironmentVariable("SGL_ANALYTICS_EXPORTER_KEY_PASSPHRASE")?.ToCharArray();
 		if (keyPassphrase == null) {

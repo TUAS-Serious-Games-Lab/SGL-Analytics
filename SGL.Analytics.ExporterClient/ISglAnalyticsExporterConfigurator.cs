@@ -79,6 +79,12 @@ namespace SGL.Analytics.ExporterClient {
 		/// <returns>A reference to this <see cref="ISglAnalyticsExporterConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsExporterConfigurator UseSynchronizationContext(Func<SynchronizationContext> synchronizationContextGetter);
 		/// <summary>
+		/// Sets the function used to obtain the maximum number of concurrent in-flight requests for an operation.
+		/// </summary>
+		/// <param name="requestConcurrencyGetter">The function to use.</param>
+		/// <returns>A reference to this <see cref="ISglAnalyticsExporterConfigurator"/> object for chaining.</returns>
+		ISglAnalyticsExporterConfigurator UseRequestConcurrency(Func<int> requestConcurrencyGetter);
+		/// <summary>
 		/// Sets the factory for the <see cref="ILoggerFactory"/> object to use for diagnostics logging.
 		/// </summary>
 		/// <param name="loggerFactoryFactory">The factory function to use.</param>

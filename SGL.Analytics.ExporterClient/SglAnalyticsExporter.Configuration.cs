@@ -11,9 +11,12 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.ExporterClient {
 	public partial class SglAnalyticsExporter {
 		private class SglAnalyticsExporterConfigurator : ISglAnalyticsExporterConfigurator {
+			private const int DefaultRequestConcurrency = 16;
+
 			internal SglAnalyticsExporterConfigurator() {
 				SynchronizationContextGetter = () => SynchronizationContext.Current ?? throw new InvalidOperationException("No SynchronizationContext set. " +
 					"SGL Analytics requires a synchronized SynchronizationContext that can be used to dispatch event handler invocations to the main thread.");
+				RequestConcurrencyGetter = () => DefaultRequestConcurrency;
 				LoggerFactory = (args => NullLoggerFactory.Instance, true);
 				Authenticator = ((args, keyPair) => new ExporterKeyPairAuthenticator(args.HttpClient, keyPair, args.LoggerFactory.CreateLogger<ExporterKeyPairAuthenticator>(), args.Random), true);
 				LogApiClient = (args => new LogExporterApiClient(args.HttpClient, args.Authorization), true);
@@ -21,6 +24,7 @@ namespace SGL.Analytics.ExporterClient {
 			}
 
 			internal Func<SynchronizationContext> SynchronizationContextGetter { get; private set; }
+			internal Func<int> RequestConcurrencyGetter { get; private set; }
 
 			internal (Func<SglAnalyticsExporterConfiguratorFactoryArguments, ILoggerFactory> Factory, bool Dispose) LoggerFactory;
 
@@ -61,6 +65,11 @@ namespace SGL.Analytics.ExporterClient {
 			}
 			public ISglAnalyticsExporterConfigurator UseAuthenticatedCustomArgumentFactory<T>(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, T> factory, bool cacheResult = false) where T : class {
 				CustomArgumentFactories.SetCustomArgumentFactory(factory, cacheResult);
+				return this;
+			}
+
+			public ISglAnalyticsExporterConfigurator UseRequestConcurrency(Func<int> requestConcurrencyGetter) {
+				RequestConcurrencyGetter = requestConcurrencyGetter;
 				return this;
 			}
 		}
