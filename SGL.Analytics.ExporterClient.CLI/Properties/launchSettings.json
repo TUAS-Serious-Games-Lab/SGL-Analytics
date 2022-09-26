@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SGL.Analytics.ExporterClient.CLI": {
+      "commandName": "Project",
+      "commandLineArgs": "-l Trace -r ./GameLogs -u ./UserRegs"
+    }
+  }
+}
