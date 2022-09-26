@@ -60,7 +60,12 @@ namespace SGL.Analytics.ExporterClient {
 		public async Task GetDecryptedLogFilesAsync(ILogFileSink sink, Func<ILogFileQuery, ILogFileQuery> query, CancellationToken ct = default) {
 			var logs = await GetDecryptedLogFilesAsync(query, ct);
 			await foreach (var (metadata, content) in logs.ConfigureAwait(false).WithCancellation(ct)) {
-				await sink.ProcessLogFileAsync(metadata, content, ct);
+				try {
+					await sink.ProcessLogFileAsync(metadata, content, ct);
+				}
+				finally {
+					await (content?.DisposeAsync() ?? ValueTask.CompletedTask);
+				}
 			}
 		}
 		public async Task<IAsyncEnumerable<UserRegistrationData>> GetDecryptedUserRegistrationsAsync(Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default) {
