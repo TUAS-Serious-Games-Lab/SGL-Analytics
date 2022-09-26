@@ -25,6 +25,10 @@ namespace SGL.Analytics.ExporterClient {
 		public (Certificate AuthenticationCertificate, Certificate DecryptionCertificate)? CurrentKeyCertificates { get; private set; } = null;
 		public string? CurrentAppName { get; private set; } = null;
 
+		public async Task UseKeyFileAsync(string filePath, Func<char[]> getPassword, CancellationToken ct = default) {
+			using var file = File.OpenText(filePath);
+			await UseKeyFileAsync(file, filePath, getPassword, ct);
+		}
 		public async Task UseKeyFileAsync(TextReader reader, string sourceName, Func<char[]> getPassword, CancellationToken ct = default) {
 			var pemReader = new PemObjectReader(reader, getPassword);
 			var result = await Task.Run(() => ReadKeyFile(pemReader, sourceName, ct), ct);
