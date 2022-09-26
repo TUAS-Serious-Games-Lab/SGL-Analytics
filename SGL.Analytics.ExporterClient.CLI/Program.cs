@@ -6,6 +6,8 @@ using SGL.Utilities;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
+namespace SGL.Analytics.ExporterClient.CLI;
+
 class Program {
 	class Options {
 		[Option('b', "backend", HelpText = "(Default: https://localhost) Specify the base URL of the API backend.")]
@@ -31,6 +33,19 @@ class Program {
 	}
 
 	async static Task RealMain(Options opts) {
-
+		using var cts = new CancellationTokenSource();
+		var ct = cts.Token;
+		Console.CancelKeyPress += (_, _) => cts.Cancel();
+		using var loggerFactory = LoggerFactory.Create(config => config.ClearProviders().AddConsole().SetMinimumLevel(opts.LoggingLevel));
+		using var syncContext = new SingleThreadedSynchronizationContext(ex => {
+			loggerFactory.CreateLogger<SingleThreadedSynchronizationContext>().LogError(ex, "Exception escapted from async callback.");
+		});
+		await syncContext; // Switch to 'main' thread context.
+		var logger = loggerFactory.CreateLogger<Program>();
+		using var httpClient = new HttpClient();
+		httpClient.BaseAddress = opts.Backend;
+		await using SglAnalyticsExporter exporter = new SglAnalyticsExporter(httpClient, config => {
+			config.UseLoggerFactory(_ => loggerFactory, false);
+		});
 	}
 }
