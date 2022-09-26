@@ -12,7 +12,7 @@ class Program {
 	class Options {
 		[Option('b', "backend", HelpText = "(Default: https://localhost) Specify the base URL of the API backend.")]
 		public Uri Backend { get; set; } = new Uri("https://localhost");
-		[Option('a', "appname", HelpText = "Specifiy the app on which to operate.")]
+		[Option('a', "appname", HelpText = "Specify the app on which to operate.")]
 		public string AppName { get; set; } = "SGL.Analytics.Client.Example";
 		[Option('l', "log-level", HelpText = "Diagnostics logging level for SGL Analytics.")]
 		public LogLevel LoggingLevel { get; set; } = LogLevel.None;
