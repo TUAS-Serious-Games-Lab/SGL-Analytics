@@ -61,5 +61,17 @@ class Program {
 		await foreach (var userReg in await exporter.GetDecryptedUserRegistrationsAsync(q => q, ct)) {
 			await Console.Out.WriteLineAsync($"{userReg.UserId}\t{userReg.Username}");
 		}
+		await Console.Out.WriteLineAsync();
+		await Console.Out.WriteLineAsync("Logs:");
+		await foreach (var logFile in await exporter.GetDecryptedLogFilesAsync(q => q, ct)) {
+			await Console.Out.WriteLineAsync($"{logFile.Metadata.LogFileId}\t{logFile.Metadata.UserId}\t{logFile.Metadata.Size}\t{logFile.Metadata.CreationTime}\t{logFile.Metadata.EndTime}\t{logFile.Metadata.UploadTime}");
+			if (logFile.Content == null) {
+				await Console.Out.WriteLineAsync("[No decrypted content available]");
+				continue;
+			}
+			using var content = new StreamReader(logFile.Content);
+			var text = await content.ReadToEndAsync();
+			await Console.Out.WriteLineAsync(text);
+		}
 	}
 }
