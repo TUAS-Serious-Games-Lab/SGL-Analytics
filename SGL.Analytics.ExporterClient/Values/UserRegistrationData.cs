@@ -18,13 +18,13 @@ namespace SGL.Analytics.ExporterClient {
 		public string Username { get; private set; }
 
 		public IReadOnlyDictionary<string, object?> StudySpecificProperties { get; private set; }
-		public IReadOnlyDictionary<string, object?>? EncryptedStudySpecificProperties { get; private set; }
+		public IReadOnlyDictionary<string, object?>? DecryptedStudySpecificProperties { get; private set; }
 
-		internal UserRegistrationData(Guid userId, string username, IReadOnlyDictionary<string, object?> studySpecificProperties, IReadOnlyDictionary<string, object?>? encryptedStudySpecificProperties) {
+		internal UserRegistrationData(Guid userId, string username, IReadOnlyDictionary<string, object?> studySpecificProperties, IReadOnlyDictionary<string, object?>? decryptedStudySpecificProperties) {
 			UserId = userId;
 			Username = username;
 			StudySpecificProperties = studySpecificProperties;
-			EncryptedStudySpecificProperties = encryptedStudySpecificProperties;
+			DecryptedStudySpecificProperties = decryptedStudySpecificProperties;
 		}
 	}
 }
