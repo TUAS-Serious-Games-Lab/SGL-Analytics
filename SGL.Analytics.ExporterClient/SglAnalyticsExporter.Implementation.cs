@@ -203,7 +203,7 @@ namespace SGL.Analytics.ExporterClient {
 						}
 						else {
 							var decryptedBytes = dataDecryptor.DecryptData(udto.EncryptedProperties, 0);
-							using var propStream = new MemoryStream(decryptedBytes, writable: false);
+							using var propStream = new GZipStream(new MemoryStream(decryptedBytes, writable: false), CompressionMode.Decompress);
 							var props = await JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(propStream, propertyJsonOptions, ct).ConfigureAwait(false);
 							if (props == null) {
 								logger.LogError("Read null value from encrypted properties for user registration {id}.", udto.UserId);
