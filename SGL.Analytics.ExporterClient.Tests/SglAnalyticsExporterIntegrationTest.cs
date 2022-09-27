@@ -158,6 +158,7 @@ namespace SGL.Analytics.ExporterClient.Tests {
 			this.serverFixture = serverFixture;
 			fixture = testFixture;
 			fixture.Output = output;
+			serverFixture.Reset();
 		}
 
 
