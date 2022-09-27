@@ -21,7 +21,7 @@ namespace SGL.Analytics.ExporterClient.Implementations {
 				if (dir != null) Directory.CreateDirectory(dir);
 				using var outputFile = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
 				await JsonSerializer.SerializeAsync(outputFile, userRegistrationData, JsonOptions, ct);
-			}, ct);
+			}, ct).ConfigureAwait(false);
 		}
 	}
 }

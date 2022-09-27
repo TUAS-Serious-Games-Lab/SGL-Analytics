@@ -104,7 +104,7 @@ namespace SGL.Analytics.ExporterClient {
 					if (authenticator == null) {
 						throw new InvalidOperationException("No authenticator present.");
 					}
-					currentAppState.AuthData = await authenticator.AuthenticateAsync(appName, ct);
+					currentAppState.AuthData = await authenticator.AuthenticateAsync(appName, ct).ConfigureAwait(false);
 					currentAppState.LogExporterApiClient.Authorization = currentAppState.AuthData;
 					currentAppState.UserExporterApiClient.Authorization = currentAppState.AuthData;
 				}
@@ -114,7 +114,7 @@ namespace SGL.Analytics.ExporterClient {
 				if (authenticator == null) {
 					throw new InvalidOperationException("No authenticator present.");
 				}
-				var authData = await authenticator.AuthenticateAsync(appName, ct);
+				var authData = await authenticator.AuthenticateAsync(appName, ct).ConfigureAwait(false);
 				if (CurrentKeyIds == null) {
 					throw new InvalidOperationException("No current key id.");
 				}
@@ -136,12 +136,12 @@ namespace SGL.Analytics.ExporterClient {
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
 			var ct = cts.Token;
 			var logClient = perAppState.LogExporterApiClient;
-			var metaDTOs = await logClient.GetMetadataForAllLogsAsync(recipientKeyId, ct);
+			var metaDTOs = await logClient.GetMetadataForAllLogsAsync(recipientKeyId, ct).ConfigureAwait(false);
 			metaDTOs = query.ApplyTo(metaDTOs);
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
 			var requestConcurrency = configurator.RequestConcurrencyGetter();
 			var logs = metaDTOs.MapBufferedAsync(requestConcurrency, (Func<DownstreamLogMetadataDTO, Task<(LogFileMetadata Metadata, Stream? Content)>>)(async mdto => {
-				var encryptedContent = await logClient.GetLogContentByIdAsync(mdto.LogFileId, ct);
+				var encryptedContent = await logClient.GetLogContentByIdAsync(mdto.LogFileId, ct).ConfigureAwait(false);
 				var metadata = ToMetadata(mdto);
 				var dataDecryptor = DataDecryptor.FromEncryptionInfo(mdto.EncryptionInfo, keyDecryptor);
 				if (dataDecryptor == null) {
@@ -173,7 +173,7 @@ namespace SGL.Analytics.ExporterClient {
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
 			var ct = cts.Token;
 			var userClient = perAppState.UserExporterApiClient;
-			var userDTOs = await userClient.GetMetadataForAllUsersAsync(recipientKeyId, ct);
+			var userDTOs = await userClient.GetMetadataForAllUsersAsync(recipientKeyId, ct).ConfigureAwait(false);
 			userDTOs = query.ApplyTo(userDTOs);
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
 			var propertyJsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertiesOptions);
@@ -197,7 +197,7 @@ namespace SGL.Analytics.ExporterClient {
 						else {
 							var decryptedBytes = dataDecryptor.DecryptData(udto.EncryptedProperties, 0);
 							using var propStream = new MemoryStream(decryptedBytes, writable: false);
-							var props = await JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(propStream, propertyJsonOptions, ct);
+							var props = await JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(propStream, propertyJsonOptions, ct).ConfigureAwait(false);
 							if (props == null) {
 								logger.LogError("Read null value from encrypted properties for user registration {id}.", udto.UserId);
 							}

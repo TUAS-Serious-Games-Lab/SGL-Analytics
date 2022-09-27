@@ -17,8 +17,8 @@ namespace SGL.Analytics.ExporterClient.Implementations {
 		public async Task ProcessLogFileAsync(LogFileMetadata metadata, Stream? content, CancellationToken ct) {
 			var contentTask = content != null ? Task.Run(() => WriteContentFile(metadata.LogFileId, content, ct), ct) : Task.CompletedTask;
 			var metadataTask = Task.Run(() => WriteMetadataFile(metadata, ct), ct);
-			await contentTask;
-			await metadataTask;
+			await contentTask.ConfigureAwait(false);
+			await metadataTask.ConfigureAwait(false);
 		}
 
 		private async Task WriteContentFile(Guid id, Stream content, CancellationToken ct) {
@@ -27,7 +27,7 @@ namespace SGL.Analytics.ExporterClient.Implementations {
 			var dir = Path.GetDirectoryName(filePath);
 			if (dir != null) Directory.CreateDirectory(dir);
 			using var outputFile = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
-			await content.CopyToAsync(outputFile, ct);
+			await content.CopyToAsync(outputFile, ct).ConfigureAwait(false);
 		}
 
 		private async Task WriteMetadataFile(LogFileMetadata metadata, CancellationToken ct) {
@@ -36,7 +36,7 @@ namespace SGL.Analytics.ExporterClient.Implementations {
 			var dir = Path.GetDirectoryName(filePath);
 			if (dir != null) Directory.CreateDirectory(dir);
 			using var outputFile = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
-			await JsonSerializer.SerializeAsync(outputFile, metadata, MetadataJsonOptions, ct);
+			await JsonSerializer.SerializeAsync(outputFile, metadata, MetadataJsonOptions, ct).ConfigureAwait(false);
 		}
 	}
 }

@@ -18,8 +18,8 @@ namespace SGL.Analytics.ExporterClient {
 		public UserExporterApiClient(HttpClient httpClient, AuthorizationData authorization) : base(httpClient, authorization, "/api/analytics/user/v1") { }
 
 		public async Task<IEnumerable<Guid>> GetUserIdListAsync(CancellationToken ct = default) {
-			using var response = await SendRequest(HttpMethod.Get, "", null, req => { }, accept: jsonMT, ct);
-			return (await response.Content.ReadFromJsonAsync<List<Guid>>(jsonOptions, ct)) ?? Enumerable.Empty<Guid>();
+			using var response = await SendRequest(HttpMethod.Get, "", null, req => { }, accept: jsonMT, ct).ConfigureAwait(false);
+			return (await response.Content.ReadFromJsonAsync<List<Guid>>(jsonOptions, ct).ConfigureAwait(false)) ?? Enumerable.Empty<Guid>();
 		}
 
 		public async Task<IEnumerable<UserMetadataDTO>> GetMetadataForAllUsersAsync(KeyId? recipientKeyId = null, CancellationToken ct = default) {
@@ -27,8 +27,8 @@ namespace SGL.Analytics.ExporterClient {
 			if (recipientKeyId != null) {
 				queryParameters = new List<KeyValuePair<string, string>> { new("recipient", recipientKeyId.ToString() ?? "") };
 			}
-			using var response = await SendRequest(HttpMethod.Get, "all", queryParameters, null, req => { }, accept: jsonMT, ct: ct);
-			return (await response.Content.ReadFromJsonAsync<List<UserMetadataDTO>>(jsonOptions, ct)) ?? Enumerable.Empty<UserMetadataDTO>();
+			using var response = await SendRequest(HttpMethod.Get, "all", queryParameters, null, req => { }, accept: jsonMT, ct: ct).ConfigureAwait(false);
+			return (await response.Content.ReadFromJsonAsync<List<UserMetadataDTO>>(jsonOptions, ct).ConfigureAwait(false)) ?? Enumerable.Empty<UserMetadataDTO>();
 		}
 
 		public async Task<UserMetadataDTO> GetUserMetadataByIdAsync(Guid id, KeyId? recipientKeyId = null, CancellationToken ct = default) {
@@ -36,8 +36,8 @@ namespace SGL.Analytics.ExporterClient {
 			if (recipientKeyId != null) {
 				queryParameters = new List<KeyValuePair<string, string>> { new("recipient", recipientKeyId.ToString() ?? "") };
 			}
-			using var response = await SendRequest(HttpMethod.Get, $"{id}", queryParameters, null, req => { }, accept: jsonMT, ct);
-			return (await response.Content.ReadFromJsonAsync<UserMetadataDTO>(jsonOptions, ct)) ?? throw new JsonException("Got null from response.");
+			using var response = await SendRequest(HttpMethod.Get, $"{id}", queryParameters, null, req => { }, accept: jsonMT, ct).ConfigureAwait(false);
+			return (await response.Content.ReadFromJsonAsync<UserMetadataDTO>(jsonOptions, ct).ConfigureAwait(false)) ?? throw new JsonException("Got null from response.");
 		}
 	}
 }
