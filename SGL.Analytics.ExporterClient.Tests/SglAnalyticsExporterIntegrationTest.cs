@@ -209,6 +209,7 @@ namespace SGL.Analytics.ExporterClient.Tests {
 			var allLogsDict = allLogs.ToDictionary(log => log.Metadata.LogFileId);
 			var receivedIds = new HashSet<Guid>();
 			await foreach (var receivedLog in await exporter.GetDecryptedLogFilesAsync(q => q)) {
+				output.WriteAsJson(receivedLog.Metadata);
 				receivedIds.Add(receivedLog.Metadata.LogFileId);
 				using var receivedContentIn = receivedLog.Content;
 				using var receivedContentBuffer = new MemoryStream();
@@ -257,6 +258,9 @@ namespace SGL.Analytics.ExporterClient.Tests {
 			await exporter.UseKeyFileAsync(fixture.GetKeyFile(), "test.key", () => fixture.KeyFilePassphrase);
 			await exporter.SwitchToApplicationAsync(fixture.AppName);
 			var receivedUsers = await (await exporter.GetDecryptedUserRegistrationsAsync(q => q)).ToListAsync();
+			foreach (var user in receivedUsers) {
+				output.WriteAsJson(user);
+			}
 			Assert.All(receivedUsers, recUsr => {
 				var expectedUsr = Assert.Single(allUsers, u => u.UserData.UserId == recUsr.UserId);
 				Assert.Equal(expectedUsr.UserData.Username, recUsr.Username);
