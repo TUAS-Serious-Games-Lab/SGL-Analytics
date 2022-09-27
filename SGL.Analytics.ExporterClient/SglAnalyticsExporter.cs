@@ -86,6 +86,15 @@ namespace SGL.Analytics.ExporterClient {
 				}
 			}
 		}
+		public async Task<UserRegistrationData> GetDecryptedUserRegistrationByIdAsync(Guid userId, CancellationToken ct = default) {
+			CheckReadyForDecryption();
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			var keyId = CurrentKeyIds!.Value.DecryptionKeyId;
+			var metaDto = await perAppState.UserExporterApiClient.GetUserMetadataByIdAsync(userId, keyId, ct);
+			var keyDecryptor = new KeyDecryptor(recipientKeyPair!);
+			var decryptedProps = await DecryptUserProperties(keyId, keyDecryptor, metaDto, ct).ConfigureAwait(false);
+			return new UserRegistrationData(metaDto.UserId, metaDto.Username, metaDto.StudySpecificProperties, decryptedProps);
+		}
 		public async Task<IAsyncEnumerable<UserRegistrationData>> GetDecryptedUserRegistrationsAsync(Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default) {
 			CheckReadyForDecryption();
 			var queryParams = (UserRegistrationQuery)query(new UserRegistrationQuery());
