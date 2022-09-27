@@ -75,7 +75,7 @@ namespace SGL.Analytics.ExporterClient.Tests {
 			return (metadata, serverContent, plainContent);
 		}
 
-		public UserMetadataDTO CreateTestUser(string? username, Action<Dictionary<string, object?>> plainProps, Action<Dictionary<string, object?>> encryptedProps) {
+		public (UserMetadataDTO Dto, UserRegistrationData UserData) CreateTestUser(string? username, Action<Dictionary<string, object?>> plainProps, Action<Dictionary<string, object?>> encryptedProps) {
 			var userId = Guid.NewGuid();
 			var plainPropsDict = new Dictionary<string, object?>();
 			var encryptedPropsDict = new Dictionary<string, object?>();
@@ -95,8 +95,9 @@ namespace SGL.Analytics.ExporterClient.Tests {
 				encryptedPropsBytes = encryptedPropsBuffer.ToArray();
 				encryptedPropsEncInfo = dataEncryptor.GenerateEncryptionInfo(keyEncryptor);
 			}
-			var metadata = new UserMetadataDTO(userId, username ?? userId.ToString(), plainPropsDict, encryptedPropsBytes, encryptedPropsEncInfo);
-			return metadata;
+			var dto = new UserMetadataDTO(userId, username ?? userId.ToString(), plainPropsDict, encryptedPropsBytes, encryptedPropsEncInfo);
+			var userData = new UserRegistrationData(userId, username ?? userId.ToString(), plainPropsDict, encryptedPropsDict);
+			return (dto, userData);
 		}
 
 		public void SetupKeyAuth(WireMockServer server) {

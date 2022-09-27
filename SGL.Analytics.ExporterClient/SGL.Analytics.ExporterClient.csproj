@@ -14,4 +14,8 @@
     <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="SGL.Analytics.ExporterClient.Tests" />
+  </ItemGroup>
+
 </Project>
