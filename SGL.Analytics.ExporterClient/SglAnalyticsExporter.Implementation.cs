@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.ExporterClient {
 	public partial class SglAnalyticsExporter {
+		private AsyncSemaphoreLock stateLock = new AsyncSemaphoreLock();
 		private HttpClient httpClient;
 		private SglAnalyticsExporterConfigurator configurator = new SglAnalyticsExporterConfigurator();
 		private RandomGenerator randomGenerator = new RandomGenerator();
@@ -92,6 +93,8 @@ namespace SGL.Analytics.ExporterClient {
 		}
 
 		private async Task<PerAppState> GetPerAppStateAsync(CancellationToken ct) {
+			// This method works with the mutable state (either reads it or updates it), thus it needs to hold a lock for the mutable state:
+			using var lockHandle = await stateLock.WaitAsyncWithScopedRelease(ct);
 			if (CurrentAppName == null) {
 				throw new InvalidOperationException("No current app selected.");
 			}

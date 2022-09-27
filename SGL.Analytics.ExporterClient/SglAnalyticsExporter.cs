@@ -31,16 +31,20 @@ namespace SGL.Analytics.ExporterClient {
 		public async Task UseKeyFileAsync(TextReader reader, string sourceName, Func<char[]> getPassword, CancellationToken ct = default) {
 			var pemReader = new PemObjectReader(reader, getPassword);
 			var result = await Task.Run(() => ReadKeyFile(pemReader, sourceName, ct), ct);
+			var authFactoryargs = new SglAnalyticsExporterConfiguratorFactoryArguments(httpClient, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories);
+
+			using var lockHandle = await stateLock.WaitAsyncWithScopedRelease(ct); // Hold lock till end of method as we mutate state.
 			authenticationKeyPair = result.AuthenticationKeyPair;
 			recipientKeyPair = result.RecipientKeyPair;
 			CurrentKeyIds = (result.AuthenticationKeyId, result.RecipientKeyId);
 			CurrentKeyCertificates = (result.AuthenticationCertificate, result.RecipientCertificate);
-			var args = new SglAnalyticsExporterConfiguratorFactoryArguments(httpClient, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories);
-			authenticator = configurator.Authenticator.Factory(args, authenticationKeyPair);
+			authenticator = configurator.Authenticator.Factory(authFactoryargs, authenticationKeyPair);
 		}
 
 		public async Task SwitchToApplicationAsync(string appName, CancellationToken ct = default) {
-			CurrentAppName = appName;
+			using (var lockHandle = await stateLock.WaitAsyncWithScopedRelease(ct)) { // Hold lock till as we mutate state.
+				CurrentAppName = appName;
+			}
 			// Create per-app state eagerly, if not cached:
 			await GetPerAppStateAsync(ct);
 		}
