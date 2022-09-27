@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.ExporterClient {
 	public partial class SglAnalyticsExporter {
+		private JsonSerializerOptions propertyJsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertiesOptions);
 		private AsyncSemaphoreLock stateLock = new AsyncSemaphoreLock();
 		private HttpClient httpClient;
 		private SglAnalyticsExporterConfigurator configurator = new SglAnalyticsExporterConfigurator();
@@ -204,7 +205,6 @@ namespace SGL.Analytics.ExporterClient {
 		}
 
 		private async Task<Dictionary<string, object?>?> DecryptUserProperties(KeyId recipientKeyId, KeyDecryptor keyDecryptor, UserMetadataDTO udto, CancellationToken ct) {
-			var propertyJsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertiesOptions);
 			Dictionary<string, object?>? decryptedProps;
 			if (udto.EncryptedProperties == null || udto.EncryptedProperties.Length == 0) {
 				logger.LogTrace("User registration {id} has no encrypted properties, providing empty properties dictionary.", udto.UserId);
