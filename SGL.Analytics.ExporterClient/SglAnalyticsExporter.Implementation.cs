@@ -197,42 +197,45 @@ namespace SGL.Analytics.ExporterClient {
 			var userDTOs = await userClient.GetMetadataForAllUsersAsync(recipientKeyId, ct).ConfigureAwait(false);
 			userDTOs = query.ApplyTo(userDTOs);
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
-			var propertyJsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertiesOptions);
 			foreach (var udto in userDTOs) {
-				if (udto.EncryptedProperties == null || udto.EncryptedProperties.Length == 0) {
-					logger.LogTrace("User registration {id} has no encrypted properties, providing empty properties dictionary.", udto.UserId);
-					yield return new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, new Dictionary<string, object?>());
-				}
-				else if (udto.PropertyEncryptionInfo == null) {
-					logger.LogError("No encryption info for encrypted properties on user registration {id}, can't decrypt.", udto.UserId);
-					yield return new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, null);
-				}
-				else {
-					UserRegistrationData result;
-					try {
-						var dataDecryptor = DataDecryptor.FromEncryptionInfo(udto.PropertyEncryptionInfo, keyDecryptor);
-						if (dataDecryptor == null) {
-							logger.LogError("No recipient key for the current decryption key pair {keyId} for encrypted properties on user registration {id}, can't decrypt.", recipientKeyId, udto.UserId);
-							result = new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, null);
-						}
-						else {
-							var decryptedBytes = dataDecryptor.DecryptData(udto.EncryptedProperties, 0);
-							using var propStream = new GZipStream(new MemoryStream(decryptedBytes, writable: false), CompressionMode.Decompress);
-							var props = await JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(propStream, propertyJsonOptions, ct).ConfigureAwait(false);
-							if (props == null) {
-								logger.LogError("Read null value from encrypted properties for user registration {id}.", udto.UserId);
-							}
-							result = new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, props);
-						}
-					}
-					catch (Exception ex) {
-						logger.LogError(ex, "Couldn't decrypt and read encrypted properties of user {id} using key pair {keyid}.", udto.UserId, recipientKeyId);
-						result = new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, null);
-					}
-					yield return result;
-				}
+				var decryptedProps = await DecryptUserProperties(recipientKeyId, keyDecryptor, udto, ct).ConfigureAwait(false);
+				yield return new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, decryptedProps);
 			}
 		}
 
+		private async Task<Dictionary<string, object?>?> DecryptUserProperties(KeyId recipientKeyId, KeyDecryptor keyDecryptor, UserMetadataDTO udto, CancellationToken ct) {
+			var propertyJsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertiesOptions);
+			Dictionary<string, object?>? decryptedProps;
+			if (udto.EncryptedProperties == null || udto.EncryptedProperties.Length == 0) {
+				logger.LogTrace("User registration {id} has no encrypted properties, providing empty properties dictionary.", udto.UserId);
+				decryptedProps = new Dictionary<string, object?>();
+			}
+			else if (udto.PropertyEncryptionInfo == null) {
+				logger.LogError("No encryption info for encrypted properties on user registration {id}, can't decrypt.", udto.UserId);
+				decryptedProps = null;
+			}
+			else {
+				try {
+					var dataDecryptor = DataDecryptor.FromEncryptionInfo(udto.PropertyEncryptionInfo!, keyDecryptor);
+					if (dataDecryptor == null) {
+						logger.LogError("No recipient key for the current decryption key pair {keyId} for encrypted properties on user registration {id}, can't decrypt.", recipientKeyId, udto.UserId);
+						decryptedProps = null;
+					}
+					else {
+						var decryptedBytes = dataDecryptor.DecryptData(udto.EncryptedProperties!, 0);
+						using var propStream = new GZipStream(new MemoryStream(decryptedBytes, writable: false), CompressionMode.Decompress);
+						decryptedProps = await JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(propStream, propertyJsonOptions, ct).ConfigureAwait(false);
+						if (decryptedProps == null) {
+							logger.LogError("Read null value from encrypted properties for user registration {id}.", udto.UserId);
+						}
+					}
+				}
+				catch (Exception ex) {
+					logger.LogError(ex, "Couldn't decrypt and read encrypted properties of user {id} using key pair {keyid}.", udto.UserId, recipientKeyId);
+					decryptedProps = null;
+				}
+			}
+			return decryptedProps;
+		}
 	}
 }
