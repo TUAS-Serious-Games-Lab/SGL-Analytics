@@ -60,6 +60,10 @@ class Program {
 		}
 		await exporter.UseKeyFileAsync(opts.KeyFile, () => keyPassphrase, ct);
 		await exporter.SwitchToApplicationAsync(opts.AppName, ct);
+		var logMetadata = await exporter.GetLogFileMetadataAsync(q => q, ct);
+		foreach (var logMd in logMetadata) {
+			Console.Out.WriteLine($"{logMd.LogFileId:D}{logMd.NameSuffix} {logMd.UserId} {logMd.Size} {logMd.EndTime} {logMd.LogContentEncoding}");
+		}
 		var userRegSink = new SimpleDirectoryUserRegistrationSink();
 		if (opts.UsersOutputDir != null) userRegSink.DirectoryPath = opts.UsersOutputDir;
 		await exporter.GetDecryptedUserRegistrationsAsync(userRegSink, q => q, ct);

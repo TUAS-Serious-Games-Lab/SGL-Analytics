@@ -97,5 +97,14 @@ namespace SGL.Analytics.ExporterClient {
 				}
 			}
 		}
+
+		public async Task<IEnumerable<LogFileMetadata>> GetLogFileMetadataAsync(Func<ILogFileQuery, ILogFileQuery> query, CancellationToken ct = default) {
+			var perAppState = await GetPerAppStateAsync(ct);
+			var queryParams = (LogFileQuery)query(new LogFileQuery());
+			var logClient = perAppState.LogExporterApiClient;
+			var metaDTOs = await logClient.GetMetadataForAllLogsAsync(ct: ct);
+			metaDTOs = queryParams.ApplyTo(metaDTOs);
+			return metaDTOs.Select(mdto => ToMetadata(mdto)).ToList();
+		}
 	}
 }
