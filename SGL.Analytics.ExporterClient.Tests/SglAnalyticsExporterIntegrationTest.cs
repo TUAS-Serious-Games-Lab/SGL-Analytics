@@ -186,5 +186,45 @@ namespace SGL.Analytics.ExporterClient.Tests {
 			verifier.ProcessBytes(sigContent);
 			verifier.CheckSignature(signature);
 		}
+
+		[Fact]
+		public async Task GetDecryptedLogFilesAsyncWithoutFilterReturnsAllLogs() {
+			var user1Id = Guid.NewGuid();
+			var user2Id = Guid.NewGuid();
+			var log1 = fixture.CreateTestGameLog(user1Id);
+			var log2 = fixture.CreateTestGameLog(user1Id);
+			var log3 = fixture.CreateTestGameLog(user1Id);
+			var log4 = fixture.CreateTestGameLog(user2Id);
+			var log5 = fixture.CreateTestGameLog(user2Id);
+
+			var allLogs = new[] { log1, log2, log3, log4, log5 };
+			var logsOnServer = allLogs.Select(log => (log.Metadata, log.ServerContent)).ToList();
+			fixture.SetupKeyAuth(serverFixture.Server);
+			fixture.SetupGameLogs(serverFixture.Server, () => logsOnServer);
+			using var client = serverFixture.Server.CreateClient();
+			await using var exporter = new SglAnalyticsExporter(client, config => config.UseLoggerFactory(_ => fixture.LoggerFactory, false));
+			await exporter.UseKeyFileAsync(fixture.GetKeyFile(), "test.key", () => fixture.KeyFilePassphrase);
+			await exporter.SwitchToApplicationAsync(fixture.AppName);
+			var allLogsDict = allLogs.ToDictionary(log => log.Metadata.LogFileId);
+			var receivedIds = new HashSet<Guid>();
+			await foreach (var receivedLog in await exporter.GetDecryptedLogFilesAsync(q => q)) {
+				receivedIds.Add(receivedLog.Metadata.LogFileId);
+				using var receivedContentIn = receivedLog.Content;
+				using var receivedContentBuffer = new MemoryStream();
+				Assert.NotNull(receivedContentIn);
+				await receivedContentIn.CopyToAsync(receivedContentBuffer);
+				var receivedContent = receivedContentBuffer.ToArray();
+				var expectedLog = Assert.Contains(receivedLog.Metadata.LogFileId, allLogsDict as
+					IReadOnlyDictionary<Guid, (DownstreamLogMetadataDTO Metadata, byte[] ServerContent, byte[] PlainContent)>);
+				Assert.Equal(expectedLog.PlainContent, receivedContent);
+				Assert.Equal(expectedLog.Metadata.LogFileId, receivedLog.Metadata.LogFileId);
+				Assert.Equal(expectedLog.Metadata.UserId, receivedLog.Metadata.UserId);
+				Assert.Equal(expectedLog.Metadata.LogContentEncoding, receivedLog.Metadata.LogContentEncoding);
+				Assert.Equal(expectedLog.Metadata.CreationTime, receivedLog.Metadata.CreationTime);
+				Assert.Equal(expectedLog.Metadata.EndTime, receivedLog.Metadata.EndTime);
+				Assert.Equal(expectedLog.Metadata.UploadTime, receivedLog.Metadata.UploadTime);
+			}
+			Assert.All(allLogsDict.Keys, id => Assert.Contains(id, receivedIds));
+		}
 	}
 }
