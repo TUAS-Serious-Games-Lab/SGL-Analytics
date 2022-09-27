@@ -51,15 +51,10 @@ namespace SGL.Analytics.ExporterClient {
 		}
 
 		public async Task<IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)>> GetDecryptedLogFilesAsync(Func<ILogFileQuery, ILogFileQuery> query, CancellationToken ct = default) {
-			if (CurrentKeyIds == null) {
-				throw new InvalidOperationException("No current key id.");
-			}
-			if (recipientKeyPair == null) {
-				throw new InvalidOperationException("No current decryption key pair.");
-			}
+			CheckReadyForDecryption();
 			var queryParams = (LogFileQuery)query(new LogFileQuery());
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
-			return GetDecryptedLogFilesAsyncImpl(perAppState, CurrentKeyIds.Value.DecryptionKeyId, recipientKeyPair, queryParams, ct);
+			return GetDecryptedLogFilesAsyncImpl(perAppState, CurrentKeyIds!.Value.DecryptionKeyId, recipientKeyPair!, queryParams, ct);
 		}
 		public async Task GetDecryptedLogFilesAsync(ILogFileSink sink, Func<ILogFileQuery, ILogFileQuery> query, CancellationToken ct = default) {
 			var logs = await GetDecryptedLogFilesAsync(query, ct).ConfigureAwait(false);
@@ -78,15 +73,10 @@ namespace SGL.Analytics.ExporterClient {
 			}
 		}
 		public async Task<IAsyncEnumerable<UserRegistrationData>> GetDecryptedUserRegistrationsAsync(Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default) {
-			if (CurrentKeyIds == null) {
-				throw new InvalidOperationException("No current key id.");
-			}
-			if (recipientKeyPair == null) {
-				throw new InvalidOperationException("No current decryption key pair.");
-			}
+			CheckReadyForDecryption();
 			var queryParams = (UserRegistrationQuery)query(new UserRegistrationQuery());
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
-			return GetDecryptedUserRegistrationsAsyncImpl(perAppState, CurrentKeyIds.Value.DecryptionKeyId, recipientKeyPair, queryParams, ct);
+			return GetDecryptedUserRegistrationsAsyncImpl(perAppState, CurrentKeyIds!.Value.DecryptionKeyId, recipientKeyPair!, queryParams, ct);
 		}
 		public async Task GetDecryptedUserRegistrationsAsync(IUserRegistrationSink sink, Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default) {
 			var users = await GetDecryptedUserRegistrationsAsync(query, ct);

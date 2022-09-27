@@ -99,6 +99,15 @@ namespace SGL.Analytics.ExporterClient {
 			}
 		}
 
+		private void CheckReadyForDecryption() {
+			if (CurrentKeyIds == null) {
+				throw new InvalidOperationException("No current key id.");
+			}
+			if (recipientKeyPair == null) {
+				throw new InvalidOperationException("No current decryption key pair.");
+			}
+		}
+
 		private async Task<PerAppState> GetPerAppStateAsync(CancellationToken ct) {
 			// This method works with the mutable state (either reads it or updates it), thus it needs to hold a lock for the mutable state:
 			using var lockHandle = await stateLock.WaitAsyncWithScopedRelease(ct);
