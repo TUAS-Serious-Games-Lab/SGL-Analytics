@@ -227,5 +227,42 @@ namespace SGL.Analytics.ExporterClient.Tests {
 			}
 			Assert.All(allLogsDict.Keys, id => Assert.Contains(id, receivedIds));
 		}
+
+		[Fact]
+		public async Task GetDecryptedUserRegistrationsAsyncWithoutFilterReturnsAllUsersWithCorrectData() {
+			var user1 = fixture.CreateTestUser(null, props => {
+				props["Foo"] = "Hello World";
+				props["Bar"] = 1234;
+				props["Baz"] = new Dictionary<string, object?> { ["A"] = 1, ["B"] = false, ["C"] = "Test" };
+			}, props => {
+				props["Foo"] = "This is a Test";
+				props["Bar"] = 54321;
+				props["Baz"] = new Dictionary<string, object?> { ["X"] = 1, ["Y"] = false, ["Z"] = "Test" };
+			});
+			var user2 = fixture.CreateTestUser(null, props => {
+				props["SomeId"] = Guid.NewGuid();
+				props["SomeNumber"] = 345678;
+				props["SomeDict"] = new Dictionary<string, object?> { ["A"] = 42, ["B"] = true, ["C"] = "TestTestTest", ["D"] = Guid.NewGuid() };
+			}, props => {
+				props["PropA"] = "Test!";
+				props["PropB"] = 654321;
+				props["PropC"] = new Dictionary<string, object?> { ["X"] = 987, ["Y"] = true, ["Z"] = "Test, Test, Test" };
+			});
+			var allUsers = new[] { user1, user2 };
+			var usersOnServer = allUsers.Select(u => u.Dto).ToList();
+			fixture.SetupKeyAuth(serverFixture.Server);
+			fixture.SetupUsers(serverFixture.Server, () => usersOnServer);
+			using var client = serverFixture.Server.CreateClient();
+			await using var exporter = new SglAnalyticsExporter(client, config => config.UseLoggerFactory(_ => fixture.LoggerFactory, false));
+			await exporter.UseKeyFileAsync(fixture.GetKeyFile(), "test.key", () => fixture.KeyFilePassphrase);
+			await exporter.SwitchToApplicationAsync(fixture.AppName);
+			var receivedUsers = await (await exporter.GetDecryptedUserRegistrationsAsync(q => q)).ToListAsync();
+			Assert.All(receivedUsers, recUsr => {
+				var expectedUsr = Assert.Single(allUsers, u => u.UserData.UserId == recUsr.UserId);
+				Assert.Equal(expectedUsr.UserData.Username, recUsr.Username);
+				Assert.Equal(expectedUsr.UserData.StudySpecificProperties, recUsr.StudySpecificProperties);
+				Assert.Equal(expectedUsr.UserData.DecryptedStudySpecificProperties, recUsr.DecryptedStudySpecificProperties);
+			});
+		}
 	}
 }
