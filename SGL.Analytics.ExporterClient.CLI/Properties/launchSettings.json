@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "SGL.Analytics.ExporterClient.CLI": {
+      "commandName": "Project",
+      "commandLineArgs": "-l Trace -r ./GameLogs -u ./UserRegs -k ../../../DevKeyFile.pem",
+      "environmentVariables": {
+        "SGL_ANALYTICS_EXPORTER_KEY_PASSPHRASE": "ThisIsATest"
+      }
+    }
+  }
+}

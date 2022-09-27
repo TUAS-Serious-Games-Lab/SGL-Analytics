@@ -21,10 +21,7 @@ namespace SGL.Analytics.Client {
 		private readonly HttpClient httpClient;
 		private static readonly Uri logApiRoute = new Uri("/api/analytics/log/v2", UriKind.Relative);
 		private static readonly Uri recipientsApiRoute = new Uri("/api/analytics/log/v2/recipient-certificates", UriKind.Relative);
-		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
-			WriteIndented = true,
-			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-		};
+		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonOptions.RestOptions);
 
 		/// <summary>
 		/// Creates a client object that uses the given <see cref="HttpClient"/> and its associated <see cref="HttpClient.BaseAddress"/> to communicate with the backend at that address.

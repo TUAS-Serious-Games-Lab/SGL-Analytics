@@ -77,9 +77,8 @@ namespace SGL.Analytics.Client {
 			public override string ConvertName(string name) => name;
 		}
 
-		private readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions() {
-			WriteIndented = true
-		};
+		private readonly JsonSerializerOptions logJsonOptions = new JsonSerializerOptions(JsonOptions.LogEntryOptions);
+		private readonly JsonSerializerOptions userPropertiesJsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertiesOptions);
 
 		private class LogQueue {
 			internal AsyncConsumerQueue<LogEntry> entryQueue = new AsyncConsumerQueue<LogEntry>();
@@ -114,9 +113,9 @@ namespace SGL.Analytics.Client {
 
 		private async Task writePendingLogsAsync() {
 			logger.LogDebug("Started log writer to asynchronously flush log entries to disk.");
-			var arrOpen = Encoding.UTF8.GetBytes(jsonSerializerOptions.WriteIndented ? ("[" + Environment.NewLine) : "[");
-			var arrClose = Encoding.UTF8.GetBytes(jsonSerializerOptions.WriteIndented ? (Environment.NewLine + "]") : "]");
-			var delim = Encoding.UTF8.GetBytes(jsonSerializerOptions.WriteIndented ? ("," + Environment.NewLine) : ",");
+			var arrOpen = Encoding.UTF8.GetBytes(logJsonOptions.WriteIndented ? ("[" + Environment.NewLine) : "[");
+			var arrClose = Encoding.UTF8.GetBytes(logJsonOptions.WriteIndented ? (Environment.NewLine + "]") : "]");
+			var delim = Encoding.UTF8.GetBytes(logJsonOptions.WriteIndented ? ("," + Environment.NewLine) : ",");
 			await foreach (var logQueue in pendingLogQueues.DequeueAllAsync()) {
 				logger.LogDebug("Starting to write entries for data log file {logFile}...", logQueue.logFile.ID);
 				var stream = logQueue.writeStream;
@@ -130,7 +129,7 @@ namespace SGL.Analytics.Client {
 						else {
 							first = false;
 						}
-						await JsonSerializer.SerializeAsync(stream, logEntry, jsonSerializerOptions);
+						await JsonSerializer.SerializeAsync(stream, logEntry, logJsonOptions);
 						await stream.FlushAsync();
 					}
 					await stream.WriteAsync(arrClose.AsMemory());
@@ -368,13 +367,8 @@ namespace SGL.Analytics.Client {
 			var dataEncryptor = new DataEncryptor(randomGenerator, 1);
 			using var encryptedPropsBuffer = new MemoryStream();
 			await using (var encryptionStream = dataEncryptor.OpenEncryptionWriteStream(encryptedPropsBuffer, 0, leaveOpen: true)) {
-				var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
-					WriteIndented = true,
-					DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-				};
 				await using var compressionStream = new GZipStream(encryptionStream, CompressionLevel.Optimal, leaveOpen: true);
-				options.Converters.Add(new ObjectDictionaryJsonConverter());
-				await JsonSerializer.SerializeAsync(compressionStream, properties, options, ct);
+				await JsonSerializer.SerializeAsync(compressionStream, properties, userPropertiesJsonOptions, ct);
 			}
 			return (encryptedPropsBuffer.ToArray(), dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
 		}

@@ -1,4 +1,5 @@
 using SGL.Analytics.Backend.Domain.Exceptions;
+using SGL.Analytics.DTO;
 using SGL.Utilities;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 	/// Models an instance of a per-user property for an application, containing the value of the property for a specific user.
 	/// </summary>
 	public class ApplicationUserPropertyInstance {
-		private static JsonSerializerOptions jsonOptions = new JsonSerializerOptions { Converters = { new ObjectDictionaryValueJsonConverter() } };
+		private static JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertyValuesOptions);
 
 		/// <summary>
 		/// The unique database id of the  property definition.

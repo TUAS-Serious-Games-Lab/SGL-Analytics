@@ -125,7 +125,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 
 				LogMetadataDTO logMetadata;
 				if (streamingHelper.IsCurrentSection("metadata", "application/json")) {
-					var metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(streamingHelper.Section!.Body, new JsonSerializerOptions(JsonSerializerDefaults.Web), ct);
+					var metadata = await JsonSerializer.DeserializeAsync<LogMetadataDTO>(streamingHelper.Section!.Body, DTO.JsonOptions.RestOptions, ct);
 					if (metadata == null) {
 						logger.LogError("IngestLog operation from user {userId} of app {appName}: Invalid JSON for LogMetadataDTO in request body section 'metadata'.", userId, appName);
 						throw new BadHttpRequestException("Invalid JSON for LogMetadataDTO in request body section 'metadata'.");

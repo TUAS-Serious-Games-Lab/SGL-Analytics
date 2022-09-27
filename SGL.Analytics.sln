@@ -132,7 +132,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ServiceBaseImage", "Service
 		SGL.Analytics.Backend.ServiceBaseImage\Dockerfile = SGL.Analytics.Backend.ServiceBaseImage\Dockerfile
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.ExporterClient", "SGL.Analytics.ExporterClient\SGL.Analytics.ExporterClient.csproj", "{215F35B0-D32C-4121-A56F-762EB7FB97C3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.ExporterClient", "SGL.Analytics.ExporterClient\SGL.Analytics.ExporterClient.csproj", "{215F35B0-D32C-4121-A56F-762EB7FB97C3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.ExporterClient.Tests", "SGL.Analytics.ExporterClient.Tests\SGL.Analytics.ExporterClient.Tests.csproj", "{8F8AD6D1-9A46-4551-89CD-B23B5D44A47C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.ExporterClient.CLI", "SGL.Analytics.ExporterClient.CLI\SGL.Analytics.ExporterClient.CLI.csproj", "{2B56D78A-CABA-49CC-AB9F-500A3A586553}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -224,6 +228,14 @@ Global
 		{215F35B0-D32C-4121-A56F-762EB7FB97C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{215F35B0-D32C-4121-A56F-762EB7FB97C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{215F35B0-D32C-4121-A56F-762EB7FB97C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F8AD6D1-9A46-4551-89CD-B23B5D44A47C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F8AD6D1-9A46-4551-89CD-B23B5D44A47C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F8AD6D1-9A46-4551-89CD-B23B5D44A47C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F8AD6D1-9A46-4551-89CD-B23B5D44A47C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B56D78A-CABA-49CC-AB9F-500A3A586553}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B56D78A-CABA-49CC-AB9F-500A3A586553}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B56D78A-CABA-49CC-AB9F-500A3A586553}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B56D78A-CABA-49CC-AB9F-500A3A586553}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -259,6 +271,8 @@ Global
 		{4D50226A-5E77-44E6-A90D-2AF56DC51858} = {0B25318D-BFA3-4E53-A36F-89071951B747}
 		{086D1600-5C7B-41FD-B842-A793B60CB3C5} = {FBC6F867-AE01-4218-82FF-5EF2FE93DAB0}
 		{215F35B0-D32C-4121-A56F-762EB7FB97C3} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
+		{8F8AD6D1-9A46-4551-89CD-B23B5D44A47C} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
+		{2B56D78A-CABA-49CC-AB9F-500A3A586553} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9107486E-74EF-450A-956B-BF17C61467C5}

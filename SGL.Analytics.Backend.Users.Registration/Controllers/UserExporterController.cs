@@ -47,7 +47,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		private UserMetadataDTO ToDto(User user) {
-			return new UserMetadataDTO(user.Id, user.App.Name, user.Username, user.AppSpecificProperties, user.EncryptedProperties, user.PropertyEncryptionInfo);
+			return new UserMetadataDTO(user.Id, user.Username, user.AppSpecificProperties, user.EncryptedProperties, user.PropertyEncryptionInfo);
 		}
 
 		[HttpGet()]

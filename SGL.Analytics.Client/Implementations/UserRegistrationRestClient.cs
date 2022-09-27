@@ -23,6 +23,7 @@ namespace SGL.Analytics.Client {
 		private static readonly Uri userRegistrationApiRoute = new Uri("/api/analytics/user/v1", UriKind.Relative);
 		private static readonly Uri loginApiRoute = new Uri("/api/analytics/user/v1/login", UriKind.Relative);
 		private static readonly Uri recipientsApiRoute = new Uri("/api/analytics/user/v1/recipient-certificates", UriKind.Relative);
+		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonOptions.RestOptions);
 
 		/// <summary>
 		/// Creates a client object that uses the given <see cref="HttpClient"/> and its associated <see cref="HttpClient.BaseAddress"/> to communicate with the backend at that address.
@@ -57,8 +58,7 @@ namespace SGL.Analytics.Client {
 			if (httpClient.BaseAddress == null) {
 				throw new ArgumentNullException($"{nameof(httpClient)}.{nameof(HttpClient.BaseAddress)}");
 			}
-			var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true };
-			var content = JsonContent.Create(loginDTO, new MediaTypeHeaderValue("application/json"), options);
+			var content = JsonContent.Create(loginDTO, new MediaTypeHeaderValue("application/json"), jsonOptions);
 			using var request = new HttpRequestMessage(HttpMethod.Post, loginApiRoute);
 			request.Content = content;
 			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -74,7 +74,7 @@ namespace SGL.Analytics.Client {
 			catch (Exception ex) {
 				throw new LoginErrorException(ex);
 			}
-			var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(options);
+			var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(jsonOptions);
 			return result?.Token ?? throw new LoginErrorException("Did not receive a valid response for the login request.");
 		}
 
@@ -83,11 +83,7 @@ namespace SGL.Analytics.Client {
 			if (httpClient.BaseAddress == null) {
 				throw new ArgumentNullException($"{nameof(httpClient)}.{nameof(HttpClient.BaseAddress)}");
 			}
-			var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
-				WriteIndented = true,
-				DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-			};
-			var content = JsonContent.Create(userDTO, new MediaTypeHeaderValue("application/json"), options);
+			var content = JsonContent.Create(userDTO, new MediaTypeHeaderValue("application/json"), jsonOptions);
 			using var request = new HttpRequestMessage(HttpMethod.Post, userRegistrationApiRoute);
 			request.Content = content;
 			request.Headers.Add("App-API-Token", appAPIToken);
@@ -97,7 +93,7 @@ namespace SGL.Analytics.Client {
 			if (response is null) throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
 			if (response.StatusCode == HttpStatusCode.Conflict && userDTO.Username != null) throw new UsernameAlreadyTakenException(userDTO.Username);
 			response.EnsureSuccessStatusCode();
-			var result = await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>(options);
+			var result = await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>(jsonOptions);
 			return result ?? throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
 		}
 	}
