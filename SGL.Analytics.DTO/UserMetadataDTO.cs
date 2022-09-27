@@ -15,12 +15,6 @@ namespace SGL.Analytics.DTO {
 		public Guid UserId { get; private set; }
 
 		/// <summary>
-		/// The unique technical name of the client application with which the user is assoicated.
-		/// </summary>
-		[PlainName]
-		[StringLength(128, MinimumLength = 1)]
-		public string AppName { get; private set; }
-		/// <summary>
 		/// The Username for the user, can be the string form of the id if none was given during the registration.
 		/// </summary>
 		[PlainName(allowBrackets: true)]
@@ -37,10 +31,9 @@ namespace SGL.Analytics.DTO {
 		public byte[]? EncryptedProperties { get; private set; }
 		public EncryptionInfo? PropertyEncryptionInfo { get; private set; }
 
-		public UserMetadataDTO(Guid userId, string appName, string username, Dictionary<string, object?> studySpecificProperties,
+		public UserMetadataDTO(Guid userId, string username, Dictionary<string, object?> studySpecificProperties,
 				byte[]? encryptedProperties, EncryptionInfo? propertyEncryptionInfo) {
 			UserId = userId;
-			AppName = appName;
 			Username = username;
 			StudySpecificProperties = studySpecificProperties;
 			EncryptedProperties = encryptedProperties;
