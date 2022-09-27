@@ -34,7 +34,7 @@ namespace SGL.Analytics.ExporterClient.Tests {
 			var recipientDN = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Analytics"), new("ou", "Tests"), new("cn", "Test") });
 			AuthKeyPair = KeyPair.GenerateEllipticCurves(Random, 521);
 			RecipientKeyPair = KeyPair.GenerateEllipticCurves(Random, 521);
-			AuthCert = Certificate.Generate(signerDN, signerKeyPair.Private, recipientDN, RecipientKeyPair.Public, TimeSpan.FromHours(1), Random, 128, keyUsages: KeyUsages.DigitalSignature, caConstraint: (false, null));
+			AuthCert = Certificate.Generate(signerDN, signerKeyPair.Private, recipientDN, AuthKeyPair.Public, TimeSpan.FromHours(1), Random, 128, keyUsages: KeyUsages.DigitalSignature, caConstraint: (false, null));
 			RecipientCert = Certificate.Generate(signerDN, signerKeyPair.Private, recipientDN, RecipientKeyPair.Public, TimeSpan.FromHours(1), Random, 128, keyUsages: KeyUsages.KeyEncipherment | KeyUsages.KeyAgreement, caConstraint: (false, null));
 			using (var keyFileBuffer = new StringWriter()) {
 				AuthCert.StoreToPem(keyFileBuffer);
