@@ -73,12 +73,6 @@ namespace SGL.Analytics.ExporterClient {
 
 	public interface ISglAnalyticsExporterConfigurator {
 		/// <summary>
-		/// Sets the function used to obtain the synchronization context for the main context when constructing the <see cref="SglAnalyticsExporter"/> object.
-		/// </summary>
-		/// <param name="synchronizationContextGetter">The function to use.</param>
-		/// <returns>A reference to this <see cref="ISglAnalyticsExporterConfigurator"/> object for chaining.</returns>
-		ISglAnalyticsExporterConfigurator UseSynchronizationContext(Func<SynchronizationContext> synchronizationContextGetter);
-		/// <summary>
 		/// Sets the function used to obtain the maximum number of concurrent in-flight requests for an operation.
 		/// </summary>
 		/// <param name="requestConcurrencyGetter">The function to use.</param>

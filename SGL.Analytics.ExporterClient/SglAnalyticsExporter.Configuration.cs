@@ -14,8 +14,6 @@ namespace SGL.Analytics.ExporterClient {
 			private const int DefaultRequestConcurrency = 16;
 
 			internal SglAnalyticsExporterConfigurator() {
-				SynchronizationContextGetter = () => SynchronizationContext.Current ?? throw new InvalidOperationException("No SynchronizationContext set. " +
-					"SGL Analytics requires a synchronized SynchronizationContext that can be used to dispatch event handler invocations to the main thread.");
 				RequestConcurrencyGetter = () => DefaultRequestConcurrency;
 				LoggerFactory = (args => NullLoggerFactory.Instance, true);
 				Authenticator = ((args, keyPair) => new ExporterKeyPairAuthenticator(args.HttpClient, keyPair, args.LoggerFactory.CreateLogger<ExporterKeyPairAuthenticator>(), args.Random), true);
@@ -23,7 +21,6 @@ namespace SGL.Analytics.ExporterClient {
 				UserApiClient = (args => new UserExporterApiClient(args.HttpClient, args.Authorization), true);
 			}
 
-			internal Func<SynchronizationContext> SynchronizationContextGetter { get; private set; }
 			internal Func<int> RequestConcurrencyGetter { get; private set; }
 
 			internal (Func<SglAnalyticsExporterConfiguratorFactoryArguments, ILoggerFactory> Factory, bool Dispose) LoggerFactory;
@@ -36,10 +33,6 @@ namespace SGL.Analytics.ExporterClient {
 			internal ConfiguratorCustomArgumentFactoryContainer<SglAnalyticsExporterConfiguratorFactoryArguments, SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments> CustomArgumentFactories { get; private set; } =
 				new ConfiguratorCustomArgumentFactoryContainer<SglAnalyticsExporterConfiguratorFactoryArguments, SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments>();
 
-			public ISglAnalyticsExporterConfigurator UseSynchronizationContext(Func<SynchronizationContext> synchronizationContextGetter) {
-				SynchronizationContextGetter = synchronizationContextGetter;
-				return this;
-			}
 			public ISglAnalyticsExporterConfigurator UseLoggerFactory(Func<SglAnalyticsExporterConfiguratorFactoryArguments, ILoggerFactory> loggerFactoryFactory, bool dispose = true) {
 				LoggerFactory = (loggerFactoryFactory, dispose);
 				return this;

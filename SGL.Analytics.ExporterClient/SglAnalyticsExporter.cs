@@ -11,7 +11,6 @@ namespace SGL.Analytics.ExporterClient {
 		public SglAnalyticsExporter(HttpClient httpClient, Action<ISglAnalyticsExporterConfigurator> configuration) {
 			this.httpClient = httpClient;
 			configuration(configurator);
-			mainSyncContext = configurator.SynchronizationContextGetter();
 			var loggerFactoryBootstrapArgs = new SglAnalyticsExporterConfiguratorFactoryArguments(httpClient, NullLoggerFactory.Instance, randomGenerator, configurator.CustomArgumentFactories);
 			LoggerFactory = configurator.LoggerFactory.Factory(loggerFactoryBootstrapArgs);
 			logger = LoggerFactory.CreateLogger<SglAnalyticsExporter>();

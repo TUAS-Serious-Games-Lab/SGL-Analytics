@@ -43,10 +43,6 @@ class Program {
 		var ct = cts.Token;
 		Console.CancelKeyPress += (_, _) => cts.Cancel();
 		using var loggerFactory = LoggerFactory.Create(config => config.ClearProviders().AddConsole().SetMinimumLevel(opts.LoggingLevel));
-		using var syncContext = new SingleThreadedSynchronizationContext(ex => {
-			loggerFactory.CreateLogger<SingleThreadedSynchronizationContext>().LogError(ex, "Exception escapted from async callback.");
-		});
-		await syncContext; // Switch to 'main' thread context.
 		var logger = loggerFactory.CreateLogger<Program>();
 		using var httpClient = new HttpClient();
 		httpClient.BaseAddress = opts.Backend;
