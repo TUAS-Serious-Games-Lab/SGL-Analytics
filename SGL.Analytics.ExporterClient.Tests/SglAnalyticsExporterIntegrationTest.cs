@@ -152,6 +152,7 @@ namespace SGL.Analytics.ExporterClient.Tests {
 		private readonly ITestOutputHelper output;
 		private readonly MockServerFixture serverFixture;
 		private readonly SglAnalyticsExporterIntegrationTestFixture fixture;
+		private readonly ILogger<SglAnalyticsExporterIntegrationTest> logger;
 
 		public SglAnalyticsExporterIntegrationTest(ITestOutputHelper output, MockServerFixture serverFixture, SglAnalyticsExporterIntegrationTestFixture testFixture) {
 			this.output = output;
@@ -159,6 +160,7 @@ namespace SGL.Analytics.ExporterClient.Tests {
 			fixture = testFixture;
 			fixture.Output = output;
 			serverFixture.Reset();
+			logger = fixture.LoggerFactory.CreateLogger<SglAnalyticsExporterIntegrationTest>();
 		}
 
 
