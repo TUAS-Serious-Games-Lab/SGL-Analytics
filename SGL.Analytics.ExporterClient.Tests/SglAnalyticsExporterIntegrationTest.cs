@@ -90,7 +90,7 @@ namespace SGL.Analytics.ExporterClient.Tests {
 				using var encryptedPropsBuffer = new MemoryStream();
 				using (var encryptionStream = dataEncryptor.OpenEncryptionWriteStream(encryptedPropsBuffer, 0, leaveOpen: true)) {
 					using var compressionStream = new GZipStream(encryptionStream, CompressionLevel.Optimal, leaveOpen: true);
-					JsonSerializer.SerializeAsync(compressionStream, encryptedPropsDict, JsonOptions.UserPropertiesOptions);
+					JsonSerializer.Serialize(compressionStream, encryptedPropsDict, JsonOptions.UserPropertiesOptions);
 				}
 				encryptedPropsBytes = encryptedPropsBuffer.ToArray();
 				encryptedPropsEncInfo = dataEncryptor.GenerateEncryptionInfo(keyEncryptor);
