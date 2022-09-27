@@ -15,14 +15,10 @@ namespace SGL.Analytics.ExporterClient.Implementations {
 		public JsonSerializerOptions MetadataJsonOptions { get; set; } = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true };
 
 		public async Task ProcessLogFileAsync(LogFileMetadata metadata, Stream? content, CancellationToken ct) {
-			//var contentTask = content != null ? Task.Run(() => WriteContentFile(metadata.LogFileId, content, ct), ct) : Task.CompletedTask;
-			//var metadataTask = Task.Run(() => WriteMetadataFile(metadata, ct), ct);
-			//await contentTask;
-			//await metadataTask;
-			if (content != null) {
-				await WriteContentFile(metadata.LogFileId, content, ct);
-			}
-			await WriteMetadataFile(metadata, ct);
+			var contentTask = content != null ? Task.Run(() => WriteContentFile(metadata.LogFileId, content, ct), ct) : Task.CompletedTask;
+			var metadataTask = Task.Run(() => WriteMetadataFile(metadata, ct), ct);
+			await contentTask;
+			await metadataTask;
 		}
 
 		private async Task WriteContentFile(Guid id, Stream content, CancellationToken ct) {
