@@ -159,25 +159,30 @@ namespace SGL.Analytics.ExporterClient {
 			var logs = metaDTOs.MapBufferedAsync(requestConcurrency, (Func<DownstreamLogMetadataDTO, Task<(LogFileMetadata Metadata, Stream? Content)>>)(async mdto => {
 				var encryptedContent = await logClient.GetLogContentByIdAsync(mdto.LogFileId, ct).ConfigureAwait(false);
 				var metadata = ToMetadata(mdto);
-				var dataDecryptor = DataDecryptor.FromEncryptionInfo(mdto.EncryptionInfo, keyDecryptor);
-				if (dataDecryptor == null) {
-					logger.LogError("No recipient key for the current decryption key pair {keyId} for log file {logId}, can't decrypt.", recipientKeyId, mdto.LogFileId);
-					return (metadata, null);
-				}
-				try {
-					Stream? content = dataDecryptor.OpenDecryptionReadStream(encryptedContent, 0, leaveOpen: false);
-					if (mdto.LogContentEncoding == LogContentEncoding.GZipCompressed) {
-						content = new GZipStream(content, CompressionMode.Decompress, leaveOpen: false);
-					}
-					return (metadata, content);
-				}
-				catch (Exception ex) {
-					logger.LogError(ex, "Couldn't decrypt log file {logId} using key pair {keyId}.", mdto.LogFileId, recipientKeyId);
-					return (metadata, null);
-				}
+				var content = DecryptLogFile(encryptedContent, recipientKeyId, mdto, keyDecryptor, ct);
+				return (metadata, content);
 			}), ct);
 			await foreach (var log in logs.ConfigureAwait(false).WithCancellation(ct)) {
 				yield return log;
+			}
+		}
+
+		private Stream? DecryptLogFile(Stream encryptedContent, KeyId recipientKeyId, DownstreamLogMetadataDTO mdto, KeyDecryptor keyDecryptor, CancellationToken ct) {
+			var dataDecryptor = DataDecryptor.FromEncryptionInfo(mdto.EncryptionInfo, keyDecryptor);
+			if (dataDecryptor == null) {
+				logger.LogError("No recipient key for the current decryption key pair {keyId} for log file {logId}, can't decrypt.", recipientKeyId, mdto.LogFileId);
+				return null;
+			}
+			try {
+				Stream? content = dataDecryptor.OpenDecryptionReadStream(encryptedContent, 0, leaveOpen: false);
+				if (mdto.LogContentEncoding == LogContentEncoding.GZipCompressed) {
+					content = new GZipStream(content, CompressionMode.Decompress, leaveOpen: false);
+				}
+				return content;
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "Couldn't decrypt log file {logId} using key pair {keyId}.", mdto.LogFileId, recipientKeyId);
+				return null;
 			}
 		}
 
