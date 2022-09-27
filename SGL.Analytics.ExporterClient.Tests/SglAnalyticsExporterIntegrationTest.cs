@@ -188,7 +188,7 @@ namespace SGL.Analytics.ExporterClient.Tests {
 		}
 
 		[Fact]
-		public async Task GetDecryptedLogFilesAsyncWithoutFilterReturnsAllLogs() {
+		public async Task GetDecryptedLogFilesAsyncWithoutFilterReturnsAllLogsWithCorrectData() {
 			var user1Id = Guid.NewGuid();
 			var user2Id = Guid.NewGuid();
 			var log1 = fixture.CreateTestGameLog(user1Id);
