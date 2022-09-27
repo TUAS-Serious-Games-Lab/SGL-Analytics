@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Cms;
 using Org.BouncyCastle.Crypto.Prng;
 using SGL.Analytics.DTO;
@@ -12,6 +13,7 @@ using SGL.Utilities.Crypto.Signatures;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -23,7 +25,6 @@ using Xunit.Abstractions;
 
 namespace SGL.Analytics.ExporterClient.Tests {
 	public class SglAnalyticsExporterIntegrationTestFixture {
-		public const string AppName = "SglAnalyticsExporterIntegrationTest";
 		private string keyFileContent;
 
 		public SglAnalyticsExporterIntegrationTestFixture() {
@@ -133,6 +134,7 @@ namespace SGL.Analytics.ExporterClient.Tests {
 			}
 		}
 
+		public string AppName { get; } = "SglAnalyticsExporterIntegrationTest";
 		public KeyPair AuthKeyPair { get; }
 		public KeyPair RecipientKeyPair { get; }
 		public Certificate AuthCert { get; }
@@ -165,8 +167,24 @@ namespace SGL.Analytics.ExporterClient.Tests {
 
 
 		[Fact]
-		public void Test1() {
-
+		public async Task AuthenticationUsingValidKeyFileWorksCorrectly() {
+			fixture.SetupKeyAuth(serverFixture.Server);
+			using var client = serverFixture.Server.CreateClient();
+			await using var exporter = new SglAnalyticsExporter(client, config => config.UseLoggerFactory(_ => fixture.LoggerFactory, false));
+			await exporter.UseKeyFileAsync(fixture.GetKeyFile(), "test.key", () => fixture.KeyFilePassphrase);
+			await exporter.SwitchToApplicationAsync(fixture.AppName);
+			var open = Assert.Single(serverFixture.Server.LogEntries, le => le.RequestMessage.Path == "/api/analytics/user/v1/exporter-key-auth/open-challenge");
+			var complete = Assert.Single(serverFixture.Server.LogEntries, le => le.RequestMessage.Path == "/api/analytics/user/v1/exporter-key-auth/complete-challenge");
+			var body = complete.RequestMessage.BodyAsJson as JObject;
+			Assert.NotNull(body);
+			var challengeId = Guid.Parse(body.Value<string>("challengeId") ?? throw new ArgumentNullException());
+			var signature = Convert.FromBase64String(body.Value<string>("signature") ?? throw new ArgumentNullException());
+			var verifier = new SignatureVerifier(fixture.AuthKeyPair.Public, SignatureDigest.Sha256);
+			KeyId keyId = fixture.AuthKeyPair.Public.CalculateId();
+			var sigContent = ExporterKeyAuthSignatureDTO.ConstructContentToSign(
+				new ExporterKeyAuthRequestDTO(fixture.AppName, keyId), fixture.ChallengeDto);
+			verifier.ProcessBytes(sigContent);
+			verifier.CheckSignature(signature);
 		}
 	}
 }
