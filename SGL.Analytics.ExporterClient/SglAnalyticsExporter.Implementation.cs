@@ -28,14 +28,21 @@ namespace SGL.Analytics.ExporterClient {
 		private ILogger<SglAnalyticsExporter> logger;
 
 		public async ValueTask DisposeAsync() {
-			foreach (var appState in perAppStates.Values) {
-				if (configurator.UserApiClient.Dispose) await disposeIfDisposable(appState.UserExporterApiClient);
-				if (configurator.LogApiClient.Dispose) await disposeIfDisposable(appState.LogExporterApiClient);
-			}
+			await ClearPerAppStatesAsync();
 			if (configurator.Authenticator.Dispose && authenticator != null) await disposeIfDisposable(authenticator);
 			configurator.CustomArgumentFactories.Dispose();
 			if (configurator.LoggerFactory.Dispose) await disposeIfDisposable(LoggerFactory);
 		}
+
+		private async Task ClearPerAppStatesAsync() {
+			using var lockHandle = await stateLock.WaitAsyncWithScopedRelease();
+			foreach (var appState in perAppStates.Values) {
+				if (configurator.UserApiClient.Dispose) await disposeIfDisposable(appState.UserExporterApiClient);
+				if (configurator.LogApiClient.Dispose) await disposeIfDisposable(appState.LogExporterApiClient);
+			}
+			perAppStates.Clear();
+		}
+
 		private async Task disposeIfDisposable(object obj) {
 			if (obj is IAsyncDisposable ad) {
 				await ad.DisposeAsync().AsTask();

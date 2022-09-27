@@ -39,6 +39,7 @@ namespace SGL.Analytics.ExporterClient {
 			CurrentKeyIds = (result.AuthenticationKeyId, result.RecipientKeyId);
 			CurrentKeyCertificates = (result.AuthenticationCertificate, result.RecipientCertificate);
 			authenticator = configurator.Authenticator.Factory(authFactoryargs, authenticationKeyPair);
+			await ClearPerAppStatesAsync(); // Clear cached per-app states as they may have clients authenticated using a different key pair.
 		}
 
 		public async Task SwitchToApplicationAsync(string appName, CancellationToken ct = default) {
