@@ -138,9 +138,9 @@ namespace SGL.Analytics.ExporterClient {
 			metaDTOs = query.ApplyTo(metaDTOs);
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
 			var requestConcurrency = configurator.RequestConcurrencyGetter();
-			var logs = metaDTOs.MapBufferedAsync<DownstreamLogMetadataDTO, (LogFileMetadata Metadata, Stream? Content)>(requestConcurrency, async mdto => {
+			var logs = metaDTOs.MapBufferedAsync(requestConcurrency, (Func<DownstreamLogMetadataDTO, Task<(LogFileMetadata Metadata, Stream? Content)>>)(async mdto => {
 				var encryptedContent = await logClient.GetLogContentByIdAsync(mdto.LogFileId, ct);
-				var metadata = new LogFileMetadata(mdto.LogFileId, mdto.UserId, mdto.CreationTime, mdto.EndTime, mdto.UploadTime, mdto.NameSuffix, mdto.LogContentEncoding, mdto.Size);
+				var metadata = ToMetadata(mdto);
 				var dataDecryptor = DataDecryptor.FromEncryptionInfo(mdto.EncryptionInfo, keyDecryptor);
 				if (dataDecryptor == null) {
 					logger.LogError("No recipient key for the current decryption key pair {keyId} for log file {logId}, can't decrypt.", recipientKeyId, mdto.LogFileId);
@@ -157,10 +157,14 @@ namespace SGL.Analytics.ExporterClient {
 					logger.LogError(ex, "Couldn't decrypt log file {logId} using key pair {keyId}.", mdto.LogFileId, recipientKeyId);
 					return (metadata, null);
 				}
-			}, ct);
+			}), ct);
 			await foreach (var log in logs.ConfigureAwait(false).WithCancellation(ct)) {
 				yield return log;
 			}
+		}
+
+		private static LogFileMetadata ToMetadata(DownstreamLogMetadataDTO mdto) {
+			return new LogFileMetadata(mdto.LogFileId, mdto.UserId, mdto.CreationTime, mdto.EndTime, mdto.UploadTime, mdto.NameSuffix, mdto.LogContentEncoding, mdto.Size);
 		}
 
 		private async IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsyncImpl(PerAppState perAppState, KeyId recipientKeyId, KeyPair recipientKeyPair, UserRegistrationQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
