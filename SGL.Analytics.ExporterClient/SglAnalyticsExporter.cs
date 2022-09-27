@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using System.Runtime.CompilerServices;
 
@@ -50,6 +51,19 @@ namespace SGL.Analytics.ExporterClient {
 			await GetPerAppStateAsync(ct).ConfigureAwait(false);
 		}
 
+		public async Task<(LogFileMetadata Metadata, Stream? Content)> GetDecryptedLogFileByIdAsync(Guid logFileId, CancellationToken ct = default) {
+			CheckReadyForDecryption();
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			var keyId = CurrentKeyIds!.Value.DecryptionKeyId;
+			var metadataTask = perAppState.LogExporterApiClient.GetLogMetadataByIdAsync(logFileId, keyId, ct);
+			var contentTask = perAppState.LogExporterApiClient.GetLogContentByIdAsync(logFileId, ct);
+			var metaDto = await metadataTask;
+			var encryptedContent = await contentTask;
+			var keyDecryptor = new KeyDecryptor(recipientKeyPair!);
+			var content = DecryptLogFile(encryptedContent, keyId, metaDto, keyDecryptor, ct);
+			var metadata = ToMetadata(metaDto);
+			return (metadata, content);
+		}
 		public async Task<IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)>> GetDecryptedLogFilesAsync(Func<ILogFileQuery, ILogFileQuery> query, CancellationToken ct = default) {
 			CheckReadyForDecryption();
 			var queryParams = (LogFileQuery)query(new LogFileQuery());
