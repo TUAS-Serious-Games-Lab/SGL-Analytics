@@ -368,7 +368,6 @@ namespace SGL.Analytics.Client {
 			using var encryptedPropsBuffer = new MemoryStream();
 			await using (var encryptionStream = dataEncryptor.OpenEncryptionWriteStream(encryptedPropsBuffer, 0, leaveOpen: true)) {
 				await using var compressionStream = new GZipStream(encryptionStream, CompressionLevel.Optimal, leaveOpen: true);
-				userPropertiesJsonOptions.Converters.Add(new ObjectDictionaryJsonConverter());
 				await JsonSerializer.SerializeAsync(compressionStream, properties, userPropertiesJsonOptions, ct);
 			}
 			return (encryptedPropsBuffer.ToArray(), dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
