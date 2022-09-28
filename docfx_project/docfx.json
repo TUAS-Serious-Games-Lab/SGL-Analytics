@@ -13,6 +13,7 @@
             "SGL.Analytics.Backend.Users.Infrastructure/bin/Debug/*/SGL.Analytics.Backend.Users.Infrastructure.dll",
             "SGL.Analytics.Backend.Users.Registration/bin/Debug/*/SGL.Analytics.Backend.Users.Registration.dll",
             "SGL.Analytics.Client/bin/Debug/*/SGL.Analytics.Client.dll",
+            "SGL.Analytics.ExporterClient/bin/Debug/*/SGL.Analytics.ExporterClient.dll",
             "SGL.Analytics.DTO/bin/Debug/*/SGL.Analytics.DTO.dll"
           ],
           "src": ".."
