@@ -24,6 +24,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
 		<ProjectReference Include="..\SGL.Analytics.ExporterClient\SGL.Analytics.ExporterClient.csproj" />
 	</ItemGroup>
 </Project>
