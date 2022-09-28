@@ -1,10 +1,13 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Client;
+using SGL.Analytics.DTO;
 using SGL.Analytics.ExporterClient;
+using SGL.Analytics.ExporterClient.Values;
 using SGL.Utilities;
 using SGL.Utilities.TestUtilities.XUnit;
 using System.Net.Sockets;
+using System.Text.Json;
 using Xunit.Abstractions;
 
 namespace SGL.Analytics.EndToEndTest {
@@ -34,6 +37,8 @@ namespace SGL.Analytics.EndToEndTest {
 
 		private string? recipientCaCertPemText = null;
 		private string? recipientCaCertPemFile = null;
+		private string? recipientKeyFile = null;
+		private string? recipientKeyPassphrase = null;
 
 		public SglAnalyticsEndToEndTest(ITestOutputHelper output) {
 			LoggerFactory = CreateLoggerFactory(output);
@@ -47,6 +52,8 @@ namespace SGL.Analytics.EndToEndTest {
 					recipientCaCertPemText = localDevDemoSignerCertificatesPem;
 				}
 			}
+			recipientKeyFile = Environment.GetEnvironmentVariable("TEST_RECIPIENT_KEY_FILE");
+			recipientKeyPassphrase = Environment.GetEnvironmentVariable("TEST_RECIPIENT_KEY_PASSPHRASE");
 			httpClient = new HttpClient();
 			httpClient.BaseAddress = new Uri(Environment.GetEnvironmentVariable("TEST_BACKEND") ?? "https://localhost/");
 			this.output = output;
@@ -69,12 +76,23 @@ namespace SGL.Analytics.EndToEndTest {
 			LoggerFactory.CreateLogger<SingleThreadedSynchronizationContext>().LogError(ex, "Exception escapted from async callback.");
 		}
 
-		[Fact]
+		public class UserData : BaseUserData {
+			public int Foo { get; set; }
+			public string Bar { get; set; }
+			public object Obj { get; set; }
+		}
+
+		[ConditionallyTestedFact(typeof(SglAnalyticsEndToEndTest), nameof(ShouldRun), "No test backend available.")]
 		public async Task UsersCanUploadLogsWhichCanBeExportedAndDecryptedByRecipients() {
 			using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(1));
 			var ct = cts.Token;
 			using var syncContext = new SingleThreadedSynchronizationContext(logUncaughtException);
 			await syncContext;
+			Guid userId;
+			Guid log1Id;
+			Guid snapShotId = Guid.NewGuid();
+			Guid log2Id;
+			var beginTime = DateTime.Now;
 			await using (var analytics = new SglAnalytics(appName, appApiToken, httpClient, config => {
 				if (recipientCaCertPemFile != null) {
 					config.UseRecipientCertificateAuthorityFromReader(() => File.OpenText(recipientCaCertPemFile), recipientCaCertPemFile, ignoreCAValidityPeriod: true);
@@ -86,13 +104,100 @@ namespace SGL.Analytics.EndToEndTest {
 				config.UseLoggerFactory(_ => LoggerFactory, false);
 				config.ConfigureCryptography(config => config.AllowSharedMessageKeyPair());
 			})) {
-				// TODO: Register and generate logs
+				if (!analytics.IsRegistered()) {
+					await analytics.RegisterAsync(new UserData { Foo = 42, Bar = "This is a Test", Obj = new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" } });
+				}
+				userId = analytics.UserID ?? Guid.Empty;
+				log1Id = analytics.StartNewLog();
+				analytics.RecordEventUnshared("Test1", new { X = 12345, Y = 9876, Msg = "Hello World!" }, "TestEvent");
+				analytics.RecordEventUnshared("Test1", new { X = 123.45, Y = 98.76, Msg = "Test!Test!Test!" }, "OtherTestEvent");
+				analytics.RecordSnapshotUnshared("Test2", snapShotId, new {
+					Position = new { X = 123, Y = 345 },
+					Energy = 1000,
+					Name = "JohnDoe",
+					Inventory = new[] { "Apple", "Orange", "WaterBottle" }
+				});
+				log2Id = analytics.StartNewLog();
+				await analytics.FinishAsync();
 			}
+			var endTime = DateTime.Now;
 
 			await using (var exporter = new SglAnalyticsExporter(httpClient, config => {
 				config.UseLoggerFactory(_ => LoggerFactory, false);
 			})) {
-				// TODO: Download, decrypt and check user registration and logs
+				if (recipientKeyFile != null) {
+					if (File.Exists(recipientKeyFile)) {
+						await exporter.UseKeyFileAsync(recipientKeyFile, () => recipientKeyPassphrase?.ToCharArray() ?? new char[0], ct);
+					}
+					else {
+						throw new FileNotFoundException("Couldn't find key file.");
+					}
+				}
+				else if (File.Exists("../../../DevKeyFile.pem")) {
+					await exporter.UseKeyFileAsync("../../../DevKeyFile.pem", () => "ThisIsATest".ToCharArray(), ct);
+				}
+				else if (File.Exists("DevKeyFile.pem")) {
+					await exporter.UseKeyFileAsync("DevKeyFile.pem", () => "ThisIsATest".ToCharArray(), ct);
+				}
+				else if (File.Exists("/DevKeyFile.pem")) {
+					await exporter.UseKeyFileAsync("/DevKeyFile.pem", () => "ThisIsATest".ToCharArray(), ct);
+				}
+				else {
+					throw new FileNotFoundException("Couldn't find key file.");
+				}
+				await exporter.SwitchToApplicationAsync(appName);
+				{
+					var log1 = await exporter.GetDecryptedLogFileByIdAsync(log1Id);
+
+					Assert.Equal(log1Id, log1.Metadata.LogFileId);
+					Assert.Equal(userId, log1.Metadata.UserId);
+					Assert.InRange(log1.Metadata.UploadTime, beginTime.ToUniversalTime(), endTime.ToUniversalTime());
+
+					Assert.NotNull(log1.Content);
+					using var log1Content = log1.Content;
+					var log1Entries = await exporter.ParseLogEntriesAsync(log1Content, ct).ToListAsync(ct);
+					Assert.Equal("Test1", log1Entries[0].Channel);
+					Assert.Equal("TestEvent", Assert.IsAssignableFrom<EventLogFileEntry>(log1Entries[0]).EventType);
+					Assert.Equal(12345, Assert.Contains("X", log1Entries[0].Payload));
+					Assert.Equal(9876, Assert.Contains("Y", log1Entries[0].Payload));
+					Assert.Equal("Hello World!", Assert.Contains("Msg", log1Entries[0].Payload));
+					Assert.InRange(log1Entries[0].TimeStamp, beginTime, endTime);
+
+					Assert.Equal("Test1", log1Entries[1].Channel);
+					Assert.Equal("OtherTestEvent", Assert.IsAssignableFrom<EventLogFileEntry>(log1Entries[1]).EventType);
+					Assert.Equal(123.45, Assert.Contains("X", log1Entries[1].Payload));
+					Assert.Equal(98.76, Assert.Contains("Y", log1Entries[1].Payload));
+					Assert.Equal("Test!Test!Test!", Assert.Contains("Msg", log1Entries[1].Payload));
+					Assert.InRange(log1Entries[1].TimeStamp, beginTime, endTime);
+
+					Assert.Equal("Test2", log1Entries[2].Channel);
+					Assert.Equal(snapShotId, Assert.IsAssignableFrom<SnapshotLogFileEntry>(log1Entries[2]).ObjectId);
+					Assert.Equal(new Dictionary<string, object?> { ["X"] = 123, ["Y"] = 345 }, Assert.Contains("Position", log1Entries[2].Payload));
+					Assert.Equal(1000, Assert.Contains("Energy", log1Entries[2].Payload));
+					Assert.Equal("JohnDoe", Assert.Contains("Name", log1Entries[2].Payload));
+					Assert.Equal(new[] { "Apple", "Orange", "WaterBottle" }.AsEnumerable(), Assert.IsAssignableFrom<IEnumerable<object?>>(Assert.Contains("Inventory", log1Entries[2].Payload)));
+					Assert.InRange(log1Entries[2].TimeStamp, beginTime, endTime);
+				}
+				{
+					var log2 = await exporter.GetDecryptedLogFileByIdAsync(log2Id);
+
+					Assert.Equal(log2Id, log2.Metadata.LogFileId);
+					Assert.Equal(userId, log2.Metadata.UserId);
+					Assert.InRange(log2.Metadata.UploadTime, beginTime.ToUniversalTime(), endTime.ToUniversalTime());
+
+					Assert.NotNull(log2.Content);
+					using var log1Content = log2.Content;
+					var log2Entries = await exporter.ParseLogEntriesAsync(log1Content, ct).ToListAsync(ct);
+					Assert.Empty(log2Entries);
+				}
+				{
+					var userReg = await exporter.GetDecryptedUserRegistrationByIdAsync(userId, ct);
+					Assert.NotNull(userReg);
+					Assert.NotNull(userReg.DecryptedStudySpecificProperties);
+					Assert.Equal(42, Assert.Contains("Foo", userReg.DecryptedStudySpecificProperties));
+					Assert.Equal("This is a Test", Assert.Contains("Bar", userReg.DecryptedStudySpecificProperties));
+					Assert.Equal(new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" }, Assert.Contains("Obj", userReg.DecryptedStudySpecificProperties));
+				}
 			}
 		}
 
