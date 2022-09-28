@@ -80,13 +80,6 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <summary>
-		/// Specifies the strength of the secret that is generated upon user registration.
-		/// The secret is created by generating the given number of bytes and then base64-encoding them.
-		/// Therefore the actual secret string will be longer due to encoding overhead.
-		/// </summary>
-		public int UserRegistrationSecretLength { get; set; } = 16;
-
-		/// <summary>
 		/// Gets the technical name of the application that uses this SGL Analytics instance, as specified in the constructor.
 		/// </summary>
 		public string AppName { get => appName; }
@@ -144,7 +137,7 @@ namespace SGL.Analytics.Client {
 					var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
 					(encryptedUserProps, userPropsEncryptionInfo) = await encryptUserProperties(encryptedUserPropDict, keyEncryptor);
 				}
-				var secret = SecretGenerator.Instance.GenerateSecret(UserRegistrationSecretLength);
+				var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
 				var userDTO = new UserRegistrationDTO(appName, userData.Username, secret, unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);

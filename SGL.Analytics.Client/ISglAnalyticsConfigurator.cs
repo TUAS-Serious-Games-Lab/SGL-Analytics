@@ -196,6 +196,15 @@ namespace SGL.Analytics.Client {
 		/// <param name="cacheResult">Indicates whether the created objects shall be cached for reuse.</param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsConfigurator UseAuthenticatedCustomArgumentFactory<T>(Func<SglAnalyticsConfiguratorAuthenticatedFactoryArguments, T> factory, bool cacheResult = false) where T : class;
+
+		/// <summary>
+		/// Specifies the strength of the secret that is generated upon user registration.
+		/// The secret is created by generating the given number of bytes and then base64-encoding them.
+		/// Therefore the actual secret string will be longer due to encoding overhead.
+		/// </summary>
+		/// <param name="length">The number of bytes to use.</param>
+		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
+		ISglAnalyticsConfigurator UseLegthOfGeneratedUserSecrets(int length);
 	}
 
 	/// <summary>

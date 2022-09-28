@@ -14,6 +14,7 @@ namespace SGL.Analytics.Client {
 	public partial class SglAnalytics {
 		internal class SglAnalyticsConfigurator : ISglAnalyticsConfigurator {
 			internal SglAnalyticsConfigurator() {
+				LegthOfGeneratedUserSecrets = 16;
 				DataDirectorySource = args => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), args.AppName);
 				SynchronizationContextGetter = () => SynchronizationContext.Current ?? throw new InvalidOperationException("No SynchronizationContext set. " +
 					"SGL Analytics requires a synchronized SynchronizationContext that can be used to dispatch event handler invocations to the main thread.");
@@ -41,6 +42,7 @@ namespace SGL.Analytics.Client {
 				return config;
 			}
 			internal Action<ICryptoConfigurator>? CryptoConfigurator { get; private set; }
+			internal int LegthOfGeneratedUserSecrets { get; private set; }
 
 			public ISglAnalyticsConfigurator UseDataDirectory(Func<SglAnalyticsConfiguratorDataDirectorySourceArguments, string> dataDirectorySource) {
 				DataDirectorySource = dataDirectorySource;
@@ -86,6 +88,11 @@ namespace SGL.Analytics.Client {
 
 			public ISglAnalyticsConfigurator ConfigureCryptography(Action<ICryptoConfigurator> configure) {
 				CryptoConfigurator += configure;
+				return this;
+			}
+
+			public ISglAnalyticsConfigurator UseLegthOfGeneratedUserSecrets(int length) {
+				LegthOfGeneratedUserSecrets = length;
 				return this;
 			}
 		}
