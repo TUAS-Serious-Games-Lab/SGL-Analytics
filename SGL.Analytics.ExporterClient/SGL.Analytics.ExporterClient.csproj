@@ -9,6 +9,14 @@
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<PackageId>SGL.Analytics.ExporterClient</PackageId>
+		<Version>0.0.0-dev</Version>
+		<Authors>Serious Games Lab Team at Hochschule Trier</Authors>
+		<Company>Hochschule Trier, Serious Games Lab</Company>
+		<Description>The library used for extracting and decrypting uploaded data from the SGL Analytics service.</Description>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="SGL.Utilities.Crypto" Version="0.10.3" />
 	</ItemGroup>
