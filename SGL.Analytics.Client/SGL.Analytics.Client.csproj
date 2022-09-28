@@ -29,7 +29,9 @@
 			<PrivateAssets>all</PrivateAssets>
 		</ProjectReference>
 
-		<ProjectReference Include="..\SGL.Analytics.SharedClient\SGL.Analytics.SharedClient.csproj" />
+		<ProjectReference Include="..\SGL.Analytics.SharedClient\SGL.Analytics.SharedClient.csproj">
+			<PrivateAssets>all</PrivateAssets>
+		</ProjectReference>
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">

@@ -10,8 +10,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
-		<ProjectReference Include="..\SGL.Analytics.SharedClient\SGL.Analytics.SharedClient.csproj" />
+		<ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj">
+			<PrivateAssets>all</PrivateAssets>
+		</ProjectReference>
+		<ProjectReference Include="..\SGL.Analytics.SharedClient\SGL.Analytics.SharedClient.csproj">
+			<PrivateAssets>all</PrivateAssets>
+		</ProjectReference>
 	</ItemGroup>
 
 	<ItemGroup>
