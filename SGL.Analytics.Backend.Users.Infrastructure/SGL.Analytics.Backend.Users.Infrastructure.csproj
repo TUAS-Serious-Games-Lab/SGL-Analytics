@@ -10,11 +10,8 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-		<DebugType>Portable</DebugType>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-		<DebugSymbols>false</DebugSymbols>
-		<DebugType>None</DebugType>
 	</PropertyGroup>
 
 	<ItemGroup>

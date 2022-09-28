@@ -1,8 +1,10 @@
+using SGL.Utilities;
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SGL.Analytics.Client {
+namespace SGL.Analytics {
 	[JsonConverter(typeof(LogEntryJsonConverter))]
 	internal class LogEntry {
 		[JsonConverter(typeof(JsonStringEnumConverter))]
@@ -21,12 +23,12 @@ namespace SGL.Analytics.Client {
 				EntryType = entryType;
 			}
 
-			public static EntryMetadata NewSnapshotEntry(string channel, DateTime timeStamp, object objectId) {
+			internal static EntryMetadata NewSnapshotEntry(string channel, DateTime timeStamp, object objectId) {
 				EntryMetadata em = new EntryMetadata(channel, timeStamp, LogEntryType.Snapshot);
 				em.ObjectID = objectId;
 				return em;
 			}
-			public static EntryMetadata NewEventEntry(string channel, DateTime timeStamp, string eventType) {
+			internal static EntryMetadata NewEventEntry(string channel, DateTime timeStamp, string eventType) {
 				EntryMetadata em = new EntryMetadata(channel, timeStamp, LogEntryType.Event);
 				em.EventType = eventType;
 				return em;
@@ -36,13 +38,14 @@ namespace SGL.Analytics.Client {
 		public EntryMetadata Metadata { get; private set; }
 		public object Payload { get; private set; }
 
-		public LogEntry(EntryMetadata metadata, object payload) {
+		internal LogEntry(EntryMetadata metadata, object payload) {
 			Metadata = metadata;
 			Payload = payload;
 		}
 	}
 
 	internal class LogEntryJsonConverter : JsonConverter<LogEntry> {
+		private static ObjectDictionaryValueJsonConverter valueConverter = new ObjectDictionaryValueJsonConverter();
 		public override LogEntry? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
 			if (reader.TokenType != JsonTokenType.StartObject) {
 				throw new JsonException();
@@ -86,10 +89,12 @@ namespace SGL.Analytics.Client {
 						eventType = reader.GetString();
 						break;
 					case "objectid":
-						objectID = JsonSerializer.Deserialize<object>(ref reader, options);
+						reader.Read();
+						objectID = valueConverter.Read(ref reader, typeof(object), options);
 						break;
 					case "payload":
-						payload = JsonSerializer.Deserialize<object>(ref reader, options);
+						reader.Read();
+						payload = valueConverter.Read(ref reader, typeof(object), options);
 						break;
 					default:
 						throw new NotSupportedException($"Invalid LogEntry property '{propertyName}'.");
@@ -102,12 +107,12 @@ namespace SGL.Analytics.Client {
 				case null:
 					throw new NotSupportedException("LogEntry is missing EntryType property.");
 				case LogEntry.LogEntryType.Event:
-					if (eventType is null) throw new NotSupportedException("LogEntry with EntryType = Event is missing EventType property.");
-					if (objectID is not null) throw new NotSupportedException("LogEntry with EntryType = Event does not support ObjectID property.");
+					if (eventType == null) throw new NotSupportedException("LogEntry with EntryType = Event is missing EventType property.");
+					if (objectID != null) throw new NotSupportedException("LogEntry with EntryType = Event does not support ObjectID property.");
 					return new LogEntry(LogEntry.EntryMetadata.NewEventEntry(channel, timeStamp.Value, eventType), payload);
 				case LogEntry.LogEntryType.Snapshot:
-					if (objectID is null) throw new NotSupportedException("LogEntry with EntryType = Snapshot is missing ObjectID property.");
-					if (eventType is not null) throw new NotSupportedException("LogEntry with EntryType = Snapshot does not support EventType property.");
+					if (objectID == null) throw new NotSupportedException("LogEntry with EntryType = Snapshot is missing ObjectID property.");
+					if (eventType != null) throw new NotSupportedException("LogEntry with EntryType = Snapshot does not support EventType property.");
 					return new LogEntry(LogEntry.EntryMetadata.NewSnapshotEntry(channel, timeStamp.Value, objectID), payload);
 				default:
 					throw new NotSupportedException("Unsupported EntryType.");

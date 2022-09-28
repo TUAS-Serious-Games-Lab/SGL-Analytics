@@ -1,11 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Analytics.DTO;
+using SGL.Analytics.ExporterClient.Values;
 using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 namespace SGL.Analytics.ExporterClient {
 	public partial class SglAnalyticsExporter : IAsyncDisposable {
@@ -41,6 +43,14 @@ namespace SGL.Analytics.ExporterClient {
 			CurrentKeyCertificates = (result.AuthenticationCertificate, result.RecipientCertificate);
 			authenticator = configurator.Authenticator.Factory(authFactoryargs, authenticationKeyPair);
 			await ClearPerAppStatesAsync(); // Clear cached per-app states as they may have clients authenticated using a different key pair.
+			if (CurrentKeyCertificates.Value.AuthenticationCertificate.SubjectDN.Equals(CurrentKeyCertificates.Value.DecryptionCertificate.SubjectDN)) {
+				logger.LogDebug("Using auth key {authKeyId} and decryption key {recipientKeyId} with common distinguished name {dn}.",
+					CurrentKeyIds?.AuthenticationKeyId, CurrentKeyIds?.DecryptionKeyId, CurrentKeyCertificates?.AuthenticationCertificate.SubjectDN);
+			}
+			else {
+				logger.LogDebug("Using auth key {authKeyId} with distinguished name {authDN} and decryption key {recipientKeyId} with distinguished name {recipientDN}.",
+					CurrentKeyIds?.AuthenticationKeyId, CurrentKeyCertificates?.AuthenticationCertificate.SubjectDN, CurrentKeyIds?.DecryptionKeyId, CurrentKeyCertificates?.DecryptionCertificate.SubjectDN);
+			}
 		}
 
 		public async Task SwitchToApplicationAsync(string appName, CancellationToken ct = default) {
@@ -49,12 +59,14 @@ namespace SGL.Analytics.ExporterClient {
 			}
 			// Create per-app state eagerly, if not cached:
 			await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			logger.LogDebug("Working with application {appName}.", appName);
 		}
 
 		public async Task<(LogFileMetadata Metadata, Stream? Content)> GetDecryptedLogFileByIdAsync(Guid logFileId, CancellationToken ct = default) {
 			CheckReadyForDecryption();
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
 			var keyId = CurrentKeyIds!.Value.DecryptionKeyId;
+			logger.LogDebug("Getting metadata and content for log file {id}...", logFileId);
 			var metadataTask = perAppState.LogExporterApiClient.GetLogMetadataByIdAsync(logFileId, keyId, ct);
 			var contentTask = perAppState.LogExporterApiClient.GetLogContentByIdAsync(logFileId, ct);
 			var metaDto = await metadataTask;
@@ -122,6 +134,26 @@ namespace SGL.Analytics.ExporterClient {
 			var metaDTOs = await logClient.GetMetadataForAllLogsAsync(ct: ct).ConfigureAwait(false);
 			metaDTOs = queryParams.ApplyTo(metaDTOs);
 			return metaDTOs.Select(mdto => ToMetadata(mdto)).ToList();
+		}
+
+		public async IAsyncEnumerable<LogFileEntry> ParseLogEntriesAsync(Stream fileContent, [EnumeratorCancellation] CancellationToken ct = default) {
+			await foreach (var entry in JsonSerializer.DeserializeAsyncEnumerable<LogEntry>(fileContent, JsonOptions.LogEntryOptions, ct).ConfigureAwait(false).WithCancellation(ct)) {
+				if (entry != null) {
+					if (entry.Metadata.EntryType is LogEntry.LogEntryType.Event) {
+						yield return new EventLogFileEntry(entry.Metadata.Channel, entry.Metadata.TimeStamp, (Dictionary<string, object?>)entry.Payload, entry.Metadata.EventType ?? "");
+					}
+					else if (entry.Metadata.EntryType is LogEntry.LogEntryType.Snapshot) {
+						yield return new SnapshotLogFileEntry(entry.Metadata.Channel, entry.Metadata.TimeStamp, (Dictionary<string, object?>)entry.Payload, entry.Metadata.ObjectID);
+					}
+					else {
+						logger.LogWarning("Read LogEntry with unknown entry type while parsing log file.");
+						yield return new LogFileEntry(entry.Metadata.Channel, entry.Metadata.TimeStamp, (Dictionary<string, object?>)entry.Payload);
+					}
+				}
+				else {
+					logger.LogWarning("Read null value instead of LogEntry while parsing log file.");
+				}
+			}
 		}
 	}
 }

@@ -52,7 +52,7 @@ namespace SGL.Analytics.ExporterClient {
 				d.Dispose();
 			}
 		}
-		private static (Certificate AuthenticationCertificate, Certificate RecipientCertificate, KeyPair AuthenticationKeyPair, KeyPair RecipientKeyPair,
+		private (Certificate AuthenticationCertificate, Certificate RecipientCertificate, KeyPair AuthenticationKeyPair, KeyPair RecipientKeyPair,
 				 KeyId AuthenticationKeyId, KeyId RecipientKeyId) ReadKeyFile(PemObjectReader reader, string sourceName, CancellationToken ct = default) {
 			List<object> pemObjects;
 			ct.ThrowIfCancellationRequested();
@@ -60,7 +60,8 @@ namespace SGL.Analytics.ExporterClient {
 				pemObjects = reader.ReadAllObjects().ToList();
 			}
 			catch (Exception ex) {
-				throw new KeyFileException("Error while reading key file {sourceName}.", ex);
+				logger.LogError(ex, "Failed to read PEM data from key file {src}.", sourceName);
+				throw new KeyFileException($"Error while reading key file {sourceName}.", ex);
 			}
 			ct.ThrowIfCancellationRequested();
 			var keyPairs = pemObjects.OfType<KeyPair>().Concat(pemObjects.OfType<PrivateKey>().Select(privKey => privKey.DeriveKeyPair())).ToDictionary(keyPair => keyPair.Public.CalculateId());
@@ -68,9 +69,13 @@ namespace SGL.Analytics.ExporterClient {
 			var authCert = certificates.FirstOrDefault(cert => cert.AllowedKeyUsages.GetValueOrDefault(KeyUsages.NoneDefined).HasFlag(KeyUsages.DigitalSignature));
 			var recipientCert = certificates.FirstOrDefault(cert => cert.AllowedKeyUsages.GetValueOrDefault(KeyUsages.NoneDefined).HasFlag(KeyUsages.KeyEncipherment));
 			if (authCert == null) {
+				logger.LogError("Couldn't find a certificate suitable for authentication in key file {keyFile}. " +
+					"The file needs to contain a certificate (and the associated key pair) with the DigitalSignature key usage extension.", sourceName);
 				throw new KeyFileException($"The given key file {sourceName} does not contain a certificate with DigitalSignature key usage for authentication.");
 			}
 			if (recipientCert == null) {
+				logger.LogError("Couldn't find a certificate suitable for decryption in key file {keyFile}. " +
+					"The file needs to contain a certificate (and the associated key pair) with the KeyEncipherment key usage extension.", sourceName);
 				throw new KeyFileException($"The given key file {sourceName} does not contain a certificate with KeyEncipherment key usage for decryption.");
 			}
 			ct.ThrowIfCancellationRequested();
@@ -79,9 +84,11 @@ namespace SGL.Analytics.ExporterClient {
 			var authKeyPair = keyPairs.GetValueOrDefault(authKeyId);
 			var recipientKeyPair = keyPairs.GetValueOrDefault(recipientKeyId);
 			if (authKeyPair == null) {
+				logger.LogError("Couldn't find the private key for the key {keyId} used by the authentication certificate in key file {keyFile}.", authKeyId, sourceName);
 				throw new KeyFileException($"The given key file {sourceName} does not contain a key pair for the certififacte with DigitalSignature key usage for authentication.");
 			}
 			if (recipientKeyPair == null) {
+				logger.LogError("Couldn't find the private key for the key {keyId} used by the decryption certificate in key file {keyFile}.", recipientKeyId, sourceName);
 				throw new KeyFileException($"The given key file {sourceName} does not contain a key pair for the certificate with KeyEncipherment key usage for decryption.");
 			}
 			ct.ThrowIfCancellationRequested();
@@ -102,10 +109,16 @@ namespace SGL.Analytics.ExporterClient {
 
 		private void CheckReadyForDecryption() {
 			if (CurrentKeyIds == null) {
+				logError();
 				throw new InvalidOperationException("No current key id.");
 			}
 			if (recipientKeyPair == null) {
+				logError();
 				throw new InvalidOperationException("No current decryption key pair.");
+			}
+
+			void logError() {
+				logger.LogError("Can't perform download and decryption operation, because there is no active key pair for decryption. Call {method} first to load a key file.", nameof(UseKeyFileAsync));
 			}
 		}
 
@@ -113,12 +126,14 @@ namespace SGL.Analytics.ExporterClient {
 			// This method works with the mutable state (either reads it or updates it), thus it needs to hold a lock for the mutable state:
 			using var lockHandle = await stateLock.WaitAsyncWithScopedRelease(ct);
 			if (CurrentAppName == null) {
+				logger.LogError("Can't perform the operation, because no app is selected yet. Call {method} first to select one.", nameof(SwitchToApplicationAsync));
 				throw new InvalidOperationException("No current app selected.");
 			}
 			string appName = CurrentAppName;
 			if (perAppStates.TryGetValue(CurrentAppName, out var currentAppState)) {
 				if (!currentAppState.AuthData.Valid) {
 					if (authenticator == null) {
+						logMissingAuthKey();
 						throw new InvalidOperationException("No authenticator present.");
 					}
 					currentAppState.AuthData = await authenticator.AuthenticateAsync(appName, ct).ConfigureAwait(false);
@@ -129,13 +144,16 @@ namespace SGL.Analytics.ExporterClient {
 			}
 			else {
 				if (authenticator == null) {
+					logMissingAuthKey();
 					throw new InvalidOperationException("No authenticator present.");
 				}
 				var authData = await authenticator.AuthenticateAsync(appName, ct).ConfigureAwait(false);
 				if (CurrentKeyIds == null) {
+					logMissingAuthKey();
 					throw new InvalidOperationException("No current key id.");
 				}
 				if (CurrentKeyCertificates == null) {
+					logMissingAuthKey();
 					throw new InvalidOperationException("No current key certificate.");
 				}
 				var args = new SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments(httpClient, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories,
@@ -147,11 +165,16 @@ namespace SGL.Analytics.ExporterClient {
 				perAppStates[appName] = perAppState;
 				return perAppState;
 			}
+
+			void logMissingAuthKey() {
+				logger.LogError("Can't perform the operation, because there is no active key pair for authentication. Call {method} first to load a key file.", nameof(UseKeyFileAsync));
+			}
 		}
 
 		private async IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)> GetDecryptedLogFilesAsyncImpl(PerAppState perAppState, KeyId recipientKeyId, KeyPair recipientKeyPair, LogFileQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
 			var ct = cts.Token;
+			logger.LogDebug("Getting metadata and content for log files by query.");
 			var logClient = perAppState.LogExporterApiClient;
 			var metaDTOs = await logClient.GetMetadataForAllLogsAsync(recipientKeyId, ct).ConfigureAwait(false);
 			metaDTOs = query.ApplyTo(metaDTOs);
@@ -194,6 +217,7 @@ namespace SGL.Analytics.ExporterClient {
 		private async IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsyncImpl(PerAppState perAppState, KeyId recipientKeyId, KeyPair recipientKeyPair, UserRegistrationQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
 			var ct = cts.Token;
+			logger.LogDebug("Getting user registrations by query.");
 			var userClient = perAppState.UserExporterApiClient;
 			var userDTOs = await userClient.GetMetadataForAllUsersAsync(recipientKeyId, ct).ConfigureAwait(false);
 			userDTOs = query.ApplyTo(userDTOs);
