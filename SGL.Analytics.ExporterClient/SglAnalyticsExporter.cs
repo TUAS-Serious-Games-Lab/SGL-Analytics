@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Analytics.DTO;
+using SGL.Analytics.ExporterClient.Values;
 using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.EndToEnd;
@@ -135,10 +136,19 @@ namespace SGL.Analytics.ExporterClient {
 			return metaDTOs.Select(mdto => ToMetadata(mdto)).ToList();
 		}
 
-		public async IAsyncEnumerable<LogEntry> ParseLogEntriesAsync(Stream fileContent, [EnumeratorCancellation] CancellationToken ct = default) {
+		public async IAsyncEnumerable<LogFileEntry> ParseLogEntriesAsync(Stream fileContent, [EnumeratorCancellation] CancellationToken ct = default) {
 			await foreach (var entry in JsonSerializer.DeserializeAsyncEnumerable<LogEntry>(fileContent, JsonOptions.LogEntryOptions, ct).ConfigureAwait(false).WithCancellation(ct)) {
 				if (entry != null) {
-					yield return entry;
+					if (entry.Metadata.EntryType is LogEntry.LogEntryType.Event) {
+						yield return new EventLogFileEntry(entry.Metadata.Channel, entry.Metadata.TimeStamp, (Dictionary<string, object?>)entry.Payload, entry.Metadata.EventType ?? "");
+					}
+					else if (entry.Metadata.EntryType is LogEntry.LogEntryType.Snapshot) {
+						yield return new SnapshotLogFileEntry(entry.Metadata.Channel, entry.Metadata.TimeStamp, (Dictionary<string, object?>)entry.Payload, entry.Metadata.ObjectID);
+					}
+					else {
+						logger.LogWarning("Read LogEntry with unknown entry type while parsing log file.");
+						yield return new LogFileEntry(entry.Metadata.Channel, entry.Metadata.TimeStamp, (Dictionary<string, object?>)entry.Payload);
+					}
 				}
 				else {
 					logger.LogWarning("Read null value instead of LogEntry while parsing log file.");

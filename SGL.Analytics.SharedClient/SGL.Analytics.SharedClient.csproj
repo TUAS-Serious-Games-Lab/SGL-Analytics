@@ -12,6 +12,7 @@
 	<ItemGroup>
 		<InternalsVisibleTo Include="SGL.Analytics.Client" />
 		<InternalsVisibleTo Include="SGL.Analytics.Client.Tests" />
+		<InternalsVisibleTo Include="SGL.Analytics.ExporterClient" />
 	</ItemGroup>
 
 </Project>
