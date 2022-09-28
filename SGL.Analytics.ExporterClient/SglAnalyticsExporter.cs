@@ -6,6 +6,7 @@ using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 namespace SGL.Analytics.ExporterClient {
 	public partial class SglAnalyticsExporter : IAsyncDisposable {
@@ -132,6 +133,17 @@ namespace SGL.Analytics.ExporterClient {
 			var metaDTOs = await logClient.GetMetadataForAllLogsAsync(ct: ct).ConfigureAwait(false);
 			metaDTOs = queryParams.ApplyTo(metaDTOs);
 			return metaDTOs.Select(mdto => ToMetadata(mdto)).ToList();
+		}
+
+		public async IAsyncEnumerable<LogEntry> ParseLogEntriesAsync(Stream fileContent, [EnumeratorCancellation] CancellationToken ct = default) {
+			await foreach (var entry in JsonSerializer.DeserializeAsyncEnumerable<LogEntry>(fileContent, JsonOptions.LogEntryOptions, ct).ConfigureAwait(false).WithCancellation(ct)) {
+				if (entry != null) {
+					yield return entry;
+				}
+				else {
+					logger.LogWarning("Read null value instead of LogEntry while parsing log file.");
+				}
+			}
 		}
 	}
 }
