@@ -41,6 +41,14 @@ namespace SGL.Analytics.ExporterClient {
 			CurrentKeyCertificates = (result.AuthenticationCertificate, result.RecipientCertificate);
 			authenticator = configurator.Authenticator.Factory(authFactoryargs, authenticationKeyPair);
 			await ClearPerAppStatesAsync(); // Clear cached per-app states as they may have clients authenticated using a different key pair.
+			if (CurrentKeyCertificates.Value.AuthenticationCertificate.SubjectDN.Equals(CurrentKeyCertificates.Value.DecryptionCertificate.SubjectDN)) {
+				logger.LogDebug("Using auth key {authKeyId} and decryption key {recipientKeyId} with common distinguished name {dn}.",
+					CurrentKeyIds?.AuthenticationKeyId, CurrentKeyIds?.DecryptionKeyId, CurrentKeyCertificates?.AuthenticationCertificate.SubjectDN);
+			}
+			else {
+				logger.LogDebug("Using auth key {authKeyId} with distinguished name {authDN} and decryption key {recipientKeyId} with distinguished name {recipientDN}.",
+					CurrentKeyIds?.AuthenticationKeyId, CurrentKeyCertificates?.AuthenticationCertificate.SubjectDN, CurrentKeyIds?.DecryptionKeyId, CurrentKeyCertificates?.DecryptionCertificate.SubjectDN);
+			}
 		}
 
 		public async Task SwitchToApplicationAsync(string appName, CancellationToken ct = default) {
@@ -49,12 +57,14 @@ namespace SGL.Analytics.ExporterClient {
 			}
 			// Create per-app state eagerly, if not cached:
 			await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			logger.LogDebug("Working with application {appName}.", appName);
 		}
 
 		public async Task<(LogFileMetadata Metadata, Stream? Content)> GetDecryptedLogFileByIdAsync(Guid logFileId, CancellationToken ct = default) {
 			CheckReadyForDecryption();
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
 			var keyId = CurrentKeyIds!.Value.DecryptionKeyId;
+			logger.LogDebug("Getting metadata and content for log file {id}...", logFileId);
 			var metadataTask = perAppState.LogExporterApiClient.GetLogMetadataByIdAsync(logFileId, keyId, ct);
 			var contentTask = perAppState.LogExporterApiClient.GetLogContentByIdAsync(logFileId, ct);
 			var metaDto = await metadataTask;
