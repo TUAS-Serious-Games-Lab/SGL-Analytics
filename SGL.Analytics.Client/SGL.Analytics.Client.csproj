@@ -45,11 +45,11 @@
 			<PackagePath>lib\net6.0</PackagePath>
 			<Pack>true</Pack>
 		</Content>
-		<Content Include="bin\$(Configuration)\netstandard2.1\SGL.Analytics.SharedClient.dll;bin\$(Configuration)\netstandard2.1\SGL.Analytics.SharedClient.xml">
+		<Content Include="bin\$(Configuration)\netstandard2.1\SGL.Analytics.SharedClient.dll">
 			<PackagePath>lib\netstandard2.1</PackagePath>
 			<Pack>true</Pack>
 		</Content>
-		<Content Include="bin\$(Configuration)\net6.0\SGL.Analytics.SharedClient.dll;bin\$(Configuration)\net6.0\SGL.Analytics.SharedClient.xml">
+		<Content Include="bin\$(Configuration)\net6.0\SGL.Analytics.SharedClient.dll">
 			<PackagePath>lib\net6.0</PackagePath>
 			<Pack>true</Pack>
 		</Content>
