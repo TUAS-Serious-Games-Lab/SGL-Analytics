@@ -31,13 +31,10 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.Equal(entryOrig.Metadata.TimeStamp, entryDeserialized?.Metadata?.TimeStamp);
 				Assert.Equal(entryOrig.Metadata.EntryType, entryDeserialized?.Metadata?.EntryType);
 				Assert.Equal(entryOrig.Metadata.ObjectID, (entryDeserialized?.Metadata?.ObjectID as JsonElement?)?.GetString());
-				var deserializedPayload = entryDeserialized?.Payload as JsonElement?;
-				JsonElement testA = new JsonElement();
-				Assert.True(deserializedPayload?.TryGetProperty("TestA", out testA));
-				Assert.Equal(12345, testA.GetInt32());
-				JsonElement testB = new JsonElement();
-				Assert.True(deserializedPayload?.TryGetProperty("TestB", out testB));
-				Assert.Equal("Hello World!", testB.GetString());
+				var deserializedPayload = entryDeserialized?.Payload as IReadOnlyDictionary<string, object?>;
+				Assert.NotNull(deserializedPayload);
+				Assert.Equal(12345, Assert.Contains("TestA", deserializedPayload));
+				Assert.Equal("Hello World!", Assert.Contains("TestB", deserializedPayload));
 			}
 		}
 		[Fact]
@@ -53,14 +50,11 @@ namespace SGL.Analytics.Client.Tests {
 				Assert.Equal(entryOrig.Metadata.Channel, entryDeserialized?.Metadata?.Channel);
 				Assert.Equal(entryOrig.Metadata.TimeStamp, entryDeserialized?.Metadata?.TimeStamp);
 				Assert.Equal(entryOrig.Metadata.EntryType, entryDeserialized?.Metadata?.EntryType);
-				Assert.Equal(entryOrig.Metadata.ObjectID, (entryDeserialized?.Metadata?.ObjectID as JsonElement?)?.GetString());
-				var deserializedPayload = entryDeserialized?.Payload as JsonElement?;
-				JsonElement testA = new JsonElement();
-				Assert.True(deserializedPayload?.TryGetProperty("TestA", out testA));
-				Assert.Equal(12345, testA.GetInt32());
-				JsonElement testB = new JsonElement();
-				Assert.True(deserializedPayload?.TryGetProperty("TestB", out testB));
-				Assert.Equal("Hello World!", testB.GetString());
+				Assert.Equal(entryOrig.Metadata.ObjectID, entryDeserialized?.Metadata?.ObjectID as string);
+				var deserializedPayload = entryDeserialized?.Payload as IReadOnlyDictionary<string, object?>;
+				Assert.NotNull(deserializedPayload);
+				Assert.Equal(12345, Assert.Contains("TestA", deserializedPayload));
+				Assert.Equal("Hello World!", Assert.Contains("TestB", deserializedPayload));
 			}
 		}
 	}

@@ -1,4 +1,6 @@
+using SGL.Utilities;
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -43,6 +45,7 @@ namespace SGL.Analytics {
 	}
 
 	internal class LogEntryJsonConverter : JsonConverter<LogEntry> {
+		private static ObjectDictionaryValueJsonConverter valueConverter = new ObjectDictionaryValueJsonConverter();
 		public override LogEntry? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
 			if (reader.TokenType != JsonTokenType.StartObject) {
 				throw new JsonException();
@@ -86,10 +89,12 @@ namespace SGL.Analytics {
 						eventType = reader.GetString();
 						break;
 					case "objectid":
-						objectID = JsonSerializer.Deserialize<object>(ref reader, options);
+						reader.Read();
+						objectID = valueConverter.Read(ref reader, typeof(object), options);
 						break;
 					case "payload":
-						payload = JsonSerializer.Deserialize<object>(ref reader, options);
+						reader.Read();
+						payload = valueConverter.Read(ref reader, typeof(object), options);
 						break;
 					default:
 						throw new NotSupportedException($"Invalid LogEntry property '{propertyName}'.");
