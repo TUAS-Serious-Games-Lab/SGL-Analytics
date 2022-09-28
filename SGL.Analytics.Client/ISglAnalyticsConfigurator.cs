@@ -220,15 +220,22 @@ namespace SGL.Analytics.Client {
 		/// Sets the client up to validate recipient certificates using CA / signer certificates loaded from the given reader in PEM format.
 		/// </summary>
 		/// <param name="configurator">The configurator object on which to setup the validator.</param>
-		/// <param name="caCertificateReader">The reader to load the PEM data from.</param>
+		/// <param name="getCaCertificateReader">
+		/// A function to open the reader to load the PEM data from.
+		/// Is invoked when the <see cref="SglAnalytics"/> object is configured.
+		/// The returned reader is disposed automatically.
+		/// </param>
 		/// <param name="sourceName">The name for the source to use for log messages, usually the file name or similar.</param>
 		/// <param name="ignoreCAValidityPeriod">
 		/// Indicates whether the validity period of the certificates is ignored. This can be used to avoid expiration of the certifiactes when they are baked into shipped
 		/// software, that may not be updated in time to replace expired CA certificates.
 		/// </param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
-		public static ISglAnalyticsConfigurator UseRecipientCertificateAuthorityFromReader(this ISglAnalyticsConfigurator configurator, TextReader caCertificateReader, string sourceName, bool ignoreCAValidityPeriod = true) {
-			configurator.UseRecipientCertificateValidator(args => new CACertTrustValidator(caCertificateReader, sourceName, ignoreCAValidityPeriod, args.LoggerFactory.CreateLogger<CACertTrustValidator>(), args.LoggerFactory.CreateLogger<CertificateStore>()));
+		public static ISglAnalyticsConfigurator UseRecipientCertificateAuthorityFromReader(this ISglAnalyticsConfigurator configurator, Func<TextReader> getCaCertificateReader, string sourceName, bool ignoreCAValidityPeriod = true) {
+			configurator.UseRecipientCertificateValidator(args => {
+				using var reader = getCaCertificateReader();
+				return new CACertTrustValidator(reader, sourceName, ignoreCAValidityPeriod, args.LoggerFactory.CreateLogger<CACertTrustValidator>(), args.LoggerFactory.CreateLogger<CertificateStore>());
+			});
 			return configurator;
 		}
 		/// <summary>
@@ -248,10 +255,17 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="configurator">The configurator object on which to setup the validator.</param>
 		/// <param name="sourceName">The name for the source to use for log messages, usually the file name or similar.</param>
-		/// <param name="signerPublicKeyReader">The reader to load the PEM data from.</param>
+		/// <param name="getSignerPublicKeyReader">
+		/// A function to open the reader to load the PEM data from.
+		/// Is invoked when the <see cref="SglAnalytics"/> object is configured.
+		/// The returned reader is disposed automatically.
+		/// </param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
-		public static ISglAnalyticsConfigurator UseRecipientCertificateSignerKeyFromReader(this ISglAnalyticsConfigurator configurator, string sourceName, TextReader signerPublicKeyReader) {
-			configurator.UseRecipientCertificateValidator(args => new KeyOnlyTrustValidator(signerPublicKeyReader, sourceName, args.LoggerFactory.CreateLogger<KeyOnlyTrustValidator>()));
+		public static ISglAnalyticsConfigurator UseRecipientCertificateSignerKeyFromReader(this ISglAnalyticsConfigurator configurator, string sourceName, Func<TextReader> getSignerPublicKeyReader) {
+			configurator.UseRecipientCertificateValidator(args => {
+				using var reader = getSignerPublicKeyReader();
+				return new KeyOnlyTrustValidator(reader, sourceName, args.LoggerFactory.CreateLogger<KeyOnlyTrustValidator>());
+			});
 			return configurator;
 		}
 	}
