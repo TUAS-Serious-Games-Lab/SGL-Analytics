@@ -38,6 +38,7 @@ namespace SGL.Analytics.EndToEndTest {
 		private string? recipientCaCertPemText = null;
 		private string? recipientCaCertPemFile = null;
 		private string? recipientKeyFile = null;
+		private string? recipientKeyText = null;
 		private string? recipientKeyPassphrase = null;
 
 		public SglAnalyticsEndToEndTest(ITestOutputHelper output) {
@@ -53,6 +54,9 @@ namespace SGL.Analytics.EndToEndTest {
 				}
 			}
 			recipientKeyFile = Environment.GetEnvironmentVariable("TEST_RECIPIENT_KEY_FILE");
+			if (recipientKeyFile == null) {
+				recipientKeyText = Environment.GetEnvironmentVariable("TEST_RECIPIENT_KEY_PEM");
+			}
 			recipientKeyPassphrase = Environment.GetEnvironmentVariable("TEST_RECIPIENT_KEY_PASSPHRASE");
 			httpClient = new HttpClient();
 			httpClient.BaseAddress = new Uri(Environment.GetEnvironmentVariable("TEST_BACKEND") ?? "https://localhost/");
@@ -132,6 +136,10 @@ namespace SGL.Analytics.EndToEndTest {
 					else {
 						throw new FileNotFoundException("Couldn't find key file.");
 					}
+				}
+				else if (!string.IsNullOrEmpty(recipientKeyText)) {
+					using var keyFile = new StringReader(recipientKeyText);
+					await exporter.UseKeyFileAsync(keyFile, "[key file]", () => recipientKeyPassphrase?.ToCharArray() ?? new char[0], ct);
 				}
 				else if (File.Exists("../../../DevKeyFile.pem")) {
 					await exporter.UseKeyFileAsync("../../../DevKeyFile.pem", () => "ThisIsATest".ToCharArray(), ct);
