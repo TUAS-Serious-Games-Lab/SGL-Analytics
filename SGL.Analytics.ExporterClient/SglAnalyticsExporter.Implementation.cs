@@ -96,11 +96,13 @@ namespace SGL.Analytics.ExporterClient {
 		}
 
 		private class PerAppState {
+			internal string AppName { get; set; }
 			internal AuthorizationData AuthData { get; set; }
 			internal ILogExporterApiClient LogExporterApiClient { get; set; }
 			internal IUserExporterApiClient UserExporterApiClient { get; set; }
 
-			internal PerAppState(AuthorizationData authData, ILogExporterApiClient logExporterApiClient, IUserExporterApiClient userExporterApiClient) {
+			internal PerAppState(string appName, AuthorizationData authData, ILogExporterApiClient logExporterApiClient, IUserExporterApiClient userExporterApiClient) {
+				AppName = appName;
 				AuthData = authData;
 				LogExporterApiClient = logExporterApiClient;
 				UserExporterApiClient = userExporterApiClient;
@@ -161,7 +163,7 @@ namespace SGL.Analytics.ExporterClient {
 					CurrentKeyIds.Value.DecryptionKeyId, CurrentKeyCertificates.Value.DecryptionCertificate);
 				var logClient = configurator.LogApiClient.Factory(args);
 				var userClient = configurator.UserApiClient.Factory(args);
-				PerAppState perAppState = new PerAppState(authData, logClient, userClient);
+				PerAppState perAppState = new PerAppState(appName, authData, logClient, userClient);
 				perAppStates[appName] = perAppState;
 				return perAppState;
 			}
