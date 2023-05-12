@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using System;
@@ -15,7 +16,8 @@ namespace SGL.Analytics.ExporterClient {
 		Task<IEnumerable<DownstreamLogMetadataDTO>> GetMetadataForAllLogsAsync(KeyId? recipientKeyId = null, CancellationToken ct = default);
 		Task<DownstreamLogMetadataDTO> GetLogMetadataByIdAsync(Guid id, KeyId? recipientKeyId = null, CancellationToken ct = default);
 		Task<Stream> GetLogContentByIdAsync(Guid id, CancellationToken ct = default);
-		Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId? recipientKeyId, CancellationToken ct = default);
-		Task PushRekeyedKeys(KeyId recipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default);
+		Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId? recipientKeyId, CancellationToken ct = default);
+		Task PutRekeyedKeys(KeyId recipientKeyId, IReadOnlyDictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default);
+		Task<IEnumerable<Certificate>> GetRecipientCertificates(string appName, string appApiToken, CancellationToken ct = default);
 	}
 }

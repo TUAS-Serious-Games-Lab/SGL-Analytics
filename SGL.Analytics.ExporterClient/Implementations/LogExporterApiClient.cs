@@ -1,5 +1,6 @@
 ﻿using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using System;
@@ -46,11 +47,15 @@ namespace SGL.Analytics.ExporterClient {
 			return (await response.Content.ReadFromJsonAsync<DownstreamLogMetadataDTO>(jsonOptions, ct).ConfigureAwait(false)) ?? throw new JsonException("Got null from response.");
 		}
 
-		public Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId? recipientKeyId, CancellationToken ct = default) {
+		public Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId? recipientKeyId, CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 
-		public Task PushRekeyedKeys(KeyId recipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default) {
+		public Task PutRekeyedKeys(KeyId recipientKeyId, IReadOnlyDictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default) {
+			throw new NotImplementedException();
+		}
+
+		public Task<IEnumerable<Certificate>> GetRecipientCertificates(string appName, string appApiToken, CancellationToken ct = default) {
 			throw new NotImplementedException();
 		}
 	}
