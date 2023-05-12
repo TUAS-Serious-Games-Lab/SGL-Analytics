@@ -165,6 +165,7 @@ namespace SGL.Analytics.ExporterClient {
 			await logClient.GetRecipientCertificates(perAppState.AppName, certStore, ct);
 			var cert = certStore.GetCertificateByKeyId(keyIdToGrantAccessTo);
 			if (cert == null) {
+				logger.LogError("Target key {targetKey} for rekeying operation not found in fetched certificate store.", keyIdToGrantAccessTo);
 				throw new Exception("KeyId not found!");
 			}
 			var origKeyDict = await perAppState.LogExporterApiClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, ct);
@@ -176,6 +177,7 @@ namespace SGL.Analytics.ExporterClient {
 			var perFileTasks = Task.WhenAll(origKeyDict.Select(logFileInfo => Task.Run<(Guid LogId, DataKeyInfo? DataKeyInfo)>(() => {
 				var decryptedKey = keyDecryptor.DecryptKey(logFileInfo.Value);
 				if (decryptedKey == null) {
+					logger.LogWarning("Couldn't decrypt data key for log file {fileId} for rekeying operation.", logFileInfo.Key);
 					return (LogId: logFileInfo.Key, DataKeyInfo: null);
 				}
 				var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
