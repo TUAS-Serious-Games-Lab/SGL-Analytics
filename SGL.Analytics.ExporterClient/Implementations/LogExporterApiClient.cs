@@ -1,5 +1,6 @@
 ﻿using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
@@ -43,6 +44,14 @@ namespace SGL.Analytics.ExporterClient {
 			}
 			using var response = await SendRequest(HttpMethod.Get, $"{id}/metadata", queryParameters, null, req => { }, accept: jsonMT, ct).ConfigureAwait(false);
 			return (await response.Content.ReadFromJsonAsync<DownstreamLogMetadataDTO>(jsonOptions, ct).ConfigureAwait(false)) ?? throw new JsonException("Got null from response.");
+		}
+
+		public Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId? recipientKeyId, CancellationToken ct = default) {
+			throw new NotImplementedException();
+		}
+
+		public Task PushRekeyedKeys(KeyId recipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default) {
+			throw new NotImplementedException();
 		}
 	}
 }
