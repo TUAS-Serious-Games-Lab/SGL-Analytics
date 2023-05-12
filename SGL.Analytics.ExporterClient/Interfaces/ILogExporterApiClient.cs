@@ -16,8 +16,8 @@ namespace SGL.Analytics.ExporterClient {
 		Task<IEnumerable<DownstreamLogMetadataDTO>> GetMetadataForAllLogsAsync(KeyId? recipientKeyId = null, CancellationToken ct = default);
 		Task<DownstreamLogMetadataDTO> GetLogMetadataByIdAsync(Guid id, KeyId? recipientKeyId = null, CancellationToken ct = default);
 		Task<Stream> GetLogContentByIdAsync(Guid id, CancellationToken ct = default);
-		Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId? recipientKeyId, CancellationToken ct = default);
-		Task PutRekeyedKeys(KeyId recipientKeyId, IReadOnlyDictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default);
-		Task<IEnumerable<Certificate>> GetRecipientCertificates(string appName, string appApiToken, CancellationToken ct = default);
+		Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId keyId, CancellationToken ct = default);
+		Task PutRekeyedKeys(KeyId keyId, IReadOnlyDictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default);
+		Task GetRecipientCertificates(string appName, CertificateStore certificateStore, CancellationToken ct = default);
 	}
 }
