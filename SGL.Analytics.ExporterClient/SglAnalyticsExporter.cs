@@ -6,6 +6,7 @@ using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 
@@ -154,6 +155,36 @@ namespace SGL.Analytics.ExporterClient {
 					logger.LogWarning("Read null value instead of LogEntry while parsing log file.");
 				}
 			}
+		}
+
+		public async Task RekeyLogFilesForRecipientKey(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
+			CheckReadyForDecryption();
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			var logClient = perAppState.LogExporterApiClient;
+			var certStore = new CertificateStore(keyCertValidator, LoggerFactory.CreateLogger<CertificateStore>());
+			await logClient.GetRecipientCertificates(perAppState.AppName, certStore, ct);
+			var cert = certStore.GetCertificateByKeyId(keyIdToGrantAccessTo);
+			if (cert == null) {
+				throw new Exception("KeyId not found!");
+			}
+			var origKeyDict = await perAppState.LogExporterApiClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, ct);
+			var keyEncryptor = new KeyEncryptor(new[] { cert.PublicKey }, randomGenerator,
+				allowSharedMessageKeyPair: false); // As we don't have the original private key for the shared message public key,
+												   // we need to create a separate message public key for the new recipient,
+												   // even if they are using the same curve parameters.
+			var keyDecryptor = new KeyDecryptor(recipientKeyPair!);
+			var perFileTasks = Task.WhenAll(origKeyDict.Select(logFileInfo => Task.Run<(Guid LogId, DataKeyInfo? DataKeyInfo)>(() => {
+				var decryptedKey = keyDecryptor.DecryptKey(logFileInfo.Value);
+				if (decryptedKey == null) {
+					return (LogId: logFileInfo.Key, DataKeyInfo: null);
+				}
+				var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
+				Debug.Assert(sharedMsgPubKey == null);
+				return (LogId: logFileInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
+			}, ct)));
+			var perFileResults = await perFileTasks;
+			var resultMap = perFileResults.Where(res => res.DataKeyInfo != null).ToDictionary(res => res.LogId, res => res.DataKeyInfo!);
+			await perAppState.LogExporterApiClient.PutRekeyedKeys(keyIdToGrantAccessTo, resultMap, ct);
 		}
 	}
 }
