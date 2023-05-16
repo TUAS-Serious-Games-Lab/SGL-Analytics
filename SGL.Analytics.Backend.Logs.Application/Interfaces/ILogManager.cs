@@ -1,5 +1,6 @@
 ﻿using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
@@ -27,5 +28,6 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 
 		Task<IEnumerable<LogFile>> ListLogsAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct = default);
 		Task<LogFile> GetLogByIdAsync(Guid logId, string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct = default);
+		Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default);
 	}
 }

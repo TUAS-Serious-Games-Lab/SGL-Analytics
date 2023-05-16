@@ -5,6 +5,7 @@ using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.Applications;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using SQLitePCL;
 using System;
@@ -84,6 +85,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				throw new LogNotFoundException($"The log {logId} was not found.", logId);
 			}
 			return log;
+		}
+
+		public Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default) {
+			// TODO: Implement
+			throw new NotImplementedException();
 		}
 
 		class SingleLogFileRepository : ILogFileRepository, IDisposable {
