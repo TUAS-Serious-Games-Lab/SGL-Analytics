@@ -1,5 +1,7 @@
 ﻿using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
@@ -13,6 +15,7 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.ExporterClient {
 	public class UserExporterApiClient : HttpApiClientBase, IUserExporterApiClient {
 		private static readonly MediaTypeWithQualityHeaderValue jsonMT = MediaTypeWithQualityHeaderValue.Parse("application/json");
+		private static readonly MediaTypeWithQualityHeaderValue pemMT = MediaTypeWithQualityHeaderValue.Parse("application/x-pem-file");
 		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonOptions.RestOptions);
 
 		public UserExporterApiClient(HttpClient httpClient, AuthorizationData authorization) : base(httpClient, authorization, "/api/analytics/user/v1") { }
@@ -38,6 +41,22 @@ namespace SGL.Analytics.ExporterClient {
 			}
 			using var response = await SendRequest(HttpMethod.Get, $"{id}", queryParameters, null, req => { }, accept: jsonMT, ct).ConfigureAwait(false);
 			return (await response.Content.ReadFromJsonAsync<UserMetadataDTO>(jsonOptions, ct).ConfigureAwait(false)) ?? throw new JsonException("Got null from response.");
+		}
+
+		public async Task GetRecipientCertificates(string appName, CertificateStore certificateStore, CancellationToken ct) {
+			var queryParameters = new List<KeyValuePair<string, string>> { new("appName", appName) };
+			using var response = await SendRequest(HttpMethod.Get, "recipient-certificates", queryParameters, null, req => { }, accept: pemMT, ct);
+			await certificateStore.LoadCertificatesFromHttpAsync(response, ct);
+		}
+
+		public async Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId keyId, CancellationToken ct) {
+			using var response = await SendRequest(HttpMethod.Get, $"rekey/{keyId}", null, req => { }, accept: jsonMT, ct);
+			return (await response.Content.ReadFromJsonAsync<Dictionary<Guid, EncryptionInfo>>(jsonOptions, ct).ConfigureAwait(false)) ?? throw new JsonException("Got null from response.");
+		}
+
+		public async Task PutRekeyedKeys(KeyId keyId, Dictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct) {
+			using var requestContent = JsonContent.Create(dataKeys, jsonMT, jsonOptions);
+			using var response = await SendRequest(HttpMethod.Put, $"rekey/{keyId}", requestContent, req => { }, accept: jsonMT, ct);
 		}
 	}
 }
