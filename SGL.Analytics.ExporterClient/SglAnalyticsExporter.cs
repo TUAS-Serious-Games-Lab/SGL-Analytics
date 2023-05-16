@@ -188,5 +188,36 @@ namespace SGL.Analytics.ExporterClient {
 			var resultMap = perFileResults.Where(res => res.DataKeyInfo != null).ToDictionary(res => res.LogId, res => res.DataKeyInfo!);
 			await logClient.PutRekeyedKeys(keyIdToGrantAccessTo, resultMap, ct);
 		}
+		public async Task RekeyUserRegistrationsForRecipientKey(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
+			CheckReadyForDecryption();
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			var usersClient = perAppState.UserExporterApiClient;
+			var certStore = new CertificateStore(keyCertValidator, LoggerFactory.CreateLogger<CertificateStore>());
+			await usersClient.GetRecipientCertificates(perAppState.AppName, certStore, ct);
+			var cert = certStore.GetCertificateByKeyId(keyIdToGrantAccessTo);
+			if (cert == null) {
+				logger.LogError("Target key {targetKey} for rekeying operation not found in fetched certificate store.", keyIdToGrantAccessTo);
+				throw new Exception("KeyId not found!");
+			}
+			var origKeyDict = await usersClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, ct);
+			var keyEncryptor = new KeyEncryptor(new[] { cert.PublicKey }, randomGenerator,
+				allowSharedMessageKeyPair: false); // As we don't have the original private key for the shared message public key,
+												   // we need to create a separate message public key for the new recipient,
+												   // even if they are using the same curve parameters.
+			var keyDecryptor = new KeyDecryptor(recipientKeyPair!);
+			var perFileTasks = Task.WhenAll(origKeyDict.Select(userInfo => Task.Run<(Guid UserId, DataKeyInfo? DataKeyInfo)>(() => {
+				var decryptedKey = keyDecryptor.DecryptKey(userInfo.Value);
+				if (decryptedKey == null) {
+					logger.LogWarning("Couldn't decrypt data key for user registration {userId} for rekeying operation.", userInfo.Key);
+					return (UserId: userInfo.Key, DataKeyInfo: null);
+				}
+				var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
+				Debug.Assert(sharedMsgPubKey == null);
+				return (UserId: userInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
+			}, ct)));
+			var perFileResults = await perFileTasks;
+			var resultMap = perFileResults.Where(res => res.DataKeyInfo != null).ToDictionary(res => res.UserId, res => res.DataKeyInfo!);
+			await usersClient.PutRekeyedKeys(keyIdToGrantAccessTo, resultMap, ct);
+		}
 	}
 }
