@@ -6,6 +6,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities.Backend;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
@@ -96,6 +97,10 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 
 		public Task<IEnumerable<User>> ListUsersAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct) {
 			return Task.FromResult(users.Values.Where(u => u.App.Name == appName).ToList().AsEnumerable());
+		}
+
+		public Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct) {
+			throw new NotImplementedException();
 		}
 	}
 }

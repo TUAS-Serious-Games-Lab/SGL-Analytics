@@ -35,6 +35,10 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			this.logger = logger;
 		}
 
+		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct) {
+			throw new NotImplementedException();
+		}
+
 		/// <inheritdoc/>
 		public async Task<User?> GetUserByIdAsync(Guid userId, KeyId? recipientKeyId = null, bool fetchProperties = false, CancellationToken ct = default) {
 			var queryOptions = new UserQueryOptions { ForUpdating = true, FetchRecipientKey = recipientKeyId, FetchProperties = fetchProperties };
