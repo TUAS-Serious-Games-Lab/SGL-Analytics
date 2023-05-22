@@ -205,8 +205,44 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 		}
 
 		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct = default) {
-			// TODO: Implement
-			throw new NotImplementedException();
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				logger.LogError("Attempt to upload rekeyed data keys for non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, newRecipientKeyId, exporterDN);
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			var queryOptions = new LogMetadataQueryOptions { ForUpdating = true, FetchRecipientKeys = true };
+			var logs = (await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, queryOptions, ct)).ToList();
+			logger.LogInformation("Putting {keyCount} rekeyed data keys for recipient {recipientKeyId} into matching logs out of {logCount} logs in application {appName} ...",
+				dataKeys.Count, newRecipientKeyId, logs.Count, appName);
+			using var logScope = logger.BeginScope("Rekey-Put {keyId}", newRecipientKeyId);
+			var pendingIds = dataKeys.Keys.ToHashSet();
+			foreach (var log in logs) {
+				if (dataKeys.TryGetValue(log.Id, out var newDataKeyInfo)) {
+					if (log.RecipientKeys.Any(rk => rk.RecipientKeyId == newRecipientKeyId)) {
+						logger.LogWarning("Attempt to put rekeyed key for recipient {keyId} into log file {logId} that already has a data key for that recipient.",
+							newRecipientKeyId, log.Id);
+					}
+					else {
+						log.RecipientKeys.Add(new LogRecipientKey {
+							LogId = log.Id,
+							RecipientKeyId = newRecipientKeyId,
+							EncryptionMode = newDataKeyInfo.Mode,
+							EncryptedKey = newDataKeyInfo.EncryptedKey,
+							LogPublicKey = newDataKeyInfo.MessagePublicKey
+						});
+						logger.LogDebug("Put key for recipient {keyId} on log {logId}.", newRecipientKeyId, log.Id);
+						pendingIds.Remove(log.Id);
+					}
+				}
+				else {
+					logger.LogWarning("No key for log {logId} and recipient {keyId} was provided.", log.Id, newRecipientKeyId);
+				}
+			}
+			if (pendingIds.Count > 0) {
+				logger.LogWarning("The following log ids given by the rekeying uploader were not present: {logIdList}", string.Join(", ", pendingIds));
+			}
+			await logMetaRepo.UpdateLogMetadataAsync(logs, ct);
+			logger.LogInformation("... rekeying upload finished.");
 		}
 	}
 }
