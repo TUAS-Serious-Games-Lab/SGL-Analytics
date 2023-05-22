@@ -111,5 +111,11 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			await context.SaveChangesAsync(ct);
 			return logMetadata;
 		}
+
+		public async Task<IList<LogMetadata>> UpdateLogMetadataAsync(IList<LogMetadata> logMetadata, CancellationToken ct = default) {
+			Debug.Assert(logMetadata.All(logMd => context.Entry(logMd).State is EntityState.Modified or EntityState.Unchanged));
+			await context.SaveChangesAsync(ct);
+			return logMetadata;
+		}
 	}
 }

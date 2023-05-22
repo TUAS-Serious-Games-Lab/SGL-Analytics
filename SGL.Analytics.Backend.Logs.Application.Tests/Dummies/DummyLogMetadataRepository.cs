@@ -72,5 +72,16 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			logs[logMetadata.Id] = logMetadata;
 			return logMetadata;
 		}
+
+		public async Task<IList<LogMetadata>> UpdateLogMetadataAsync(IList<LogMetadata> logMetadata, CancellationToken ct = default) {
+			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
+			foreach (var logMd in logMetadata) {
+				Debug.Assert(logs.ContainsKey(logMd.Id));
+				Debug.Assert(logs.ContainsValue(logMd));
+				logs[logMd.Id] = logMd;
+			}
+			return logMetadata;
+		}
 	}
 }
