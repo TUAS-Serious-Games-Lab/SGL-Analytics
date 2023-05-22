@@ -87,7 +87,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			return log;
 		}
 
-		public Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default) {
+		public Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct = default) {
 			// TODO: Implement
 			throw new NotImplementedException();
 		}

@@ -204,7 +204,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 			return new LogFile(log, logFileRepo);
 		}
 
-		public Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default) {
+		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct = default) {
 			// TODO: Implement
 			throw new NotImplementedException();
 		}

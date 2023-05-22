@@ -78,7 +78,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(PutRekeyedKeys));
 			if (credResult != null) return credResult;
 			try {
-				await logManager.AddRekeyedKeysAsync(appName, newRecipientKeyId, dataKeys, ct);
+				await logManager.AddRekeyedKeysAsync(appName, newRecipientKeyId, dataKeys, exporterDN, ct);
 				return Ok(dataKeys);
 			}
 			catch (OperationCanceledException) {
