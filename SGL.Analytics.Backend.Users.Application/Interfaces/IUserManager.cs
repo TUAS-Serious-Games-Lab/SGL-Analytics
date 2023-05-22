@@ -13,7 +13,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 	/// registered users and their associated application-specfic properties.
 	/// </summary>
 	public interface IUserManager {
-		Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct);
+		Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct = default);
 
 		/// <summary>
 		/// Asynchronously obtains the user object with the given id if it exists.
