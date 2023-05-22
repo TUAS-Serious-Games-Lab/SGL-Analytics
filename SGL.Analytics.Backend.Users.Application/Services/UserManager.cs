@@ -36,7 +36,44 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		}
 
 		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct) {
-			throw new NotImplementedException();
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				logger.LogError("Attempt to upload rekeyed data keys for non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, newRecipientKeyId, exporterDN);
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			var queryOptions = new UserQueryOptions { ForUpdating = true, FetchRecipientKeys = true };
+			var userRegs = (await userRepo.ListUsersAsync(app.Name, queryOptions, ct)).ToList();
+			logger.LogInformation("Putting {keyCount} rekeyed data keys for recipient {recipientKeyId} into matching user registrations out of {userRegCount} registrations in application {appName} ...",
+				dataKeys.Count, newRecipientKeyId, userRegs.Count, appName);
+			using var logScope = logger.BeginScope("Rekey-Put {keyId}", newRecipientKeyId);
+			var pendingIds = dataKeys.Keys.ToHashSet();
+			foreach (var userReg in userRegs) {
+				if (dataKeys.TryGetValue(userReg.Id, out var newDataKeyInfo)) {
+					if (userReg.PropertyRecipientKeys.Any(rk => rk.RecipientKeyId == newRecipientKeyId)) {
+						logger.LogWarning("Attempt to put rekeyed key for recipient {keyId} into user registration {userId} that already has a data key for that recipient.",
+							newRecipientKeyId, userReg.Id);
+					}
+					else {
+						userReg.PropertyRecipientKeys.Add(new UserRegistrationPropertyRecipientKey {
+							UserId = userReg.Id,
+							RecipientKeyId = newRecipientKeyId,
+							EncryptionMode = newDataKeyInfo.Mode,
+							EncryptedKey = newDataKeyInfo.EncryptedKey,
+							UserPropertiesPublicKey = newDataKeyInfo.MessagePublicKey
+						});
+						logger.LogDebug("Put key for recipient {keyId} on user registration {userId}.", newRecipientKeyId, userReg.Id);
+						pendingIds.Remove(userReg.Id);
+					}
+				}
+				else {
+					logger.LogWarning("No key for user registration {userId} and recipient {keyId} was provided.", userReg.Id, newRecipientKeyId);
+				}
+			}
+			if (pendingIds.Count > 0) {
+				logger.LogWarning("The following user registration ids given by the rekeying uploader were not present: {userIdList}", string.Join(", ", pendingIds));
+			}
+			await userRepo.UpdateUsersAsync(userRegs, ct);
+			logger.LogInformation("... rekeying upload finished.");
 		}
 
 		/// <inheritdoc/>
