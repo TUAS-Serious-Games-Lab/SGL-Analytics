@@ -127,5 +127,11 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			query = ApplyQueryOptions(query, queryOptions);
 			return await query.ToListAsync(ct);
 		}
+
+		public async Task<IList<UserRegistration>> UpdateUsersAsync(IList<UserRegistration> userRegs, CancellationToken ct = default) {
+			Debug.Assert(userRegs.All(userReg => context.Entry(userReg).State is EntityState.Modified or EntityState.Unchanged));
+			await context.SaveChangesAsync(ct);
+			return userRegs;
+		}
 	}
 }

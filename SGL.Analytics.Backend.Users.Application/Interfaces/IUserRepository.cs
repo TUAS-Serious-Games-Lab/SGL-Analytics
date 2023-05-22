@@ -56,5 +56,6 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing an application name -> user count dictionary as its result.</returns>
 		Task<IDictionary<string, int>> GetUsersCountPerAppAsync(CancellationToken ct = default);
+		Task<IList<UserRegistration>> UpdateUsersAsync(IList<UserRegistration> userRegs, CancellationToken ct = default);
 	}
 }
