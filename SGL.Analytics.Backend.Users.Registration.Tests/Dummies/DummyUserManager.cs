@@ -20,6 +20,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 		private IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo;
 		private Dictionary<Guid, User> users = new();
 		private int nextPropDefId = 1;
+		public int WarningCount { get; private set; } = 0;
 
 		private void assignPropDefIds(ApplicationWithUserProperties app) {
 			foreach (var propDef in app.UserProperties) {
@@ -99,8 +100,22 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			return Task.FromResult(users.Values.Where(u => u.App.Name == appName).ToList().AsEnumerable());
 		}
 
-		public Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct) {
-			throw new NotImplementedException();
+		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct) {
+			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
+			foreach (var (userId, newDataKey) in dataKeys) {
+				if (users.TryGetValue(userId, out var user)) {
+					if (user.PropertyEncryptionInfo.DataKeys.TryGetValue(newRecipientKeyId, out var existingDataKey)) {
+						WarningCount++;
+					}
+					else {
+						user.PropertyEncryptionInfo.DataKeys.Add(newRecipientKeyId, newDataKey);
+					}
+				}
+				else {
+					WarningCount++;
+				}
+			}
 		}
 	}
 }

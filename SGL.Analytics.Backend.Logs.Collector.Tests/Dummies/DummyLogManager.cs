@@ -32,6 +32,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		private IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo;
 		public List<IngestOperation> Ingests { get; } = new();
+		public int WarningCount { get; private set; } = 0;
+
 
 		public DummyLogManager(IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo) {
 			this.appRepo = appRepo;
@@ -87,9 +89,29 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			return log;
 		}
 
-		public Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct = default) {
-			// TODO: Implement
-			throw new NotImplementedException();
+		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			foreach (var ingest in Ingests) {
+				if (ingest.LogMetadata.RecipientKeys.Any(rk => rk.RecipientKeyId == newRecipientKeyId)) {
+					WarningCount++;
+					continue;
+				}
+				if (dataKeys.TryGetValue(ingest.LogMetadata.Id, out var newDataKey)) {
+					ingest.LogMetadata.RecipientKeys.Add(new LogRecipientKey {
+						LogId = ingest.LogMetadata.Id,
+						EncryptionMode = newDataKey.Mode,
+						EncryptedKey = newDataKey.EncryptedKey,
+						LogPublicKey = newDataKey.MessagePublicKey,
+						RecipientKeyId = newRecipientKeyId
+					});
+				}
+				else {
+					WarningCount++;
+				}
+			}
 		}
 
 		class SingleLogFileRepository : ILogFileRepository, IDisposable {

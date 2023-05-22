@@ -65,8 +65,11 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			return userReg;
 		}
 
-		public Task<IList<UserRegistration>> UpdateUsersAsync(IList<UserRegistration> userRegs, CancellationToken ct = default) {
-			throw new NotImplementedException();
+		public async Task<IList<UserRegistration>> UpdateUsersAsync(IList<UserRegistration> userRegs, CancellationToken ct = default) {
+			foreach (var userReg in userRegs) {
+				await UpdateUserAsync(userReg, ct);
+			}
+			return userRegs;
 		}
 
 		private void assignPropertyInstanceIds(UserRegistration userReg) {
