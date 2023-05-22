@@ -84,7 +84,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			catch (OperationCanceledException) {
 				throw;
 			}
-			// TODO: catch applicable exceptions
+			catch (ApplicationDoesNotExistException ex) {
+				logger.LogError(ex, "PutRekeyedKeys PUT request for non-existent application {appName} from exporter {keyId} ({exporterDN}).", appName, exporterKeyId, exporterDN);
+				metrics.HandleUnknownAppError(appName);
+				return NotFound($"Application {appName} not found.");
+			}
 			catch (Exception ex) {
 				logger.LogError(ex, "PutRekeyedKeys PUT request for application {appName} from exporter {keyId} ({exporterDN}) failed due to unexpected exception.",
 					appName, exporterKeyId, exporterDN);
