@@ -20,10 +20,10 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 	[Authorize(Policy = "ExporterUser")]
 	public class RekeyingController : ControllerBase {
 		private readonly ILogManager logManager;
-		private readonly ILogger<LogExporterController> logger;
+		private readonly ILogger<RekeyingController> logger;
 		private readonly IMetricsManager metrics;
 
-		public RekeyingController(ILogManager logManager, ILogger<LogExporterController> logger, IMetricsManager metrics) {
+		public RekeyingController(ILogManager logManager, ILogger<RekeyingController> logger, IMetricsManager metrics) {
 			this.logManager = logManager;
 			this.logger = logger;
 			this.metrics = metrics;
