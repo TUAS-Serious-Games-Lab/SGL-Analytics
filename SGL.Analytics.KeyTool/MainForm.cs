@@ -14,6 +14,11 @@ namespace SGL.Analytics.KeyTool {
 			if (defaultCurveIndex >= 0) {
 				cmbNamedCurve.SelectedIndex = defaultCurveIndex;
 			}
+			var csrDnFieldAnchor = AnchorStyles.Top | AnchorStyles.Left;//| AnchorStyles.Right;
+			flowCsrDnFields.Controls.Add(new DistinguishedNameEntryEdit() { Anchor = csrDnFieldAnchor, TypeCode = "C" });
+			flowCsrDnFields.Controls.Add(new DistinguishedNameEntryEdit() { Anchor = csrDnFieldAnchor, TypeCode = "O" });
+			flowCsrDnFields.Controls.Add(new DistinguishedNameEntryEdit() { Anchor = csrDnFieldAnchor, TypeCode = "OU" });
+			flowCsrDnFields.Controls.Add(new DistinguishedNameEntryEdit() { Anchor = csrDnFieldAnchor, TypeCode = "CN" });
 		}
 
 		private void spinRsaKeyStrengthExp_ValueChanged(object sender, EventArgs e) {

@@ -246,23 +246,24 @@
 			// 
 			// groupBox2
 			// 
-			groupBox2.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			groupBox2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 			groupBox2.Controls.Add(chkGenerateSigner);
 			groupBox2.Controls.Add(flowCsrDnFields);
 			groupBox2.Location = new Point(3, 220);
 			groupBox2.Name = "groupBox2";
-			groupBox2.Size = new Size(519, 284);
+			groupBox2.Size = new Size(519, 270);
 			groupBox2.TabIndex = 1;
 			groupBox2.TabStop = false;
 			groupBox2.Text = "Certificate Request Infos";
 			// 
 			// chkGenerateSigner
 			// 
+			chkGenerateSigner.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
 			chkGenerateSigner.AutoSize = true;
-			chkGenerateSigner.Location = new Point(409, 259);
+			chkGenerateSigner.Location = new Point(410, 245);
 			chkGenerateSigner.Name = "chkGenerateSigner";
 			chkGenerateSigner.Size = new Size(103, 19);
-			chkGenerateSigner.TabIndex = 1;
+			chkGenerateSigner.TabIndex = 2;
 			chkGenerateSigner.Text = "Mark as Signer";
 			chkGenerateSigner.UseVisualStyleBackColor = true;
 			// 
@@ -273,8 +274,9 @@
 			flowCsrDnFields.FlowDirection = FlowDirection.TopDown;
 			flowCsrDnFields.Location = new Point(6, 22);
 			flowCsrDnFields.Name = "flowCsrDnFields";
-			flowCsrDnFields.Size = new Size(507, 231);
+			flowCsrDnFields.Size = new Size(507, 217);
 			flowCsrDnFields.TabIndex = 0;
+			flowCsrDnFields.WrapContents = false;
 			// 
 			// tabsMain
 			// 
@@ -285,7 +287,7 @@
 			tabsMain.Location = new Point(0, 0);
 			tabsMain.Name = "tabsMain";
 			tabsMain.SelectedIndex = 0;
-			tabsMain.Size = new Size(533, 569);
+			tabsMain.Size = new Size(533, 555);
 			tabsMain.TabIndex = 0;
 			// 
 			// tabGenerateKeyAndCSR
@@ -297,7 +299,7 @@
 			tabGenerateKeyAndCSR.Location = new Point(4, 24);
 			tabGenerateKeyAndCSR.Name = "tabGenerateKeyAndCSR";
 			tabGenerateKeyAndCSR.Padding = new Padding(3);
-			tabGenerateKeyAndCSR.Size = new Size(525, 541);
+			tabGenerateKeyAndCSR.Size = new Size(525, 527);
 			tabGenerateKeyAndCSR.TabIndex = 0;
 			tabGenerateKeyAndCSR.Text = "Generate Key & CSR";
 			tabGenerateKeyAndCSR.UseVisualStyleBackColor = true;
@@ -305,7 +307,7 @@
 			// lblKeyGenStatus
 			// 
 			lblKeyGenStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-			lblKeyGenStatus.Location = new Point(9, 510);
+			lblKeyGenStatus.Location = new Point(8, 496);
 			lblKeyGenStatus.Name = "lblKeyGenStatus";
 			lblKeyGenStatus.Size = new Size(404, 25);
 			lblKeyGenStatus.TabIndex = 3;
@@ -313,7 +315,7 @@
 			// btnGenerateKeyAndCsr
 			// 
 			btnGenerateKeyAndCsr.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-			btnGenerateKeyAndCsr.Location = new Point(419, 510);
+			btnGenerateKeyAndCsr.Location = new Point(419, 496);
 			btnGenerateKeyAndCsr.Name = "btnGenerateKeyAndCsr";
 			btnGenerateKeyAndCsr.Size = new Size(100, 25);
 			btnGenerateKeyAndCsr.TabIndex = 2;
@@ -325,7 +327,7 @@
 			tabSignCert.Location = new Point(4, 24);
 			tabSignCert.Name = "tabSignCert";
 			tabSignCert.Padding = new Padding(3);
-			tabSignCert.Size = new Size(525, 541);
+			tabSignCert.Size = new Size(525, 527);
 			tabSignCert.TabIndex = 2;
 			tabSignCert.Text = "Sign Certificate";
 			tabSignCert.UseVisualStyleBackColor = true;
@@ -335,7 +337,7 @@
 			tabBuildKeyFile.Location = new Point(4, 24);
 			tabBuildKeyFile.Name = "tabBuildKeyFile";
 			tabBuildKeyFile.Padding = new Padding(3);
-			tabBuildKeyFile.Size = new Size(525, 541);
+			tabBuildKeyFile.Size = new Size(525, 527);
 			tabBuildKeyFile.TabIndex = 3;
 			tabBuildKeyFile.Text = "Build Key File";
 			tabBuildKeyFile.UseVisualStyleBackColor = true;
@@ -348,7 +350,7 @@
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new Size(534, 570);
+			ClientSize = new Size(534, 556);
 			Controls.Add(tabsMain);
 			MinimumSize = new Size(450, 0);
 			Name = "MainForm";
