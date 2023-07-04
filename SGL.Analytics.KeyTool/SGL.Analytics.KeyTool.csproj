@@ -9,4 +9,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="SGL.Utilities.Crypto" Version="0.11.6-1-gb4d70a3-main" />
+  </ItemGroup>
+
 </Project>
