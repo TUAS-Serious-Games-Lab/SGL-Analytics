@@ -24,12 +24,13 @@
 		/// </summary>
 		private void InitializeComponent() {
 			GroupBox groupBox1;
-			Label label5;
-			Label label4;
 			Label label3;
 			Label label2;
 			GroupBox groupBox2;
+			Label label7;
+			lblRepeatPassphrase = new Label();
 			txtRepeatPassphrase = new TextBox();
+			lblPassphrase = new Label();
 			txtPassphrase = new TextBox();
 			progBarKeyGen = new ProgressBar();
 			lblIntermediateKeySavePath = new Label();
@@ -41,6 +42,10 @@
 			lblRsaKeyStrength = new Label();
 			spinRsaKeyStrengthExp = new NumericUpDown();
 			label1 = new Label();
+			btnRemoveCsrDnInput = new Button();
+			btnAddCsrDnInput = new Button();
+			lblCsrOutputFile = new Label();
+			btnBrowseCsrOutputFile = new Button();
 			chkGenerateSigner = new CheckBox();
 			flowCsrDnFields = new FlowLayoutPanel();
 			tabsMain = new TabControl();
@@ -50,12 +55,12 @@
 			tabSignCert = new TabPage();
 			tabBuildKeyFile = new TabPage();
 			saveIntermediateKeyFileDialog = new SaveFileDialog();
+			saveCsrFileDialog = new SaveFileDialog();
 			groupBox1 = new GroupBox();
-			label5 = new Label();
-			label4 = new Label();
 			label3 = new Label();
 			label2 = new Label();
 			groupBox2 = new GroupBox();
+			label7 = new Label();
 			groupBox1.SuspendLayout();
 			tabsKeyType.SuspendLayout();
 			tabEllipticCurve.SuspendLayout();
@@ -69,9 +74,9 @@
 			// groupBox1
 			// 
 			groupBox1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-			groupBox1.Controls.Add(label5);
+			groupBox1.Controls.Add(lblRepeatPassphrase);
 			groupBox1.Controls.Add(txtRepeatPassphrase);
-			groupBox1.Controls.Add(label4);
+			groupBox1.Controls.Add(lblPassphrase);
 			groupBox1.Controls.Add(txtPassphrase);
 			groupBox1.Controls.Add(progBarKeyGen);
 			groupBox1.Controls.Add(lblIntermediateKeySavePath);
@@ -85,14 +90,14 @@
 			groupBox1.TabStop = false;
 			groupBox1.Text = "Key Generation";
 			// 
-			// label5
+			// lblRepeatPassphrase
 			// 
-			label5.AutoSize = true;
-			label5.Location = new Point(6, 153);
-			label5.Name = "label5";
-			label5.Size = new Size(104, 15);
-			label5.TabIndex = 8;
-			label5.Text = "Repeat Passphrase";
+			lblRepeatPassphrase.AutoSize = true;
+			lblRepeatPassphrase.Location = new Point(6, 153);
+			lblRepeatPassphrase.Name = "lblRepeatPassphrase";
+			lblRepeatPassphrase.Size = new Size(104, 15);
+			lblRepeatPassphrase.TabIndex = 8;
+			lblRepeatPassphrase.Text = "Repeat Passphrase";
 			// 
 			// txtRepeatPassphrase
 			// 
@@ -102,15 +107,16 @@
 			txtRepeatPassphrase.PasswordChar = '*';
 			txtRepeatPassphrase.Size = new Size(383, 23);
 			txtRepeatPassphrase.TabIndex = 7;
+			txtRepeatPassphrase.TextChanged += txtRepeatPassphrase_TextChanged;
 			// 
-			// label4
+			// lblPassphrase
 			// 
-			label4.AutoSize = true;
-			label4.Location = new Point(6, 124);
-			label4.Name = "label4";
-			label4.Size = new Size(65, 15);
-			label4.TabIndex = 6;
-			label4.Text = "Passphrase";
+			lblPassphrase.AutoSize = true;
+			lblPassphrase.Location = new Point(6, 124);
+			lblPassphrase.Name = "lblPassphrase";
+			lblPassphrase.Size = new Size(65, 15);
+			lblPassphrase.TabIndex = 6;
+			lblPassphrase.Text = "Passphrase";
 			// 
 			// txtPassphrase
 			// 
@@ -120,14 +126,16 @@
 			txtPassphrase.PasswordChar = '*';
 			txtPassphrase.Size = new Size(383, 23);
 			txtPassphrase.TabIndex = 5;
+			txtPassphrase.TextChanged += txtPassphrase_TextChanged;
 			// 
 			// progBarKeyGen
 			// 
 			progBarKeyGen.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 			progBarKeyGen.Location = new Point(6, 180);
+			progBarKeyGen.MarqueeAnimationSpeed = 30;
 			progBarKeyGen.Name = "progBarKeyGen";
 			progBarKeyGen.Size = new Size(507, 25);
-			progBarKeyGen.Style = ProgressBarStyle.Marquee;
+			progBarKeyGen.Style = ProgressBarStyle.Continuous;
 			progBarKeyGen.TabIndex = 4;
 			// 
 			// lblIntermediateKeySavePath
@@ -148,6 +156,7 @@
 			btnBrowseSaveIntermediateKeyFile.TabIndex = 2;
 			btnBrowseSaveIntermediateKeyFile.Text = "Browse ...";
 			btnBrowseSaveIntermediateKeyFile.UseVisualStyleBackColor = true;
+			btnBrowseSaveIntermediateKeyFile.Click += btnBrowseSaveIntermediateKeyFile_Click;
 			// 
 			// label3
 			// 
@@ -232,6 +241,7 @@
 			spinRsaKeyStrengthExp.Name = "spinRsaKeyStrengthExp";
 			spinRsaKeyStrengthExp.Size = new Size(50, 23);
 			spinRsaKeyStrengthExp.TabIndex = 1;
+			spinRsaKeyStrengthExp.TabStop = false;
 			spinRsaKeyStrengthExp.Value = new decimal(new int[] { 12, 0, 0, 0 });
 			spinRsaKeyStrengthExp.ValueChanged += spinRsaKeyStrengthExp_ValueChanged;
 			// 
@@ -247,25 +257,83 @@
 			// groupBox2
 			// 
 			groupBox2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			groupBox2.Controls.Add(btnRemoveCsrDnInput);
+			groupBox2.Controls.Add(btnAddCsrDnInput);
+			groupBox2.Controls.Add(lblCsrOutputFile);
+			groupBox2.Controls.Add(btnBrowseCsrOutputFile);
+			groupBox2.Controls.Add(label7);
 			groupBox2.Controls.Add(chkGenerateSigner);
 			groupBox2.Controls.Add(flowCsrDnFields);
 			groupBox2.Location = new Point(3, 220);
 			groupBox2.Name = "groupBox2";
-			groupBox2.Size = new Size(519, 270);
+			groupBox2.Size = new Size(519, 295);
 			groupBox2.TabIndex = 1;
 			groupBox2.TabStop = false;
-			groupBox2.Text = "Certificate Request Infos";
+			groupBox2.Text = "Certificate Signing Request";
+			// 
+			// btnRemoveCsrDnInput
+			// 
+			btnRemoveCsrDnInput.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			btnRemoveCsrDnInput.Location = new Point(482, 0);
+			btnRemoveCsrDnInput.Name = "btnRemoveCsrDnInput";
+			btnRemoveCsrDnInput.Size = new Size(30, 22);
+			btnRemoveCsrDnInput.TabIndex = 8;
+			btnRemoveCsrDnInput.Text = "-";
+			btnRemoveCsrDnInput.UseVisualStyleBackColor = true;
+			btnRemoveCsrDnInput.Click += btnRemoveCsrDnInput_Click;
+			// 
+			// btnAddCsrDnInput
+			// 
+			btnAddCsrDnInput.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			btnAddCsrDnInput.Location = new Point(446, 0);
+			btnAddCsrDnInput.Name = "btnAddCsrDnInput";
+			btnAddCsrDnInput.Size = new Size(30, 22);
+			btnAddCsrDnInput.TabIndex = 7;
+			btnAddCsrDnInput.Text = "+";
+			btnAddCsrDnInput.UseVisualStyleBackColor = true;
+			btnAddCsrDnInput.Click += btnAddCsrDnInput_Click;
+			// 
+			// lblCsrOutputFile
+			// 
+			lblCsrOutputFile.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			lblCsrOutputFile.Location = new Point(101, 262);
+			lblCsrOutputFile.Name = "lblCsrOutputFile";
+			lblCsrOutputFile.Size = new Size(305, 25);
+			lblCsrOutputFile.TabIndex = 6;
+			lblCsrOutputFile.TextAlign = ContentAlignment.MiddleLeft;
+			// 
+			// btnBrowseCsrOutputFile
+			// 
+			btnBrowseCsrOutputFile.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+			btnBrowseCsrOutputFile.Location = new Point(412, 262);
+			btnBrowseCsrOutputFile.Name = "btnBrowseCsrOutputFile";
+			btnBrowseCsrOutputFile.Size = new Size(100, 25);
+			btnBrowseCsrOutputFile.TabIndex = 5;
+			btnBrowseCsrOutputFile.Text = "Browse ...";
+			btnBrowseCsrOutputFile.UseVisualStyleBackColor = true;
+			btnBrowseCsrOutputFile.Click += btnBrowseCsrOutputFile_Click;
+			// 
+			// label7
+			// 
+			label7.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+			label7.AutoSize = true;
+			label7.Location = new Point(5, 267);
+			label7.Name = "label7";
+			label7.Size = new Size(90, 15);
+			label7.TabIndex = 4;
+			label7.Text = "CSR Output File";
 			// 
 			// chkGenerateSigner
 			// 
-			chkGenerateSigner.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+			chkGenerateSigner.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			chkGenerateSigner.AutoSize = true;
-			chkGenerateSigner.Location = new Point(410, 245);
+			chkGenerateSigner.BackColor = SystemColors.Window;
+			chkGenerateSigner.Location = new Point(274, 0);
 			chkGenerateSigner.Name = "chkGenerateSigner";
-			chkGenerateSigner.Size = new Size(103, 19);
+			chkGenerateSigner.Size = new Size(166, 19);
 			chkGenerateSigner.TabIndex = 2;
-			chkGenerateSigner.Text = "Mark as Signer";
-			chkGenerateSigner.UseVisualStyleBackColor = true;
+			chkGenerateSigner.Text = "Generate Signer Certificate";
+			chkGenerateSigner.UseVisualStyleBackColor = false;
 			// 
 			// flowCsrDnFields
 			// 
@@ -274,9 +342,10 @@
 			flowCsrDnFields.FlowDirection = FlowDirection.TopDown;
 			flowCsrDnFields.Location = new Point(6, 22);
 			flowCsrDnFields.Name = "flowCsrDnFields";
-			flowCsrDnFields.Size = new Size(507, 217);
+			flowCsrDnFields.Size = new Size(507, 234);
 			flowCsrDnFields.TabIndex = 0;
 			flowCsrDnFields.WrapContents = false;
+			flowCsrDnFields.SizeChanged += flowCsrDnFields_SizeChanged;
 			// 
 			// tabsMain
 			// 
@@ -287,7 +356,7 @@
 			tabsMain.Location = new Point(0, 0);
 			tabsMain.Name = "tabsMain";
 			tabsMain.SelectedIndex = 0;
-			tabsMain.Size = new Size(533, 555);
+			tabsMain.Size = new Size(533, 580);
 			tabsMain.TabIndex = 0;
 			// 
 			// tabGenerateKeyAndCSR
@@ -299,35 +368,36 @@
 			tabGenerateKeyAndCSR.Location = new Point(4, 24);
 			tabGenerateKeyAndCSR.Name = "tabGenerateKeyAndCSR";
 			tabGenerateKeyAndCSR.Padding = new Padding(3);
-			tabGenerateKeyAndCSR.Size = new Size(525, 527);
+			tabGenerateKeyAndCSR.Size = new Size(525, 552);
 			tabGenerateKeyAndCSR.TabIndex = 0;
 			tabGenerateKeyAndCSR.Text = "Generate Key & CSR";
 			tabGenerateKeyAndCSR.UseVisualStyleBackColor = true;
 			// 
 			// lblKeyGenStatus
 			// 
-			lblKeyGenStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-			lblKeyGenStatus.Location = new Point(8, 496);
+			lblKeyGenStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			lblKeyGenStatus.Location = new Point(8, 521);
 			lblKeyGenStatus.Name = "lblKeyGenStatus";
-			lblKeyGenStatus.Size = new Size(404, 25);
+			lblKeyGenStatus.Size = new Size(402, 25);
 			lblKeyGenStatus.TabIndex = 3;
 			// 
 			// btnGenerateKeyAndCsr
 			// 
 			btnGenerateKeyAndCsr.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-			btnGenerateKeyAndCsr.Location = new Point(419, 496);
+			btnGenerateKeyAndCsr.Location = new Point(415, 521);
 			btnGenerateKeyAndCsr.Name = "btnGenerateKeyAndCsr";
 			btnGenerateKeyAndCsr.Size = new Size(100, 25);
 			btnGenerateKeyAndCsr.TabIndex = 2;
 			btnGenerateKeyAndCsr.Text = "Generate";
 			btnGenerateKeyAndCsr.UseVisualStyleBackColor = true;
+			btnGenerateKeyAndCsr.Click += btnGenerateKeyAndCsr_Click;
 			// 
 			// tabSignCert
 			// 
 			tabSignCert.Location = new Point(4, 24);
 			tabSignCert.Name = "tabSignCert";
 			tabSignCert.Padding = new Padding(3);
-			tabSignCert.Size = new Size(525, 527);
+			tabSignCert.Size = new Size(525, 552);
 			tabSignCert.TabIndex = 2;
 			tabSignCert.Text = "Sign Certificate";
 			tabSignCert.UseVisualStyleBackColor = true;
@@ -337,7 +407,7 @@
 			tabBuildKeyFile.Location = new Point(4, 24);
 			tabBuildKeyFile.Name = "tabBuildKeyFile";
 			tabBuildKeyFile.Padding = new Padding(3);
-			tabBuildKeyFile.Size = new Size(525, 527);
+			tabBuildKeyFile.Size = new Size(525, 552);
 			tabBuildKeyFile.TabIndex = 3;
 			tabBuildKeyFile.Text = "Build Key File";
 			tabBuildKeyFile.UseVisualStyleBackColor = true;
@@ -346,13 +416,17 @@
 			// 
 			saveIntermediateKeyFileDialog.Filter = "Intermediary key files|*.intkey|All files|*.*";
 			// 
+			// saveCsrFileDialog
+			// 
+			saveCsrFileDialog.Filter = "Certificate signing request files|*.csr|All files|*.*";
+			// 
 			// MainForm
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new Size(534, 556);
+			ClientSize = new Size(534, 581);
 			Controls.Add(tabsMain);
-			MinimumSize = new Size(450, 0);
+			MinimumSize = new Size(450, 500);
 			Name = "MainForm";
 			Text = "SGL-Analytics Key Tool";
 			groupBox1.ResumeLayout(false);
@@ -394,5 +468,12 @@
 		private Label lblKeyGenStatus;
 		private Button btnGenerateKeyAndCsr;
 		private CheckBox chkGenerateSigner;
+		private Label lblCsrOutputFile;
+		private Button btnBrowseCsrOutputFile;
+		private Button btnAddCsrDnInput;
+		private Button btnRemoveCsrDnInput;
+		private SaveFileDialog saveCsrFileDialog;
+		private Label lblRepeatPassphrase;
+		private Label lblPassphrase;
 	}
 }

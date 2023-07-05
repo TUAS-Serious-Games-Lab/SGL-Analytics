@@ -44,7 +44,7 @@
 			txtValue.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 			txtValue.Location = new Point(162, 3);
 			txtValue.Name = "txtValue";
-			txtValue.Size = new Size(360, 23);
+			txtValue.Size = new Size(135, 23);
 			txtValue.TabIndex = 1;
 			txtValue.TextChanged += txtValue_TextChanged;
 			// 
@@ -54,8 +54,10 @@
 			AutoScaleMode = AutoScaleMode.Font;
 			Controls.Add(txtValue);
 			Controls.Add(cmbType);
+			MaximumSize = new Size(0, 30);
+			MinimumSize = new Size(300, 30);
 			Name = "DistinguishedNameEntryEdit";
-			Size = new Size(525, 30);
+			Size = new Size(300, 30);
 			ResumeLayout(false);
 			PerformLayout();
 		}
