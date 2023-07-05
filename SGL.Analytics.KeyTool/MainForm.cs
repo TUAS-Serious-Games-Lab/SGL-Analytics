@@ -11,6 +11,7 @@ namespace SGL.Analytics.KeyTool {
 		private int rsaKeyStrength;
 		private List<DistinguishedNameEntryEdit> dnEntryEdits;
 		private string? keyGenPassphrase = null;
+		private List<CertificateSigningRequest> loadedCsrs = new List<CertificateSigningRequest>();
 
 		public MainForm() {
 			InitializeComponent();
@@ -271,5 +272,25 @@ namespace SGL.Analytics.KeyTool {
 				await pemBuff.CopyToAsync(csrOutputFile);
 			}
 		}
+
+		private void lstInputCsrs_SelectedIndexChanged(object sender, EventArgs e) {
+			if (lstInputCsrs.SelectedIndex < 0) return;
+			var csr = lstInputCsrs.SelectedItem as CertificateSigningRequest;
+			lblCsrKeyId.Text = csr?.SubjectPublicKey?.CalculateId()?.ToString() ?? "";
+			lblCsrDn.Text = csr?.SubjectDN.ToString() ?? "";
+			lblCsrKeyUsages.Text = csr?.RequestedKeyUsages.GetValueOrDefault(KeyUsages.NoneDefined).ToString("G");
+			lblCsrBasicConstraints.Text = csr?.RequestedCABasicConstraints?.ToString() ?? "";
+		}
+
+		private void btnBrowseCsrInputFile_Click(object sender, EventArgs e) {
+			if (openCsrInputFileDialog.ShowDialog() == DialogResult.OK) {
+				using var csrInputFile = File.OpenText(openCsrInputFileDialog.FileName);
+				loadedCsrs = CertificateSigningRequest.LoadAllFromPem(csrInputFile).ToList();
+				lstInputCsrs.Items.Clear();
+				lstInputCsrs.Items.AddRange(loadedCsrs.ToArray());
+				lstInputCsrs.SelectedIndex = 0;
+			}
+		}
+
 	}
 }
