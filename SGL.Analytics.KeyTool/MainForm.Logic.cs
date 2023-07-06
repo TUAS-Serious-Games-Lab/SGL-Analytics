@@ -138,8 +138,40 @@ namespace SGL.Analytics.KeyTool {
 			}
 		}
 
-		private Task BuildKeyFile(string intermediateKeyLoadPath, string certificateInputPath, char[] keyFilePassphrase, string keyFileOutputPath) {
-			throw new NotImplementedException();
+		private async Task BuildKeyFile(string intermediateKeyLoadPath, string certificateInputPath, char[] keyFilePassphrase, string keyFileOutputPath) {
+			List<Certificate> certs;
+			using (var certFile = File.OpenRead(certificateInputPath)) {
+				using var pemBuffer = new MemoryStream();
+				await certFile.CopyToAsync(pemBuffer);
+				pemBuffer.Position = 0;
+				using var pemBufferReader = new StreamReader(pemBuffer, leaveOpen: true);
+				certs = Certificate.LoadAllFromPem(pemBufferReader).ToList();
+			}
+			List<KeyPair> keyPairs;
+			using (var intermediateKeyFile = File.OpenRead(intermediateKeyLoadPath)) {
+				using var pemBuffer = new MemoryStream();
+				await intermediateKeyFile.CopyToAsync(pemBuffer);
+				pemBuffer.Position = 0;
+				using var pemBufferReader = new StreamReader(pemBuffer, leaveOpen: true);
+				var pemReader = new PemObjectReader(pemBufferReader, () => keyFilePassphrase);
+				var pemObjects = pemReader.ReadAllObjects().ToList();
+				keyPairs = pemObjects.OfType<KeyPair>().Concat(pemObjects.OfType<PrivateKey>().Select(pk => pk.DeriveKeyPair())).ToList();
+			}
+			//TODO: Check if all certificates and keys match
+			using var outputPemBuffer = new MemoryStream();
+			var random = new RandomGenerator();
+			using (var pemBufferWriter = new StreamWriter(outputPemBuffer, leaveOpen: true)) {
+				foreach (var cert in certs) {
+					cert.StoreToPem(pemBufferWriter);
+				}
+				foreach (var keyPair in keyPairs) {
+					keyPair.StoreToPem(pemBufferWriter, PemEncryptionMode.AES_256_CBC, keyFilePassphrase, random);
+				}
+			}
+			outputPemBuffer.Position = 0;
+			using (var keyOutputFile = File.Create(keyFileOutputPath)) {
+				await outputPemBuffer.CopyToAsync(keyOutputFile);
+			}
 		}
 	}
 }
