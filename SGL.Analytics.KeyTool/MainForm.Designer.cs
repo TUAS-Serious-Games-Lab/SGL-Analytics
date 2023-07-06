@@ -576,9 +576,9 @@
 			label10.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 			label10.Location = new Point(3, 48);
 			label10.Name = "label10";
-			label10.Size = new Size(70, 23);
+			label10.Size = new Size(86, 23);
 			label10.TabIndex = 8;
-			label10.Text = "Valid To";
+			label10.Text = "Valid To (UTC)";
 			// 
 			// btnBrowseCertificateOutputPath
 			// 
@@ -614,7 +614,7 @@
 			dtpValidTo.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 			dtpValidTo.CustomFormat = "ddd dd MMM yyyy, HH:mm:ss";
 			dtpValidTo.Format = DateTimePickerFormat.Custom;
-			dtpValidTo.Location = new Point(79, 48);
+			dtpValidTo.Location = new Point(95, 48);
 			dtpValidTo.Name = "dtpValidTo";
 			dtpValidTo.Size = new Size(185, 23);
 			dtpValidTo.TabIndex = 0;

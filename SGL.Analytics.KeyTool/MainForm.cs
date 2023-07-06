@@ -8,6 +8,7 @@ namespace SGL.Analytics.KeyTool {
 		private const int minPassphraseLength = 12;
 		private const string defaultCurveName = "secp521r1";
 		private const string configFile = "KeyTool-Settings.json";
+		private const int defaultValidityYears = 3;
 		private int rsaKeyStrength;
 		private List<DistinguishedNameEntryEdit> dnEntryEdits;
 		private string? keyGenPassphrase = null;
@@ -24,6 +25,7 @@ namespace SGL.Analytics.KeyTool {
 			var settings = LoadSettings();
 			FillDistinguishedNameEntries(settings.InitialDistinguishedName);
 			spinRsaKeyStrengthExp_ValueChanged(spinRsaKeyStrengthExp, EventArgs.Empty);
+			dtpValidTo.Value = DateTime.UtcNow.AddYears(defaultValidityYears);
 		}
 
 		private KeyToolSettings LoadSettings() {
@@ -158,7 +160,6 @@ namespace SGL.Analytics.KeyTool {
 			}
 			lblKeyGenStatus.Text = "";
 			lblKeyGenStatus.BackColor = Color.Transparent;
-			btnGenerateKeyAndCsr.Enabled = false;
 			var intermediateKeyPath = lblIntermediateKeySavePath.Text;
 			var csrOutputPath = lblCsrOutputFile.Text;
 			if (File.Exists(intermediateKeyPath)) {
@@ -174,6 +175,7 @@ namespace SGL.Analytics.KeyTool {
 					return;
 				}
 			}
+			btnGenerateKeyAndCsr.Enabled = false;
 			var isSignerCert = chkGenerateSigner.Checked;
 			var keyType = (tabsKeyType.SelectedTab == tabEllipticCurve) ? KeyType.EllipticCurves : KeyType.RSA;
 			var ellipticCurveName = cmbNamedCurve.SelectedItem as string;
@@ -284,11 +286,21 @@ namespace SGL.Analytics.KeyTool {
 
 		private void btnBrowseCsrInputFile_Click(object sender, EventArgs e) {
 			if (openCsrInputFileDialog.ShowDialog() == DialogResult.OK) {
-				using var csrInputFile = File.OpenText(openCsrInputFileDialog.FileName);
-				loadedCsrs = CertificateSigningRequest.LoadAllFromPem(csrInputFile).ToList();
-				lstInputCsrs.Items.Clear();
-				lstInputCsrs.Items.AddRange(loadedCsrs.ToArray());
-				lstInputCsrs.SelectedIndex = 0;
+				try {
+					using var csrInputFile = File.OpenText(openCsrInputFileDialog.FileName);
+					loadedCsrs = CertificateSigningRequest.LoadAllFromPem(csrInputFile).ToList();
+					lstInputCsrs.Items.Clear();
+					lstInputCsrs.Items.AddRange(loadedCsrs.ToArray());
+					lstInputCsrs.SelectedIndex = 0;
+					lblCsrInputFile.Text = openCsrInputFileDialog.FileName;
+					dtpValidTo.Value = DateTime.UtcNow.AddYears(defaultValidityYears);
+				}
+				catch (Exception ex) {
+					MessageBox.Show("Error while loading CSR file:\n" + ex.Message, "Error loading CSR", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					loadedCsrs = new List<CertificateSigningRequest>();
+					lstInputCsrs.Items.Clear();
+					lblCsrInputFile.Text = "";
+				}
 			}
 		}
 
@@ -310,8 +322,63 @@ namespace SGL.Analytics.KeyTool {
 			}
 		}
 
-		private void btnSignCert_Click(object sender, EventArgs e) {
+		private async void btnSignCert_Click(object sender, EventArgs e) {
+			if (loadedCsrs.Count == 0) {
+				lblSignatureStatus.Text = "No certificate signing request loaded!";
+				lblSignatureStatus.BackColor = Color.Red;
+				return;
+			}
+			if (string.IsNullOrEmpty(lblSignerCaCertPath.Text)) {
+				lblSignatureStatus.Text = "No CA certificate specified!";
+				lblSignatureStatus.BackColor = Color.Red;
+				return;
+			}
+			if (string.IsNullOrEmpty(lblSignerPrivateKeyPath.Text)) {
+				lblSignatureStatus.Text = "No CA private key specified!";
+				lblSignatureStatus.BackColor = Color.Red;
+				return;
+			}
+			if (string.IsNullOrEmpty(lblCertificateOutputPath.Text)) {
+				lblSignatureStatus.Text = "Please specify output path!";
+				lblSignatureStatus.BackColor = Color.Red;
+				return;
+			}
+			lblSignatureStatus.BackColor = Color.Transparent;
+			lblSignatureStatus.Text = "";
+			var certOutputPath = lblCertificateOutputPath.Text;
+			if (File.Exists(certOutputPath)) {
+				if (MessageBox.Show("The certificate output file already exists.\nShould this file be overwritten?\n",
+					"Overwrite certificate file?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) {
+					return;
+				}
+			}
+			var csrs = loadedCsrs;
+			var signerCaCertPath = lblSignerCaCertPath.Text;
+			var signerPrivateKeyPath = lblSignerPrivateKeyPath.Text;
+			var signerPassphrase = lblSignerPassphrase.Text.ToCharArray();
+			var validToDate = dtpValidTo.Value;
+			var allowSignerCert = chkAllowSignerCert.Checked;
+			btnSignCert.Enabled = false;
+			lblSignatureStatus.Text = "Signing ...";
+			lblSignatureStatus.BackColor = Color.Yellow;
+			var signingTask = Task.Run(async () => {
+				await SignCertificates(csrs, signerCaCertPath, signerPrivateKeyPath, signerPassphrase, validToDate, allowSignerCert, certOutputPath);
+			});
+			try {
+				await signingTask;
+				lblSignatureStatus.Text = "Successfully signed certificate.";
+				lblSignatureStatus.BackColor = Color.Transparent;
+				btnGenerateKeyAndCsr.Enabled = true;
+			}
+			catch (Exception ex) {
+				lblSignatureStatus.Text = "Error: " + ex.Message;
+				lblSignatureStatus.BackColor = Color.Red;
+				btnGenerateKeyAndCsr.Enabled = true;
+			}
+		}
 
+		private Task SignCertificates(List<CertificateSigningRequest> csrs, string signerCaCertPath, string signerPrivateKeyPath, char[] signerPassphrase, DateTime validToDate, bool allowSignerCert, string certOutputPath) {
+			throw new NotImplementedException();
 		}
 
 		private void btnBrowseOpenIntermediateKeyFile_Click(object sender, EventArgs e) {
@@ -332,8 +399,49 @@ namespace SGL.Analytics.KeyTool {
 			}
 		}
 
-		private void btnBuildKeyFile_Click(object sender, EventArgs e) {
+		private async void btnBuildKeyFile_Click(object sender, EventArgs e) {
+			if (string.IsNullOrEmpty(lblIntermediateKeyLoadPath.Text)) {
+				lblCombineStatus.Text = "No intermediate key file specified!";
+				lblCombineStatus.BackColor = Color.Red;
+				return;
+			}
+			if (string.IsNullOrEmpty(lblCertificateInputPath.Text)) {
+				lblCombineStatus.Text = "No certificate file specified!";
+				lblCombineStatus.BackColor = Color.Red;
+				return;
+			}
+			if (string.IsNullOrEmpty(lblKeyFileOutputPath.Text)) {
+				lblCombineStatus.Text = "No output path specified!";
+				lblCombineStatus.BackColor = Color.Red;
+				return;
+			}
+			lblCombineStatus.BackColor = Color.Transparent;
+			lblCombineStatus.Text = "";
+			var intermediateKeyLoadPath = lblIntermediateKeyLoadPath.Text;
+			var certificateInputPath = lblCertificateInputPath.Text;
+			var keyFilePassphrase = txtKeyFilePassphrase.Text.ToCharArray();
+			var keyFileOutputPath = lblKeyFileOutputPath.Text;
+			btnSignCert.Enabled = false;
+			lblCombineStatus.Text = "Building ...";
+			lblCombineStatus.BackColor = Color.Yellow;
+			var signingTask = Task.Run(async () => {
+				await BuildKeyFile(intermediateKeyLoadPath, certificateInputPath, keyFilePassphrase, keyFileOutputPath);
+			});
+			try {
+				await signingTask;
+				lblCombineStatus.Text = "Successfully built key file.";
+				lblCombineStatus.BackColor = Color.Transparent;
+				btnGenerateKeyAndCsr.Enabled = true;
+			}
+			catch (Exception ex) {
+				lblCombineStatus.Text = "Error: " + ex.Message;
+				lblCombineStatus.BackColor = Color.Red;
+				btnGenerateKeyAndCsr.Enabled = true;
+			}
+		}
 
+		private Task BuildKeyFile(string intermediateKeyLoadPath, string certificateInputPath, char[] keyFilePassphrase, string keyFileOutputPath) {
+			throw new NotImplementedException();
 		}
 	}
 }
