@@ -209,20 +209,35 @@ namespace SGL.Analytics.KeyTool {
 
 		private void lstInputCsrs_SelectedIndexChanged(object sender, EventArgs e) {
 			if (lstInputCsrs.SelectedIndex < 0) return;
-			var csr = lstInputCsrs.SelectedItem as CertificateSigningRequest;
-			lblCsrKeyId.Text = csr?.SubjectPublicKey?.CalculateId()?.ToString() ?? "";
-			lblCsrDn.Text = csr?.SubjectDN.ToString() ?? "";
-			lblCsrKeyUsages.Text = csr?.RequestedKeyUsages.GetValueOrDefault(KeyUsages.NoneDefined).ToString("G");
-			lblCsrBasicConstraints.Text = csr?.RequestedCABasicConstraints?.ToString() ?? "";
+			switch (lstInputCsrs.SelectedItem) {
+				case CertificateSigningRequest csr:
+					lblCsrKeyId.Text = csr?.SubjectPublicKey?.CalculateId()?.ToString() ?? "";
+					lblCsrDn.Text = csr?.SubjectDN.ToString() ?? "";
+					lblCsrKeyUsages.Text = csr?.RequestedKeyUsages.GetValueOrDefault(KeyUsages.NoneDefined).ToString("G");
+					lblCsrBasicConstraints.Text = csr?.RequestedCABasicConstraints?.ToString() ?? "";
+					break;
+				default:
+					lblCsrKeyId.Text = "[Invalid CSR]";
+					lblCsrDn.Text = "[Invalid CSR]";
+					lblCsrKeyUsages.Text = "[Invalid CSR]";
+					lblCsrBasicConstraints.Text = "[Invalid CSR]";
+					break;
+			}
 		}
 
 		private void btnBrowseCsrInputFile_Click(object sender, EventArgs e) {
 			if (openCsrInputFileDialog.ShowDialog() == DialogResult.OK) {
 				try {
 					using var csrInputFile = File.OpenText(openCsrInputFileDialog.FileName);
-					loadedCsrs = CertificateSigningRequest.LoadAllFromPem(csrInputFile).ToList();
+					var tmpLoadedCsrs = CertificateSigningRequest.LoadAllFromPem(csrInputFile).ToList();
+					var checkedCsrs = tmpLoadedCsrs.Select(csr => {
+						var res = csr.Verify();
+						return (csr, valid: res == CertificateCheckOutcome.Valid);
+					}).ToList();
+					loadedCsrs = checkedCsrs.Where(entry => entry.valid).Select(entry => entry.csr).ToList();
 					lstInputCsrs.Items.Clear();
-					lstInputCsrs.Items.AddRange(loadedCsrs.ToArray());
+					lstInputCsrs.Items.AddRange(checkedCsrs.Select(entry =>
+						entry.valid ? (object)entry.csr : "INVALID SIGNATURE: " + entry.csr.ToString() ?? "").ToArray());
 					lstInputCsrs.SelectedIndex = 0;
 					lblCsrInputFile.Text = openCsrInputFileDialog.FileName;
 					dtpValidTo.Value = DateTime.UtcNow.AddYears(defaultValidityYears);
