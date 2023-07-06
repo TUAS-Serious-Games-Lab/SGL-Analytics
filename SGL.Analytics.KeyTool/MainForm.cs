@@ -1,3 +1,4 @@
+using Org.BouncyCastle.Crypto;
 using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.Keys;
@@ -259,7 +260,7 @@ namespace SGL.Analytics.KeyTool {
 				lblSignatureStatus.BackColor = Color.Red;
 				return;
 			}
-			if (string.IsNullOrEmpty(lblSignerCaCertPath.Text)) {
+			if (string.IsNullOrEmpty(lblSignerCaCertPath.Text) && !chkSelfSign.Checked) {
 				lblSignatureStatus.Text = "No CA certificate specified!";
 				lblSignatureStatus.BackColor = Color.Red;
 				return;
@@ -286,25 +287,31 @@ namespace SGL.Analytics.KeyTool {
 			var csrs = loadedCsrs;
 			var signerCaCertPath = lblSignerCaCertPath.Text;
 			var signerPrivateKeyPath = lblSignerPrivateKeyPath.Text;
-			var signerPassphrase = lblSignerPassphrase.Text.ToCharArray();
+			var signerPassphrase = txtSignerPassphrase.Text.ToCharArray();
 			var validToDate = dtpValidTo.Value;
+			var selfSign = chkSelfSign.Checked;
 			var allowSignerCert = chkAllowSignerCert.Checked;
 			btnSignCert.Enabled = false;
 			lblSignatureStatus.Text = "Signing ...";
 			lblSignatureStatus.BackColor = Color.Yellow;
 			var signingTask = Task.Run(async () => {
-				await SignCertificates(csrs, signerCaCertPath, signerPrivateKeyPath, signerPassphrase, validToDate, allowSignerCert, certOutputPath);
+				await SignCertificates(csrs, signerCaCertPath, signerPrivateKeyPath, signerPassphrase, validToDate, allowSignerCert, selfSign, certOutputPath);
 			});
 			try {
 				await signingTask;
 				lblSignatureStatus.Text = "Successfully signed certificate.";
 				lblSignatureStatus.BackColor = Color.Transparent;
-				btnGenerateKeyAndCsr.Enabled = true;
+				btnSignCert.Enabled = true;
+			}
+			catch (PemException ex) when (ex.InnerException is InvalidCipherTextException iex) {
+				lblSignatureStatus.Text = $"Error decrypting PEM objects, is the Passphrase correct?";
+				lblSignatureStatus.BackColor = Color.Red;
+				btnSignCert.Enabled = true;
 			}
 			catch (Exception ex) {
-				lblSignatureStatus.Text = "Error: " + ex.Message;
+				lblSignatureStatus.Text = $"Error ({ex.GetType().Name}): " + ex.Message;
 				lblSignatureStatus.BackColor = Color.Red;
-				btnGenerateKeyAndCsr.Enabled = true;
+				btnSignCert.Enabled = true;
 			}
 		}
 
@@ -348,7 +355,7 @@ namespace SGL.Analytics.KeyTool {
 			var certificateInputPath = lblCertificateInputPath.Text;
 			var keyFilePassphrase = txtKeyFilePassphrase.Text.ToCharArray();
 			var keyFileOutputPath = lblKeyFileOutputPath.Text;
-			btnSignCert.Enabled = false;
+			btnBuildKeyFile.Enabled = false;
 			lblCombineStatus.Text = "Building ...";
 			lblCombineStatus.BackColor = Color.Yellow;
 			var signingTask = Task.Run(async () => {
@@ -358,13 +365,20 @@ namespace SGL.Analytics.KeyTool {
 				await signingTask;
 				lblCombineStatus.Text = "Successfully built key file.";
 				lblCombineStatus.BackColor = Color.Transparent;
-				btnGenerateKeyAndCsr.Enabled = true;
+				btnBuildKeyFile.Enabled = true;
 			}
 			catch (Exception ex) {
 				lblCombineStatus.Text = "Error: " + ex.Message;
 				lblCombineStatus.BackColor = Color.Red;
-				btnGenerateKeyAndCsr.Enabled = true;
+				btnBuildKeyFile.Enabled = true;
 			}
+		}
+
+		private void chkSelfSign_CheckedChanged(object sender, EventArgs e) {
+			lblSignerCaCertPath.BackColor = chkSelfSign.Checked ? Color.DarkGray : Color.Transparent;
+			btnBrowseSignerCertFile.Enabled = !chkSelfSign.Checked;
+			chkAllowSignerCert.Checked = chkSelfSign.Checked;
+			chkAllowSignerCert.Enabled = !chkSelfSign.Checked;
 		}
 	}
 }

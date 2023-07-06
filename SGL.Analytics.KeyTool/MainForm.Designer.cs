@@ -112,6 +112,7 @@
 			openIntermediateKeyFileDialog = new OpenFileDialog();
 			openCertFileDialog = new OpenFileDialog();
 			saveKeyFileDialog = new SaveFileDialog();
+			chkSelfSign = new CheckBox();
 			groupBox1 = new GroupBox();
 			label3 = new Label();
 			label2 = new Label();
@@ -527,6 +528,7 @@
 			// groupBox6
 			// 
 			groupBox6.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			groupBox6.Controls.Add(chkSelfSign);
 			groupBox6.Controls.Add(btnSignCert);
 			groupBox6.Controls.Add(lblSignatureStatus);
 			groupBox6.Controls.Add(chkAllowSignerCert);
@@ -616,7 +618,7 @@
 			dtpValidTo.Format = DateTimePickerFormat.Custom;
 			dtpValidTo.Location = new Point(95, 48);
 			dtpValidTo.Name = "dtpValidTo";
-			dtpValidTo.Size = new Size(185, 23);
+			dtpValidTo.Size = new Size(180, 23);
 			dtpValidTo.TabIndex = 0;
 			// 
 			// groupBox5
@@ -1014,6 +1016,18 @@
 			// 
 			saveKeyFileDialog.Filter = "Key files|*.key|All files|*.*";
 			// 
+			// chkSelfSign
+			// 
+			chkSelfSign.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+			chkSelfSign.AutoSize = true;
+			chkSelfSign.Location = new Point(281, 50);
+			chkSelfSign.Name = "chkSelfSign";
+			chkSelfSign.Size = new Size(73, 19);
+			chkSelfSign.TabIndex = 12;
+			chkSelfSign.Text = "Self-Sign";
+			chkSelfSign.UseVisualStyleBackColor = true;
+			chkSelfSign.CheckedChanged += chkSelfSign_CheckedChanged;
+			// 
 			// MainForm
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
@@ -1129,5 +1143,6 @@
 		private OpenFileDialog openIntermediateKeyFileDialog;
 		private OpenFileDialog openCertFileDialog;
 		private SaveFileDialog saveKeyFileDialog;
+		private CheckBox chkSelfSign;
 	}
 }

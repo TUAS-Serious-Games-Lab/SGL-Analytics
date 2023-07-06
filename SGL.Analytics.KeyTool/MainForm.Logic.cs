@@ -77,8 +77,65 @@ namespace SGL.Analytics.KeyTool {
 				await pemBuff.CopyToAsync(csrOutputFile);
 			}
 		}
-		private Task SignCertificates(List<CertificateSigningRequest> csrs, string signerCaCertPath, string signerPrivateKeyPath, char[] signerPassphrase, DateTime validToDate, bool allowSignerCert, string certOutputPath) {
-			throw new NotImplementedException();
+		private async Task SignCertificates(List<CertificateSigningRequest> csrs, string signerCaCertPath, string signerPrivateKeyPath,
+				char[] signerPassphrase, DateTime validToDate, bool allowSignerCert, bool selfSign, string certOutputPath) {
+			Certificate signerCert = null!;
+			if (!selfSign) {
+				using (var caCertFile = File.OpenRead(signerCaCertPath)) {
+					using var pemBuffer = new MemoryStream();
+					await caCertFile.CopyToAsync(pemBuffer);
+					pemBuffer.Position = 0;
+					using var pemBufferReader = new StreamReader(pemBuffer, leaveOpen: true);
+					var loadedCerts = Certificate.LoadAllFromPem(pemBufferReader).ToList();
+					signerCert = loadedCerts.FirstOrDefault(cert =>
+							cert.CABasicConstraints.HasValue && cert.CABasicConstraints.Value.IsCA &&
+							cert.AllowedKeyUsages.HasValue && cert.AllowedKeyUsages.Value.HasFlag(KeyUsages.KeyCertSign)) ??
+							throw new Exception($"No CA certificate found in file {Path.GetFileName(signerCaCertPath)}.");
+				}
+			}
+			var signerKeyIdFromCert = !selfSign ? signerCert.PublicKey.CalculateId() : default;
+			KeyPair signerKeyPair;
+			using (var signerPrivateKeyFile = File.OpenRead(signerPrivateKeyPath)) {
+				using var pemBuffer = new MemoryStream();
+				await signerPrivateKeyFile.CopyToAsync(pemBuffer);
+				pemBuffer.Position = 0;
+				using var pemBufferReader = new StreamReader(pemBuffer, leaveOpen: true);
+				var pemReader = new PemObjectReader(pemBufferReader, () => signerPassphrase);
+				var pemObjects = pemReader.ReadAllObjects().ToList();
+				var keyPairs = pemObjects.OfType<KeyPair>().Concat(pemObjects.OfType<PrivateKey>().Select(pk => pk.DeriveKeyPair()));
+				signerKeyPair = keyPairs.FirstOrDefault(kp => selfSign || kp.Public.CalculateId() == signerKeyIdFromCert) ??
+					throw new Exception($"No matching key for loaded CA certificate was found in {Path.GetFileName(signerPrivateKeyPath)}");
+			}
+			CsrSigningPolicy policy = new CsrSigningPolicy();
+			policy.UseFixedValidityPeriod(DateTime.UtcNow, validToDate);
+			policy.ForceKeyIdentifiers();
+			if (allowSignerCert) {
+				policy.AllowExtensionRequestsForCA();
+			}
+			List<Certificate> certs;
+			if (selfSign) {
+				var validityPeriod = policy.GetValidityPeriod();
+				certs = csrs.Select(csr => Certificate.Generate(csr.SubjectDN, signerKeyPair.Private, csr.SubjectDN, signerKeyPair.Public,
+						validityPeriod.From, validityPeriod.To, policy.GetSerialNumber(), policy.GetSignatureDigest(),
+						policy.ShouldGenerateAuthorityKeyIdentifier(csr.RequestedAuthorityKeyIdentifier) ?
+							new KeyIdentifier(signerKeyPair.Public) : null,
+						policy.ShouldGenerateSubjectKeyIdentifier(csr.RequestedSubjectKeyIdentifier),
+						policy.AcceptedKeyUsages(csr.RequestedKeyUsages) ?? KeyUsages.NoneDefined,
+						policy.AcceptedCAConstraints(csr.RequestedCABasicConstraints))).ToList();
+			}
+			else {
+				certs = csrs.Select(csr => csr.GenerateCertificate(signerCert, signerKeyPair, policy)).ToList();
+			}
+			using var outputPemBuffer = new MemoryStream();
+			using (var pemBufferWriter = new StreamWriter(outputPemBuffer, leaveOpen: true)) {
+				foreach (var cert in certs) {
+					cert.StoreToPem(pemBufferWriter);
+				}
+			}
+			outputPemBuffer.Position = 0;
+			using (var certOutputFile = File.Create(certOutputPath)) {
+				await outputPemBuffer.CopyToAsync(certOutputFile);
+			}
 		}
 
 		private Task BuildKeyFile(string intermediateKeyLoadPath, string certificateInputPath, char[] keyFilePassphrase, string keyFileOutputPath) {
