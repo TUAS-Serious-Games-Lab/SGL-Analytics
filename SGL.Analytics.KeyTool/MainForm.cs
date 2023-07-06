@@ -292,5 +292,48 @@ namespace SGL.Analytics.KeyTool {
 			}
 		}
 
+		private void btnBrowseSignerCertFile_Click(object sender, EventArgs e) {
+			if (openSignerCertFileDialog.ShowDialog() == DialogResult.OK) {
+				lblSignerCaCertPath.Text = openSignerCertFileDialog.FileName;
+			}
+		}
+
+		private void btnBrowseSignerPrivateKey_Click(object sender, EventArgs e) {
+			if (openSignerKeyFileDialog.ShowDialog() == DialogResult.OK) {
+				lblSignerPrivateKeyPath.Text = openSignerKeyFileDialog.FileName;
+			}
+		}
+
+		private void btnBrowseCertificateOutputPath_Click(object sender, EventArgs e) {
+			if (saveCertFileDialog.ShowDialog() == DialogResult.OK) {
+				lblCertificateOutputPath.Text = saveCertFileDialog.FileName;
+			}
+		}
+
+		private void btnSignCert_Click(object sender, EventArgs e) {
+
+		}
+
+		private void btnBrowseOpenIntermediateKeyFile_Click(object sender, EventArgs e) {
+			if (openIntermediateKeyFileDialog.ShowDialog() == DialogResult.OK) {
+				lblIntermediateKeyLoadPath.Text = openIntermediateKeyFileDialog.FileName;
+			}
+		}
+
+		private void btnBrowseCertificateInputFile_Click(object sender, EventArgs e) {
+			if (openCertFileDialog.ShowDialog() == DialogResult.OK) {
+				lblCertificateInputPath.Text = openCertFileDialog.FileName;
+			}
+		}
+
+		private void btnBrowseOutputKeyFile_Click(object sender, EventArgs e) {
+			if (saveKeyFileDialog.ShowDialog() == DialogResult.OK) {
+				lblKeyFileOutputPath.Text = saveKeyFileDialog.FileName;
+			}
+		}
+
+		private void btnBuildKeyFile_Click(object sender, EventArgs e) {
+
+		}
 	}
 }

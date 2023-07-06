@@ -92,22 +92,26 @@
 			lblKeyFilePassphrase = new Label();
 			txtKeyFilePassphrase = new TextBox();
 			label20 = new Label();
-			button4 = new Button();
-			label18 = new Label();
+			btnBrowseOutputKeyFile = new Button();
+			lblKeyFileOutputPath = new Label();
 			label19 = new Label();
 			lblCombineStatus = new Label();
 			btnBuildKeyFile = new Button();
-			button2 = new Button();
-			label15 = new Label();
+			btnBrowseCertificateInputFile = new Button();
+			lblCertificateInputPath = new Label();
 			label16 = new Label();
-			label13 = new Label();
-			button1 = new Button();
+			lblIntermediateKeyLoadPath = new Label();
+			btnBrowseOpenIntermediateKeyFile = new Button();
 			saveIntermediateKeyFileDialog = new SaveFileDialog();
 			saveCsrFileDialog = new SaveFileDialog();
 			openCsrInputFileDialog = new OpenFileDialog();
 			openSignerCertFileDialog = new OpenFileDialog();
 			openSignerKeyFileDialog = new OpenFileDialog();
 			toolTipMain = new ToolTip(components);
+			saveCertFileDialog = new SaveFileDialog();
+			openIntermediateKeyFileDialog = new OpenFileDialog();
+			openCertFileDialog = new OpenFileDialog();
+			saveKeyFileDialog = new SaveFileDialog();
 			groupBox1 = new GroupBox();
 			label3 = new Label();
 			label2 = new Label();
@@ -547,6 +551,7 @@
 			btnSignCert.TabIndex = 11;
 			btnSignCert.Text = "Sign";
 			btnSignCert.UseVisualStyleBackColor = true;
+			btnSignCert.Click += btnSignCert_Click;
 			// 
 			// lblSignatureStatus
 			// 
@@ -584,6 +589,7 @@
 			btnBrowseCertificateOutputPath.TabIndex = 7;
 			btnBrowseCertificateOutputPath.Text = "Browse ...";
 			btnBrowseCertificateOutputPath.UseVisualStyleBackColor = true;
+			btnBrowseCertificateOutputPath.Click += btnBrowseCertificateOutputPath_Click;
 			// 
 			// lblCertificateOutputPath
 			// 
@@ -658,6 +664,7 @@
 			btnBrowseSignerPrivateKey.TabIndex = 7;
 			btnBrowseSignerPrivateKey.Text = "Browse ...";
 			btnBrowseSignerPrivateKey.UseVisualStyleBackColor = true;
+			btnBrowseSignerPrivateKey.Click += btnBrowseSignerPrivateKey_Click;
 			// 
 			// lblSignerPrivateKeyPath
 			// 
@@ -686,6 +693,7 @@
 			btnBrowseSignerCertFile.TabIndex = 4;
 			btnBrowseSignerCertFile.Text = "Browse ...";
 			btnBrowseSignerCertFile.UseVisualStyleBackColor = true;
+			btnBrowseSignerCertFile.Click += btnBrowseSignerCertFile_Click;
 			// 
 			// lblSignerCaCertPath
 			// 
@@ -824,16 +832,16 @@
 			tabBuildKeyFile.Controls.Add(lblKeyFilePassphrase);
 			tabBuildKeyFile.Controls.Add(txtKeyFilePassphrase);
 			tabBuildKeyFile.Controls.Add(label20);
-			tabBuildKeyFile.Controls.Add(button4);
-			tabBuildKeyFile.Controls.Add(label18);
+			tabBuildKeyFile.Controls.Add(btnBrowseOutputKeyFile);
+			tabBuildKeyFile.Controls.Add(lblKeyFileOutputPath);
 			tabBuildKeyFile.Controls.Add(label19);
 			tabBuildKeyFile.Controls.Add(lblCombineStatus);
 			tabBuildKeyFile.Controls.Add(btnBuildKeyFile);
-			tabBuildKeyFile.Controls.Add(button2);
-			tabBuildKeyFile.Controls.Add(label15);
+			tabBuildKeyFile.Controls.Add(btnBrowseCertificateInputFile);
+			tabBuildKeyFile.Controls.Add(lblCertificateInputPath);
 			tabBuildKeyFile.Controls.Add(label16);
-			tabBuildKeyFile.Controls.Add(label13);
-			tabBuildKeyFile.Controls.Add(button1);
+			tabBuildKeyFile.Controls.Add(lblIntermediateKeyLoadPath);
+			tabBuildKeyFile.Controls.Add(btnBrowseOpenIntermediateKeyFile);
 			tabBuildKeyFile.Controls.Add(label14);
 			tabBuildKeyFile.Location = new Point(4, 24);
 			tabBuildKeyFile.Name = "tabBuildKeyFile";
@@ -871,24 +879,25 @@
 			label20.TabIndex = 16;
 			label20.Text = "Combine your intermediate key file and your signed certificates into your final key file:";
 			// 
-			// button4
+			// btnBrowseOutputKeyFile
 			// 
-			button4.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			button4.Location = new Point(415, 131);
-			button4.Name = "button4";
-			button4.Size = new Size(100, 25);
-			button4.TabIndex = 15;
-			button4.Text = "Browse ...";
-			button4.UseVisualStyleBackColor = true;
+			btnBrowseOutputKeyFile.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			btnBrowseOutputKeyFile.Location = new Point(415, 131);
+			btnBrowseOutputKeyFile.Name = "btnBrowseOutputKeyFile";
+			btnBrowseOutputKeyFile.Size = new Size(100, 25);
+			btnBrowseOutputKeyFile.TabIndex = 15;
+			btnBrowseOutputKeyFile.Text = "Browse ...";
+			btnBrowseOutputKeyFile.UseVisualStyleBackColor = true;
+			btnBrowseOutputKeyFile.Click += btnBrowseOutputKeyFile_Click;
 			// 
-			// label18
+			// lblKeyFileOutputPath
 			// 
-			label18.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-			label18.Location = new Point(131, 131);
-			label18.Name = "label18";
-			label18.Size = new Size(278, 23);
-			label18.TabIndex = 14;
-			label18.TextAlign = ContentAlignment.MiddleRight;
+			lblKeyFileOutputPath.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			lblKeyFileOutputPath.Location = new Point(131, 131);
+			lblKeyFileOutputPath.Name = "lblKeyFileOutputPath";
+			lblKeyFileOutputPath.Size = new Size(278, 23);
+			lblKeyFileOutputPath.TabIndex = 14;
+			lblKeyFileOutputPath.TextAlign = ContentAlignment.MiddleRight;
 			// 
 			// label19
 			// 
@@ -917,25 +926,27 @@
 			btnBuildKeyFile.TabIndex = 11;
 			btnBuildKeyFile.Text = "Build";
 			btnBuildKeyFile.UseVisualStyleBackColor = true;
+			btnBuildKeyFile.Click += btnBuildKeyFile_Click;
 			// 
-			// button2
+			// btnBrowseCertificateInputFile
 			// 
-			button2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			button2.Location = new Point(415, 100);
-			button2.Name = "button2";
-			button2.Size = new Size(100, 25);
-			button2.TabIndex = 10;
-			button2.Text = "Browse ...";
-			button2.UseVisualStyleBackColor = true;
+			btnBrowseCertificateInputFile.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			btnBrowseCertificateInputFile.Location = new Point(415, 100);
+			btnBrowseCertificateInputFile.Name = "btnBrowseCertificateInputFile";
+			btnBrowseCertificateInputFile.Size = new Size(100, 25);
+			btnBrowseCertificateInputFile.TabIndex = 10;
+			btnBrowseCertificateInputFile.Text = "Browse ...";
+			btnBrowseCertificateInputFile.UseVisualStyleBackColor = true;
+			btnBrowseCertificateInputFile.Click += btnBrowseCertificateInputFile_Click;
 			// 
-			// label15
+			// lblCertificateInputPath
 			// 
-			label15.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-			label15.Location = new Point(131, 100);
-			label15.Name = "label15";
-			label15.Size = new Size(278, 23);
-			label15.TabIndex = 9;
-			label15.TextAlign = ContentAlignment.MiddleRight;
+			lblCertificateInputPath.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			lblCertificateInputPath.Location = new Point(131, 100);
+			lblCertificateInputPath.Name = "lblCertificateInputPath";
+			lblCertificateInputPath.Size = new Size(278, 23);
+			lblCertificateInputPath.TabIndex = 9;
+			lblCertificateInputPath.TextAlign = ContentAlignment.MiddleRight;
 			// 
 			// label16
 			// 
@@ -947,28 +958,29 @@
 			label16.Text = "Certificate File";
 			toolTipMain.SetToolTip(label16, "The signed certificate returned from your project's signer.");
 			// 
-			// label13
+			// lblIntermediateKeyLoadPath
 			// 
-			label13.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-			label13.Location = new Point(134, 40);
-			label13.Name = "label13";
-			label13.Size = new Size(275, 25);
-			label13.TabIndex = 6;
-			label13.TextAlign = ContentAlignment.MiddleRight;
+			lblIntermediateKeyLoadPath.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			lblIntermediateKeyLoadPath.Location = new Point(134, 40);
+			lblIntermediateKeyLoadPath.Name = "lblIntermediateKeyLoadPath";
+			lblIntermediateKeyLoadPath.Size = new Size(275, 25);
+			lblIntermediateKeyLoadPath.TabIndex = 6;
+			lblIntermediateKeyLoadPath.TextAlign = ContentAlignment.MiddleRight;
 			// 
-			// button1
+			// btnBrowseOpenIntermediateKeyFile
 			// 
-			button1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			button1.Location = new Point(415, 40);
-			button1.Name = "button1";
-			button1.Size = new Size(100, 25);
-			button1.TabIndex = 5;
-			button1.Text = "Browse ...";
-			button1.UseVisualStyleBackColor = true;
+			btnBrowseOpenIntermediateKeyFile.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			btnBrowseOpenIntermediateKeyFile.Location = new Point(415, 40);
+			btnBrowseOpenIntermediateKeyFile.Name = "btnBrowseOpenIntermediateKeyFile";
+			btnBrowseOpenIntermediateKeyFile.Size = new Size(100, 25);
+			btnBrowseOpenIntermediateKeyFile.TabIndex = 5;
+			btnBrowseOpenIntermediateKeyFile.Text = "Browse ...";
+			btnBrowseOpenIntermediateKeyFile.UseVisualStyleBackColor = true;
+			btnBrowseOpenIntermediateKeyFile.Click += btnBrowseOpenIntermediateKeyFile_Click;
 			// 
 			// saveIntermediateKeyFileDialog
 			// 
-			saveIntermediateKeyFileDialog.Filter = "Intermediary key files|*.intkey|All files|*.*";
+			saveIntermediateKeyFileDialog.Filter = "Intermediate key files|*.intkey|All files|*.*";
 			// 
 			// saveCsrFileDialog
 			// 
@@ -984,7 +996,23 @@
 			// 
 			// openSignerKeyFileDialog
 			// 
-			openSignerKeyFileDialog.Filter = "Key files|*.key|All files|*.*";
+			openSignerKeyFileDialog.Filter = "Key files|*.key|Intermediate key files|*.intkey|All files|*.*";
+			// 
+			// saveCertFileDialog
+			// 
+			saveCertFileDialog.Filter = "Certificate files|*.cert|All files|*.*";
+			// 
+			// openIntermediateKeyFileDialog
+			// 
+			openIntermediateKeyFileDialog.Filter = "Intermediate key files|*.intkey|All files|*.*";
+			// 
+			// openCertFileDialog
+			// 
+			openCertFileDialog.Filter = "Certificate files|*.cert|All files|*.*";
+			// 
+			// saveKeyFileDialog
+			// 
+			saveKeyFileDialog.Filter = "Key files|*.key|All files|*.*";
 			// 
 			// MainForm
 			// 
@@ -1083,13 +1111,13 @@
 		private CheckBox chkAllowSignerCert;
 		private Label lblSignatureStatus;
 		private Button btnSignCert;
-		private Label label13;
-		private Button button1;
-		private Button button2;
-		private Label label15;
+		private Label lblIntermediateKeyLoadPath;
+		private Button btnBrowseOpenIntermediateKeyFile;
+		private Button btnBrowseCertificateInputFile;
+		private Label lblCertificateInputPath;
 		private Label label16;
-		private Button button4;
-		private Label label18;
+		private Button btnBrowseOutputKeyFile;
+		private Label lblKeyFileOutputPath;
 		private Label label19;
 		private Label lblCombineStatus;
 		private Button btnBuildKeyFile;
@@ -1097,5 +1125,9 @@
 		private ToolTip toolTipMain;
 		private Label lblKeyFilePassphrase;
 		private TextBox txtKeyFilePassphrase;
+		private SaveFileDialog saveCertFileDialog;
+		private OpenFileDialog openIntermediateKeyFileDialog;
+		private OpenFileDialog openCertFileDialog;
+		private SaveFileDialog saveKeyFileDialog;
 	}
 }
