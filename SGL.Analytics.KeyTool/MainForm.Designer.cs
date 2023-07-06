@@ -23,15 +23,18 @@
 		///  the contents of this method with the code editor.
 		/// </summary>
 		private void InitializeComponent() {
+			components = new System.ComponentModel.Container();
 			GroupBox groupBox1;
 			Label label3;
 			Label label2;
 			GroupBox groupBox2;
 			Label label7;
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
 			Label label4;
 			Label label5;
 			Label label6;
 			Label label8;
+			Label label14;
 			lblRepeatPassphrase = new Label();
 			txtRepeatPassphrase = new TextBox();
 			lblPassphrase = new Label();
@@ -86,11 +89,25 @@
 			btnBrowseCsrInputFile = new Button();
 			lblCsrInputFile = new Label();
 			tabBuildKeyFile = new TabPage();
+			lblKeyFilePassphrase = new Label();
+			txtKeyFilePassphrase = new TextBox();
+			label20 = new Label();
+			button4 = new Button();
+			label18 = new Label();
+			label19 = new Label();
+			lblCombineStatus = new Label();
+			btnBuildKeyFile = new Button();
+			button2 = new Button();
+			label15 = new Label();
+			label16 = new Label();
+			label13 = new Label();
+			button1 = new Button();
 			saveIntermediateKeyFileDialog = new SaveFileDialog();
 			saveCsrFileDialog = new SaveFileDialog();
 			openCsrInputFileDialog = new OpenFileDialog();
 			openSignerCertFileDialog = new OpenFileDialog();
 			openSignerKeyFileDialog = new OpenFileDialog();
+			toolTipMain = new ToolTip(components);
 			groupBox1 = new GroupBox();
 			label3 = new Label();
 			label2 = new Label();
@@ -100,6 +117,7 @@
 			label5 = new Label();
 			label6 = new Label();
 			label8 = new Label();
+			label14 = new Label();
 			groupBox1.SuspendLayout();
 			tabsKeyType.SuspendLayout();
 			tabEllipticCurve.SuspendLayout();
@@ -114,6 +132,7 @@
 			groupBox4.SuspendLayout();
 			tableLayoutPanel1.SuspendLayout();
 			groupBox3.SuspendLayout();
+			tabBuildKeyFile.SuspendLayout();
 			SuspendLayout();
 			// 
 			// groupBox1
@@ -162,6 +181,7 @@
 			lblPassphrase.Size = new Size(65, 15);
 			lblPassphrase.TabIndex = 6;
 			lblPassphrase.Text = "Passphrase";
+			toolTipMain.SetToolTip(lblPassphrase, "The passphrase used to protect your private key.\r\nYou will need to enter it when using the key file later.\r\nMake sure to remember it, as losing it makes the key unusable.");
 			// 
 			// txtPassphrase
 			// 
@@ -190,7 +210,7 @@
 			lblIntermediateKeySavePath.Name = "lblIntermediateKeySavePath";
 			lblIntermediateKeySavePath.Size = new Size(278, 25);
 			lblIntermediateKeySavePath.TabIndex = 3;
-			lblIntermediateKeySavePath.TextAlign = ContentAlignment.MiddleLeft;
+			lblIntermediateKeySavePath.TextAlign = ContentAlignment.MiddleRight;
 			// 
 			// btnBrowseSaveIntermediateKeyFile
 			// 
@@ -211,6 +231,7 @@
 			label3.Size = new Size(117, 15);
 			label3.TabIndex = 1;
 			label3.Text = "Intermediate Key File";
+			toolTipMain.SetToolTip(label3, "The path of the file that will store your private key temporarily.\r\nIt is used in Step 3 to combine it with your signed certificate into your final key file.\r\nThis file must be kept secret.");
 			// 
 			// tabsKeyType
 			// 
@@ -345,7 +366,7 @@
 			lblCsrOutputFile.Name = "lblCsrOutputFile";
 			lblCsrOutputFile.Size = new Size(305, 25);
 			lblCsrOutputFile.TabIndex = 6;
-			lblCsrOutputFile.TextAlign = ContentAlignment.MiddleLeft;
+			lblCsrOutputFile.TextAlign = ContentAlignment.MiddleRight;
 			// 
 			// btnBrowseCsrOutputFile
 			// 
@@ -367,6 +388,7 @@
 			label7.Size = new Size(90, 15);
 			label7.TabIndex = 4;
 			label7.Text = "CSR Output File";
+			toolTipMain.SetToolTip(label7, resources.GetString("label7.ToolTip"));
 			// 
 			// chkGenerateSigner
 			// 
@@ -378,6 +400,7 @@
 			chkGenerateSigner.Size = new Size(166, 19);
 			chkGenerateSigner.TabIndex = 2;
 			chkGenerateSigner.Text = "Generate Signer Certificate";
+			toolTipMain.SetToolTip(chkGenerateSigner, resources.GetString("chkGenerateSigner.ToolTip"));
 			chkGenerateSigner.UseVisualStyleBackColor = false;
 			// 
 			// flowCsrDnFields
@@ -428,6 +451,16 @@
 			label8.TabIndex = 5;
 			label8.Text = "CA Basic Constraints";
 			// 
+			// label14
+			// 
+			label14.AutoSize = true;
+			label14.Location = new Point(11, 40);
+			label14.Name = "label14";
+			label14.Size = new Size(117, 15);
+			label14.TabIndex = 4;
+			label14.Text = "Intermediate Key File";
+			toolTipMain.SetToolTip(label14, "Your secret intermediate key file, generated in step 1.");
+			// 
 			// tabsMain
 			// 
 			tabsMain.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
@@ -451,7 +484,7 @@
 			tabGenerateKeyAndCSR.Padding = new Padding(3);
 			tabGenerateKeyAndCSR.Size = new Size(525, 552);
 			tabGenerateKeyAndCSR.TabIndex = 0;
-			tabGenerateKeyAndCSR.Text = "Generate Key & CSR";
+			tabGenerateKeyAndCSR.Text = "Step 1: Generate Key & CSR";
 			tabGenerateKeyAndCSR.UseVisualStyleBackColor = true;
 			// 
 			// lblKeyGenStatus
@@ -484,7 +517,7 @@
 			tabSignCert.Padding = new Padding(3);
 			tabSignCert.Size = new Size(525, 552);
 			tabSignCert.TabIndex = 2;
-			tabSignCert.Text = "Sign Certificate";
+			tabSignCert.Text = "Step 2 (Signer): Sign Certificate";
 			tabSignCert.UseVisualStyleBackColor = true;
 			// 
 			// groupBox6
@@ -559,6 +592,7 @@
 			lblCertificateOutputPath.Name = "lblCertificateOutputPath";
 			lblCertificateOutputPath.Size = new Size(332, 23);
 			lblCertificateOutputPath.TabIndex = 6;
+			lblCertificateOutputPath.TextAlign = ContentAlignment.MiddleRight;
 			// 
 			// label12
 			// 
@@ -632,6 +666,7 @@
 			lblSignerPrivateKeyPath.Name = "lblSignerPrivateKeyPath";
 			lblSignerPrivateKeyPath.Size = new Size(279, 23);
 			lblSignerPrivateKeyPath.TabIndex = 6;
+			lblSignerPrivateKeyPath.TextAlign = ContentAlignment.MiddleRight;
 			// 
 			// label11
 			// 
@@ -659,6 +694,7 @@
 			lblSignerCaCertPath.Name = "lblSignerCaCertPath";
 			lblSignerCaCertPath.Size = new Size(279, 23);
 			lblSignerCaCertPath.TabIndex = 1;
+			lblSignerCaCertPath.TextAlign = ContentAlignment.MiddleRight;
 			// 
 			// label9
 			// 
@@ -785,13 +821,150 @@
 			// 
 			// tabBuildKeyFile
 			// 
+			tabBuildKeyFile.Controls.Add(lblKeyFilePassphrase);
+			tabBuildKeyFile.Controls.Add(txtKeyFilePassphrase);
+			tabBuildKeyFile.Controls.Add(label20);
+			tabBuildKeyFile.Controls.Add(button4);
+			tabBuildKeyFile.Controls.Add(label18);
+			tabBuildKeyFile.Controls.Add(label19);
+			tabBuildKeyFile.Controls.Add(lblCombineStatus);
+			tabBuildKeyFile.Controls.Add(btnBuildKeyFile);
+			tabBuildKeyFile.Controls.Add(button2);
+			tabBuildKeyFile.Controls.Add(label15);
+			tabBuildKeyFile.Controls.Add(label16);
+			tabBuildKeyFile.Controls.Add(label13);
+			tabBuildKeyFile.Controls.Add(button1);
+			tabBuildKeyFile.Controls.Add(label14);
 			tabBuildKeyFile.Location = new Point(4, 24);
 			tabBuildKeyFile.Name = "tabBuildKeyFile";
 			tabBuildKeyFile.Padding = new Padding(3);
 			tabBuildKeyFile.Size = new Size(525, 552);
 			tabBuildKeyFile.TabIndex = 3;
-			tabBuildKeyFile.Text = "Build Key File";
+			tabBuildKeyFile.Text = "Step 3: Build Key File";
 			tabBuildKeyFile.UseVisualStyleBackColor = true;
+			// 
+			// lblKeyFilePassphrase
+			// 
+			lblKeyFilePassphrase.AutoSize = true;
+			lblKeyFilePassphrase.Location = new Point(11, 71);
+			lblKeyFilePassphrase.Name = "lblKeyFilePassphrase";
+			lblKeyFilePassphrase.Size = new Size(65, 15);
+			lblKeyFilePassphrase.TabIndex = 18;
+			lblKeyFilePassphrase.Text = "Passphrase";
+			toolTipMain.SetToolTip(lblKeyFilePassphrase, "The passphrase for your intermediate key file.\r\nIt is used to decrypt your key file for processing.\r\nNote: Your finished key file will use the same passphrase.");
+			// 
+			// txtKeyFilePassphrase
+			// 
+			txtKeyFilePassphrase.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			txtKeyFilePassphrase.Location = new Point(132, 71);
+			txtKeyFilePassphrase.Name = "txtKeyFilePassphrase";
+			txtKeyFilePassphrase.PasswordChar = '*';
+			txtKeyFilePassphrase.Size = new Size(383, 23);
+			txtKeyFilePassphrase.TabIndex = 17;
+			// 
+			// label20
+			// 
+			label20.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			label20.Location = new Point(11, 3);
+			label20.Name = "label20";
+			label20.Size = new Size(507, 34);
+			label20.TabIndex = 16;
+			label20.Text = "Combine your intermediate key file and your signed certificates into your final key file:";
+			// 
+			// button4
+			// 
+			button4.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			button4.Location = new Point(415, 131);
+			button4.Name = "button4";
+			button4.Size = new Size(100, 25);
+			button4.TabIndex = 15;
+			button4.Text = "Browse ...";
+			button4.UseVisualStyleBackColor = true;
+			// 
+			// label18
+			// 
+			label18.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			label18.Location = new Point(131, 131);
+			label18.Name = "label18";
+			label18.Size = new Size(278, 23);
+			label18.TabIndex = 14;
+			label18.TextAlign = ContentAlignment.MiddleRight;
+			// 
+			// label19
+			// 
+			label19.AutoSize = true;
+			label19.Location = new Point(11, 131);
+			label19.Name = "label19";
+			label19.Size = new Size(66, 15);
+			label19.TabIndex = 13;
+			label19.Text = "Output File";
+			toolTipMain.SetToolTip(label19, "The path where to output your finished key file.\r\nThis file must be kept secret.\r\nIt will be used to access and decrypt collected data.");
+			// 
+			// lblCombineStatus
+			// 
+			lblCombineStatus.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			lblCombineStatus.Location = new Point(8, 162);
+			lblCombineStatus.Name = "lblCombineStatus";
+			lblCombineStatus.Size = new Size(401, 386);
+			lblCombineStatus.TabIndex = 12;
+			// 
+			// btnBuildKeyFile
+			// 
+			btnBuildKeyFile.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			btnBuildKeyFile.Location = new Point(415, 162);
+			btnBuildKeyFile.Name = "btnBuildKeyFile";
+			btnBuildKeyFile.Size = new Size(100, 38);
+			btnBuildKeyFile.TabIndex = 11;
+			btnBuildKeyFile.Text = "Build";
+			btnBuildKeyFile.UseVisualStyleBackColor = true;
+			// 
+			// button2
+			// 
+			button2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			button2.Location = new Point(415, 100);
+			button2.Name = "button2";
+			button2.Size = new Size(100, 25);
+			button2.TabIndex = 10;
+			button2.Text = "Browse ...";
+			button2.UseVisualStyleBackColor = true;
+			// 
+			// label15
+			// 
+			label15.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			label15.Location = new Point(131, 100);
+			label15.Name = "label15";
+			label15.Size = new Size(278, 23);
+			label15.TabIndex = 9;
+			label15.TextAlign = ContentAlignment.MiddleRight;
+			// 
+			// label16
+			// 
+			label16.AutoSize = true;
+			label16.Location = new Point(11, 100);
+			label16.Name = "label16";
+			label16.Size = new Size(82, 15);
+			label16.TabIndex = 8;
+			label16.Text = "Certificate File";
+			toolTipMain.SetToolTip(label16, "The signed certificate returned from your project's signer.");
+			// 
+			// label13
+			// 
+			label13.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			label13.Location = new Point(134, 40);
+			label13.Name = "label13";
+			label13.Size = new Size(275, 25);
+			label13.TabIndex = 6;
+			label13.TextAlign = ContentAlignment.MiddleRight;
+			// 
+			// button1
+			// 
+			button1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			button1.Location = new Point(415, 40);
+			button1.Name = "button1";
+			button1.Size = new Size(100, 25);
+			button1.TabIndex = 5;
+			button1.Text = "Browse ...";
+			button1.UseVisualStyleBackColor = true;
 			// 
 			// saveIntermediateKeyFileDialog
 			// 
@@ -843,6 +1016,8 @@
 			tableLayoutPanel1.ResumeLayout(false);
 			tableLayoutPanel1.PerformLayout();
 			groupBox3.ResumeLayout(false);
+			tabBuildKeyFile.ResumeLayout(false);
+			tabBuildKeyFile.PerformLayout();
 			ResumeLayout(false);
 		}
 
@@ -908,5 +1083,19 @@
 		private CheckBox chkAllowSignerCert;
 		private Label lblSignatureStatus;
 		private Button btnSignCert;
+		private Label label13;
+		private Button button1;
+		private Button button2;
+		private Label label15;
+		private Label label16;
+		private Button button4;
+		private Label label18;
+		private Label label19;
+		private Label lblCombineStatus;
+		private Button btnBuildKeyFile;
+		private Label label20;
+		private ToolTip toolTipMain;
+		private Label lblKeyFilePassphrase;
+		private TextBox txtKeyFilePassphrase;
 	}
 }
