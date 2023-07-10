@@ -30,7 +30,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		public JwtOptions JwtOptions { get; } = new JwtOptions() {
 			Audience = "UserExporterIntegrationTest",
 			Issuer = "UserExporterIntegrationTest",
-			SymmetricKey = "TestingS3cr3tTestingS3cr3t"
+			SymmetricKey = "TestingS3cr3tTestingS3cr3tTestingS3cr3t"
 		};
 		public Dictionary<string, string> Config { get; }
 

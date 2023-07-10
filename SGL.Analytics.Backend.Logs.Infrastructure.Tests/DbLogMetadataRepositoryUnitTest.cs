@@ -117,7 +117,6 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 				var repo = new DbLogMetadataRepository(context);
 				logMd2 = await repo.GetLogMetadataByIdAsync(logId, new LogMetadataQueryOptions { FetchRecipientKeys = true, ForUpdating = true });
 				Assert.NotNull(logMd2);
-				if (logMd2 is null) throw new NotNullException();
 				encryptionInfo.IVs[0] = Encoding.UTF8.GetBytes("Changed IV");
 				encryptionInfo.DataKeys[keyId1].EncryptedKey = Encoding.UTF8.GetBytes("Updated Fake Key");
 				encryptionInfo.DataKeys.Remove(keyId2);
