@@ -22,6 +22,28 @@ nuget-package:
     - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
     - if: $FORCE_NUGET_BUILD
 
+package-key-tool:
+  stage: package
+  needs:
+  - job: build-debug
+    artifacts: false
+  - job: build-release
+    artifacts: false
+  - job: test
+    artifacts: false
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
+    - if: $FORCE_KEY_TOOL_PACK
+  script:
+    - cd SGL.Analytics.KeyTool
+    - dotnet publish --no-restore -c Release -o ../SGL.Analytics.KeyTool-${CI_COMMIT_REF_SLUG}
+  artifacts:
+    expire_in: 1 day
+    name: "SGL.Analytics.KeyTool-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - SGL.Analytics.KeyTool-${CI_COMMIT_REF_SLUG}
+
 .package-end-to-end-test-base:
   stage: package
   needs:
