@@ -176,19 +176,33 @@ namespace SGL.Analytics.KeyTool {
 					return;
 				}
 			}
+			var passphrase = keyGenPassphrase;
+			bool storeUnencrypted = false;
+			if (passphrase.Length == 0) {
+				if (MessageBox.Show("No passphrase for the private key was given, but the minimum length allows an empty passphrase.\n" +
+						"Shall the private key be saved in unencrypted form?\n" +
+						"WARNING: Storing private keys without a passphrase is NOT RECOMENDED!\n" +
+						"Only proceed if you are sure you want an unencrypted key, e.g. for testing purposes.",
+						"WARNING: Unencrypted Private Key?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
+						MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
+					storeUnencrypted = true;
+				}
+				else {
+					return;
+				}
+			}
 			btnGenerateKeyAndCsr.Enabled = false;
 			var isSignerCert = chkGenerateSigner.Checked;
 			var keyType = (tabsKeyType.SelectedTab == tabEllipticCurve) ? KeyType.EllipticCurves : KeyType.RSA;
 			var ellipticCurveName = cmbNamedCurve.SelectedItem as string;
 			var selectedRsaKeyStrength = rsaKeyStrength;
-			var passphrase = keyGenPassphrase;
 			var csrDn = new DistinguishedName(dnEntryEdits.Select(entry => new KeyValuePair<string, string>(entry.TypeCode ?? "", entry.Value)));
 			lblKeyGenStatus.Text = "Generating ...";
 			lblKeyGenStatus.BackColor = Color.Yellow;
 			progBarKeyGen.Value = 0;
 			progBarKeyGen.Style = ProgressBarStyle.Marquee;
 			var keyGenTask = Task.Run(async () => {
-				await GenerateKeyAndCsr(intermediateKeyPath, csrOutputPath, isSignerCert, keyType, ellipticCurveName, selectedRsaKeyStrength, passphrase, csrDn);
+				await GenerateKeyAndCsr(intermediateKeyPath, csrOutputPath, isSignerCert, keyType, ellipticCurveName, selectedRsaKeyStrength, passphrase, csrDn, storeUnencrypted);
 			});
 			try {
 				await keyGenTask;
