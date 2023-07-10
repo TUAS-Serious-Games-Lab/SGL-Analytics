@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.KeyTool {
 	public class KeyToolSettings {
+		public int MinPassphraseLength { get; set; } = 12;
 		[JsonConverter(typeof(JsonStringEnumConverter))]
 		public KeyType DefaultKeyType { get; set; } = KeyType.EllipticCurves;
 		public string DefaultCurveName { get; set; } = "secp521r1";

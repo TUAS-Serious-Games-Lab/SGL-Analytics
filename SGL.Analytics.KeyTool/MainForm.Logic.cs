@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.KeyTool {
 	public partial class MainForm {
-		private static async Task GenerateKeyAndCsr(string intermediateKeyPath, string csrOutputPath, bool isSignerCert, KeyType keyType, string? ellipticCurveName, int selectedRsaKeyStrength, string passphrase, DistinguishedName csrDn) {
+		private static async Task GenerateKeyAndCsr(string intermediateKeyPath, string csrOutputPath, bool isSignerCert, KeyType keyType, string? ellipticCurveName, int selectedRsaKeyStrength, string passphrase, DistinguishedName csrDn, bool storeUnencrypted) {
 			var random = new RandomGenerator();
 			KeyPair primaryKeyPair = null!;
 			KeyPair authKeyPair = null!;
@@ -41,9 +41,9 @@ namespace SGL.Analytics.KeyTool {
 			using (var keyOutputFile = File.Create(intermediateKeyPath, 4096, FileOptions.Asynchronous)) {
 				using var pemBuff = new MemoryStream();
 				using (var pemWriter = new StreamWriter(pemBuff, leaveOpen: true)) {
-					primaryKeyPair.StoreToPem(pemWriter, PemEncryptionMode.AES_256_CBC, passphrase.ToCharArray(), random);
+					primaryKeyPair.StoreToPem(pemWriter, storeUnencrypted ? PemEncryptionMode.UNENCRYPTED : PemEncryptionMode.AES_256_CBC, passphrase.ToCharArray(), random);
 					if (!isSignerCert) {
-						authKeyPair.StoreToPem(pemWriter, PemEncryptionMode.AES_256_CBC, passphrase.ToCharArray(), random);
+						authKeyPair.StoreToPem(pemWriter, storeUnencrypted ? PemEncryptionMode.UNENCRYPTED : PemEncryptionMode.AES_256_CBC, passphrase.ToCharArray(), random);
 					}
 				}
 				pemBuff.Position = 0;
@@ -165,7 +165,12 @@ namespace SGL.Analytics.KeyTool {
 					cert.StoreToPem(pemBufferWriter);
 				}
 				foreach (var keyPair in keyPairs) {
-					keyPair.StoreToPem(pemBufferWriter, PemEncryptionMode.AES_256_CBC, keyFilePassphrase, random);
+					if (keyFilePassphrase.Length == 0) {
+						keyPair.StoreToPem(pemBufferWriter, PemEncryptionMode.UNENCRYPTED, keyFilePassphrase, random);
+					}
+					else {
+						keyPair.StoreToPem(pemBufferWriter, PemEncryptionMode.AES_256_CBC, keyFilePassphrase, random);
+					}
 				}
 			}
 			outputPemBuffer.Position = 0;
