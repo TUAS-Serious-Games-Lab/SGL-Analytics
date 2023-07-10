@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace SGL.Analytics.KeyTool {
 	public partial class MainForm : Form {
-		private const int minPassphraseLength = 12;
+		private KeyToolSettings settings;
 		private const string defaultCurveName = "secp521r1";
 		private const string configFile = "KeyTool-Settings.json";
 		private const int defaultValidityYears = 3;
@@ -23,7 +23,7 @@ namespace SGL.Analytics.KeyTool {
 			if (defaultCurveIndex >= 0) {
 				cmbNamedCurve.SelectedIndex = defaultCurveIndex;
 			}
-			var settings = LoadSettings();
+			settings = LoadSettings();
 			FillDistinguishedNameEntries(settings.InitialDistinguishedName);
 			spinRsaKeyStrengthExp_ValueChanged(spinRsaKeyStrengthExp, EventArgs.Empty);
 			dtpValidTo.Value = DateTime.UtcNow.AddYears(defaultValidityYears);
@@ -109,7 +109,7 @@ namespace SGL.Analytics.KeyTool {
 		}
 
 		private void UpdatePassphraseState() {
-			if (txtPassphrase.Text.Length < minPassphraseLength) {
+			if (txtPassphrase.Text.Length < settings.MinPassphraseLength) {
 				lblPassphrase.BackColor = Color.Red;
 				lblKeyGenStatus.Text = "Passphrase too short!";
 				lblKeyGenStatus.BackColor = Color.Red;
