@@ -264,8 +264,8 @@ namespace SGL.Analytics.ExporterClient.Tests {
 			Assert.All(receivedUsers, recUsr => {
 				var expectedUsr = Assert.Single(allUsers, u => u.UserData.UserId == recUsr.UserId);
 				Assert.Equal(expectedUsr.UserData.Username, recUsr.Username);
-				Assert.Equal(expectedUsr.UserData.StudySpecificProperties, recUsr.StudySpecificProperties);
-				Assert.Equal(expectedUsr.UserData.DecryptedStudySpecificProperties, recUsr.DecryptedStudySpecificProperties);
+				Assert.Equivalent(expectedUsr.UserData.StudySpecificProperties, recUsr.StudySpecificProperties);
+				Assert.Equivalent(expectedUsr.UserData.DecryptedStudySpecificProperties, recUsr.DecryptedStudySpecificProperties);
 			});
 		}
 	}
