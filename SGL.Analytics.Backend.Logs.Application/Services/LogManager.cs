@@ -221,6 +221,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 					if (log.RecipientKeys.Any(rk => rk.RecipientKeyId == newRecipientKeyId)) {
 						logger.LogWarning("Attempt to put rekeyed key for recipient {keyId} into log file {logId} that already has a data key for that recipient.",
 							newRecipientKeyId, log.Id);
+						pendingIds.Remove(log.Id);
 					}
 					else {
 						log.RecipientKeys.Add(new LogRecipientKey {
