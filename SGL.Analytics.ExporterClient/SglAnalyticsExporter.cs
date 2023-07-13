@@ -33,14 +33,17 @@ namespace SGL.Analytics.ExporterClient {
 			await UseKeyFileAsync(file, filePath, getPassword, ct).ConfigureAwait(false);
 		}
 		public async Task UseKeyFileAsync(TextReader reader, string sourceName, Func<char[]> getPassword, CancellationToken ct = default) {
-			var result = await KeyFile.LoadAsync(reader, sourceName, getPassword, logger, ct);
+			var keyFile = await KeyFile.LoadAsync(reader, sourceName, getPassword, logger, ct).ConfigureAwait(false);
+			await UseKeyFileAsync(keyFile, ct).ConfigureAwait(false);
+		}
+		public async Task UseKeyFileAsync(KeyFile keyFile, CancellationToken ct = default) {
 			var authFactoryargs = new SglAnalyticsExporterConfiguratorFactoryArguments(httpClient, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories);
 
 			using var lockHandle = await stateLock.WaitAsyncWithScopedRelease(ct).ConfigureAwait(false); // Hold lock till end of method as we mutate state.
-			authenticationKeyPair = result.AuthenticationKeyPair;
-			recipientKeyPair = result.RecipientKeyPair;
-			CurrentKeyIds = (result.AuthenticationKeyId, result.RecipientKeyId);
-			CurrentKeyCertificates = (result.AuthenticationCertificate, result.RecipientCertificate);
+			authenticationKeyPair = keyFile.AuthenticationKeyPair;
+			recipientKeyPair = keyFile.RecipientKeyPair;
+			CurrentKeyIds = (keyFile.AuthenticationKeyId, keyFile.RecipientKeyId);
+			CurrentKeyCertificates = (keyFile.AuthenticationCertificate, keyFile.RecipientCertificate);
 			authenticator = configurator.Authenticator.Factory(authFactoryargs, authenticationKeyPair);
 			await ClearPerAppStatesAsync(); // Clear cached per-app states as they may have clients authenticated using a different key pair.
 			if (CurrentKeyCertificates.Value.AuthenticationCertificate.SubjectDN.Equals(CurrentKeyCertificates.Value.DecryptionCertificate.SubjectDN)) {
