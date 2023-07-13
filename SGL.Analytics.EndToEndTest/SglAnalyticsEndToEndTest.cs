@@ -80,6 +80,17 @@ namespace SGL.Analytics.EndToEndTest {
 			LoggerFactory.CreateLogger<SingleThreadedSynchronizationContext>().LogError(ex, "Exception escapted from async callback.");
 		}
 
+		private bool FindFirstExistingFile(out string path, params string[] paths) {
+			foreach (var p in paths) {
+				if (File.Exists(p)) {
+					path = p;
+					return true;
+				}
+			}
+			path = null!;
+			return false;
+		}
+
 		public class UserData : BaseUserData {
 			public int Foo { get; set; }
 			public string Bar { get; set; }
@@ -141,14 +152,8 @@ namespace SGL.Analytics.EndToEndTest {
 					using var keyFile = new StringReader(recipientKeyText);
 					await exporter.UseKeyFileAsync(keyFile, "[key file]", () => recipientKeyPassphrase?.ToCharArray() ?? new char[0], ct);
 				}
-				else if (File.Exists("../../../DevKeyFile.pem")) {
-					await exporter.UseKeyFileAsync("../../../DevKeyFile.pem", () => "ThisIsATest".ToCharArray(), ct);
-				}
-				else if (File.Exists("DevKeyFile.pem")) {
-					await exporter.UseKeyFileAsync("DevKeyFile.pem", () => "ThisIsATest".ToCharArray(), ct);
-				}
-				else if (File.Exists("/DevKeyFile.pem")) {
-					await exporter.UseKeyFileAsync("/DevKeyFile.pem", () => "ThisIsATest".ToCharArray(), ct);
+				else if (FindFirstExistingFile(out var devKeyFile, "../../../DevKeyFile.pem", "DevKeyFile.pem", "/DevKeyFile.pem")) {
+					await exporter.UseKeyFileAsync(devKeyFile, () => "ThisIsATest".ToCharArray(), ct);
 				}
 				else {
 					throw new FileNotFoundException("Couldn't find key file.");
