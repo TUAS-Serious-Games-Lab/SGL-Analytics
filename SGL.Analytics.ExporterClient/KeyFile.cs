@@ -86,7 +86,7 @@ namespace SGL.Analytics.ExporterClient {
 		/// <exception cref="KeyFileException">If the key file couldn't be loaded correctly.</exception>
 		public static async Task<KeyFile> LoadAsync(TextReader reader, string sourceName, Func<char[]> getPassword, ILogger logger, CancellationToken ct = default) {
 			var pemReader = new PemObjectReader(reader, getPassword);
-			var readData = await Task.Run(() => InnerLoad(pemReader, sourceName, logger, ct));
+			var readData = await Task.Run(() => InnerLoad(pemReader, sourceName, logger, ct)).ConfigureAwait(false);
 			return new KeyFile(readData.AuthenticationCertificate, readData.RecipientCertificate, readData.AuthenticationKeyPair, readData.RecipientKeyPair, readData.AuthenticationKeyId, readData.RecipientKeyId);
 		}
 
