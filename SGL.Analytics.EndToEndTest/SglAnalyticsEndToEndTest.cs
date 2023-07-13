@@ -5,6 +5,7 @@ using SGL.Analytics.DTO;
 using SGL.Analytics.ExporterClient;
 using SGL.Analytics.ExporterClient.Values;
 using SGL.Utilities;
+using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.TestUtilities.XUnit;
 using System.Net.Sockets;
 using System.Text.Json;
@@ -40,6 +41,11 @@ namespace SGL.Analytics.EndToEndTest {
 		private string? recipientKeyFile = null;
 		private string? recipientKeyText = null;
 		private string? recipientKeyPassphrase = null;
+		private string? rekeyRecipientCaCertPemFile = null;
+		private string? rekeyRecipientCaCertPemText = null;
+		private string? rekeyRecipientKeyFile = null;
+		private string? rekeyRecipientKeyText = null;
+		private string? rekeyRecipientKeyPassphrase = null;
 
 		public SglAnalyticsEndToEndTest(ITestOutputHelper output) {
 			LoggerFactory = CreateLoggerFactory(output);
@@ -50,7 +56,7 @@ namespace SGL.Analytics.EndToEndTest {
 			if (recipientCaCertPemFile == null) {
 				recipientCaCertPemText = Environment.GetEnvironmentVariable("TEST_RECIPIENT_CA_PEM");
 				if (recipientCaCertPemText == null) {
-					recipientCaCertPemText = localDevDemoSignerCertificatesPem;
+					recipientCaCertPemText = localDevDemoSignerCertificatePem;
 				}
 			}
 			recipientKeyFile = Environment.GetEnvironmentVariable("TEST_RECIPIENT_KEY_FILE");
@@ -58,6 +64,20 @@ namespace SGL.Analytics.EndToEndTest {
 				recipientKeyText = Environment.GetEnvironmentVariable("TEST_RECIPIENT_KEY_PEM");
 			}
 			recipientKeyPassphrase = Environment.GetEnvironmentVariable("TEST_RECIPIENT_KEY_PASSPHRASE");
+
+			rekeyRecipientCaCertPemFile = Environment.GetEnvironmentVariable("TEST_REKEY_RECIPIENT_CA_FILE");
+			if (rekeyRecipientCaCertPemFile == null) {
+				rekeyRecipientCaCertPemText = Environment.GetEnvironmentVariable("TEST_REKEY_RECIPIENT_CA_PEM");
+				if (rekeyRecipientCaCertPemText == null) {
+					rekeyRecipientCaCertPemText = localDevDemoRekeySignerCertificatePem;
+				}
+			}
+			rekeyRecipientKeyFile = Environment.GetEnvironmentVariable("TEST_REKEY_RECIPIENT_KEY_FILE");
+			if (rekeyRecipientKeyFile == null) {
+				rekeyRecipientKeyText = Environment.GetEnvironmentVariable("TEST_REKEY_RECIPIENT_KEY_PEM");
+			}
+			rekeyRecipientKeyPassphrase = Environment.GetEnvironmentVariable("TEST_REKEY_RECIPIENT_KEY_PASSPHRASE");
+
 			httpClient = new HttpClient();
 			httpClient.BaseAddress = new Uri(Environment.GetEnvironmentVariable("TEST_BACKEND") ?? "https://localhost/");
 			this.output = output;
@@ -137,6 +157,28 @@ namespace SGL.Analytics.EndToEndTest {
 			}
 			var endTime = DateTime.Now;
 
+			KeyFile rekeyTargetKeyFile;
+			if (rekeyRecipientKeyFile != null) {
+				if (File.Exists(rekeyRecipientKeyFile)) {
+					using var keyFile = File.OpenText(rekeyRecipientKeyFile);
+					rekeyTargetKeyFile = await KeyFile.LoadAsync(keyFile, rekeyRecipientKeyFile, () => rekeyRecipientKeyPassphrase?.ToCharArray() ?? new char[0], logger, ct);
+				}
+				else {
+					throw new FileNotFoundException("Couldn't find key file.");
+				}
+			}
+			else if (!string.IsNullOrEmpty(rekeyRecipientKeyText)) {
+				using var keyFile = new StringReader(rekeyRecipientKeyText);
+				rekeyTargetKeyFile = await KeyFile.LoadAsync(keyFile, "[key file]", () => rekeyRecipientKeyPassphrase?.ToCharArray() ?? new char[0], logger, ct);
+			}
+			else if (FindFirstExistingFile(out var devKeyFile, "../../../RekeyingDevKeyFile.pem", "RekeyingDevKeyFile.pem", "/RekeyingDevKeyFile.pem")) {
+				using var keyFile = File.OpenText(devKeyFile);
+				rekeyTargetKeyFile = await KeyFile.LoadAsync(keyFile, devKeyFile, () => "ThisIsATest".ToCharArray() ?? new char[0], logger, ct);
+			}
+			else {
+				throw new FileNotFoundException("Couldn't find key file.");
+			}
+
 			await using (var exporter = new SglAnalyticsExporter(httpClient, config => {
 				config.UseLoggerFactory(_ => LoggerFactory, false);
 			})) {
@@ -158,63 +200,87 @@ namespace SGL.Analytics.EndToEndTest {
 				else {
 					throw new FileNotFoundException("Couldn't find key file.");
 				}
-				await exporter.SwitchToApplicationAsync(appName);
+				await ValidateTestData(exporter, userId, log1Id, log2Id, snapShotId, beginTime, endTime, ct);
 				{
-					var log1 = await exporter.GetDecryptedLogFileByIdAsync(log1Id);
-
-					Assert.Equal(log1Id, log1.Metadata.LogFileId);
-					Assert.Equal(userId, log1.Metadata.UserId);
-					Assert.InRange(log1.Metadata.UploadTime, beginTime.ToUniversalTime(), endTime.ToUniversalTime());
-
-					Assert.NotNull(log1.Content);
-					using var log1Content = log1.Content;
-					var log1Entries = await exporter.ParseLogEntriesAsync(log1Content, ct).ToListAsync(ct);
-					Assert.Equal("Test1", log1Entries[0].Channel);
-					Assert.Equal("TestEvent", Assert.IsAssignableFrom<EventLogFileEntry>(log1Entries[0]).EventType);
-					Assert.Equal(12345, Assert.Contains("X", log1Entries[0].Payload));
-					Assert.Equal(9876, Assert.Contains("Y", log1Entries[0].Payload));
-					Assert.Equal("Hello World!", Assert.Contains("Msg", log1Entries[0].Payload));
-					Assert.InRange(log1Entries[0].TimeStamp, beginTime, endTime);
-
-					Assert.Equal("Test1", log1Entries[1].Channel);
-					Assert.Equal("OtherTestEvent", Assert.IsAssignableFrom<EventLogFileEntry>(log1Entries[1]).EventType);
-					Assert.Equal(123.45, Assert.Contains("X", log1Entries[1].Payload));
-					Assert.Equal(98.76, Assert.Contains("Y", log1Entries[1].Payload));
-					Assert.Equal("Test!Test!Test!", Assert.Contains("Msg", log1Entries[1].Payload));
-					Assert.InRange(log1Entries[1].TimeStamp, beginTime, endTime);
-
-					Assert.Equal("Test2", log1Entries[2].Channel);
-					Assert.Equal(snapShotId, Assert.IsAssignableFrom<SnapshotLogFileEntry>(log1Entries[2]).ObjectId);
-					Assert.Equal(new Dictionary<string, object?> { ["X"] = 123, ["Y"] = 345 }, Assert.Contains("Position", log1Entries[2].Payload));
-					Assert.Equal(1000, Assert.Contains("Energy", log1Entries[2].Payload));
-					Assert.Equal("JohnDoe", Assert.Contains("Name", log1Entries[2].Payload));
-					Assert.Equal(new[] { "Apple", "Orange", "WaterBottle" }.AsEnumerable(), Assert.IsAssignableFrom<IEnumerable<object?>>(Assert.Contains("Inventory", log1Entries[2].Payload)));
-					Assert.InRange(log1Entries[2].TimeStamp, beginTime, endTime);
+					// Grant access to recipient that was ignored during recording because the in-game client doesn't have their certificate:
+					ICertificateValidator keyCertValidator;
+					if (rekeyRecipientCaCertPemFile != null) {
+						using var caCertFile = File.OpenText(rekeyRecipientCaCertPemFile);
+						keyCertValidator = new CACertTrustValidator(caCertFile, rekeyRecipientCaCertPemFile, ignoreValidityPeriod: true, LoggerFactory.CreateLogger<CACertTrustValidator>(), LoggerFactory.CreateLogger<CertificateStore>());
+					}
+					else {
+						keyCertValidator = new CACertTrustValidator(rekeyRecipientCaCertPemText!, ignoreValidityPeriod: true, LoggerFactory.CreateLogger<CACertTrustValidator>(), LoggerFactory.CreateLogger<CertificateStore>());
+					}
+					await exporter.RekeyLogFilesForRecipientKey(rekeyTargetKeyFile.RecipientKeyId, keyCertValidator, ct);
+					await exporter.RekeyUserRegistrationsForRecipientKey(rekeyTargetKeyFile.RecipientKeyId, keyCertValidator, ct);
 				}
-				{
-					var log2 = await exporter.GetDecryptedLogFileByIdAsync(log2Id);
-
-					Assert.Equal(log2Id, log2.Metadata.LogFileId);
-					Assert.Equal(userId, log2.Metadata.UserId);
-					Assert.InRange(log2.Metadata.UploadTime, beginTime.ToUniversalTime(), endTime.ToUniversalTime());
-
-					Assert.NotNull(log2.Content);
-					using var log1Content = log2.Content;
-					var log2Entries = await exporter.ParseLogEntriesAsync(log1Content, ct).ToListAsync(ct);
-					Assert.Empty(log2Entries);
-				}
-				{
-					var userReg = await exporter.GetDecryptedUserRegistrationByIdAsync(userId, ct);
-					Assert.NotNull(userReg);
-					Assert.NotNull(userReg.DecryptedStudySpecificProperties);
-					Assert.Equal(42, Assert.Contains("Foo", userReg.DecryptedStudySpecificProperties));
-					Assert.Equal("This is a Test", Assert.Contains("Bar", userReg.DecryptedStudySpecificProperties));
-					Assert.Equal(new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" }, Assert.Contains("Obj", userReg.DecryptedStudySpecificProperties));
-				}
+			}
+			// Now use other recipient credentials and verify that they now have access:
+			await using (var exporter = new SglAnalyticsExporter(httpClient, config => {
+				config.UseLoggerFactory(_ => LoggerFactory, false);
+			})) {
+				await exporter.UseKeyFileAsync(rekeyTargetKeyFile, ct);
+				await ValidateTestData(exporter, userId, log1Id, log2Id, snapShotId, beginTime, endTime, ct);
 			}
 		}
 
-		private const string localDevDemoSignerCertificatesPem = @"
+		private async Task ValidateTestData(SglAnalyticsExporter exporter, Guid userId, Guid log1Id, Guid log2Id, Guid snapShotId, DateTime beginTime, DateTime endTime, CancellationToken ct) {
+			await exporter.SwitchToApplicationAsync(appName);
+			{
+				var log1 = await exporter.GetDecryptedLogFileByIdAsync(log1Id);
+
+				Assert.Equal(log1Id, log1.Metadata.LogFileId);
+				Assert.Equal(userId, log1.Metadata.UserId);
+				Assert.InRange(log1.Metadata.UploadTime, beginTime.ToUniversalTime(), endTime.ToUniversalTime());
+
+				Assert.NotNull(log1.Content);
+				using var log1Content = log1.Content;
+				var log1Entries = await exporter.ParseLogEntriesAsync(log1Content, ct).ToListAsync(ct);
+				Assert.Equal("Test1", log1Entries[0].Channel);
+				Assert.Equal("TestEvent", Assert.IsAssignableFrom<EventLogFileEntry>(log1Entries[0]).EventType);
+				Assert.Equal(12345, Assert.Contains("X", log1Entries[0].Payload));
+				Assert.Equal(9876, Assert.Contains("Y", log1Entries[0].Payload));
+				Assert.Equal("Hello World!", Assert.Contains("Msg", log1Entries[0].Payload));
+				Assert.InRange(log1Entries[0].TimeStamp, beginTime, endTime);
+
+				Assert.Equal("Test1", log1Entries[1].Channel);
+				Assert.Equal("OtherTestEvent", Assert.IsAssignableFrom<EventLogFileEntry>(log1Entries[1]).EventType);
+				Assert.Equal(123.45, Assert.Contains("X", log1Entries[1].Payload));
+				Assert.Equal(98.76, Assert.Contains("Y", log1Entries[1].Payload));
+				Assert.Equal("Test!Test!Test!", Assert.Contains("Msg", log1Entries[1].Payload));
+				Assert.InRange(log1Entries[1].TimeStamp, beginTime, endTime);
+
+				Assert.Equal("Test2", log1Entries[2].Channel);
+				Assert.Equal(snapShotId, Assert.IsAssignableFrom<SnapshotLogFileEntry>(log1Entries[2]).ObjectId);
+				Assert.Equal(new Dictionary<string, object?> { ["X"] = 123, ["Y"] = 345 }, Assert.Contains("Position", log1Entries[2].Payload));
+				Assert.Equal(1000, Assert.Contains("Energy", log1Entries[2].Payload));
+				Assert.Equal("JohnDoe", Assert.Contains("Name", log1Entries[2].Payload));
+				Assert.Equal(new[] { "Apple", "Orange", "WaterBottle" }.AsEnumerable(), Assert.IsAssignableFrom<IEnumerable<object?>>(Assert.Contains("Inventory", log1Entries[2].Payload)));
+				Assert.InRange(log1Entries[2].TimeStamp, beginTime, endTime);
+			}
+			{
+				var log2 = await exporter.GetDecryptedLogFileByIdAsync(log2Id);
+
+				Assert.Equal(log2Id, log2.Metadata.LogFileId);
+				Assert.Equal(userId, log2.Metadata.UserId);
+				Assert.InRange(log2.Metadata.UploadTime, beginTime.ToUniversalTime(), endTime.ToUniversalTime());
+
+				Assert.NotNull(log2.Content);
+				using var log1Content = log2.Content;
+				var log2Entries = await exporter.ParseLogEntriesAsync(log1Content, ct).ToListAsync(ct);
+				Assert.Empty(log2Entries);
+			}
+			{
+				var userReg = await exporter.GetDecryptedUserRegistrationByIdAsync(userId, ct);
+				Assert.NotNull(userReg);
+				Assert.NotNull(userReg.DecryptedStudySpecificProperties);
+				Assert.Equal(42, Assert.Contains("Foo", userReg.DecryptedStudySpecificProperties));
+				Assert.Equal("This is a Test", Assert.Contains("Bar", userReg.DecryptedStudySpecificProperties));
+				Assert.Equal(new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" }, Assert.Contains("Obj", userReg.DecryptedStudySpecificProperties));
+			}
+		}
+
+		private const string localDevDemoSignerCertificatePem = @"
 -----BEGIN CERTIFICATE-----
 MIIFuTCCA6GgAwIBAgIUKpQ24sBFO9bqQjDP+7s+wGCbcngwDQYJKoZIhvcNAQEL
 BQAwZDELMAkGA1UEBhMCREUxGTAXBgNVBAoMEEhvY2hzY2h1bGUgVHJpZXIxJDAi
@@ -247,6 +313,26 @@ IklyxrNwUSFlBSCkzI8PRuhV8NIycRowiBCrWmqEiOxR4FLx53gyTgTQoCJtrllL
 h1n6VBPHGysCKT5/Wefyi3DMimNuhyM9Ci7QP88ann+d5smraMpgy1Z+/jmmPQOa
 BqWhTbMxCis0OJw9HUtRsh4ftW2n7h3vd+DoT+Czu40T0qzAO+XnXMj6tg3A+e8S
 5Youu5yh3WKRfU5eBEC9fSqzjodd/SZAsOWoSXk=
+-----END CERTIFICATE-----
+";
+
+		private const string localDevDemoRekeySignerCertificatePem = @"
+-----BEGIN CERTIFICATE-----
+MIICwTCCAiOgAwIBAgIQROmC/Ea5gEkYuy0ZUgl7JjAKBggqhkjOPQQDAjBrMQsw
+CQYDVQQGEwJERTEZMBcGA1UECgwQSG9jaHNjaHVsZSBUcmllcjEkMCIGA1UECwwb
+U2VuaW9yIEhlYWx0aCBHYW1lcyBQcm9qZWN0MRswGQYDVQQDDBJTZWNvbmQgVGVz
+dCBTaWduZXIwHhcNMjMwNzEyMTMwNTIxWhcNMzIwOTEzMTEwMzEzWjBrMQswCQYD
+VQQGEwJERTEZMBcGA1UECgwQSG9jaHNjaHVsZSBUcmllcjEkMCIGA1UECwwbU2Vu
+aW9yIEhlYWx0aCBHYW1lcyBQcm9qZWN0MRswGQYDVQQDDBJTZWNvbmQgVGVzdCBT
+aWduZXIwgZswEAYHKoZIzj0CAQYFK4EEACMDgYYABAFWZV/biGqjTR6ujnB7jWRU
+L7fsacbrAHSyQ9bcz32gsaHM/twACgoJnPmW8f6PRn884f99QvIn2DTTaFovVWXV
+zQHLDLcQfOEmJaoDnokbk3mP7Z5dSOtGWYPxcZjpw1cebNAvx/0JdCprI5Bxro9y
+AAb++/42fSDT2qeQDsx9229rFqNmMGQwHwYDVR0jBBgwFoAUwP8L4Jm9ftaRFnug
+rDDpRHP0SacwHQYDVR0OBBYEFMD/C+CZvX7WkRZ7oKww6URz9EmnMA4GA1UdDwEB
+/wQEAwICBDASBgNVHRMBAf8ECDAGAQH/AgEBMAoGCCqGSM49BAMCA4GLADCBhwJB
+IJrRZQRSDKmdkRvsM22KyvZuMLH9UcPm9MrWumuigK8vHXNWa6TbHvDvQ6l+xv8U
+iSFd2cKrpb2Q3OETEaQDrFACQgFUzKFlZc3vW2cJPtLHHVQ2BH2UDOFXAnuu2Nlp
+1teJZ+/b/wehQx4Uy23ZWxOJdyywcaeJGltIcDuRmhlEkNVX2Q==
 -----END CERTIFICATE-----
 ";
 	}
