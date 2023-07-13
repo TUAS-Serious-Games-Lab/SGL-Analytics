@@ -33,8 +33,7 @@ namespace SGL.Analytics.ExporterClient {
 			await UseKeyFileAsync(file, filePath, getPassword, ct).ConfigureAwait(false);
 		}
 		public async Task UseKeyFileAsync(TextReader reader, string sourceName, Func<char[]> getPassword, CancellationToken ct = default) {
-			var pemReader = new PemObjectReader(reader, getPassword);
-			var result = await Task.Run(() => ReadKeyFile(pemReader, sourceName, ct), ct).ConfigureAwait(false);
+			var result = await KeyFile.LoadAsync(reader, sourceName, getPassword, logger, ct);
 			var authFactoryargs = new SglAnalyticsExporterConfiguratorFactoryArguments(httpClient, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories);
 
 			using var lockHandle = await stateLock.WaitAsyncWithScopedRelease(ct).ConfigureAwait(false); // Hold lock till end of method as we mutate state.
