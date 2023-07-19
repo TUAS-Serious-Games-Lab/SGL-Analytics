@@ -48,8 +48,10 @@ namespace SGL.Analytics.ExporterClient {
 			return (await response.Content.ReadFromJsonAsync<DownstreamLogMetadataDTO>(jsonOptions, ct).ConfigureAwait(false)) ?? throw new JsonException("Got null from response.");
 		}
 
-		public async Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId keyId, CancellationToken ct = default) {
-			using var response = await SendRequest(HttpMethod.Get, $"rekey/{keyId}", null, req => { }, accept: jsonMT, ct);
+		public async Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId keyId, KeyId targetKeyId, CancellationToken ct = default) {
+			using var response = await SendRequest(HttpMethod.Get, $"rekey/{keyId}", new Dictionary<string, string> {
+				["targetKeyId"] = targetKeyId.ToString() ?? throw new ArgumentNullException(nameof(targetKeyId) + "." + nameof(KeyId.ToString))
+			}, null, req => { }, accept: jsonMT, ct);
 			return (await response.Content.ReadFromJsonAsync<Dictionary<Guid, EncryptionInfo>>(jsonOptions, ct).ConfigureAwait(false)) ?? throw new JsonException("Got null from response.");
 		}
 

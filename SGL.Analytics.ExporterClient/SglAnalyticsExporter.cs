@@ -170,7 +170,7 @@ namespace SGL.Analytics.ExporterClient {
 				logger.LogError("Target key {targetKey} for rekeying operation not found in fetched certificate store.", keyIdToGrantAccessTo);
 				throw new Exception("KeyId not found!");
 			}
-			var origKeyDict = await logClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, ct);
+			var origKeyDict = await logClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, keyIdToGrantAccessTo, ct);
 			var keyEncryptor = new KeyEncryptor(new[] { cert.PublicKey }, randomGenerator,
 				allowSharedMessageKeyPair: false); // As we don't have the original private key for the shared message public key,
 												   // we need to create a separate message public key for the new recipient,
@@ -201,7 +201,7 @@ namespace SGL.Analytics.ExporterClient {
 				logger.LogError("Target key {targetKey} for rekeying operation not found in fetched certificate store.", keyIdToGrantAccessTo);
 				throw new Exception("KeyId not found!");
 			}
-			var origKeyDict = await usersClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, ct);
+			var origKeyDict = await usersClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, keyIdToGrantAccessTo, ct);
 			var keyEncryptor = new KeyEncryptor(new[] { cert.PublicKey }, randomGenerator,
 				allowSharedMessageKeyPair: false); // As we don't have the original private key for the shared message public key,
 												   // we need to create a separate message public key for the new recipient,

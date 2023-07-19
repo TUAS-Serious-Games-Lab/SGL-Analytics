@@ -49,8 +49,10 @@ namespace SGL.Analytics.ExporterClient {
 			await certificateStore.LoadCertificatesFromHttpAsync(response, ct);
 		}
 
-		public async Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId keyId, CancellationToken ct) {
-			using var response = await SendRequest(HttpMethod.Get, $"rekey/{keyId}", null, req => { }, accept: jsonMT, ct);
+		public async Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId keyId, KeyId targetKeyId, CancellationToken ct) {
+			using var response = await SendRequest(HttpMethod.Get, $"rekey/{keyId}", new Dictionary<string, string> {
+				["targetKeyId"] = targetKeyId.ToString() ?? throw new ArgumentNullException(nameof(targetKeyId) + "." + nameof(KeyId.ToString))
+			}, null, req => { }, accept: jsonMT, ct);
 			return (await response.Content.ReadFromJsonAsync<Dictionary<Guid, EncryptionInfo>>(jsonOptions, ct).ConfigureAwait(false)) ?? throw new JsonException("Got null from response.");
 		}
 

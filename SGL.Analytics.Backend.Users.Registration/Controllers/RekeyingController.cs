@@ -46,7 +46,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		[HttpGet("{keyId}")]
-		public async Task<ActionResult<Dictionary<Guid, EncryptionInfo>>> GetKeysForRekeying([FromRoute(Name = "keyId")] KeyId recipientKeyId, CancellationToken ct = default) {
+		public async Task<ActionResult<Dictionary<Guid, EncryptionInfo>>> GetKeysForRekeying([FromRoute(Name = "keyId")] KeyId recipientKeyId,
+				[FromQuery(Name = "targetKeyId")] KeyId targetKeyId, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetKeysForRekeying));
 			if (credResult != null) return credResult;
 			try {
