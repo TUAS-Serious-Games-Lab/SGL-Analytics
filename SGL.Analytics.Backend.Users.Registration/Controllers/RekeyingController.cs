@@ -51,8 +51,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetKeysForRekeying));
 			if (credResult != null) return credResult;
 			try {
-				logger.LogInformation("Listing key material for all user registrations in application {appName} with recipient keys for {recipientKeyId} for rekeying by exporter {exporterKeyId} ({exporterDN}).",
-					appName, recipientKeyId, exporterKeyId, exporterDN);
+				logger.LogInformation("Listing key material for user registrations in application {appName} with recipient keys for {recipientKeyId} for rekeying by exporter {exporterKeyId} ({exporterDN}) to recipient key {targetKeyId}.",
+					appName, recipientKeyId, exporterKeyId, exporterDN, targetKeyId);
 				var result = await userManager.GetKeysForRekeying(appName, recipientKeyId, targetKeyId, exporterDN, ct);
 				return result;
 			}

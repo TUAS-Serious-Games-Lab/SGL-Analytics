@@ -130,5 +130,13 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			await context.SaveChangesAsync(ct);
 			return logMetadata;
 		}
+
+		public async Task<IEnumerable<LogMetadata>> GetLogMetadataByIdsAsync(IReadOnlyCollection<Guid> logIds, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var logIdsSet = logIds.ToHashSet();
+			var query = context.LogMetadata
+				.Where(lmd => logIdsSet.Contains(lmd.Id));
+			query = ApplyQueryOptions(query, queryOptions);
+			return await query.ToListAsync(ct);
+		}
 	}
 }

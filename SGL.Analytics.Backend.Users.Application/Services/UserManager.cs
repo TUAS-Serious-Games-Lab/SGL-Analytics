@@ -56,12 +56,16 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				Ordering = UserQuerySortCriteria.UserId,
 				Limit = options.RekeyingPagination
 			};
-			var userRegs = (await userRepo.ListUsersAsync(app.Name, notForKeyId: newRecipientKeyId, queryOptions, ct)).ToList();
-			logger.LogInformation("Putting {keyCount} rekeyed data keys for recipient {recipientKeyId} into matching user registrations out of {userRegCount} registrations in application {appName} ...",
+			var userRegs = (await userRepo.GetUsersByIdsAsync(dataKeys.Keys, queryOptions, ct)).ToList();
+			logger.LogInformation("Putting {keyCount} rekeyed data keys for recipient {recipientKeyId} into matching user registrations out of {userRegCount} looked-up registrations in application {appName} ...",
 				dataKeys.Count, newRecipientKeyId, userRegs.Count, appName);
 			using var logScope = logger.BeginScope("Rekey-Put {keyId}", newRecipientKeyId);
 			var pendingIds = dataKeys.Keys.ToHashSet();
 			foreach (var userReg in userRegs) {
+				if (userReg.App.Name != appName) {
+					logger.LogError("Attempt to put rekeyed key for user registration {userId} in app {appName1} through a request from app {appName2}.", userReg.Id, userReg.App.Name, appName);
+					continue;
+				}
 				if (dataKeys.TryGetValue(userReg.Id, out var newDataKeyInfo)) {
 					if (userReg.PropertyRecipientKeys.Any(rk => rk.RecipientKeyId == newRecipientKeyId)) {
 						logger.LogWarning("Attempt to put rekeyed key for recipient {keyId} into user registration {userId} that already has a data key for that recipient.",

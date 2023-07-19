@@ -52,8 +52,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetKeysForRekeying));
 			if (credResult != null) return credResult;
 			try {
-				logger.LogInformation("Listing key material for all logs in application {appName} with recipient keys for {recipientKeyId} for rekeying by exporter {exporterKeyId} ({exporterDN}).",
-					appName, recipientKeyId, exporterKeyId, exporterDN);
+				logger.LogInformation("Listing key material for logs in application {appName} with recipient keys for {recipientKeyId} for rekeying by exporter {exporterKeyId} ({exporterDN}) to recipient key {targetKeyId}.",
+					appName, recipientKeyId, exporterKeyId, exporterDN, targetKeyId);
 				var result = await logManager.GetKeysForRekeying(appName, recipientKeyId, targetKeyId, exporterDN, ct);
 				return result;
 			}

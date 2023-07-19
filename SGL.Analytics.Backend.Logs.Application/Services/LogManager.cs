@@ -225,12 +225,16 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				Ordering = LogMetadataQuerySortCriteria.UserIdThenCreateTime,
 				Limit = options.RekeyingPagination
 			};
-			var logs = (await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, notForKeyId: newRecipientKeyId, queryOptions: queryOptions, ct: ct)).ToList();
-			logger.LogInformation("Putting {keyCount} rekeyed data keys for recipient {recipientKeyId} into matching logs out of {logCount} logs in application {appName} ...",
+			var logs = (await logMetaRepo.GetLogMetadataByIdsAsync(dataKeys.Keys, queryOptions: queryOptions, ct: ct)).ToList();
+			logger.LogInformation("Putting {keyCount} rekeyed data keys for recipient {recipientKeyId} into matching logs out of {logCount} looked-up logs in application {appName} ...",
 				dataKeys.Count, newRecipientKeyId, logs.Count, appName);
 			using var logScope = logger.BeginScope("Rekey-Put {keyId}", newRecipientKeyId);
 			var pendingIds = dataKeys.Keys.ToHashSet();
 			foreach (var log in logs) {
+				if (log.App.Name != appName) {
+					logger.LogError("Attempt to put rekeyed key for log {logId} in app {appName1} through a request from app {appName2}.", log.Id, log.App.Name, appName);
+					continue;
+				}
 				if (dataKeys.TryGetValue(log.Id, out var newDataKeyInfo)) {
 					if (log.RecipientKeys.Any(rk => rk.RecipientKeyId == newRecipientKeyId)) {
 						logger.LogWarning("Attempt to put rekeyed key for recipient {keyId} into log file {logId} that already has a data key for that recipient.",

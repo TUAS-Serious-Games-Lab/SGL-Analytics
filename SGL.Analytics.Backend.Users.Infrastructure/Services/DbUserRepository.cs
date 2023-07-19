@@ -146,5 +146,13 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			await context.SaveChangesAsync(ct);
 			return userRegs;
 		}
+
+		public async Task<IEnumerable<UserRegistration>> GetUsersByIdsAsync(IReadOnlyCollection<Guid> ids, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var idsSet = ids.ToHashSet();
+			var query = context.UserRegistrations
+				.Where(u => idsSet.Contains(u.Id));
+			query = ApplyQueryOptions(query, queryOptions);
+			return await query.ToListAsync(ct);
+		}
 	}
 }

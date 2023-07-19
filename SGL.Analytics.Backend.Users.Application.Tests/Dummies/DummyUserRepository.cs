@@ -1,4 +1,5 @@
-﻿using SGL.Analytics.Backend.Domain.Entity;
+﻿using Org.BouncyCastle.Utilities;
+using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Utilities.Backend;
@@ -29,6 +30,13 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 		public async Task<UserRegistration?> GetUserByUsernameAndAppNameAsync(string username, string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			return users.Values.Where(u => u.Username == username && u.App.Name == appName).SingleOrDefault<UserRegistration?>();
+		}
+
+		public async Task<IEnumerable<UserRegistration>> GetUsersByIdsAsync(IReadOnlyCollection<Guid> ids, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
+			var idsSet = ids.ToHashSet();
+			return users.Values.Where(u => idsSet.Contains(u.Id)).ToList();
 		}
 
 		public async Task<IDictionary<string, int>> GetUsersCountPerAppAsync(CancellationToken ct = default) {
