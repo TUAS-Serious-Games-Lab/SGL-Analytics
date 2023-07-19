@@ -117,5 +117,12 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 				}
 			}
 		}
+
+		public Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct = default) {
+			return Task.FromResult(users.Values
+				.Where(u => u.App.Name == appName)
+				.Where(u => !u.PropertyEncryptionInfo.DataKeys.ContainsKey(targetKeyId))
+				.ToList().ToDictionary(u => u.Id, u => u.PropertyEncryptionInfo));
+		}
 	}
 }

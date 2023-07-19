@@ -53,8 +53,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			try {
 				logger.LogInformation("Listing key material for all user registrations in application {appName} with recipient keys for {recipientKeyId} for rekeying by exporter {exporterKeyId} ({exporterDN}).",
 					appName, recipientKeyId, exporterKeyId, exporterDN);
-				var logs = await userManager.ListUsersAsync(appName, recipientKeyId, exporterDN, ct);
-				var result = logs.ToDictionary(log => log.Id, log => log.PropertyEncryptionInfo);
+				var result = await userManager.GetKeysForRekeying(appName, recipientKeyId, targetKeyId, exporterDN, ct);
 				return result;
 			}
 			catch (OperationCanceledException) {

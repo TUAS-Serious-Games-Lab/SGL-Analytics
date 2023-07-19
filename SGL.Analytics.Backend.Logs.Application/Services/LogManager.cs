@@ -180,7 +180,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				throw new ApplicationDoesNotExistException(appName);
 			}
 			var queryOptions = new LogMetadataQueryOptions { ForUpdating = false, FetchRecipientKey = recipientKeyId };
-			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, queryOptions, ct);
+			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, notForKeyId: null, queryOptions: queryOptions, ct: ct);
 			return logs.Select(log => new LogFile(log, logFileRepo)).ToList();
 		}
 
@@ -211,7 +211,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				throw new ApplicationDoesNotExistException(appName);
 			}
 			var queryOptions = new LogMetadataQueryOptions { ForUpdating = true, FetchRecipientKeys = true };
-			var logs = (await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, queryOptions, ct)).ToList();
+			var logs = (await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, notForKeyId: null, queryOptions: queryOptions, ct: ct)).ToList();
 			logger.LogInformation("Putting {keyCount} rekeyed data keys for recipient {recipientKeyId} into matching logs out of {logCount} logs in application {appName} ...",
 				dataKeys.Count, newRecipientKeyId, logs.Count, appName);
 			using var logScope = logger.BeginScope("Rekey-Put {keyId}", newRecipientKeyId);
@@ -244,6 +244,17 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 			}
 			await logMetaRepo.UpdateLogMetadataAsync(logs, ct);
 			logger.LogInformation("... rekeying upload finished.");
+		}
+
+		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				logger.LogError("Attempt to list logs from non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, recipientKeyId, exporterDN);
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			var queryOptions = new LogMetadataQueryOptions { ForUpdating = false, FetchRecipientKey = recipientKeyId };
+			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, notForKeyId: targetKeyId, queryOptions: queryOptions, ct: ct);
+			return logs.ToDictionary(log => log.Id, log => log.EncryptionInfo);
 		}
 	}
 }

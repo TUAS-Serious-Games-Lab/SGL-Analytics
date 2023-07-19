@@ -54,8 +54,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			try {
 				logger.LogInformation("Listing key material for all logs in application {appName} with recipient keys for {recipientKeyId} for rekeying by exporter {exporterKeyId} ({exporterDN}).",
 					appName, recipientKeyId, exporterKeyId, exporterDN);
-				var logs = await logManager.ListLogsAsync(appName, recipientKeyId, exporterDN, ct);
-				var result = logs.ToDictionary(log => log.Id, log => log.EncryptionInfo);
+				var result = await logManager.GetKeysForRekeying(appName, recipientKeyId, targetKeyId, exporterDN, ct);
 				return result;
 			}
 			catch (OperationCanceledException) {

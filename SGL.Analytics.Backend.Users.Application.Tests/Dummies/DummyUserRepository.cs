@@ -39,8 +39,12 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			return query.ToDictionary(e => e.AppName, e => e.UsersCount);
 		}
 
-		public Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
-			return Task.FromResult(users.Values.Where(u => u.App.Name == appName).ToList().AsEnumerable());
+		public Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, KeyId? notForKeyId = null, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var query = users.Values.Where(u => u.App.Name == appName);
+			if (notForKeyId != null) {
+				query = query.Where(u => !u.PropertyEncryptionInfo.DataKeys.ContainsKey(notForKeyId));
+			}
+			return Task.FromResult(query.ToList().AsEnumerable());
 		}
 
 		public async Task<UserRegistration> RegisterUserAsync(UserRegistration userReg, CancellationToken ct = default) {

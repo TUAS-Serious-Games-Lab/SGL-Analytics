@@ -42,7 +42,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				throw new ApplicationDoesNotExistException(appName);
 			}
 			var queryOptions = new UserQueryOptions { ForUpdating = true, FetchRecipientKeys = true };
-			var userRegs = (await userRepo.ListUsersAsync(app.Name, queryOptions, ct)).ToList();
+			var userRegs = (await userRepo.ListUsersAsync(app.Name, notForKeyId: null, queryOptions, ct)).ToList();
 			logger.LogInformation("Putting {keyCount} rekeyed data keys for recipient {recipientKeyId} into matching user registrations out of {userRegCount} registrations in application {appName} ...",
 				dataKeys.Count, newRecipientKeyId, userRegs.Count, appName);
 			using var logScope = logger.BeginScope("Rekey-Put {keyId}", newRecipientKeyId);
@@ -76,6 +76,13 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			logger.LogInformation("... rekeying upload finished.");
 		}
 
+		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct = default) {
+			var queryOptions = new UserQueryOptions { ForUpdating = false, FetchRecipientKey = recipientKeyId, FetchProperties = true };
+			var userRegs = await userRepo.ListUsersAsync(appName, notForKeyId: targetKeyId, queryOptions, ct);
+			var result = userRegs.Select(u => new User(u)).ToList().ToDictionary(u => u.Id, u => u.PropertyEncryptionInfo);
+			return result;
+		}
+
 		/// <inheritdoc/>
 		public async Task<User?> GetUserByIdAsync(Guid userId, KeyId? recipientKeyId = null, bool fetchProperties = false, CancellationToken ct = default) {
 			var queryOptions = new UserQueryOptions { ForUpdating = true, FetchRecipientKey = recipientKeyId, FetchProperties = fetchProperties };
@@ -95,7 +102,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <inheritdoc/>
 		public async Task<IEnumerable<Guid>> ListUserIdsAsync(string appName, string exporterDN, CancellationToken ct) {
 			var queryOptions = new UserQueryOptions { ForUpdating = false };
-			var userRegs = await userRepo.ListUsersAsync(appName, queryOptions, ct);
+			var userRegs = await userRepo.ListUsersAsync(appName, notForKeyId: null, queryOptions, ct);
 			var result = userRegs.Select(u => u.Id).ToList();
 			return result;
 		}
@@ -103,7 +110,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <inheritdoc/>
 		public async Task<IEnumerable<User>> ListUsersAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct) {
 			var queryOptions = new UserQueryOptions { ForUpdating = false, FetchRecipientKey = recipientKeyId, FetchProperties = true };
-			var userRegs = await userRepo.ListUsersAsync(appName, queryOptions, ct);
+			var userRegs = await userRepo.ListUsersAsync(appName, notForKeyId: null, queryOptions, ct);
 			var result = userRegs.Select(u => new User(u)).ToList();
 			return result;
 		}

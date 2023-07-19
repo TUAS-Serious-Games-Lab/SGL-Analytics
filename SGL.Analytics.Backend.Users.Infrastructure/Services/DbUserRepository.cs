@@ -122,8 +122,11 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			return await query.AsNoTracking().ToDictionaryAsync(e => e.AppName, e => e.UsersCount, ct);
 		}
 
-		public async Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+		public async Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, KeyId? notForKeyId = null, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var query = context.UserRegistrations.Where(u => u.App.Name == appName);
+			if (notForKeyId != null) {
+				query = query.Where(u => !u.PropertyRecipientKeys.Any(rk => rk.RecipientKeyId == notForKeyId));
+			}
 			query = ApplyQueryOptions(query, queryOptions);
 			return await query.ToListAsync(ct);
 		}

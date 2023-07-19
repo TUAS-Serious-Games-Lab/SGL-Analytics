@@ -14,6 +14,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 	/// </summary>
 	public interface IUserManager {
 		Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct = default);
+		Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct = default);
 
 		/// <summary>
 		/// Asynchronously obtains the user object with the given id if it exists.
