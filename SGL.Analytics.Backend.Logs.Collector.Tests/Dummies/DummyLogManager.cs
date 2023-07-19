@@ -33,7 +33,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		private IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo;
 		public List<IngestOperation> Ingests { get; } = new();
 		public int WarningCount { get; private set; } = 0;
-
+		public int RekeyingQueryLimit { get; set; } = 100;
 
 		public DummyLogManager(IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo) {
 			this.appRepo = appRepo;
@@ -121,10 +121,11 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			}
 			var logsQuery = Ingests.Where(ig => ig.LogMetadata.App.Name == appName)
 				.Where(ig => !ig.LogMetadata.EncryptionInfo.DataKeys.ContainsKey(targetKeyId))
+				.OrderBy(log => log.LogMetadata.UserId).ThenBy(log => log.LogMetadata.CreationTime)
+				.Take(RekeyingQueryLimit)
 				.Select(ig => new LogFile(ig.LogMetadata,
 					new SingleLogFileRepository(ig.LogMetadata.App.Name, ig.LogMetadata.UserId, ig.LogMetadata.Id, ig.LogMetadata.FilenameSuffix, ig.LogContent)));
 			return logsQuery.ToList().ToDictionary(log => log.Id, log => log.EncryptionInfo);
-
 		}
 
 		class SingleLogFileRepository : ILogFileRepository, IDisposable {

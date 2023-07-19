@@ -47,6 +47,16 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			else {
 				query = query.Include(u => u.App);
 			}
+			switch (queryOptions.Ordering) {
+				case UserQuerySortCriteria.UserId:
+					query = query.OrderBy(ur => ur.Id);
+					break;
+				default:
+					break;
+			}
+			if (queryOptions.Limit > 0) {
+				query = query.Take(queryOptions.Limit);
+			}
 			if (!queryOptions.ForUpdating) {
 				query = query.AsNoTracking();
 			}

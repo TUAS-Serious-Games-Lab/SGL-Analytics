@@ -44,6 +44,16 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			if (notForKeyId != null) {
 				query = query.Where(u => !u.PropertyEncryptionInfo.DataKeys.ContainsKey(notForKeyId));
 			}
+			switch (queryOptions?.Ordering) {
+				case UserQuerySortCriteria.UserId:
+					query = query.OrderBy(ur => ur.Id);
+					break;
+				default:
+					break;
+			}
+			if ((queryOptions?.Limit ?? 0) > 0) {
+				query = query.Take(queryOptions!.Limit);
+			}
 			return Task.FromResult(query.ToList().AsEnumerable());
 		}
 

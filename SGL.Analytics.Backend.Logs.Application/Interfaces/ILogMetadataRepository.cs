@@ -9,7 +9,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 	public class LogMetadataQueryOptions {
 		public bool FetchRecipientKeys { get; set; } = false;
 		public KeyId? FetchRecipientKey { get; set; } = null;
+		public int Limit { get; set; } = 0;
+		public LogMetadataQuerySortCriteria Ordering { get; set; } = LogMetadataQuerySortCriteria.Unordered;
 		public bool ForUpdating { get; set; } = false;
+	}
+
+	public enum LogMetadataQuerySortCriteria {
+		Unordered,
+		UserIdThenCreateTime
 	}
 
 	/// <summary>

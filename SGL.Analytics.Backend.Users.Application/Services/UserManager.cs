@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
@@ -15,12 +16,18 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Services {
+	public class UserManagerOptions {
+		public const string UserManager = "UserManager";
+		public int RekeyingPagination { get; set; } = 100;
+	}
+
 	/// <summary>
 	/// Implements the functionality required by <see cref="IUserManager"/>.
 	/// </summary>
 	public class UserManager : IUserManager {
 		private IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo;
 		private IUserRepository userRepo;
+		private UserManagerOptions options;
 		private ILogger<UserManager> logger;
 
 		/// <summary>
@@ -29,10 +36,12 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <param name="appRepo">The application repository to use.</param>
 		/// <param name="userRepo">The user registration repository to use.</param>
 		/// <param name="logger">A logger to log status, warning and error messages to.</param>
-		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger) {
+		/// <param name="options">Configuration options for the UserManager service.</param>
+		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger, IOptions<UserManagerOptions> options) {
 			this.appRepo = appRepo;
 			this.userRepo = userRepo;
 			this.logger = logger;
+			this.options = options.Value;
 		}
 
 		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct) {
@@ -41,8 +50,13 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				logger.LogError("Attempt to upload rekeyed data keys for non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, newRecipientKeyId, exporterDN);
 				throw new ApplicationDoesNotExistException(appName);
 			}
-			var queryOptions = new UserQueryOptions { ForUpdating = true, FetchRecipientKeys = true };
-			var userRegs = (await userRepo.ListUsersAsync(app.Name, notForKeyId: null, queryOptions, ct)).ToList();
+			var queryOptions = new UserQueryOptions {
+				ForUpdating = true,
+				FetchRecipientKeys = true,
+				Ordering = UserQuerySortCriteria.UserId,
+				Limit = options.RekeyingPagination
+			};
+			var userRegs = (await userRepo.ListUsersAsync(app.Name, notForKeyId: newRecipientKeyId, queryOptions, ct)).ToList();
 			logger.LogInformation("Putting {keyCount} rekeyed data keys for recipient {recipientKeyId} into matching user registrations out of {userRegCount} registrations in application {appName} ...",
 				dataKeys.Count, newRecipientKeyId, userRegs.Count, appName);
 			using var logScope = logger.BeginScope("Rekey-Put {keyId}", newRecipientKeyId);
@@ -77,7 +91,13 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		}
 
 		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct = default) {
-			var queryOptions = new UserQueryOptions { ForUpdating = false, FetchRecipientKey = recipientKeyId, FetchProperties = true };
+			var queryOptions = new UserQueryOptions {
+				ForUpdating = false,
+				FetchRecipientKey = recipientKeyId,
+				Ordering = UserQuerySortCriteria.UserId,
+				Limit = options.RekeyingPagination,
+				FetchProperties = true
+			};
 			var userRegs = await userRepo.ListUsersAsync(appName, notForKeyId: targetKeyId, queryOptions, ct);
 			var result = userRegs.Select(u => new User(u)).ToList().ToDictionary(u => u.Id, u => u.PropertyEncryptionInfo);
 			return result;

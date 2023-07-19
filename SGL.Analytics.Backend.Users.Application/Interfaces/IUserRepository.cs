@@ -10,9 +10,14 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		public bool FetchProperties { get; set; } = false;
 		public bool FetchRecipientKeys { get; set; } = false;
 		public KeyId? FetchRecipientKey { get; set; } = null;
+		public int Limit { get; set; } = 0;
+		public UserQuerySortCriteria Ordering { get; set; } = UserQuerySortCriteria.Unordered;
 		public bool ForUpdating { get; set; } = false;
 	}
-
+	public enum UserQuerySortCriteria {
+		Unordered,
+		UserId
+	}
 	/// <summary>
 	/// Specifies the interface for a repository to store <see cref="UserRegistration"/> objects.
 	/// </summary>

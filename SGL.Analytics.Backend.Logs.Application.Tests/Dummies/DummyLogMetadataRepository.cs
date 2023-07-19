@@ -64,6 +64,16 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			if (notForKeyId != null) {
 				query = query.Where(log => !log.EncryptionInfo.DataKeys.ContainsKey(notForKeyId));
 			}
+			switch (queryOptions?.Ordering) {
+				case LogMetadataQuerySortCriteria.UserIdThenCreateTime:
+					query = query.OrderBy(log => log.UserId).ThenBy(log => log.CreationTime);
+					break;
+				default:
+					break;
+			}
+			if ((queryOptions?.Limit ?? 0) > 0) {
+				query = query.Take(queryOptions!.Limit);
+			}
 			return Task.FromResult(query.ToList().AsEnumerable());
 		}
 

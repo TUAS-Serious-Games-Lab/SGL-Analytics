@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
@@ -29,7 +30,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 		public LogManagerUnitTest(ITestOutputHelper output) {
 			this.output = output;
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
-			manager = new LogManager(appRepo, logMetadataRepo, logFileRepo, loggerFactory.CreateLogger<LogManager>(), new NullMetricsManager());
+			manager = new LogManager(appRepo, logMetadataRepo, logFileRepo, loggerFactory.CreateLogger<LogManager>(), new NullMetricsManager(),
+				Options.Create(new LogManagerOptions { RekeyingPagination = 10 }));
 			appRepo.AddApplicationAsync(new Domain.Entity.Application(Guid.NewGuid(), appName, appApiToken)).Wait();
 		}
 

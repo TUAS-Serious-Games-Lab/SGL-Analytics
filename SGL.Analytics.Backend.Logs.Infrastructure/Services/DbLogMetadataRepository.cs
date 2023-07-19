@@ -59,6 +59,16 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			else if (queryOptions.FetchRecipientKey != null) {
 				query = query.Include(lmd => lmd.RecipientKeys.Where(rk => rk.RecipientKeyId == queryOptions.FetchRecipientKey));
 			}
+			switch (queryOptions.Ordering) {
+				case LogMetadataQuerySortCriteria.UserIdThenCreateTime:
+					query = query.OrderBy(log => log.UserId).ThenBy(log => log.CreationTime);
+					break;
+				default:
+					break;
+			}
+			if (queryOptions.Limit > 0) {
+				query = query.Take(queryOptions.Limit);
+			}
 			if (!queryOptions.ForUpdating) {
 				query = query.AsNoTracking();
 			}
