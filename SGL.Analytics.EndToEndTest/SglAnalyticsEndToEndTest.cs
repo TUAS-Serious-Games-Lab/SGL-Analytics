@@ -205,11 +205,16 @@ namespace SGL.Analytics.EndToEndTest {
 					// Grant access to recipient that was ignored during recording because the in-game client doesn't have their certificate:
 					ICertificateValidator keyCertValidator;
 					if (rekeyRecipientCaCertPemFile != null) {
-						using var caCertFile = File.OpenText(rekeyRecipientCaCertPemFile);
-						keyCertValidator = new CACertTrustValidator(caCertFile, rekeyRecipientCaCertPemFile, ignoreValidityPeriod: true, LoggerFactory.CreateLogger<CACertTrustValidator>(), LoggerFactory.CreateLogger<CertificateStore>());
+						var caCert1Content = await File.ReadAllTextAsync(rekeyRecipientCaCertPemFile);
+						var caCert2Content = recipientCaCertPemFile != null ? await File.ReadAllTextAsync(recipientCaCertPemFile) : recipientCaCertPemText ?? "";
+						var caCertsContent = caCert1Content + "\n\n" + caCert2Content;
+						keyCertValidator = new CACertTrustValidator(caCertsContent, ignoreValidityPeriod: true, LoggerFactory.CreateLogger<CACertTrustValidator>(), LoggerFactory.CreateLogger<CertificateStore>());
 					}
 					else {
-						keyCertValidator = new CACertTrustValidator(rekeyRecipientCaCertPemText!, ignoreValidityPeriod: true, LoggerFactory.CreateLogger<CACertTrustValidator>(), LoggerFactory.CreateLogger<CertificateStore>());
+						var caCert1Content = rekeyRecipientCaCertPemText!;
+						var caCert2Content = recipientCaCertPemFile != null ? await File.ReadAllTextAsync(recipientCaCertPemFile) : recipientCaCertPemText ?? "";
+						var caCertsContent = caCert1Content + "\n\n" + caCert2Content;
+						keyCertValidator = new CACertTrustValidator(caCertsContent, ignoreValidityPeriod: true, LoggerFactory.CreateLogger<CACertTrustValidator>(), LoggerFactory.CreateLogger<CertificateStore>());
 					}
 					await exporter.RekeyLogFilesForRecipientKey(rekeyTargetKeyFile.RecipientKeyId, keyCertValidator, ct);
 					await exporter.RekeyUserRegistrationsForRecipientKey(rekeyTargetKeyFile.RecipientKeyId, keyCertValidator, ct);
