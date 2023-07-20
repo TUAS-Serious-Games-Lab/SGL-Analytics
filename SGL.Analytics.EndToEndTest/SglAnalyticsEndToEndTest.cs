@@ -94,7 +94,7 @@ namespace SGL.Analytics.EndToEndTest {
 				.SetMinimumLevel(LogLevel.Trace)
 				.AddConfiguration(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string> {
 					["LogLevel:SGL"] = "Trace",
-				}).Build()));
+				}).AddEnvironmentVariables("SGLA_E2ET_").Build()));
 		}
 		private void logUncaughtException(Exception ex) {
 			LoggerFactory.CreateLogger<SingleThreadedSynchronizationContext>().LogError(ex, "Exception escapted from async callback.");
