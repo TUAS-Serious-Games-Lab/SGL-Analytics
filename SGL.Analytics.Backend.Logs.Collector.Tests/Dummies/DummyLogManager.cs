@@ -5,6 +5,7 @@ using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Model;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.Applications;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
 using SQLitePCL;
 using System;
@@ -31,6 +32,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		private IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo;
 		public List<IngestOperation> Ingests { get; } = new();
+		public int WarningCount { get; private set; } = 0;
+		public int RekeyingQueryLimit { get; set; } = 100;
 
 		public DummyLogManager(IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo) {
 			this.appRepo = appRepo;
@@ -84,6 +87,45 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				throw new LogNotFoundException($"The log {logId} was not found.", logId);
 			}
 			return log;
+		}
+
+		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			foreach (var ingest in Ingests) {
+				if (ingest.LogMetadata.RecipientKeys.Any(rk => rk.RecipientKeyId == newRecipientKeyId)) {
+					WarningCount++;
+					continue;
+				}
+				if (dataKeys.TryGetValue(ingest.LogMetadata.Id, out var newDataKey)) {
+					ingest.LogMetadata.RecipientKeys.Add(new LogRecipientKey {
+						LogId = ingest.LogMetadata.Id,
+						EncryptionMode = newDataKey.Mode,
+						EncryptedKey = newDataKey.EncryptedKey,
+						LogPublicKey = newDataKey.MessagePublicKey,
+						RecipientKeyId = newRecipientKeyId
+					});
+				}
+				else {
+					WarningCount++;
+				}
+			}
+		}
+
+		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			var logsQuery = Ingests.Where(ig => ig.LogMetadata.App.Name == appName)
+				.Where(ig => !ig.LogMetadata.EncryptionInfo.DataKeys.ContainsKey(targetKeyId))
+				.OrderBy(log => log.LogMetadata.UserId).ThenBy(log => log.LogMetadata.CreationTime)
+				.Take(RekeyingQueryLimit)
+				.Select(ig => new LogFile(ig.LogMetadata,
+					new SingleLogFileRepository(ig.LogMetadata.App.Name, ig.LogMetadata.UserId, ig.LogMetadata.Id, ig.LogMetadata.FilenameSuffix, ig.LogContent)));
+			return logsQuery.ToList().ToDictionary(log => log.Id, log => log.EncryptionInfo);
 		}
 
 		class SingleLogFileRepository : ILogFileRepository, IDisposable {

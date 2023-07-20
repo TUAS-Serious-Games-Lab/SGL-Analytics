@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
@@ -15,12 +16,18 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Services {
+	public class UserManagerOptions {
+		public const string UserManager = "UserManager";
+		public int RekeyingPagination { get; set; } = 100;
+	}
+
 	/// <summary>
 	/// Implements the functionality required by <see cref="IUserManager"/>.
 	/// </summary>
 	public class UserManager : IUserManager {
 		private IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo;
 		private IUserRepository userRepo;
+		private UserManagerOptions options;
 		private ILogger<UserManager> logger;
 
 		/// <summary>
@@ -29,10 +36,75 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <param name="appRepo">The application repository to use.</param>
 		/// <param name="userRepo">The user registration repository to use.</param>
 		/// <param name="logger">A logger to log status, warning and error messages to.</param>
-		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger) {
+		/// <param name="options">Configuration options for the UserManager service.</param>
+		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger, IOptions<UserManagerOptions> options) {
 			this.appRepo = appRepo;
 			this.userRepo = userRepo;
 			this.logger = logger;
+			this.options = options.Value;
+		}
+
+		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				logger.LogError("Attempt to upload rekeyed data keys for non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, newRecipientKeyId, exporterDN);
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			var queryOptions = new UserQueryOptions {
+				ForUpdating = true,
+				FetchRecipientKeys = true,
+				Ordering = UserQuerySortCriteria.UserId,
+				Limit = options.RekeyingPagination
+			};
+			var userRegs = (await userRepo.GetUsersByIdsAsync(dataKeys.Keys, queryOptions, ct)).ToList();
+			logger.LogInformation("Putting {keyCount} rekeyed data keys for recipient {recipientKeyId} into matching user registrations out of {userRegCount} looked-up registrations in application {appName} ...",
+				dataKeys.Count, newRecipientKeyId, userRegs.Count, appName);
+			using var logScope = logger.BeginScope("Rekey-Put {keyId}", newRecipientKeyId);
+			var pendingIds = dataKeys.Keys.ToHashSet();
+			foreach (var userReg in userRegs) {
+				if (userReg.App.Name != appName) {
+					logger.LogError("Attempt to put rekeyed key for user registration {userId} in app {appName1} through a request from app {appName2}.", userReg.Id, userReg.App.Name, appName);
+					continue;
+				}
+				if (dataKeys.TryGetValue(userReg.Id, out var newDataKeyInfo)) {
+					if (userReg.PropertyRecipientKeys.Any(rk => rk.RecipientKeyId == newRecipientKeyId)) {
+						logger.LogWarning("Attempt to put rekeyed key for recipient {keyId} into user registration {userId} that already has a data key for that recipient.",
+							newRecipientKeyId, userReg.Id);
+					}
+					else {
+						userReg.PropertyRecipientKeys.Add(new UserRegistrationPropertyRecipientKey {
+							UserId = userReg.Id,
+							RecipientKeyId = newRecipientKeyId,
+							EncryptionMode = newDataKeyInfo.Mode,
+							EncryptedKey = newDataKeyInfo.EncryptedKey,
+							UserPropertiesPublicKey = newDataKeyInfo.MessagePublicKey
+						});
+						logger.LogDebug("Put key for recipient {keyId} on user registration {userId}.", newRecipientKeyId, userReg.Id);
+						pendingIds.Remove(userReg.Id);
+					}
+				}
+				else {
+					logger.LogWarning("No key for user registration {userId} and recipient {keyId} was provided.", userReg.Id, newRecipientKeyId);
+				}
+			}
+			if (pendingIds.Count > 0) {
+				logger.LogWarning("The following user registration ids given by the rekeying uploader were not present: {userIdList}", string.Join(", ", pendingIds));
+			}
+			await userRepo.UpdateUsersAsync(userRegs, ct);
+			logger.LogInformation("... rekeying upload finished.");
+		}
+
+		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct = default) {
+			var queryOptions = new UserQueryOptions {
+				ForUpdating = false,
+				FetchRecipientKey = recipientKeyId,
+				Ordering = UserQuerySortCriteria.UserId,
+				Limit = options.RekeyingPagination,
+				FetchProperties = true
+			};
+			var userRegs = await userRepo.ListUsersAsync(appName, notForKeyId: targetKeyId, queryOptions, ct);
+			var result = userRegs.Select(u => new User(u)).ToList().ToDictionary(u => u.Id, u => u.PropertyEncryptionInfo);
+			return result;
 		}
 
 		/// <inheritdoc/>
@@ -54,7 +126,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <inheritdoc/>
 		public async Task<IEnumerable<Guid>> ListUserIdsAsync(string appName, string exporterDN, CancellationToken ct) {
 			var queryOptions = new UserQueryOptions { ForUpdating = false };
-			var userRegs = await userRepo.ListUsersAsync(appName, queryOptions, ct);
+			var userRegs = await userRepo.ListUsersAsync(appName, notForKeyId: null, queryOptions, ct);
 			var result = userRegs.Select(u => u.Id).ToList();
 			return result;
 		}
@@ -62,7 +134,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <inheritdoc/>
 		public async Task<IEnumerable<User>> ListUsersAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct) {
 			var queryOptions = new UserQueryOptions { ForUpdating = false, FetchRecipientKey = recipientKeyId, FetchProperties = true };
-			var userRegs = await userRepo.ListUsersAsync(appName, queryOptions, ct);
+			var userRegs = await userRepo.ListUsersAsync(appName, notForKeyId: null, queryOptions, ct);
 			var result = userRegs.Select(u => new User(u)).ToList();
 			return result;
 		}

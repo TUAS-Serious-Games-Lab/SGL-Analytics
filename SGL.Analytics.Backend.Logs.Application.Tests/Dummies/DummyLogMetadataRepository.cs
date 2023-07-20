@@ -34,6 +34,13 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			}
 		}
 
+		public async Task<IEnumerable<LogMetadata>> GetLogMetadataByIdsAsync(IReadOnlyCollection<Guid> logIds, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
+			var logIdsSet = logIds.ToHashSet();
+			return logs.Values.Where(l => logIdsSet.Contains(l.Id)).ToList();
+		}
+
 		public async Task<LogMetadata?> GetLogMetadataByUserLocalIdAsync(Guid userAppId, Guid userId, Guid localLogId, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
@@ -56,10 +63,23 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			return query.ToDictionary(e => e.AppName, e => e.LogSizeAvg ?? 0);
 		}
 
-		public Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
+		public Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, KeyId? notForKeyId = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var query = logs.Values.Where(lmd => lmd.AppId == appId);
 			if (completenessFilter != null) {
 				query = query.Where(log => log.Complete == completenessFilter);
+			}
+			if (notForKeyId != null) {
+				query = query.Where(log => !log.EncryptionInfo.DataKeys.ContainsKey(notForKeyId));
+			}
+			switch (queryOptions?.Ordering) {
+				case LogMetadataQuerySortCriteria.UserIdThenCreateTime:
+					query = query.OrderBy(log => log.UserId).ThenBy(log => log.CreationTime);
+					break;
+				default:
+					break;
+			}
+			if ((queryOptions?.Limit ?? 0) > 0) {
+				query = query.Take(queryOptions!.Limit);
 			}
 			return Task.FromResult(query.ToList().AsEnumerable());
 		}
@@ -70,6 +90,17 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			Debug.Assert(logs.ContainsKey(logMetadata.Id));
 			Debug.Assert(logs.ContainsValue(logMetadata));
 			logs[logMetadata.Id] = logMetadata;
+			return logMetadata;
+		}
+
+		public async Task<IList<LogMetadata>> UpdateLogMetadataAsync(IList<LogMetadata> logMetadata, CancellationToken ct = default) {
+			await Task.CompletedTask;
+			ct.ThrowIfCancellationRequested();
+			foreach (var logMd in logMetadata) {
+				Debug.Assert(logs.ContainsKey(logMd.Id));
+				Debug.Assert(logs.ContainsValue(logMd));
+				logs[logMd.Id] = logMd;
+			}
 			return logMetadata;
 		}
 	}

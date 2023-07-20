@@ -29,7 +29,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			this.metrics = metrics;
 		}
 
-		private ActionResult? GetCredentials(out string appName, out KeyId keyId, out string exporterDN) {
+		private ActionResult? GetCredentials(out string appName, out KeyId keyId, out string exporterDN, string operationName) {
 			try {
 				appName = User.GetClaim("appname");
 				keyId = User.GetClaim<KeyId>("keyid", KeyId.TryParse!);
@@ -37,7 +37,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				return null;
 			}
 			catch (ClaimException ex) {
-				logger.LogError(ex, "GetLogIds operation failed due to an error with the required security token claims.");
+				logger.LogError(ex, "{operationName} operation failed due to an error with the required security token claims.", operationName);
 				metrics.HandleIncorrectSecurityTokenClaimsError();
 				appName = null!;
 				keyId = null!;
@@ -52,7 +52,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 
 		[HttpGet()]
 		public async Task<ActionResult<IEnumerable<Guid>>> GetUserIdList(CancellationToken ct = default) {
-			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
+			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetUserIdList));
 			if (credResult != null) return credResult;
 			try {
 				logger.LogInformation("Listing user ids in application {appName} for exporter {keyId} ({exporterDN}).", appName, exporterKeyId, exporterDN);
@@ -78,7 +78,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 
 		[HttpGet("all")]
 		public async Task<ActionResult<IEnumerable<UserMetadataDTO>>> GetMetadataForAllUsers([FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
-			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
+			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetMetadataForAllUsers));
 			if (credResult != null) return credResult;
 			try {
 				logger.LogInformation("Listing user metadata for all users in application {appName} with recipient keys for {recipientKeyId} for exporter {exporterKeyId} ({exporterDN}).",
@@ -105,7 +105,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 
 		[HttpGet("{id:Guid}")]
 		public async Task<ActionResult<UserMetadataDTO>> GetUserMetadataById(Guid id, [FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
-			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN);
+			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetUserMetadataById));
 			if (credResult != null) return credResult;
 			try {
 				logger.LogInformation("Fetching user metadata for user {userId} in application {appName} with recipient key for {recipientKeyId} for exporter {exporterKeyId} ({exporterDN}).",

@@ -10,9 +10,14 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		public bool FetchProperties { get; set; } = false;
 		public bool FetchRecipientKeys { get; set; } = false;
 		public KeyId? FetchRecipientKey { get; set; } = null;
+		public int Limit { get; set; } = 0;
+		public UserQuerySortCriteria Ordering { get; set; } = UserQuerySortCriteria.Unordered;
 		public bool ForUpdating { get; set; } = false;
 	}
-
+	public enum UserQuerySortCriteria {
+		Unordered,
+		UserId
+	}
 	/// <summary>
 	/// Specifies the interface for a repository to store <see cref="UserRegistration"/> objects.
 	/// </summary>
@@ -25,6 +30,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The user registration object if the user registration exists, or <see langword="null"/> otherwise.</returns>
 		Task<UserRegistration?> GetUserByIdAsync(Guid id, UserQueryOptions? queryOptions = null, CancellationToken ct = default);
+		Task<IEnumerable<UserRegistration>> GetUsersByIdsAsync(IReadOnlyCollection<Guid> ids, UserQueryOptions? queryOptions = null, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously obtains the user object with the given username in the application given by name if such a user exists.
 		/// </summary>
@@ -34,7 +40,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The user registration object if the user registration exists, or <see langword="null"/> otherwise.</returns>
 		Task<UserRegistration?> GetUserByUsernameAndAppNameAsync(string username, string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default);
-		Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default);
+		Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, KeyId? notForKeyId = null, UserQueryOptions? queryOptions = null, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously creates the given user registration object in the repository.
 		/// </summary>
@@ -56,5 +62,6 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing an application name -> user count dictionary as its result.</returns>
 		Task<IDictionary<string, int>> GetUsersCountPerAppAsync(CancellationToken ct = default);
+		Task<IList<UserRegistration>> UpdateUsersAsync(IList<UserRegistration> userRegs, CancellationToken ct = default);
 	}
 }

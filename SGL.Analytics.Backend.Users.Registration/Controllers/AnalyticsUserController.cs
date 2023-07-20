@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -11,6 +12,7 @@ using SGL.Utilities.Backend;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -257,13 +259,28 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[HttpGet("recipient-certificates")]
 		[Produces("application/x-pem-file")]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-		public async Task<ActionResult<IEnumerable<string>>> GetRecipientCertificates([FromQuery] string appName, [FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, CancellationToken ct = default) {
+		public async Task<ActionResult<IEnumerable<string>>> GetRecipientCertificates([FromQuery] string appName, [FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string? appApiToken, CancellationToken ct = default) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, new ApplicationQueryOptions { FetchRecipients = true }, ct: ct);
 			if (app == null) {
 				return Unauthorized();
 			}
-			if (app.ApiToken != appApiToken) {
+			if (appApiToken != null && app.ApiToken != appApiToken) {
 				return Unauthorized();
+			}
+			else if (appApiToken == null) {
+				var result = await HttpContext.AuthenticateAsync();
+				var tokenAppName = result?.Principal?.GetClaim("appname");
+				var keyId = result?.Principal?.GetClaim<KeyId>("keyid", KeyId.TryParse!);
+				var exporterDN = result?.Principal?.GetClaim("exporter-dn");
+				if (tokenAppName != appName) {
+					return Unauthorized();
+				}
+				if (keyId == null) {
+					return Unauthorized();
+				}
+				if (exporterDN == null) {
+					return Unauthorized();
+				}
 			}
 			return Ok(app.DataRecipients.Select(r => r.CertificatePem));
 		}

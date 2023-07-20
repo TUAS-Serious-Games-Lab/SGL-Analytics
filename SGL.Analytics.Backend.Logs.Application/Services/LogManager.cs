@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
@@ -16,6 +17,11 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Application.Services {
 
+	public class LogManagerOptions {
+		public const string LogManager = "LogManager";
+		public int RekeyingPagination { get; set; } = 100;
+	}
+
 	/// <summary>
 	/// Implements the management logic for analytics log files and their metadata.
 	/// </summary>
@@ -23,6 +29,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 		private IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo;
 		private ILogMetadataRepository logMetaRepo;
 		private ILogFileRepository logFileRepo;
+		private LogManagerOptions options;
 		private ILogger<LogManager> logger;
 		private IMetricsManager metrics;
 
@@ -34,12 +41,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 		/// <param name="logFileRepo">the log file repository to use.</param>
 		/// <param name="logger">A logger to log status, warning and error messages to.</param>
 		/// <param name="metrics">A metrics manager to which metrics-relevant events are reported.</param>
-		public LogManager(IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo, ILogMetadataRepository logMetaRepo, ILogFileRepository logFileRepo, ILogger<LogManager> logger, IMetricsManager metrics) {
+		/// <param name="options">Configuration options for the LogManager service.</param>
+		public LogManager(IApplicationRepository<Domain.Entity.Application, ApplicationQueryOptions> appRepo, ILogMetadataRepository logMetaRepo, ILogFileRepository logFileRepo, ILogger<LogManager> logger, IMetricsManager metrics, IOptions<LogManagerOptions> options) {
 			this.appRepo = appRepo;
 			this.logMetaRepo = logMetaRepo;
 			this.logFileRepo = logFileRepo;
 			this.logger = logger;
 			this.metrics = metrics;
+			this.options = options.Value;
 		}
 
 		private void updateContentEncodingAndSuffix(LogMetadataDTO logMetaDTO, LogMetadata logMetadata, string appName) {
@@ -180,7 +189,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				throw new ApplicationDoesNotExistException(appName);
 			}
 			var queryOptions = new LogMetadataQueryOptions { ForUpdating = false, FetchRecipientKey = recipientKeyId };
-			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, queryOptions, ct);
+			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, notForKeyId: null, queryOptions: queryOptions, ct: ct);
 			return logs.Select(log => new LogFile(log, logFileRepo)).ToList();
 		}
 
@@ -202,6 +211,73 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				throw new LogNotFoundException($"The log {logId} was not found in application {appName}.", logId);
 			}
 			return new LogFile(log, logFileRepo);
+		}
+
+		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				logger.LogError("Attempt to upload rekeyed data keys for non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, newRecipientKeyId, exporterDN);
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			var queryOptions = new LogMetadataQueryOptions {
+				ForUpdating = true,
+				FetchRecipientKeys = true,
+				Ordering = LogMetadataQuerySortCriteria.UserIdThenCreateTime,
+				Limit = options.RekeyingPagination
+			};
+			var logs = (await logMetaRepo.GetLogMetadataByIdsAsync(dataKeys.Keys, queryOptions: queryOptions, ct: ct)).ToList();
+			logger.LogInformation("Putting {keyCount} rekeyed data keys for recipient {recipientKeyId} into matching logs out of {logCount} looked-up logs in application {appName} ...",
+				dataKeys.Count, newRecipientKeyId, logs.Count, appName);
+			using var logScope = logger.BeginScope("Rekey-Put {keyId}", newRecipientKeyId);
+			var pendingIds = dataKeys.Keys.ToHashSet();
+			foreach (var log in logs) {
+				if (log.App.Name != appName) {
+					logger.LogError("Attempt to put rekeyed key for log {logId} in app {appName1} through a request from app {appName2}.", log.Id, log.App.Name, appName);
+					continue;
+				}
+				if (dataKeys.TryGetValue(log.Id, out var newDataKeyInfo)) {
+					if (log.RecipientKeys.Any(rk => rk.RecipientKeyId == newRecipientKeyId)) {
+						logger.LogWarning("Attempt to put rekeyed key for recipient {keyId} into log file {logId} that already has a data key for that recipient.",
+							newRecipientKeyId, log.Id);
+						pendingIds.Remove(log.Id);
+					}
+					else {
+						log.RecipientKeys.Add(new LogRecipientKey {
+							LogId = log.Id,
+							RecipientKeyId = newRecipientKeyId,
+							EncryptionMode = newDataKeyInfo.Mode,
+							EncryptedKey = newDataKeyInfo.EncryptedKey,
+							LogPublicKey = newDataKeyInfo.MessagePublicKey
+						});
+						logger.LogDebug("Put key for recipient {keyId} on log {logId}.", newRecipientKeyId, log.Id);
+						pendingIds.Remove(log.Id);
+					}
+				}
+				else {
+					logger.LogWarning("No key for log {logId} and recipient {keyId} was provided.", log.Id, newRecipientKeyId);
+				}
+			}
+			if (pendingIds.Count > 0) {
+				logger.LogWarning("The following log ids given by the rekeying uploader were not present: {logIdList}", string.Join(", ", pendingIds));
+			}
+			await logMetaRepo.UpdateLogMetadataAsync(logs, ct);
+			logger.LogInformation("... rekeying upload finished.");
+		}
+
+		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct = default) {
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			if (app is null) {
+				logger.LogError("Attempt to list logs from non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, recipientKeyId, exporterDN);
+				throw new ApplicationDoesNotExistException(appName);
+			}
+			var queryOptions = new LogMetadataQueryOptions {
+				ForUpdating = false,
+				FetchRecipientKey = recipientKeyId,
+				Ordering = LogMetadataQuerySortCriteria.UserIdThenCreateTime,
+				Limit = options.RekeyingPagination
+			};
+			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, notForKeyId: targetKeyId, queryOptions: queryOptions, ct: ct);
+			return logs.ToDictionary(log => log.Id, log => log.EncryptionInfo);
 		}
 	}
 }

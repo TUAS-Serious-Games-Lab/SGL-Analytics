@@ -59,6 +59,16 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			else if (queryOptions.FetchRecipientKey != null) {
 				query = query.Include(lmd => lmd.RecipientKeys.Where(rk => rk.RecipientKeyId == queryOptions.FetchRecipientKey));
 			}
+			switch (queryOptions.Ordering) {
+				case LogMetadataQuerySortCriteria.UserIdThenCreateTime:
+					query = query.OrderBy(log => log.UserId).ThenBy(log => log.CreationTime);
+					break;
+				default:
+					break;
+			}
+			if (queryOptions.Limit > 0) {
+				query = query.Take(queryOptions.Limit);
+			}
 			if (!queryOptions.ForUpdating) {
 				query = query.AsNoTracking();
 			}
@@ -96,10 +106,13 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		/// <inheritdoc/>
-		public async Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
+		public async Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, KeyId? notForKeyId = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var query = context.LogMetadata.Where(lmd => lmd.AppId == appId);
 			if (completenessFilter != null) {
 				query = query.Where(lmd => lmd.Complete == completenessFilter);
+			}
+			if (notForKeyId != null) {
+				query = query.Where(lmd => !lmd.RecipientKeys.Any(rk => rk.RecipientKeyId == notForKeyId));
 			}
 			query = ApplyQueryOptions(query, queryOptions);
 			return await query.ToListAsync(ct);
@@ -110,6 +123,20 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			Debug.Assert(context.Entry(logMetadata).State is EntityState.Modified or EntityState.Unchanged);
 			await context.SaveChangesAsync(ct);
 			return logMetadata;
+		}
+
+		public async Task<IList<LogMetadata>> UpdateLogMetadataAsync(IList<LogMetadata> logMetadata, CancellationToken ct = default) {
+			Debug.Assert(logMetadata.All(logMd => context.Entry(logMd).State is EntityState.Modified or EntityState.Unchanged));
+			await context.SaveChangesAsync(ct);
+			return logMetadata;
+		}
+
+		public async Task<IEnumerable<LogMetadata>> GetLogMetadataByIdsAsync(IReadOnlyCollection<Guid> logIds, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var logIdsSet = logIds.ToHashSet();
+			var query = context.LogMetadata
+				.Where(lmd => logIdsSet.Contains(lmd.Id));
+			query = ApplyQueryOptions(query, queryOptions);
+			return await query.ToListAsync(ct);
 		}
 	}
 }

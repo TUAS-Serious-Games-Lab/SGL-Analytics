@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
@@ -29,7 +30,8 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 		public UserManagerUnitTest(ITestOutputHelper output) {
 			this.output = output;
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
-			userMgr = new UserManager(appRepo, userRepo, loggerFactory.CreateLogger<UserManager>());
+			userMgr = new UserManager(appRepo, userRepo, loggerFactory.CreateLogger<UserManager>(),
+				Options.Create(new UserManagerOptions { }));
 		}
 
 		[Fact]

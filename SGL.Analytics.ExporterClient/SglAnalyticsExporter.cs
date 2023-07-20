@@ -6,6 +6,7 @@ using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 
@@ -32,15 +33,17 @@ namespace SGL.Analytics.ExporterClient {
 			await UseKeyFileAsync(file, filePath, getPassword, ct).ConfigureAwait(false);
 		}
 		public async Task UseKeyFileAsync(TextReader reader, string sourceName, Func<char[]> getPassword, CancellationToken ct = default) {
-			var pemReader = new PemObjectReader(reader, getPassword);
-			var result = await Task.Run(() => ReadKeyFile(pemReader, sourceName, ct), ct).ConfigureAwait(false);
+			var keyFile = await KeyFile.LoadAsync(reader, sourceName, getPassword, logger, ct).ConfigureAwait(false);
+			await UseKeyFileAsync(keyFile, ct).ConfigureAwait(false);
+		}
+		public async Task UseKeyFileAsync(KeyFile keyFile, CancellationToken ct = default) {
 			var authFactoryargs = new SglAnalyticsExporterConfiguratorFactoryArguments(httpClient, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories);
 
 			using var lockHandle = await stateLock.WaitAsyncWithScopedRelease(ct).ConfigureAwait(false); // Hold lock till end of method as we mutate state.
-			authenticationKeyPair = result.AuthenticationKeyPair;
-			recipientKeyPair = result.RecipientKeyPair;
-			CurrentKeyIds = (result.AuthenticationKeyId, result.RecipientKeyId);
-			CurrentKeyCertificates = (result.AuthenticationCertificate, result.RecipientCertificate);
+			authenticationKeyPair = keyFile.AuthenticationKeyPair;
+			recipientKeyPair = keyFile.RecipientKeyPair;
+			CurrentKeyIds = (keyFile.AuthenticationKeyId, keyFile.RecipientKeyId);
+			CurrentKeyCertificates = (keyFile.AuthenticationCertificate, keyFile.RecipientCertificate);
 			authenticator = configurator.Authenticator.Factory(authFactoryargs, authenticationKeyPair);
 			await ClearPerAppStatesAsync(); // Clear cached per-app states as they may have clients authenticated using a different key pair.
 			if (CurrentKeyCertificates.Value.AuthenticationCertificate.SubjectDN.Equals(CurrentKeyCertificates.Value.DecryptionCertificate.SubjectDN)) {
@@ -153,6 +156,73 @@ namespace SGL.Analytics.ExporterClient {
 				else {
 					logger.LogWarning("Read null value instead of LogEntry while parsing log file.");
 				}
+			}
+		}
+
+		public async Task RekeyLogFilesForRecipientKey(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
+			CheckReadyForDecryption();
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			var logClient = perAppState.LogExporterApiClient;
+			var certStore = new CertificateStore(keyCertValidator, LoggerFactory.CreateLogger<CertificateStore>());
+			await logClient.GetRecipientCertificates(perAppState.AppName, certStore, ct);
+			var cert = certStore.GetCertificateByKeyId(keyIdToGrantAccessTo);
+			if (cert == null) {
+				logger.LogError("Target key {targetKey} for rekeying operation not found in fetched certificate store.", keyIdToGrantAccessTo);
+				throw new Exception("KeyId not found!");
+			}
+			IReadOnlyDictionary<Guid, EncryptionInfo> origKeyDict;
+			while ((origKeyDict = await logClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, keyIdToGrantAccessTo, ct)).Count > 0) {
+				var keyEncryptor = new KeyEncryptor(new[] { cert.PublicKey }, randomGenerator,
+					allowSharedMessageKeyPair: false); // As we don't have the original private key for the shared message public key,
+													   // we need to create a separate message public key for the new recipient,
+													   // even if they are using the same curve parameters.
+				var keyDecryptor = new KeyDecryptor(recipientKeyPair!);
+				var perFileTasks = Task.WhenAll(origKeyDict.Select(logFileInfo => Task.Run<(Guid LogId, DataKeyInfo? DataKeyInfo)>(() => {
+					var decryptedKey = keyDecryptor.DecryptKey(logFileInfo.Value);
+					if (decryptedKey == null) {
+						logger.LogWarning("Couldn't decrypt data key for log file {fileId} for rekeying operation.", logFileInfo.Key);
+						return (LogId: logFileInfo.Key, DataKeyInfo: null);
+					}
+					var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
+					Debug.Assert(sharedMsgPubKey == null);
+					return (LogId: logFileInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
+				}, ct)));
+				var perFileResults = await perFileTasks;
+				var resultMap = perFileResults.Where(res => res.DataKeyInfo != null).ToDictionary(res => res.LogId, res => res.DataKeyInfo!);
+				await logClient.PutRekeyedKeys(keyIdToGrantAccessTo, resultMap, ct);
+			}
+		}
+		public async Task RekeyUserRegistrationsForRecipientKey(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
+			CheckReadyForDecryption();
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			var usersClient = perAppState.UserExporterApiClient;
+			var certStore = new CertificateStore(keyCertValidator, LoggerFactory.CreateLogger<CertificateStore>());
+			await usersClient.GetRecipientCertificates(perAppState.AppName, certStore, ct);
+			var cert = certStore.GetCertificateByKeyId(keyIdToGrantAccessTo);
+			if (cert == null) {
+				logger.LogError("Target key {targetKey} for rekeying operation not found in fetched certificate store.", keyIdToGrantAccessTo);
+				throw new Exception("KeyId not found!");
+			}
+			IReadOnlyDictionary<Guid, EncryptionInfo> origKeyDict;
+			while ((origKeyDict = await usersClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, keyIdToGrantAccessTo, ct)).Count > 0) {
+				var keyEncryptor = new KeyEncryptor(new[] { cert.PublicKey }, randomGenerator,
+					allowSharedMessageKeyPair: false); // As we don't have the original private key for the shared message public key,
+													   // we need to create a separate message public key for the new recipient,
+													   // even if they are using the same curve parameters.
+				var keyDecryptor = new KeyDecryptor(recipientKeyPair!);
+				var perFileTasks = Task.WhenAll(origKeyDict.Select(userInfo => Task.Run<(Guid UserId, DataKeyInfo? DataKeyInfo)>(() => {
+					var decryptedKey = keyDecryptor.DecryptKey(userInfo.Value);
+					if (decryptedKey == null) {
+						logger.LogWarning("Couldn't decrypt data key for user registration {userId} for rekeying operation.", userInfo.Key);
+						return (UserId: userInfo.Key, DataKeyInfo: null);
+					}
+					var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
+					Debug.Assert(sharedMsgPubKey == null);
+					return (UserId: userInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
+				}, ct)));
+				var perFileResults = await perFileTasks;
+				var resultMap = perFileResults.Where(res => res.DataKeyInfo != null).ToDictionary(res => res.UserId, res => res.DataKeyInfo!);
+				await usersClient.PutRekeyedKeys(keyIdToGrantAccessTo, resultMap, ct);
 			}
 		}
 	}

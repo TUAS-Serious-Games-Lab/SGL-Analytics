@@ -9,7 +9,14 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 	public class LogMetadataQueryOptions {
 		public bool FetchRecipientKeys { get; set; } = false;
 		public KeyId? FetchRecipientKey { get; set; } = null;
+		public int Limit { get; set; } = 0;
+		public LogMetadataQuerySortCriteria Ordering { get; set; } = LogMetadataQuerySortCriteria.Unordered;
 		public bool ForUpdating { get; set; } = false;
+	}
+
+	public enum LogMetadataQuerySortCriteria {
+		Unordered,
+		UserIdThenCreateTime
 	}
 
 	/// <summary>
@@ -24,6 +31,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The log metadata object if the log exists, or <see langword="null"/> otherwise.</returns>
 		Task<LogMetadata?> GetLogMetadataByIdAsync(Guid logId, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default);
+		Task<IEnumerable<LogMetadata>> GetLogMetadataByIdsAsync(IReadOnlyCollection<Guid> logIds, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously obtains the log metadata entry using the given user-local id for the given user if the log exists.
 		/// </summary>
@@ -49,7 +57,9 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <returns>A task object representing the operation, providing the updated object as its result.</returns>
 		Task<LogMetadata> UpdateLogMetadataAsync(LogMetadata logMetadata, CancellationToken ct = default);
 
-		Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default);
+		Task<IList<LogMetadata>> UpdateLogMetadataAsync(IList<LogMetadata> logMetadata, CancellationToken ct = default);
+
+		Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, KeyId? notForKeyId = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default);
 
 		/// <summary>
 		/// Asynchronously obtains the per-application counts of the log files in the database.

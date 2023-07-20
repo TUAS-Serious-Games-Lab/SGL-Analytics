@@ -47,6 +47,16 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			else {
 				query = query.Include(u => u.App);
 			}
+			switch (queryOptions.Ordering) {
+				case UserQuerySortCriteria.UserId:
+					query = query.OrderBy(ur => ur.Id);
+					break;
+				default:
+					break;
+			}
+			if (queryOptions.Limit > 0) {
+				query = query.Take(queryOptions.Limit);
+			}
 			if (!queryOptions.ForUpdating) {
 				query = query.AsNoTracking();
 			}
@@ -122,8 +132,25 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			return await query.AsNoTracking().ToDictionaryAsync(e => e.AppName, e => e.UsersCount, ct);
 		}
 
-		public async Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+		public async Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, KeyId? notForKeyId = null, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var query = context.UserRegistrations.Where(u => u.App.Name == appName);
+			if (notForKeyId != null) {
+				query = query.Where(u => !u.PropertyRecipientKeys.Any(rk => rk.RecipientKeyId == notForKeyId));
+			}
+			query = ApplyQueryOptions(query, queryOptions);
+			return await query.ToListAsync(ct);
+		}
+
+		public async Task<IList<UserRegistration>> UpdateUsersAsync(IList<UserRegistration> userRegs, CancellationToken ct = default) {
+			Debug.Assert(userRegs.All(userReg => context.Entry(userReg).State is EntityState.Modified or EntityState.Unchanged));
+			await context.SaveChangesAsync(ct);
+			return userRegs;
+		}
+
+		public async Task<IEnumerable<UserRegistration>> GetUsersByIdsAsync(IReadOnlyCollection<Guid> ids, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var idsSet = ids.ToHashSet();
+			var query = context.UserRegistrations
+				.Where(u => idsSet.Contains(u.Id));
 			query = ApplyQueryOptions(query, queryOptions);
 			return await query.ToListAsync(ct);
 		}
