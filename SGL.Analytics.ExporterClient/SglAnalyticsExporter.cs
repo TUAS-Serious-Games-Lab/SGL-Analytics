@@ -181,6 +181,8 @@ namespace SGL.Analytics.ExporterClient {
 					var decryptedKey = keyDecryptor.DecryptKey(logFileInfo.Value);
 					if (decryptedKey == null) {
 						logger.LogWarning("Couldn't decrypt data key for log file {fileId} for rekeying operation.", logFileInfo.Key);
+						logger.LogTrace("File uses encryption mode {mode} and the server returned the following keys:\n{keys}", logFileInfo.Value.DataMode,
+							string.Join("; ", logFileInfo.Value.DataKeys.Select(dk => $"{dk.Key} => {dk.Value}")));
 						return (LogId: logFileInfo.Key, DataKeyInfo: null);
 					}
 					var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
