@@ -191,6 +191,7 @@ namespace SGL.Analytics.ExporterClient {
 						}
 						var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
 						Debug.Assert(sharedMsgPubKey == null);
+						logger.LogTrace("Rekeyed data key for log file {fileId}.", logFileInfo.Key);
 						return (LogId: logFileInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
 					}, ct)));
 				var perFileResults = await perFileTasks;
@@ -242,6 +243,7 @@ namespace SGL.Analytics.ExporterClient {
 						}
 						var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
 						Debug.Assert(sharedMsgPubKey == null);
+						logger.LogTrace("Rekeyed data key for user registration {userId}.", userInfo.Key);
 						return (UserId: userInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
 					}, ct)));
 				var perUserResults = await perUserTasks;
