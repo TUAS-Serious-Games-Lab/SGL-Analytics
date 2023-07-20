@@ -66,11 +66,11 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 				default:
 					break;
 			}
-			if (queryOptions.Limit > 0) {
-				query = query.Take(queryOptions.Limit);
-			}
 			if (queryOptions.Offset > 0) {
 				query = query.Skip(queryOptions.Offset);
+			}
+			if (queryOptions.Limit > 0) {
+				query = query.Take(queryOptions.Limit);
 			}
 			if (!queryOptions.ForUpdating) {
 				query = query.AsNoTracking();

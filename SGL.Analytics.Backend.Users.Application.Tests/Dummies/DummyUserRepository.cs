@@ -59,11 +59,11 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 				default:
 					break;
 			}
-			if ((queryOptions?.Limit ?? 0) > 0) {
-				query = query.Take(queryOptions!.Limit);
-			}
 			if ((queryOptions?.Offset ?? 0) > 0) {
 				query = query.Skip(queryOptions!.Offset);
+			}
+			if ((queryOptions?.Limit ?? 0) > 0) {
+				query = query.Take(queryOptions!.Limit);
 			}
 			return Task.FromResult(query.ToList().AsEnumerable());
 		}
