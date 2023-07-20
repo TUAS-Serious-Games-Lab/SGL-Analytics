@@ -203,19 +203,22 @@ namespace SGL.Analytics.EndToEndTest {
 				await ValidateTestData(exporter, userId, log1Id, log2Id, snapShotId, beginTime, endTime, ct);
 				{
 					// Grant access to recipient that was ignored during recording because the in-game client doesn't have their certificate:
-					ICertificateValidator keyCertValidator;
+					CACertTrustValidator keyCertValidator;
 					if (rekeyRecipientCaCertPemFile != null) {
 						var caCert1Content = await File.ReadAllTextAsync(rekeyRecipientCaCertPemFile);
 						var caCert2Content = recipientCaCertPemFile != null ? await File.ReadAllTextAsync(recipientCaCertPemFile) : recipientCaCertPemText ?? "";
 						var caCertsContent = caCert1Content + "\n\n" + caCert2Content;
+						logger.LogTrace("CA cert PEM:\n", caCertsContent);
 						keyCertValidator = new CACertTrustValidator(caCertsContent, ignoreValidityPeriod: true, LoggerFactory.CreateLogger<CACertTrustValidator>(), LoggerFactory.CreateLogger<CertificateStore>());
 					}
 					else {
 						var caCert1Content = rekeyRecipientCaCertPemText!;
 						var caCert2Content = recipientCaCertPemFile != null ? await File.ReadAllTextAsync(recipientCaCertPemFile) : recipientCaCertPemText ?? "";
 						var caCertsContent = caCert1Content + "\n\n" + caCert2Content;
+						logger.LogTrace("CA cert PEM:\n", caCertsContent);
 						keyCertValidator = new CACertTrustValidator(caCertsContent, ignoreValidityPeriod: true, LoggerFactory.CreateLogger<CACertTrustValidator>(), LoggerFactory.CreateLogger<CertificateStore>());
 					}
+					logger.LogDebug("Trusting the following singer certificates:\n {certs}", string.Join("\n", keyCertValidator.TrustedCACertificates.Select(c => $"\t{c}")));
 					await exporter.RekeyLogFilesForRecipientKey(rekeyTargetKeyFile.RecipientKeyId, keyCertValidator, ct);
 					await exporter.RekeyUserRegistrationsForRecipientKey(rekeyTargetKeyFile.RecipientKeyId, keyCertValidator, ct);
 				}
