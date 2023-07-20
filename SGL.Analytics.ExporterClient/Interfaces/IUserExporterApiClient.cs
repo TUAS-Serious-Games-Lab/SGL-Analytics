@@ -16,7 +16,7 @@ namespace SGL.Analytics.ExporterClient {
 		Task<IEnumerable<UserMetadataDTO>> GetMetadataForAllUsersAsync(KeyId? recipientKeyId = null, CancellationToken ct = default);
 		Task<UserMetadataDTO> GetUserMetadataByIdAsync(Guid id, KeyId? recipientKeyId = null, CancellationToken ct = default);
 		Task GetRecipientCertificates(string appName, CertificateStore certificateStore, CancellationToken ct = default);
-		Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId keyId, KeyId targetKeyId, CancellationToken ct = default);
+		Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId keyId, KeyId targetKeyId, int offset = 0, CancellationToken ct = default);
 		Task PutRekeyedKeys(KeyId keyId, Dictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default);
 	}
 }

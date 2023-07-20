@@ -48,13 +48,13 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 
 		[HttpGet("{keyId}")]
 		public async Task<ActionResult<Dictionary<Guid, EncryptionInfo>>> GetKeysForRekeying([FromRoute(Name = "keyId")] KeyId recipientKeyId,
-				[FromQuery(Name = "targetKeyId")] KeyId targetKeyId, CancellationToken ct = default) {
+				[FromQuery(Name = "targetKeyId")] KeyId targetKeyId, [FromQuery(Name = "offset")] int offset = 0, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetKeysForRekeying));
 			if (credResult != null) return credResult;
 			try {
-				logger.LogInformation("Listing key material for logs in application {appName} with recipient keys for {recipientKeyId} for rekeying by exporter {exporterKeyId} ({exporterDN}) to recipient key {targetKeyId}.",
-					appName, recipientKeyId, exporterKeyId, exporterDN, targetKeyId);
-				var result = await logManager.GetKeysForRekeying(appName, recipientKeyId, targetKeyId, exporterDN, ct);
+				logger.LogInformation("Listing key material for logs in application {appName} with recipient keys for {recipientKeyId} for rekeying by exporter {exporterKeyId} ({exporterDN}) to recipient key {targetKeyId} (pagination offset = {offset}).",
+					appName, recipientKeyId, exporterKeyId, exporterDN, targetKeyId, offset);
+				var result = await logManager.GetKeysForRekeying(appName, recipientKeyId, targetKeyId, exporterDN, offset, ct);
 				return result;
 			}
 			catch (OperationCanceledException) {

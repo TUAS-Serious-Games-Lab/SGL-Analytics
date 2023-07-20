@@ -69,6 +69,9 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			if (queryOptions.Limit > 0) {
 				query = query.Take(queryOptions.Limit);
 			}
+			if (queryOptions.Offset > 0) {
+				query = query.Skip(queryOptions.Offset);
+			}
 			if (!queryOptions.ForUpdating) {
 				query = query.AsNoTracking();
 			}

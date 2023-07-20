@@ -21,6 +21,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 		private Dictionary<Guid, User> users = new();
 		private int nextPropDefId = 1;
 		public int WarningCount { get; private set; } = 0;
+		public int RekeyingQueryLimit { get; set; } = 100;
 
 		private void assignPropDefIds(ApplicationWithUserProperties app) {
 			foreach (var propDef in app.UserProperties) {
@@ -118,10 +119,13 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			}
 		}
 
-		public Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct = default) {
+		public Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, int offset, CancellationToken ct = default) {
 			return Task.FromResult(users.Values
 				.Where(u => u.App.Name == appName)
 				.Where(u => !u.PropertyEncryptionInfo.DataKeys.ContainsKey(targetKeyId))
+				.OrderBy(u => u.Id)
+				.Skip(offset)
+				.Take(RekeyingQueryLimit)
 				.ToList().ToDictionary(u => u.Id, u => u.PropertyEncryptionInfo));
 		}
 	}

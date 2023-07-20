@@ -10,6 +10,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		public bool FetchRecipientKeys { get; set; } = false;
 		public KeyId? FetchRecipientKey { get; set; } = null;
 		public int Limit { get; set; } = 0;
+		public int Offset { get; set; } = 0;
 		public LogMetadataQuerySortCriteria Ordering { get; set; } = LogMetadataQuerySortCriteria.Unordered;
 		public bool ForUpdating { get; set; } = false;
 	}

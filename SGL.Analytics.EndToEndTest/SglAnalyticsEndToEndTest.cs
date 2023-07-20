@@ -208,14 +208,12 @@ namespace SGL.Analytics.EndToEndTest {
 						var caCert1Content = await File.ReadAllTextAsync(rekeyRecipientCaCertPemFile);
 						var caCert2Content = recipientCaCertPemFile != null ? await File.ReadAllTextAsync(recipientCaCertPemFile) : recipientCaCertPemText ?? "";
 						var caCertsContent = caCert1Content + "\n\n" + caCert2Content;
-						logger.LogTrace("CA cert PEM:\n", caCertsContent);
 						keyCertValidator = new CACertTrustValidator(caCertsContent, ignoreValidityPeriod: true, LoggerFactory.CreateLogger<CACertTrustValidator>(), LoggerFactory.CreateLogger<CertificateStore>());
 					}
 					else {
 						var caCert1Content = rekeyRecipientCaCertPemText!;
 						var caCert2Content = recipientCaCertPemFile != null ? await File.ReadAllTextAsync(recipientCaCertPemFile) : recipientCaCertPemText ?? "";
 						var caCertsContent = caCert1Content + "\n\n" + caCert2Content;
-						logger.LogTrace("CA cert PEM:\n", caCertsContent);
 						keyCertValidator = new CACertTrustValidator(caCertsContent, ignoreValidityPeriod: true, LoggerFactory.CreateLogger<CACertTrustValidator>(), LoggerFactory.CreateLogger<CertificateStore>());
 					}
 					logger.LogDebug("Trusting the following singer certificates:\n {certs}", string.Join("\n", keyCertValidator.TrustedCACertificates.Select(c => $"\t{c}")));

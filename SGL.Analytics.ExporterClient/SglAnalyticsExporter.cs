@@ -171,25 +171,37 @@ namespace SGL.Analytics.ExporterClient {
 				throw new Exception("KeyId not found!");
 			}
 			IReadOnlyDictionary<Guid, EncryptionInfo> origKeyDict;
-			while ((origKeyDict = await logClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, keyIdToGrantAccessTo, ct)).Count > 0) {
+			int paginationOffset = 0;
+			while ((origKeyDict = await logClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, keyIdToGrantAccessTo, paginationOffset, ct)).Count > 0) {
 				var keyEncryptor = new KeyEncryptor(new[] { cert.PublicKey }, randomGenerator,
 					allowSharedMessageKeyPair: false); // As we don't have the original private key for the shared message public key,
 													   // we need to create a separate message public key for the new recipient,
 													   // even if they are using the same curve parameters.
 				var keyDecryptor = new KeyDecryptor(recipientKeyPair!);
-				var perFileTasks = Task.WhenAll(origKeyDict.Select(logFileInfo => Task.Run<(Guid LogId, DataKeyInfo? DataKeyInfo)>(() => {
-					var decryptedKey = keyDecryptor.DecryptKey(logFileInfo.Value);
-					if (decryptedKey == null) {
-						logger.LogWarning("Couldn't decrypt data key for log file {fileId} for rekeying operation.", logFileInfo.Key);
-						logger.LogTrace("File uses encryption mode {mode} and the server returned the following keys:\n{keys}", logFileInfo.Value.DataMode,
-							string.Join("; ", logFileInfo.Value.DataKeys.Select(dk => $"{dk.Key} => {dk.Value}")));
-						return (LogId: logFileInfo.Key, DataKeyInfo: null);
-					}
-					var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
-					Debug.Assert(sharedMsgPubKey == null);
-					return (LogId: logFileInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
-				}, ct)));
+				var perFileTasks = Task.WhenAll(origKeyDict.Where(logFileInfo => logFileInfo.Value.DataMode != DataEncryptionMode.Unencrypted)
+					.Select(logFileInfo => Task.Run<(Guid LogId, DataKeyInfo? DataKeyInfo)>(() => {
+						var decryptedKey = keyDecryptor.DecryptKey(logFileInfo.Value);
+						if (decryptedKey == null) {
+							logger.LogWarning("Couldn't decrypt data key for log file {fileId} for rekeying operation.", logFileInfo.Key);
+							logger.LogTrace("File uses encryption mode {mode} and the server returned the following keys:\n{keys}", logFileInfo.Value.DataMode,
+								string.Join("; ", logFileInfo.Value.DataKeys.Select(dk => $"{dk.Key} => {dk.Value}")));
+							return (LogId: logFileInfo.Key, DataKeyInfo: null);
+						}
+						var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
+						Debug.Assert(sharedMsgPubKey == null);
+						return (LogId: logFileInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
+					}, ct)));
 				var perFileResults = await perFileTasks;
+				var skippedUnencrypted = origKeyDict.Count(logFileInfo => logFileInfo.Value.DataMode != DataEncryptionMode.Unencrypted);
+				if (skippedUnencrypted > 0) {
+					paginationOffset += skippedUnencrypted;
+					logger.LogDebug("Skipped {skippedUnencrypted} log files because they are unencrypted.", skippedUnencrypted);
+				}
+				var skippedError = perFileResults.Count(res => res.DataKeyInfo == null);
+				if (skippedError > 0) {
+					paginationOffset += skippedError;
+					logger.LogWarning("Skipped {skippedError} log files due to errors.", skippedError);
+				}
 				var resultMap = perFileResults.Where(res => res.DataKeyInfo != null).ToDictionary(res => res.LogId, res => res.DataKeyInfo!);
 				await logClient.PutRekeyedKeys(keyIdToGrantAccessTo, resultMap, ct);
 			}
@@ -206,24 +218,36 @@ namespace SGL.Analytics.ExporterClient {
 				throw new Exception("KeyId not found!");
 			}
 			IReadOnlyDictionary<Guid, EncryptionInfo> origKeyDict;
-			while ((origKeyDict = await usersClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, keyIdToGrantAccessTo, ct)).Count > 0) {
+			int paginationOffset = 0;
+			while ((origKeyDict = await usersClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, keyIdToGrantAccessTo, paginationOffset, ct)).Count > 0) {
 				var keyEncryptor = new KeyEncryptor(new[] { cert.PublicKey }, randomGenerator,
 					allowSharedMessageKeyPair: false); // As we don't have the original private key for the shared message public key,
 													   // we need to create a separate message public key for the new recipient,
 													   // even if they are using the same curve parameters.
 				var keyDecryptor = new KeyDecryptor(recipientKeyPair!);
-				var perFileTasks = Task.WhenAll(origKeyDict.Select(userInfo => Task.Run<(Guid UserId, DataKeyInfo? DataKeyInfo)>(() => {
-					var decryptedKey = keyDecryptor.DecryptKey(userInfo.Value);
-					if (decryptedKey == null) {
-						logger.LogWarning("Couldn't decrypt data key for user registration {userId} for rekeying operation.", userInfo.Key);
-						return (UserId: userInfo.Key, DataKeyInfo: null);
-					}
-					var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
-					Debug.Assert(sharedMsgPubKey == null);
-					return (UserId: userInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
-				}, ct)));
-				var perFileResults = await perFileTasks;
-				var resultMap = perFileResults.Where(res => res.DataKeyInfo != null).ToDictionary(res => res.UserId, res => res.DataKeyInfo!);
+				var perUserTasks = Task.WhenAll(origKeyDict.Where(userInfo => userInfo.Value.DataMode != DataEncryptionMode.Unencrypted)
+					.Select(userInfo => Task.Run<(Guid UserId, DataKeyInfo? DataKeyInfo)>(() => {
+						var decryptedKey = keyDecryptor.DecryptKey(userInfo.Value);
+						if (decryptedKey == null) {
+							logger.LogWarning("Couldn't decrypt data key for user registration {userId} for rekeying operation.", userInfo.Key);
+							return (UserId: userInfo.Key, DataKeyInfo: null);
+						}
+						var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
+						Debug.Assert(sharedMsgPubKey == null);
+						return (UserId: userInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
+					}, ct)));
+				var perUserResults = await perUserTasks;
+				var skippedUnencrypted = origKeyDict.Count(userInfo => userInfo.Value.DataMode != DataEncryptionMode.Unencrypted);
+				if (skippedUnencrypted > 0) {
+					paginationOffset += skippedUnencrypted;
+					logger.LogDebug("Skipped {skippedUnencrypted} user registrations because they are unencrypted.", skippedUnencrypted);
+				}
+				var skippedError = perUserResults.Count(res => res.DataKeyInfo == null);
+				if (skippedError > 0) {
+					paginationOffset += skippedError;
+					logger.LogWarning("Skipped {skippedError} user registrations due to errors.", skippedError);
+				}
+				var resultMap = perUserResults.Where(res => res.DataKeyInfo != null).ToDictionary(res => res.UserId, res => res.DataKeyInfo!);
 				await usersClient.PutRekeyedKeys(keyIdToGrantAccessTo, resultMap, ct);
 			}
 		}

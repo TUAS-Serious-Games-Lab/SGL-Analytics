@@ -114,7 +114,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			}
 		}
 
-		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct) {
+		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, int offset, CancellationToken ct) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
 			if (app is null) {
 				throw new ApplicationDoesNotExistException(appName);
@@ -122,6 +122,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			var logsQuery = Ingests.Where(ig => ig.LogMetadata.App.Name == appName)
 				.Where(ig => !ig.LogMetadata.EncryptionInfo.DataKeys.ContainsKey(targetKeyId))
 				.OrderBy(log => log.LogMetadata.UserId).ThenBy(log => log.LogMetadata.CreationTime)
+				.Skip(offset)
 				.Take(RekeyingQueryLimit)
 				.Select(ig => new LogFile(ig.LogMetadata,
 					new SingleLogFileRepository(ig.LogMetadata.App.Name, ig.LogMetadata.UserId, ig.LogMetadata.Id, ig.LogMetadata.FilenameSuffix, ig.LogContent)));

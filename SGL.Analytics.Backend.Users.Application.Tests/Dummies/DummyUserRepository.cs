@@ -62,6 +62,9 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			if ((queryOptions?.Limit ?? 0) > 0) {
 				query = query.Take(queryOptions!.Limit);
 			}
+			if ((queryOptions?.Offset ?? 0) > 0) {
+				query = query.Skip(queryOptions!.Offset);
+			}
 			return Task.FromResult(query.ToList().AsEnumerable());
 		}
 

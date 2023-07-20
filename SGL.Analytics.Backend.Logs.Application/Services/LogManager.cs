@@ -264,7 +264,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 			logger.LogInformation("... rekeying upload finished.");
 		}
 
-		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct = default) {
+		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, int offset, CancellationToken ct = default) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
 			if (app is null) {
 				logger.LogError("Attempt to list logs from non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, recipientKeyId, exporterDN);
@@ -274,7 +274,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				ForUpdating = false,
 				FetchRecipientKey = recipientKeyId,
 				Ordering = LogMetadataQuerySortCriteria.UserIdThenCreateTime,
-				Limit = options.RekeyingPagination
+				Limit = options.RekeyingPagination,
+				Offset = offset
 			};
 			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, notForKeyId: targetKeyId, queryOptions: queryOptions, ct: ct);
 			return logs.ToDictionary(log => log.Id, log => log.EncryptionInfo);

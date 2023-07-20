@@ -94,13 +94,14 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			logger.LogInformation("... rekeying upload finished.");
 		}
 
-		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, CancellationToken ct = default) {
+		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, int offset, CancellationToken ct = default) {
 			var queryOptions = new UserQueryOptions {
 				ForUpdating = false,
 				FetchRecipientKey = recipientKeyId,
 				Ordering = UserQuerySortCriteria.UserId,
 				Limit = options.RekeyingPagination,
-				FetchProperties = true
+				FetchProperties = true,
+				Offset = offset
 			};
 			var userRegs = await userRepo.ListUsersAsync(appName, notForKeyId: targetKeyId, queryOptions, ct);
 			var result = userRegs.Select(u => new User(u)).ToList().ToDictionary(u => u.Id, u => u.PropertyEncryptionInfo);
