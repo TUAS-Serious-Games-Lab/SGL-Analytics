@@ -159,7 +159,7 @@ namespace SGL.Analytics.ExporterClient {
 			}
 		}
 
-		public async Task RekeyLogFilesForRecipientKey(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
+		public async Task<RekeyingOperationResult> RekeyLogFilesForRecipientKey(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
 			CheckReadyForDecryption();
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
 			var logClient = perAppState.LogExporterApiClient;
@@ -172,7 +172,9 @@ namespace SGL.Analytics.ExporterClient {
 			}
 			IReadOnlyDictionary<Guid, EncryptionInfo> origKeyDict;
 			int paginationOffset = 0;
+			var result = new RekeyingOperationResult();
 			while ((origKeyDict = await logClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, keyIdToGrantAccessTo, paginationOffset, ct)).Count > 0) {
+				result.TotalToRekey += origKeyDict.Count;
 				var keyEncryptor = new KeyEncryptor(new[] { cert.PublicKey }, randomGenerator,
 					allowSharedMessageKeyPair: false); // As we don't have the original private key for the shared message public key,
 													   // we need to create a separate message public key for the new recipient,
@@ -195,18 +197,22 @@ namespace SGL.Analytics.ExporterClient {
 				var skippedUnencrypted = origKeyDict.Count(logFileInfo => logFileInfo.Value.DataMode == DataEncryptionMode.Unencrypted);
 				if (skippedUnencrypted > 0) {
 					paginationOffset += skippedUnencrypted;
+					result.Unencrypted += skippedUnencrypted;
 					logger.LogDebug("Skipped {skippedUnencrypted} log files because they are unencrypted.", skippedUnencrypted);
 				}
 				var skippedError = perFileResults.Count(res => res.DataKeyInfo == null);
 				if (skippedError > 0) {
 					paginationOffset += skippedError;
+					result.SkippedDueToError += skippedError;
 					logger.LogWarning("Skipped {skippedError} log files due to errors.", skippedError);
 				}
 				var resultMap = perFileResults.Where(res => res.DataKeyInfo != null).ToDictionary(res => res.LogId, res => res.DataKeyInfo!);
 				await logClient.PutRekeyedKeys(keyIdToGrantAccessTo, resultMap, ct);
+				result.Successful += resultMap.Count;
 			}
+			return result;
 		}
-		public async Task RekeyUserRegistrationsForRecipientKey(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
+		public async Task<RekeyingOperationResult> RekeyUserRegistrationsForRecipientKey(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
 			CheckReadyForDecryption();
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
 			var usersClient = perAppState.UserExporterApiClient;
@@ -219,7 +225,9 @@ namespace SGL.Analytics.ExporterClient {
 			}
 			IReadOnlyDictionary<Guid, EncryptionInfo> origKeyDict;
 			int paginationOffset = 0;
+			var result = new RekeyingOperationResult();
 			while ((origKeyDict = await usersClient.GetKeysForRekeying(CurrentKeyIds!.Value.DecryptionKeyId, keyIdToGrantAccessTo, paginationOffset, ct)).Count > 0) {
+				result.TotalToRekey += origKeyDict.Count;
 				var keyEncryptor = new KeyEncryptor(new[] { cert.PublicKey }, randomGenerator,
 					allowSharedMessageKeyPair: false); // As we don't have the original private key for the shared message public key,
 													   // we need to create a separate message public key for the new recipient,
@@ -240,16 +248,20 @@ namespace SGL.Analytics.ExporterClient {
 				var skippedUnencrypted = origKeyDict.Count(userInfo => userInfo.Value.DataMode == DataEncryptionMode.Unencrypted);
 				if (skippedUnencrypted > 0) {
 					paginationOffset += skippedUnencrypted;
+					result.Unencrypted += skippedUnencrypted;
 					logger.LogDebug("Skipped {skippedUnencrypted} user registrations because they are unencrypted.", skippedUnencrypted);
 				}
 				var skippedError = perUserResults.Count(res => res.DataKeyInfo == null);
 				if (skippedError > 0) {
 					paginationOffset += skippedError;
+					result.SkippedDueToError += skippedError;
 					logger.LogWarning("Skipped {skippedError} user registrations due to errors.", skippedError);
 				}
 				var resultMap = perUserResults.Where(res => res.DataKeyInfo != null).ToDictionary(res => res.UserId, res => res.DataKeyInfo!);
 				await usersClient.PutRekeyedKeys(keyIdToGrantAccessTo, resultMap, ct);
+				result.Successful += resultMap.Count;
 			}
+			return result;
 		}
 	}
 }

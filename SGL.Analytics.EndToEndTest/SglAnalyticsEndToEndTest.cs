@@ -217,8 +217,12 @@ namespace SGL.Analytics.EndToEndTest {
 						keyCertValidator = new CACertTrustValidator(caCertsContent, ignoreValidityPeriod: true, LoggerFactory.CreateLogger<CACertTrustValidator>(), LoggerFactory.CreateLogger<CertificateStore>());
 					}
 					logger.LogDebug("Trusting the following singer certificates:\n {certs}", string.Join("\n", keyCertValidator.TrustedCACertificates.Select(c => $"\t{c}")));
-					await exporter.RekeyLogFilesForRecipientKey(rekeyTargetKeyFile.RecipientKeyId, keyCertValidator, ct);
-					await exporter.RekeyUserRegistrationsForRecipientKey(rekeyTargetKeyFile.RecipientKeyId, keyCertValidator, ct);
+					var logRekeyResult = await exporter.RekeyLogFilesForRecipientKey(rekeyTargetKeyFile.RecipientKeyId, keyCertValidator, ct);
+					logger.LogInformation("Rekeyed log files: total to rekey = {total} successful = {successful}, unencrypted = {unencrypted}, with errors = {withErrors}",
+						logRekeyResult.TotalToRekey, logRekeyResult.Successful, logRekeyResult.Unencrypted, logRekeyResult.SkippedDueToError);
+					var userRekeyResult = await exporter.RekeyUserRegistrationsForRecipientKey(rekeyTargetKeyFile.RecipientKeyId, keyCertValidator, ct);
+					logger.LogInformation("Rekeyed user registrations: total to rekey = {total} successful = {successful}, unencrypted = {unencrypted}, with errors = {withErrors}",
+						userRekeyResult.TotalToRekey, userRekeyResult.Successful, userRekeyResult.Unencrypted, userRekeyResult.SkippedDueToError);
 				}
 			}
 			// Now use other recipient credentials and verify that they now have access:
