@@ -192,7 +192,7 @@ namespace SGL.Analytics.ExporterClient {
 						return (LogId: logFileInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
 					}, ct)));
 				var perFileResults = await perFileTasks;
-				var skippedUnencrypted = origKeyDict.Count(logFileInfo => logFileInfo.Value.DataMode != DataEncryptionMode.Unencrypted);
+				var skippedUnencrypted = origKeyDict.Count(logFileInfo => logFileInfo.Value.DataMode == DataEncryptionMode.Unencrypted);
 				if (skippedUnencrypted > 0) {
 					paginationOffset += skippedUnencrypted;
 					logger.LogDebug("Skipped {skippedUnencrypted} log files because they are unencrypted.", skippedUnencrypted);
@@ -237,7 +237,7 @@ namespace SGL.Analytics.ExporterClient {
 						return (UserId: userInfo.Key, DataKeyInfo: recipientKeys[keyIdToGrantAccessTo]);
 					}, ct)));
 				var perUserResults = await perUserTasks;
-				var skippedUnencrypted = origKeyDict.Count(userInfo => userInfo.Value.DataMode != DataEncryptionMode.Unencrypted);
+				var skippedUnencrypted = origKeyDict.Count(userInfo => userInfo.Value.DataMode == DataEncryptionMode.Unencrypted);
 				if (skippedUnencrypted > 0) {
 					paginationOffset += skippedUnencrypted;
 					logger.LogDebug("Skipped {skippedUnencrypted} user registrations because they are unencrypted.", skippedUnencrypted);
