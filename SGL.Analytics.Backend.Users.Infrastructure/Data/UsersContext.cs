@@ -28,6 +28,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 			app.HasIndex(a => a.Name).IsUnique();
 			app.Property(a => a.Name).HasMaxLength(128);
 			app.Property(a => a.ApiToken).HasMaxLength(64);
+			app.Property(a => a.BasicFederationUpstreamAuthUrl).HasConversion<string>().HasMaxLength(255);
 
 			app.OwnsMany(app => app.DataRecipients, r => {
 				r.WithOwner(r => (ApplicationWithUserProperties)r.App);
@@ -45,6 +46,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 			userReg.Property(u => u.Username).HasMaxLength(64);
 			userReg.Property(u => u.HashedSecret).HasMaxLength(128);
 			userReg.Ignore(u => u.PropertyEncryptionInfo);
+			userReg.HasIndex(u => new { u.AppId, u.BasicFederationUpstreamUserId }).IsUnique();
 			userReg.OwnsMany(u => u.AppSpecificProperties, p => {
 				p.WithOwner(p => p.User);
 				p.HasIndex(pi => new { pi.DefinitionId, pi.UserId }).IsUnique();

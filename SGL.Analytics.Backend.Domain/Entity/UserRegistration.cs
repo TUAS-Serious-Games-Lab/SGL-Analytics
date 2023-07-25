@@ -62,6 +62,8 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// </summary>
 		public ICollection<UserRegistrationPropertyRecipientKey> PropertyRecipientKeys { get; set; } = null!;
 
+		public Guid? BasicFederationUpstreamUserId { get; set; } = null;
+
 		/// <summary>
 		/// Provides access to the encryption metadata for <see cref="EncryptedProperties"/> in bundled form.
 		/// The object is packed / unpacked into separate properties on-the-fly, thus the property should not be accessed in a tight loop, but the value should be copied locally.
@@ -108,7 +110,8 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// see <see cref="Create(ApplicationWithUserProperties, string, string, byte[], EncryptionInfo)"/> or its overloads.
 		/// </summary>
 		public UserRegistration(Guid id, Guid appId, string username, string hashedSecret, byte[] encryptedProperties,
-			byte[] propertyInitializationVector, DataEncryptionMode propertyEncryptionMode, byte[]? propertySharedPublicKey) {
+			byte[] propertyInitializationVector, DataEncryptionMode propertyEncryptionMode, byte[]? propertySharedPublicKey,
+			Guid? basicFederationUpstreamUserId = null) {
 			Id = id;
 			AppId = appId;
 			Username = username;
@@ -117,6 +120,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			PropertyInitializationVector = propertyInitializationVector;
 			PropertyEncryptionMode = propertyEncryptionMode;
 			PropertySharedPublicKey = propertySharedPublicKey;
+			BasicFederationUpstreamUserId = basicFederationUpstreamUserId;
 		}
 
 		/// <summary>
@@ -127,12 +131,14 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <param name="username">The username of the user.</param>
 		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
 		/// <returns>The created object.</returns>
-		public static UserRegistration Create(Guid id, ApplicationWithUserProperties app, string username, string hashedSecret) =>
-			Create(id, app, username, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted());
 		public static UserRegistration Create(Guid id, ApplicationWithUserProperties app, string username, string hashedSecret,
-				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo) {
+			Guid? basicFederationUpstreamUserId = null) =>
+			Create(id, app, username, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted(), basicFederationUpstreamUserId);
+		public static UserRegistration Create(Guid id, ApplicationWithUserProperties app, string username, string hashedSecret,
+				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo, Guid? basicFederationUpstreamUserId = null) {
 			var userReg = new UserRegistration(id, app.Id, username, hashedSecret, encryptedProperties,
-				propertyEncryptionInfo.IVs.Single(), propertyEncryptionInfo.DataMode, propertyEncryptionInfo.MessagePublicKey);
+				propertyEncryptionInfo.IVs.Single(), propertyEncryptionInfo.DataMode, propertyEncryptionInfo.MessagePublicKey,
+				basicFederationUpstreamUserId);
 			userReg.App = app;
 			userReg.AppSpecificProperties = new List<ApplicationUserPropertyInstance>();
 			userReg.PropertyRecipientKeys = new List<UserRegistrationPropertyRecipientKey>();
@@ -149,11 +155,11 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <param name="username">The username of the user.</param>
 		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
 		/// <returns>The created object.</returns>
-		public static UserRegistration Create(ApplicationWithUserProperties app, string username, string hashedSecret) =>
-			Create(app, username, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted());
+		public static UserRegistration Create(ApplicationWithUserProperties app, string username, string hashedSecret, Guid? basicFederationUpstreamUserId = null) =>
+			Create(app, username, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted(), basicFederationUpstreamUserId);
 		public static UserRegistration Create(ApplicationWithUserProperties app, string username, string hashedSecret,
-				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo) {
-			return Create(Guid.NewGuid(), app, username, hashedSecret, encryptedProperties, propertyEncryptionInfo);
+				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo, Guid? basicFederationUpstreamUserId = null) {
+			return Create(Guid.NewGuid(), app, username, hashedSecret, encryptedProperties, propertyEncryptionInfo, basicFederationUpstreamUserId);
 		}
 
 		/// <summary>
@@ -162,13 +168,13 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// <param name="app">The application for which the user is registered.</param>
 		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
 		/// <returns>The created object.</returns>
-		public static UserRegistration Create(ApplicationWithUserProperties app, string hashedSecret) =>
-			Create(app, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted());
+		public static UserRegistration Create(ApplicationWithUserProperties app, string hashedSecret, Guid? basicFederationUpstreamUserId = null) =>
+			Create(app, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted(), basicFederationUpstreamUserId);
 
 		public static UserRegistration Create(ApplicationWithUserProperties app, string hashedSecret,
-				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo) {
+				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo, Guid? basicFederationUpstreamUserId = null) {
 			var id = Guid.NewGuid();
-			return Create(id, app, id.ToString(), hashedSecret, encryptedProperties, propertyEncryptionInfo);
+			return Create(id, app, id.ToString(), hashedSecret, encryptedProperties, propertyEncryptionInfo, basicFederationUpstreamUserId);
 		}
 
 		private ApplicationUserPropertyInstance setAppSpecificPropertyImpl(string name, object? value, Func<string, ApplicationUserPropertyDefinition> getPropDef) {
