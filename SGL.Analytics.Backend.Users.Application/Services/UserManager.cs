@@ -161,14 +161,22 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				logger.LogError("Attempt to register user {username} for non-existent application {appName}.", userRegDTO.Username, userRegDTO.AppName);
 				throw new ApplicationDoesNotExistException(userRegDTO.AppName);
 			}
-
-			var hashedSecret = SecretHashing.CreateHashedSecret(userRegDTO.Secret);
-			var userReg = userRegDTO.Username != null ?
-				UserRegistration.Create(app, userRegDTO.Username, hashedSecret,
-					userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted()) :
-				UserRegistration.Create(app, hashedSecret,
-					userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted());
-			User user = new User(userReg);
+			UserRegistration userReg;
+			User user;
+			if (userRegDTO.Secret != null) {
+				// Register full user account, including credentials:
+				var hashedSecret = SecretHashing.CreateHashedSecret(userRegDTO.Secret);
+				userReg = userRegDTO.Username != null ?
+				   UserRegistration.Create(app, userRegDTO.Username, hashedSecret,
+					   userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted()) :
+				   UserRegistration.Create(app, hashedSecret,
+					   userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted());
+				user = new User(userReg);
+			}
+			else {
+				// Register user account using federated authentication against upstream backend:
+				throw new NotImplementedException("Federated authentication is not yet implemented!");
+			}
 			foreach (var prop in userRegDTO.StudySpecificProperties) {
 				user.AppSpecificProperties[prop.Key] = prop.Value;
 			}
