@@ -2,6 +2,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Crypto.Certificates;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
@@ -84,5 +85,7 @@ namespace SGL.Analytics.Client {
 		/// <param name="loginDTO">A data transfer object, bundling the application and user credentials to use for the login request.</param>
 		/// <returns>A task representing the login operation, providing the response from the server, containing an authorization token (if successful), as its result upon completion.</returns>
 		Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO);
+
+		Task<LoginResponseDTO> OpenSessionFromUpstream(string appName, string appApiToken, AuthorizationToken upstreamAuthToken, CancellationToken ct = default);
 	}
 }

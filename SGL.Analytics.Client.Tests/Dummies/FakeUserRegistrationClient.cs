@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client.Tests {
@@ -24,6 +25,11 @@ namespace SGL.Analytics.Client.Tests {
 			await Task.CompletedTask;
 			LoginRequests.Add(loginDTO);
 			return new AuthorizationToken("OK");
+		}
+
+		public Task<LoginResponseDTO> OpenSessionFromUpstream(string appName, string appApiToken, AuthorizationToken upstreamAuthToken, CancellationToken ct = default) {
+			// TODO: Implement
+			throw new NotImplementedException();
 		}
 
 		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken) {
