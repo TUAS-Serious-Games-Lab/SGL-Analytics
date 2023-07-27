@@ -3,6 +3,7 @@ using SGL.Utilities;
 using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
@@ -39,7 +40,7 @@ namespace SGL.Analytics.Client {
 	/// <summary>
 	/// The interface that clients for the log collector backend need to implement.
 	/// </summary>
-	public interface ILogCollectorClient : IRecipientCertificatesClient {
+	public interface ILogCollectorClient : IApiClient, IRecipientCertificatesClient {
 		/// <summary>
 		/// Indicates whether the log collection is active.
 		/// This property should usually return true for real implementations (as the default implementation always does).
@@ -73,6 +74,6 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="FileTooLargeException">
 		/// Thrown when the server rejected the upload request because the given file is too large for the size limit of the server and thus can't be uploaded.
 		/// </exception>
-		Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, LogMetadataDTO metadata, Stream content);
+		Task UploadLogFileAsync(LogMetadataDTO metadata, Stream content, CancellationToken ct = default);
 	}
 }

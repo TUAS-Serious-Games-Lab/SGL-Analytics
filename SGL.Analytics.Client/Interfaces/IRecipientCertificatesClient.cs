@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
@@ -17,6 +18,6 @@ namespace SGL.Analytics.Client {
 		/// <param name="appAPIToken">The API token for the application to authenticate it with the backend.</param>
 		/// <param name="targetCertificateStore">The certificate store to which the downloaded certificate shall be added.</param>
 		/// <returns>A task representing the operation.</returns>
-		Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore);
+		Task LoadRecipientCertificatesAsync(CertificateStore targetCertificateStore, CancellationToken ct = default);
 	}
 }

@@ -73,6 +73,11 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		private async Task refreshLogin(Func<CancellationToken, Task> reloginDelegate, object? sender, AuthorizationExpiredEventArgs e, CancellationToken ct) {
+			await reloginDelegate(ct);
+			logCollectorClient.Authorization = userRegistrationClient.Authorization;
+		}
+
 		private class EnumNamingPolicy : JsonNamingPolicy {
 			public override string ConvertName(string name) => name;
 		}
@@ -91,7 +96,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		private async Task<CertificateStore> loadAuthorizedRecipientCertificatesAsync(IRecipientCertificatesClient client) {
+		private async Task<CertificateStore> loadAuthorizedRecipientCertificatesAsync(IRecipientCertificatesClient client, CancellationToken ct = default) {
 			var store = new CertificateStore(recipientCertificateValidator, LoggerFactory.CreateLogger<CertificateStore>(), (cert, logger) => {
 				if (!cert.AllowedKeyUsages.HasValue) {
 					logger.LogError("Recipient certificate with SubjectDN={subjDN} and KeyId={keyId} doesn't have allowed key usages specified. " +
@@ -107,7 +112,7 @@ namespace SGL.Analytics.Client {
 				}
 				return true;
 			});
-			await client.LoadRecipientCertificatesAsync(appName, appAPIToken, store);
+			await client.LoadRecipientCertificatesAsync(store, ct);
 			return store;
 		}
 
@@ -202,6 +207,7 @@ namespace SGL.Analytics.Client {
 			}
 			lock (lockObject) {
 				this.authToken = authToken;
+				logCollectorClient.Authorization = userRegistrationClient.Authorization;
 			}
 			logger.LogInformation("Login was successful.");
 			return authToken;
@@ -271,7 +277,7 @@ namespace SGL.Analytics.Client {
 				completedLogFiles.Add(logFile.ID);
 			}
 
-			async Task attemptToUploadFileAsync(AuthorizationToken authToken, ILogStorage.ILogFile logFile, KeyEncryptor keyEncryptor) {
+			async Task attemptToUploadFileAsync(AuthorizationToken authToken, ILogStorage.ILogFile logFile, KeyEncryptor keyEncryptor, CancellationToken ct = default) {
 				bool removing = false;
 				try {
 					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
@@ -295,7 +301,7 @@ namespace SGL.Analytics.Client {
 						var encryptionInfo = dataEncryptor.GenerateEncryptionInfo(keyEncryptor);
 						var metadataDTO = new LogMetadataDTO(logFileID, logFileCreationTime, logFileEndTime, logFileSuffix, logFileEncoding, encryptionInfo);
 						Validator.ValidateObject(metadataDTO, new ValidationContext(metadataDTO), true);
-						await logCollectorClient.UploadLogFileAsync(appName, appAPIToken, authToken, metadataDTO, encryptionStream);
+						await logCollectorClient.UploadLogFileAsync(metadataDTO, encryptionStream, ct);
 					}
 					finally {
 						await contentStream.DisposeAsync();
