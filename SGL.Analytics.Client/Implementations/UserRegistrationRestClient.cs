@@ -1,15 +1,20 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Org.BouncyCastle.Asn1.Ocsp;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Crypto.Certificates;
 using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -18,11 +23,12 @@ namespace SGL.Analytics.Client {
 	/// <summary>
 	/// An implementation of <see cref="IUserRegistrationClient"/> that uses REST API calls to communicate with the user registration backend.
 	/// </summary>
-	public class UserRegistrationRestClient : IUserRegistrationClient {
-		private readonly HttpClient httpClient;
+	public class UserRegistrationRestClient : HttpApiClientBase, IUserRegistrationClient {
+		private readonly string appName;
+		private readonly string appApiToken;
 		private static readonly Uri userRegistrationApiRoute = new Uri("/api/analytics/user/v1", UriKind.Relative);
-		private static readonly Uri loginApiRoute = new Uri("/api/analytics/user/v1/login", UriKind.Relative);
-		private static readonly Uri recipientsApiRoute = new Uri("/api/analytics/user/v1/recipient-certificates", UriKind.Relative);
+		private readonly MediaTypeWithQualityHeaderValue pemMT = new MediaTypeWithQualityHeaderValue("application/x-pem-file");
+		private readonly MediaTypeWithQualityHeaderValue jsonMT = new MediaTypeWithQualityHeaderValue("application/json");
 		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonOptions.RestOptions);
 
 		/// <summary>
@@ -30,71 +36,92 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="httpClient">The <see cref="HttpClient"/> to use for requests to the backend.
 		/// The <see cref="HttpClient.BaseAddress"/> of the client needs to be set to the base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
-		public UserRegistrationRestClient(HttpClient httpClient) {
-			if (httpClient.BaseAddress == null) {
-				throw new ArgumentNullException($"{nameof(httpClient)}.{nameof(HttpClient.BaseAddress)}");
-			}
-			this.httpClient = httpClient;
+		public UserRegistrationRestClient(HttpClient httpClient, string appName, string appApiToken) : base(httpClient, null, "/api/analytics/user/v1/") {
+			this.appName = appName;
+			this.appApiToken = appApiToken;
+		}
+
+		private void addApiTokenHeader(HttpRequestMessage request) {
+			request.Headers.Add("App-API-Token", appApiToken);
 		}
 
 		/// <inheritdoc/>
-		public async Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore) {
-			var fullUri = new Uri(httpClient.BaseAddress ??
-				throw new ArgumentNullException($"{nameof(httpClient)}.{nameof(HttpClient.BaseAddress)}"),
-				recipientsApiRoute);
-			var query = HttpUtility.ParseQueryString(fullUri.Query);
-			query.Add("appName", appName);
-			var uriBuilder = new UriBuilder(fullUri);
-			uriBuilder.Query = query.ToString();
-			using var request = new HttpRequestMessage(HttpMethod.Get, uriBuilder.Uri);
-			request.Headers.Add("App-API-Token", appAPIToken);
-			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-pem-file"));
-			request.Version = HttpVersion.Version20;
-			await targetCertificateStore.LoadCertificatesFromHttpAsync(httpClient, request);
+		public Guid? AuthorizedUserId { get; set; } = null;
+
+		/// <inheritdoc/>
+		public event EventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
+
+		/// <summary>
+		/// The clock tolerance for <see cref="IApiClient.Authorization"/>.
+		/// It is subtracted from the received expiry time to account for potential clock differences between the client and the server.
+		/// </summary>
+		public TimeSpan AuthorizationExpiryClockTolerance { get; set; } = TimeSpan.FromMinutes(5);
+
+		/// <inheritdoc/>
+		public async Task LoadRecipientCertificatesAsync(CertificateStore targetCertificateStore, CancellationToken ct = default) {
+			using var response = await SendRequest(HttpMethod.Get, "recipient-certificates",
+				new Dictionary<string, string> { ["appName"] = appName },
+				null, addApiTokenHeader, pemMT, ct, authenticated: false);
+			await targetCertificateStore.LoadCertificatesFromHttpAsync(response, ct);
 		}
 
 		/// <inheritdoc/>
-		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO) {
-			if (httpClient.BaseAddress == null) {
-				throw new ArgumentNullException($"{nameof(httpClient)}.{nameof(HttpClient.BaseAddress)}");
+		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
+			if (loginDTO.AppName != appName) {
+				throw new ArgumentException("AppName of passed DTO doesn't match appName of REST client.", nameof(loginDTO));
 			}
-			var content = JsonContent.Create(loginDTO, new MediaTypeHeaderValue("application/json"), jsonOptions);
-			using var request = new HttpRequestMessage(HttpMethod.Post, loginApiRoute);
-			request.Content = content;
-			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-			request.Version = HttpVersion.Version20;
-			using var response = await httpClient.SendAsync(request);
-			if (response is null) throw new LoginErrorException("Did not receive a valid response for the login request.");
+			if (loginDTO.AppApiToken != appApiToken) {
+				throw new ArgumentException("AppApiToken of passed DTO doesn't match appApiToken of REST client.", nameof(loginDTO));
+			}
 			try {
-				response.EnsureSuccessStatusCode();
+				using var response = await SendRequest(HttpMethod.Post, "login", JsonContent.Create(loginDTO, jsonMT, jsonOptions),
+					_ => { }, jsonMT, ct, authenticated: false);
+				var result = (await response.Content.ReadFromJsonAsync<LoginResponseDTO>(jsonOptions)) ?? throw new JsonException("Got null from response.");
+				//TODO: Consider replacing this by having the server return the user id and expiry time separately.
+				//      If we do so, we can remove the dependency on System.IdentityModel.Tokens.Jwt.
+				try {
+					var token = (new JwtSecurityTokenHandler()).ReadJwtToken(result.Token.Value);
+					Authorization = new AuthorizationData(result.Token, token.ValidTo.ToUniversalTime() - AuthorizationExpiryClockTolerance);
+					AuthorizedUserId = Guid.TryParse(token.Claims.FirstOrDefault(c => c.Type == "userid")?.Value, out var userId) ? userId : Guid.Empty;
+				}
+				catch {
+					Authorization = new AuthorizationData(result.Token, DateTime.UtcNow.AddMinutes(5));
+					AuthorizedUserId = Guid.Empty;
+				}
+
+				UserAuthenticated?.Invoke(this, new UserAuthenticatedEventArgs(Authorization.Value, AuthorizedUserId.Value));
+				return result?.Token ?? throw new LoginErrorException("Did not receive a valid response for the login request.");
 			}
-			catch (HttpRequestException) when (response?.StatusCode == HttpStatusCode.Unauthorized) {
+			catch (HttpApiResponseException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
 				throw new LoginFailedException();
 			}
+			catch (LoginErrorException) { throw; }
 			catch (Exception ex) {
 				throw new LoginErrorException(ex);
 			}
-			var result = await response.Content.ReadFromJsonAsync<LoginResponseDTO>(jsonOptions);
-			return result?.Token ?? throw new LoginErrorException("Did not receive a valid response for the login request.");
 		}
 
 		/// <inheritdoc/>
-		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken) {
-			if (httpClient.BaseAddress == null) {
-				throw new ArgumentNullException($"{nameof(httpClient)}.{nameof(HttpClient.BaseAddress)}");
+		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, CancellationToken ct = default) {
+			if (userDTO.AppName != appName) {
+				throw new ArgumentException("AppName of passed DTO doesn't match appName of REST client.", nameof(userDTO));
 			}
-			var content = JsonContent.Create(userDTO, new MediaTypeHeaderValue("application/json"), jsonOptions);
-			using var request = new HttpRequestMessage(HttpMethod.Post, userRegistrationApiRoute);
-			request.Content = content;
-			request.Headers.Add("App-API-Token", appAPIToken);
-			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-			request.Version = HttpVersion.Version20;
-			using var response = await httpClient.SendAsync(request);
-			if (response is null) throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
-			if (response.StatusCode == HttpStatusCode.Conflict && userDTO.Username != null) throw new UsernameAlreadyTakenException(userDTO.Username);
-			response.EnsureSuccessStatusCode();
-			var result = await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>(jsonOptions);
-			return result ?? throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
+			try {
+				using var response = await SendRequest(HttpMethod.Post, "",
+					JsonContent.Create(userDTO, new MediaTypeHeaderValue("application/json"), jsonOptions),
+					addApiTokenHeader, jsonMT, ct, authenticated: false);
+				var result = response != null ? await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>(jsonOptions) : null;
+				if (result == null) {
+					throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
+				}
+				return result;
+			}
+			catch (HttpApiResponseException ex) when (ex.StatusCode == HttpStatusCode.Conflict && userDTO.Username != null) {
+				throw new UsernameAlreadyTakenException(userDTO.Username, ex);
+			}
+			catch (Exception) {
+				throw;
+			}
 		}
 	}
 }

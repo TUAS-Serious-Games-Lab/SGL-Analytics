@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client.Tests {
@@ -20,13 +21,16 @@ namespace SGL.Analytics.Client.Tests {
 		/// </summary>
 		/// <remarks>Thread-safety is achieved by only allowing to set the value at the beginning of the object lifetime.</remarks>
 		public bool IsActive { get; init; } = true;
+		public AuthorizationData? Authorization { get; set; }
 
-		public Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore) {
+		public event AsyncEventHandler<AuthorizationExpiredEventArgs>? AuthorizationExpired;
+
+		public Task LoadRecipientCertificatesAsync(CertificateStore targetCertificateStore, CancellationToken ct = default) {
 			targetCertificateStore.AddCertificatesWithValidation(RecipientCertificates, nameof(FakeLogCollectorClient));
 			return Task.CompletedTask;
 		}
 
-		public async Task UploadLogFileAsync(string appName, string appAPIToken, AuthorizationToken authToken, LogMetadataDTO metadata, Stream content) {
+		public async Task UploadLogFileAsync(LogMetadataDTO metadata, Stream content, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			var resp = new HttpResponseMessage(StatusCode);
 			resp.EnsureSuccessStatusCode();
