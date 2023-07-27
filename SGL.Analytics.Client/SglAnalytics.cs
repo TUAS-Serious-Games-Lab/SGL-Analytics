@@ -118,6 +118,12 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
 		/// <exception cref="HttpRequestException">Indicates either a network problem (if <see cref="HttpRequestException.StatusCode"/> is <see langword="null"/>) or a server-side error (if <see cref="HttpRequestException.StatusCode"/> has a value).</exception>
 		public async Task RegisterAsync(BaseUserData userData) {
+			await RegisterImplAsync(userData, null);
+		}
+		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, AuthorizationToken upstreamAuthToken) {
+			await RegisterImplAsync(userData, upstreamAuthToken);
+		}
+		private async Task RegisterImplAsync(BaseUserData userData, AuthorizationToken? upstreamAuthToken) {
 			try {
 				if (IsRegistered()) {
 					throw new InvalidOperationException("User is already registered.");
@@ -137,7 +143,7 @@ namespace SGL.Analytics.Client {
 					var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
 					(encryptedUserProps, userPropsEncryptionInfo) = await encryptUserProperties(encryptedUserPropDict, keyEncryptor);
 				}
-				var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
+				var secret = upstreamAuthToken == null ? SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets) : null;
 				var userDTO = new UserRegistrationDTO(appName, userData.Username, secret, unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
