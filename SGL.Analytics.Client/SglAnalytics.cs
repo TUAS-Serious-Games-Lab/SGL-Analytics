@@ -6,6 +6,7 @@ using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.EndToEnd;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
@@ -117,7 +118,7 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="UsernameAlreadyTakenException">If <paramref name="userData"/> had the optional <see cref="BaseUserData.Username"/> property set and the given username is already taken for this application. If this happens, the user needs to pick a different name.</exception>
 		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
 		/// <exception cref="HttpRequestException">Indicates either a network problem (if <see cref="HttpRequestException.StatusCode"/> is <see langword="null"/>) or a server-side error (if <see cref="HttpRequestException.StatusCode"/> has a value).</exception>
-		public async Task RegisterAsync(BaseUserData userData) {
+		public async Task RegisterAsync(BaseUserData userData) { // TODO: Rework into private RegisterImplAsync, taking the secret to use as an argument. Current call sites should become RegisterUserWithDeviceToken.
 			try {
 				if (IsRegistered()) {
 					throw new InvalidOperationException("User is already registered.");
@@ -175,6 +176,76 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "Registration failed due to unexpected error.");
 				throw;
 			}
+		}
+
+		public async Task RegisterUserWithPasswordAsync(BaseUserData userData, string password, bool rememberCredentials = false, CancellationToken ct = default) {
+			// TODO:
+			// - maybe: check password complexity
+			// - submit registration request
+			// - if failed, report reason by exception (username taken, network failure, ...)
+			// - if rememberCredentials set, store username, userid, password in root data store
+			// - login with newly registered credentials to obtain session token
+			// - transfer session token from user client to logs client
+			// - hold on to re-login delegate for token refreshing, capturing needed credentials
+			// (Some of these will be done in RegisterImplAsync)
+			throw new NotImplementedException();
+		}
+		public async Task RegisterUserWithDeviceSecret(BaseUserData userData, CancellationToken ct = default) {
+			// TODO:
+			// - generate random secret
+			// - submit registration request
+			// - if failed, report reason by exception (network failure, ...)
+			// - store userid, secret in root data store
+			// - login with newly registered credentials to obtain session token
+			// - transfer session token from user client to logs client
+			// - hold on to re-login delegate for token refreshing, capturing needed credentials
+			// (Some of these will be done in RegisterImplAsync)
+			throw new NotImplementedException();
+		}
+		public async Task<LoginAttemptResult> TryLoginWithStoredCredentialsAsync(CancellationToken ct = default) {
+			// TODO:
+			// - if no credentials present in root data store, return CredentialsNotAvailable
+			// - retrieve credentials and send login request
+			// - if failed, return Failed or NetworkProblem depending on reason
+			// - transfer session token from user client to logs client
+			// - hold on to re-login delegate for token refreshing, capturing needed credentials
+			throw new NotImplementedException();
+		}
+		public async Task<LoginAttemptResult> TryLoginWithPasswordAsync(string loginName, string password, bool rememberCredentials = false, CancellationToken ct = default) {
+			// TODO:
+			// - send login request using provided credentials
+			// - if failed, return Failed or NetworkProblem depending on reason
+			// - transfer session token from user client to logs client
+			// - hold on to re-login delegate for token refreshing, capturing needed credentials
+			throw new NotImplementedException();
+		}
+		public async Task UseOfflineModeAsync(CancellationToken ct = default) {
+			// TODO:
+			// - if there is a stored user id, load it and store local logs under that identifier
+			// - otherwise store local logs under anonymous identifier, can be linked to user later using InheritAnonymousLogsAsync
+			// - enable local log writing
+			// - disable background upload, don't even attempt to authenticate
+			throw new NotImplementedException();
+		}
+		public async Task DeactivateAsync(CancellationToken ct = default) {
+			// TODO:
+			// - ensure finished
+			// - disable log writing
+			// - disable background upload
+			// - don't try to authenticate
+			// - set a flag that makes StartNewLog, FinishAsync, StartRetryUploads, Record* No-Ops
+			throw new NotImplementedException();
+		}
+
+		public async Task<IList<(Guid Id, DateTime Start, DateTime End)>> CheckForAnonymousLogsAsync(CancellationToken ct = default) {
+			// TODO: Check if there are local, not yet uploaded logs for anonymous identifier (Guid.Empty), return list of ids and time ranges.
+			// App can call this and ask user if they are theirs and upon confirmation (or selection), call InheritAnonymousLogsAsync to take ownership.
+			throw new NotImplementedException();
+		}
+		public async Task InheritAnonymousLogsAsync(IEnumerable<Guid> logIds, CancellationToken ct = default) {
+			// TODO: Retrieve logs from log storage and add them to upload queue of authenticated user.
+			// (Fail if no user session active)
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
