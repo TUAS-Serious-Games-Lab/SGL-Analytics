@@ -87,10 +87,7 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		public string AppName { get => appName; }
 
-		/// <summary>
-		/// The <see cref="ILoggerFactory"/> object that this client uses for logging.
-		/// </summary>
-		public ILoggerFactory LoggerFactory { get; }
+		private ILoggerFactory LoggerFactory { get; }
 
 		/// <summary>
 		/// The id of the registered user, or null if not registered.
