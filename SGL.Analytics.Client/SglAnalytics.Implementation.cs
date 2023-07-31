@@ -114,6 +114,17 @@ namespace SGL.Analytics.Client {
 			return (unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
 		}
 
+		private async Task storeCredentials(BaseUserData userData, string secret, UserRegistrationResultDTO regResult) {
+			lock (lockObject) {
+				rootDataStore.UserID = regResult.UserId;
+				rootDataStore.UserSecret = secret;
+				if (userData.Username != null) {
+					rootDataStore.Username = userData.Username;
+				}
+			}
+			await rootDataStore.SaveAsync();
+		}
+
 		private async Task<CertificateStore> loadAuthorizedRecipientCertificatesAsync(IRecipientCertificatesClient client, CancellationToken ct = default) {
 			var store = new CertificateStore(recipientCertificateValidator, LoggerFactory.CreateLogger<CertificateStore>(), (cert, logger) => {
 				if (!cert.AllowedKeyUsages.HasValue) {
