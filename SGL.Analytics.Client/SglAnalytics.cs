@@ -130,7 +130,7 @@ namespace SGL.Analytics.Client {
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO);
 				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
-				await storeCredentials(userData, secret, regResult);
+				await storeCredentials(userData.Username, secret, regResult.UserId);
 				logger.LogInformation("Successfully registered user.");
 				startUploadingExistingLogs();
 			}

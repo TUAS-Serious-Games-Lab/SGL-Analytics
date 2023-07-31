@@ -114,12 +114,12 @@ namespace SGL.Analytics.Client {
 			return (unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
 		}
 
-		private async Task storeCredentials(BaseUserData userData, string secret, UserRegistrationResultDTO regResult) {
+		private async Task storeCredentials(string? username, string secret, Guid userId) {
 			lock (lockObject) {
-				rootDataStore.UserID = regResult.UserId;
+				rootDataStore.UserID = userId;
 				rootDataStore.UserSecret = secret;
-				if (userData.Username != null) {
-					rootDataStore.Username = userData.Username;
+				if (username != null) {
+					rootDataStore.Username = username;
 				}
 			}
 			await rootDataStore.SaveAsync();
