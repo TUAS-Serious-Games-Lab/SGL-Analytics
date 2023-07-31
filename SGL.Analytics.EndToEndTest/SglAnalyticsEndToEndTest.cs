@@ -140,7 +140,7 @@ namespace SGL.Analytics.EndToEndTest {
 				config.ConfigureCryptography(config => config.AllowSharedMessageKeyPair());
 			})) {
 				if (!analytics.IsRegistered()) {
-					await analytics.RegisterAsync(new UserData { Foo = 42, Bar = "This is a Test", Obj = new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" } });
+					await analytics.RegisterUserWithDeviceSecretAsync(new UserData { Foo = 42, Bar = "This is a Test", Obj = new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" } });
 				}
 				userId = analytics.UserID ?? Guid.Empty;
 				log1Id = analytics.StartNewLog();

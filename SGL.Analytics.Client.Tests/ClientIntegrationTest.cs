@@ -176,7 +176,13 @@ namespace SGL.Analytics.Client.Tests {
 					Test2 = "Hello World"
 				}
 			};
-			await analytics.RegisterAsync(user);
+			if (username == null) {
+				await analytics.RegisterUserWithDeviceSecretAsync(user);
+			}
+			else {
+				string password = SecretGenerator.Instance.GenerateSecret(10);
+				await analytics.RegisterUserWithPasswordAsync(user, password, rememberCredentials: true);
+			}
 
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test J" });

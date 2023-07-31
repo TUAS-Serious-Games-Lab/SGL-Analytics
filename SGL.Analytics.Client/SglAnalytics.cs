@@ -118,19 +118,21 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="UsernameAlreadyTakenException">If <paramref name="userData"/> had the optional <see cref="BaseUserData.Username"/> property set and the given username is already taken for this application. If this happens, the user needs to pick a different name.</exception>
 		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
 		/// <exception cref="HttpRequestException">Indicates either a network problem (if <see cref="HttpRequestException.StatusCode"/> is <see langword="null"/>) or a server-side error (if <see cref="HttpRequestException.StatusCode"/> has a value).</exception>
-		public async Task RegisterAsync(BaseUserData userData) { // TODO: Rework into private RegisterImplAsync, taking the secret to use as an argument. Current call sites should become RegisterUserWithDeviceToken.
+		private async Task RegisterImplAsync(BaseUserData userData, string secret, bool storeCredentials) {
 			try {
 				if (IsRegistered()) {
 					throw new InvalidOperationException("User is already registered.");
 				}
 				logger.LogInformation("Starting user registration process...");
 				var (unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo) = await getUserProperties(userData);
-				var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
 				var userDTO = new UserRegistrationDTO(appName, userData.Username, secret, unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
+				// submit registration request
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO);
 				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
-				await storeCredentials(userData.Username, secret, regResult.UserId);
+				if (storeCredentials) {
+					await storeCredentialsAsync(userData.Username, secret, regResult.UserId);
+				}
 				logger.LogInformation("Successfully registered user.");
 				startUploadingExistingLogs();
 			}
@@ -163,21 +165,22 @@ namespace SGL.Analytics.Client {
 		public async Task RegisterUserWithPasswordAsync(BaseUserData userData, string password, bool rememberCredentials = false, CancellationToken ct = default) {
 			// TODO:
 			// - maybe: check password complexity
-			// - submit registration request
-			// - if failed, report reason by exception (username taken, network failure, ...)
-			// - if rememberCredentials set, store username, userid, password in root data store
+			await RegisterImplAsync(userData, password, rememberCredentials);
+			// TODO:
 			// - login with newly registered credentials to obtain session token
 			// - transfer session token from user client to logs client
 			// - hold on to re-login delegate for token refreshing, capturing needed credentials
 			// (Some of these will be done in RegisterImplAsync)
 			throw new NotImplementedException();
 		}
-		public async Task RegisterUserWithDeviceSecret(BaseUserData userData, CancellationToken ct = default) {
+		public async Task RegisterUserWithDeviceSecretAsync(BaseUserData userData, CancellationToken ct = default) {
+			if (userData.Username == null) {
+				throw new ArgumentNullException($"{nameof(userData)}.{nameof(BaseUserData.Username)}");
+			}
+			// Generate random secret
+			var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
+			await RegisterImplAsync(userData, secret, storeCredentials: true);
 			// TODO:
-			// - generate random secret
-			// - submit registration request
-			// - if failed, report reason by exception (network failure, ...)
-			// - store userid, secret in root data store
 			// - login with newly registered credentials to obtain session token
 			// - transfer session token from user client to logs client
 			// - hold on to re-login delegate for token refreshing, capturing needed credentials

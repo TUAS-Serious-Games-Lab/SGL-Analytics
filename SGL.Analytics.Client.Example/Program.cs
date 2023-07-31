@@ -100,7 +100,14 @@ namespace SGL.Analytics.Client.Example {
 			});
 			if (!analytics.IsRegistered()) {
 				try {
-					await analytics.RegisterAsync(new BaseUserData(opts.NoUsername ? null : opts.Username));
+					if (opts.NoUsername) {
+						await analytics.RegisterUserWithDeviceSecretAsync(new BaseUserData(null));
+					}
+					else {
+						string password = SecretGenerator.Instance.GenerateSecret(10);
+						await Console.Out.WriteLineAsync($"Generated password: {password}");
+						await analytics.RegisterUserWithPasswordAsync(new BaseUserData(opts.Username), password);
+					}
 				}
 				catch (Exception ex) {
 					await Console.Error.WriteLineAsync($"Registration Error: {ex.Message}");

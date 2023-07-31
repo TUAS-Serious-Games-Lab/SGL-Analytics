@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.DTO;
+using SGL.Utilities;
 using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.Keys;
@@ -623,7 +624,8 @@ namespace SGL.Analytics.Client.Tests {
 		public async Task UserIsCorrectlyRegistered() {
 			ds.UserID = null;
 			var user = new TestUserData("Testuser") { Label = "This is a test!", SomeNumber = 42 };
-			await analytics.RegisterAsync(user);
+			string password = SecretGenerator.Instance.GenerateSecret(10);
+			await analytics.RegisterUserWithPasswordAsync(user, password, rememberCredentials: true);
 			Assert.True(analytics.IsRegistered());
 			Assert.Single(userRegClient.RegistrationResults);
 			var userId = userRegClient.RegistrationResults.Single().UserId;
@@ -669,7 +671,8 @@ namespace SGL.Analytics.Client.Tests {
 			});
 			var user = new TestUserData("Testuser") { Label = "This is a test!", SomeNumber = 42 };
 			Assert.Empty(collectorClient.UploadedLogFileIds);
-			await analytics.RegisterAsync(user);
+			string password = SecretGenerator.Instance.GenerateSecret(10);
+			await analytics.RegisterUserWithPasswordAsync(user, password, rememberCredentials: true);
 			await analytics.FinishAsync();
 			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
 		}
@@ -790,7 +793,8 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
-			await analytics.RegisterAsync(new BaseUserData("Testuser"));
+			string password = SecretGenerator.Instance.GenerateSecret(10);
+			await analytics.RegisterUserWithPasswordAsync(new BaseUserData("Testuser"), password, rememberCredentials: true);
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
@@ -815,7 +819,7 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
-			await analytics.RegisterAsync(new BaseUserData());
+			await analytics.RegisterUserWithDeviceSecretAsync(new BaseUserData());
 			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
