@@ -75,8 +75,11 @@ namespace SGL.Analytics.Client {
 			logStorage = configurator.LogStorageFactory.Factory(factoryArgs);
 			userRegistrationClient = configurator.UserRegistrationClientFactory.Factory(factoryArgs);
 			logCollectorClient = configurator.LogCollectorClientFactory.Factory(factoryArgs);
+			userRegistrationClient.UserAuthenticated += async (s, e, ct) => {
+				await logCollectorClient.SetAuthorizationLockedAsync(e.Authorization, ct);
+			};
 			logCollectorClient.AuthorizationExpired += async (s, e, ct) => {
-				await loginAsync(true);
+				await refreshLoginDelegate(ct);
 			};
 			if (IsRegistered()) {
 				startUploadingExistingLogs();

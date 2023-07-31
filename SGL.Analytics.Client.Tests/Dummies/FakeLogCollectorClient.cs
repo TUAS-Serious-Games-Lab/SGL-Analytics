@@ -30,6 +30,11 @@ namespace SGL.Analytics.Client.Tests {
 			return Task.CompletedTask;
 		}
 
+		public Task SetAuthorizationLockedAsync(AuthorizationData? value, CancellationToken ct = default) {
+			Authorization = value;
+			return Task.CompletedTask;
+		}
+
 		public async Task UploadLogFileAsync(LogMetadataDTO metadata, Stream content, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			var resp = new HttpResponseMessage(StatusCode);

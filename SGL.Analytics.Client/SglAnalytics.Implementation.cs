@@ -39,6 +39,7 @@ namespace SGL.Analytics.Client {
 		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
 
 		private AuthorizationToken? authToken;
+		private Func<CancellationToken, Task> refreshLoginDelegate = async ct => throw new InvalidOperationException();
 		private SynchronizationContext mainSyncContext;
 		private string dataDirectory;
 		private Task? logUploader = null;
@@ -191,6 +192,32 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		private async Task loginAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
+			try {
+				if (string.IsNullOrEmpty(loginDTO.UserSecret)) {
+					throw new ArgumentNullException(nameof(loginDTO.UserSecret));
+				}
+				switch (loginDTO) {
+					case IdBasedLoginRequestDTO:
+						break;
+					case UsernameBasedLoginRequestDTO usernameBasedLoginRequestDTO:
+						if (string.IsNullOrEmpty(usernameBasedLoginRequestDTO.Username)) {
+							throw new ArgumentNullException(nameof(BaseUserData.Username));
+						}
+						break;
+					default:
+						throw new ArgumentException("Unsupported login DTO object type.", nameof(loginDTO));
+				}
+				logger.LogInformation("Logging in user {userIdent} ...", loginDTO.GetUserIdentifier());
+				Validator.ValidateObject(loginDTO, new ValidationContext(loginDTO), true);
+				await userRegistrationClient.LoginUserAsync(loginDTO, ct);
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "Login for user {userIdent} failed with exception.", loginDTO.GetUserIdentifier());
+				throw;
+			}
+
+		}
 		private async Task<AuthorizationToken?> loginAsync(bool expired = false) {
 			Guid? userIDOpt;
 			string? usernameOpt;
@@ -245,7 +272,7 @@ namespace SGL.Analytics.Client {
 		private async Task uploadFilesAsync() {
 			if (!logCollectorClient.IsActive) return;
 			try {
-				var authToken = await loginAsync();
+				var authToken = await loginAsync(false);
 			}
 			catch (LoginFailedException ex) {
 				logger.LogError(ex, "The login attempt failed due to incorrect credentials.");

@@ -20,7 +20,7 @@ namespace SGL.Analytics.Client.Tests {
 		public Guid? AuthorizedUserId => Guid.NewGuid();
 
 		public event AsyncEventHandler<AuthorizationExpiredEventArgs>? AuthorizationExpired;
-		public event EventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
+		public event AsyncEventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
 
 		public Task LoadRecipientCertificatesAsync(CertificateStore targetCertificateStore, CancellationToken ct = default) {
 			targetCertificateStore.AddCertificatesWithValidation(RecipientCertificates, nameof(FakeUserRegistrationClient));
@@ -43,5 +43,8 @@ namespace SGL.Analytics.Client.Tests {
 			return result;
 		}
 
+		public Task SetAuthorizationLockedAsync(AuthorizationData? value, CancellationToken ct = default) {
+			throw new NotSupportedException();
+		}
 	}
 }

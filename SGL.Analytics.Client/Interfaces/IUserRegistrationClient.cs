@@ -90,7 +90,7 @@ namespace SGL.Analytics.Client {
 		/// Allows other clients to be notified when a new token was obtained, either initially or through a re-login after a token has expired.
 		/// They can then use the new token for their requests as well.
 		/// </summary>
-		event EventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
+		event AsyncEventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
 
 
 		/// <summary>
