@@ -96,6 +96,24 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		private async Task<(Dictionary<string, object?> unencryptedUserPropDict, byte[]? encryptedUserProps, EncryptionInfo? userPropsEncryptionInfo)> getUserProperties(BaseUserData userData) {
+			var (unencryptedUserPropDict, encryptedUserPropDict) = userData.BuildUserProperties();
+			byte[]? encryptedUserProps = null;
+			EncryptionInfo? userPropsEncryptionInfo = null;
+			if (encryptedUserPropDict.Any()) {
+				var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(userRegistrationClient);
+				var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
+				if (!certList.Any()) {
+					const string msg = "Can't send registration because no authorized recipients for study-specific properties were found.";
+					logger.LogError(msg);
+					throw new InvalidOperationException(msg);
+				}
+				var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
+				(encryptedUserProps, userPropsEncryptionInfo) = await encryptUserProperties(encryptedUserPropDict, keyEncryptor);
+			}
+			return (unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
+		}
+
 		private async Task<CertificateStore> loadAuthorizedRecipientCertificatesAsync(IRecipientCertificatesClient client, CancellationToken ct = default) {
 			var store = new CertificateStore(recipientCertificateValidator, LoggerFactory.CreateLogger<CertificateStore>(), (cert, logger) => {
 				if (!cert.AllowedKeyUsages.HasValue) {

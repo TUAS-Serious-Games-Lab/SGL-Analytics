@@ -124,20 +124,7 @@ namespace SGL.Analytics.Client {
 					throw new InvalidOperationException("User is already registered.");
 				}
 				logger.LogInformation("Starting user registration process...");
-				var (unencryptedUserPropDict, encryptedUserPropDict) = userData.BuildUserProperties();
-				byte[]? encryptedUserProps = null;
-				EncryptionInfo? userPropsEncryptionInfo = null;
-				if (encryptedUserPropDict.Any()) {
-					var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(userRegistrationClient);
-					var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
-					if (!certList.Any()) {
-						const string msg = "Can't send registration because no authorized recipients for study-specific properties were found.";
-						logger.LogError(msg);
-						throw new InvalidOperationException(msg);
-					}
-					var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
-					(encryptedUserProps, userPropsEncryptionInfo) = await encryptUserProperties(encryptedUserPropDict, keyEncryptor);
-				}
+				var (unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo) = await getUserProperties(userData);
 				var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
 				var userDTO = new UserRegistrationDTO(appName, userData.Username, secret, unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
