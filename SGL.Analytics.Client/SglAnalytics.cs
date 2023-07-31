@@ -136,6 +136,7 @@ namespace SGL.Analytics.Client {
 			}
 			catch (UsernameAlreadyTakenException ex) {
 				logger.LogError(ex, "Registration failed because the specified username is already in use.");
+				throw;
 			}
 			catch (UserRegistrationResponseException ex) {
 				logger.LogError(ex, "Registration failed due to error with the registration response.");
@@ -151,6 +152,7 @@ namespace SGL.Analytics.Client {
 			}
 			catch (ValidationException ex) {
 				logger.LogError(ex, "Registration failed due to violating validation constraints.");
+				throw;
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "Registration failed due to unexpected error.");
