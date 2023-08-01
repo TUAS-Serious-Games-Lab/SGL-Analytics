@@ -38,9 +38,9 @@ namespace SGL.Analytics.Client {
 		private Task? logWriter = null;
 		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
 
-		private AuthorizationToken? authToken;
 		private Func<CancellationToken, Task> refreshLoginDelegate = async ct => throw new InvalidOperationException();
 		private SynchronizationContext mainSyncContext;
+		private CancellationTokenSource cts = new CancellationTokenSource();
 		private string dataDirectory;
 		private Task? logUploader = null;
 
@@ -62,6 +62,8 @@ namespace SGL.Analytics.Client {
 			if (configurator.LogStorageFactory.Dispose) await disposeIfDisposable(logStorage);
 			if (configurator.RootDataStoreFactory.Dispose) await disposeIfDisposable(rootDataStore);
 			configurator.CustomArgumentFactories.Dispose();
+			cts.Cancel();
+			cts.Dispose();
 			if (configurator.LoggerFactory.Dispose) await disposeIfDisposable(LoggerFactory);
 		}
 
@@ -72,11 +74,6 @@ namespace SGL.Analytics.Client {
 			if (obj is IDisposable d) {
 				d.Dispose();
 			}
-		}
-
-		private async Task refreshLogin(Func<CancellationToken, Task> reloginDelegate, object? sender, AuthorizationExpiredEventArgs e, CancellationToken ct) {
-			await reloginDelegate(ct);
-			logCollectorClient.Authorization = userRegistrationClient.Authorization;
 		}
 
 		private class EnumNamingPolicy : JsonNamingPolicy {
@@ -98,11 +95,12 @@ namespace SGL.Analytics.Client {
 		}
 
 		private async Task<(Dictionary<string, object?> unencryptedUserPropDict, byte[]? encryptedUserProps, EncryptionInfo? userPropsEncryptionInfo)> getUserProperties(BaseUserData userData) {
+			var ct = cts.Token;
 			var (unencryptedUserPropDict, encryptedUserPropDict) = userData.BuildUserProperties();
 			byte[]? encryptedUserProps = null;
 			EncryptionInfo? userPropsEncryptionInfo = null;
 			if (encryptedUserPropDict.Any()) {
-				var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(userRegistrationClient);
+				var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(userRegistrationClient, ct);
 				var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
 				if (!certList.Any()) {
 					const string msg = "Can't send registration because no authorized recipients for study-specific properties were found.";
@@ -110,7 +108,7 @@ namespace SGL.Analytics.Client {
 					throw new InvalidOperationException(msg);
 				}
 				var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
-				(encryptedUserProps, userPropsEncryptionInfo) = await encryptUserProperties(encryptedUserPropDict, keyEncryptor);
+				(encryptedUserProps, userPropsEncryptionInfo) = await encryptUserProperties(encryptedUserPropDict, keyEncryptor, ct);
 			}
 			return (unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
 		}
@@ -211,68 +209,33 @@ namespace SGL.Analytics.Client {
 				logger.LogInformation("Logging in user {userIdent} ...", loginDTO.GetUserIdentifier());
 				Validator.ValidateObject(loginDTO, new ValidationContext(loginDTO), true);
 				await userRegistrationClient.LoginUserAsync(loginDTO, ct);
+				logger.LogInformation("Login was successful.");
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "Login for user {userIdent} failed with exception.", loginDTO.GetUserIdentifier());
 				throw;
 			}
-
 		}
-		private async Task<AuthorizationToken?> loginAsync(bool expired = false) {
+
+		private (Guid? UserId, string? Username, string? UserSecret)? readStoredCredentials() {
 			Guid? userIDOpt;
 			string? usernameOpt;
 			string? userSecret;
-			AuthorizationToken? authToken;
 			lock (lockObject) {
 				userIDOpt = rootDataStore.UserID;
 				usernameOpt = rootDataStore.Username;
 				userSecret = rootDataStore.UserSecret;
-				authToken = this.authToken;
 			}
-			// Can't login without credentials, the user needs to be registered first.
-			if ((userIDOpt == null && usernameOpt == null) || userSecret is null) return null;
-			// We have loginData already and we weren't called because of expired loginData, return the already present ones.
-			if (authToken != null && !expired) return authToken;
-			logger.LogInformation("Logging in user {userId} ...", userIDOpt?.ToString() ?? usernameOpt);
-			var tcs = new TaskCompletionSource<AuthorizationToken>();
-			mainSyncContext.Post(async s => {
-				try {
-					LoginRequestDTO loginDTO;
-					if (userIDOpt != null) {
-						loginDTO = new IdBasedLoginRequestDTO(appName, appAPIToken, userIDOpt.Value, userSecret);
-					}
-					else if (usernameOpt != null) {
-						loginDTO = new UsernameBasedLoginRequestDTO(appName, appAPIToken, usernameOpt, userSecret);
-					}
-					else {
-						throw new Exception("UserId and Username are both missing although one of them was present before switching to main context.");
-					}
-					Validator.ValidateObject(loginDTO, new ValidationContext(loginDTO), true);
-					tcs.SetResult(await userRegistrationClient.LoginUserAsync(loginDTO));
-				}
-				catch (Exception ex) {
-					tcs.SetException(ex);
-				}
-			}, null);
-			try {
-				authToken = await tcs.Task;
-			}
-			catch (Exception ex) {
-				logger.LogError(ex, "Login for user {userId} failed with exception.", userIDOpt?.ToString() ?? usernameOpt);
-				throw;
-			}
-			lock (lockObject) {
-				this.authToken = authToken;
-				logCollectorClient.Authorization = userRegistrationClient.Authorization;
-			}
-			logger.LogInformation("Login was successful.");
-			return authToken;
+			return (userIDOpt, usernameOpt, userSecret);
 		}
 
 		private async Task uploadFilesAsync() {
+			var ct = cts.Token;
 			if (!logCollectorClient.IsActive) return;
 			try {
-				var authToken = await loginAsync(false);
+				if (!logCollectorClient.Authorization.HasValue || !logCollectorClient.Authorization.Value.Valid) {
+					await refreshLoginDelegate(ct);
+				}
 			}
 			catch (LoginFailedException ex) {
 				logger.LogError(ex, "The login attempt failed due to incorrect credentials.");
@@ -282,32 +245,32 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "The login attempt failed due to an error. Exiting the upload process ...");
 				return;
 			}
-			if (authToken == null) {
-				logger.LogError("The registered login credentails are missing. This is unexpected at this point. Exiting the upload process ...");
+			if (!logCollectorClient.Authorization.HasValue || !logCollectorClient.Authorization.Value.Valid) {
+				logger.LogError("No valid authorization token is present. This is unexpected at this point. Exiting the upload process ...");
 				return;
 			}
 			logger.LogDebug("Started log uploader to asynchronously upload finished data logs to the backend.");
 			var completedLogFiles = new HashSet<Guid>();
-			var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(logCollectorClient);
+			var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(logCollectorClient, ct);
 			var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
 			if (!certList.Any()) {
 				logger.LogError("Can't upload log files because no authorized recipients were found.");
 				return;
 			}
 			var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
-			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
+			await foreach (var logFile in uploadQueue.DequeueAllAsync(ct)) {
 				// If we already completed this file, it has been added to the queue twice,
 				// e.g. once by the writer worker and once by startUploadingExistingLogs.
 				// Since we removed the file after successfully uploading it, lets not try again, only to fail with a missing file exception.
 				if (completedLogFiles.Contains(logFile.ID)) continue;
 				try {
-					await attemptToUploadFileAsync((AuthorizationToken)authToken, logFile, keyEncryptor);
+					await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
 				}
 				catch (LoginRequiredException) {
 					logger.LogInformation("Uploading data log {logId} failed because the backend told us that we need to login first. " +
 						"The most likely reason is that our session token expired. Obtaining a new session token by logging in again, after which we will retry the upload ...", logFile.ID);
 					try {
-						authToken = await loginAsync(true);
+						await refreshLoginDelegate(ct);
 					}
 					catch (LoginFailedException ex) {
 						logger.LogError(ex, "The login attempt failed due to incorrect credentials.");
@@ -317,12 +280,12 @@ namespace SGL.Analytics.Client {
 						logger.LogError(ex, "The login attempt failed due to an error. Exiting the upload process ...");
 						return;
 					}
-					if (authToken == null) {
-						logger.LogError("The registered login credentails are missing. This is unexpected at this point. Exiting the upload process ...");
+					if (!logCollectorClient.Authorization.HasValue || !logCollectorClient.Authorization.Value.Valid) {
+						logger.LogError("No valid authorization token is present. This is unexpected at this point. Exiting the upload process ...");
 						return;
 					}
 					try {
-						await attemptToUploadFileAsync((AuthorizationToken)authToken, logFile, keyEncryptor);
+						await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
 					}
 					catch (LoginRequiredException ex) {
 						logger.LogError(ex, "The upload for data log {logId} failed again after obtaining a fresh session token. " +
@@ -333,7 +296,7 @@ namespace SGL.Analytics.Client {
 				completedLogFiles.Add(logFile.ID);
 			}
 
-			async Task attemptToUploadFileAsync(AuthorizationToken authToken, ILogStorage.ILogFile logFile, KeyEncryptor keyEncryptor, CancellationToken ct = default) {
+			async Task attemptToUploadFileAsync(ILogStorage.ILogFile logFile, KeyEncryptor keyEncryptor, CancellationToken ct = default) {
 				bool removing = false;
 				try {
 					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
