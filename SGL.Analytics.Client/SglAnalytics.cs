@@ -121,7 +121,7 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="UsernameAlreadyTakenException">If <paramref name="userData"/> had the optional <see cref="BaseUserData.Username"/> property set and the given username is already taken for this application. If this happens, the user needs to pick a different name.</exception>
 		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
 		/// <exception cref="HttpRequestException">Indicates either a network problem (if <see cref="HttpRequestException.StatusCode"/> is <see langword="null"/>) or a server-side error (if <see cref="HttpRequestException.StatusCode"/> has a value).</exception>
-		private async Task RegisterImplAsync(BaseUserData userData, string secret, bool storeCredentials) {
+		private async Task<Guid> RegisterImplAsync(BaseUserData userData, string secret, bool storeCredentials) {
 			try {
 				if (IsRegistered()) {
 					throw new InvalidOperationException("User is already registered.");
@@ -137,7 +137,8 @@ namespace SGL.Analytics.Client {
 					await storeCredentialsAsync(userData.Username, secret, regResult.UserId);
 				}
 				logger.LogInformation("Successfully registered user.");
-				startUploadingExistingLogs();
+				startUploadingExistingLogs(); // TODO: Move to better place
+				return regResult.UserId;
 			}
 			catch (UsernameAlreadyTakenException ex) {
 				logger.LogError(ex, "Registration failed because the specified username is already in use.");
@@ -166,46 +167,86 @@ namespace SGL.Analytics.Client {
 		}
 
 		public async Task RegisterUserWithPasswordAsync(BaseUserData userData, string password, bool rememberCredentials = false, CancellationToken ct = default) {
-			// TODO:
-			// - maybe: check password complexity
-			await RegisterImplAsync(userData, password, rememberCredentials);
-			// TODO:
-			// - login with newly registered credentials to obtain session token
-			// - transfer session token from user client to logs client
-			// - hold on to re-login delegate for token refreshing, capturing needed credentials
-			// (Some of these will be done in RegisterImplAsync)
-			throw new NotImplementedException();
-		}
-		public async Task RegisterUserWithDeviceSecretAsync(BaseUserData userData, CancellationToken ct = default) {
 			if (userData.Username == null) {
 				throw new ArgumentNullException($"{nameof(userData)}.{nameof(BaseUserData.Username)}");
 			}
+			// TODO:
+			// - maybe: check password complexity
+			await RegisterImplAsync(userData, password, rememberCredentials);
+			var loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, userData.Username, password);
+			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			// login with newly registered credentials to obtain session token
+			await reloginDelegate(ct);
+			// hold on to re-login delegate for token refreshing, capturing needed credentials
+			lock (lockObject) {
+				refreshLoginDelegate = reloginDelegate;
+			}
+		}
+		public async Task RegisterUserWithDeviceSecretAsync(BaseUserData userData, CancellationToken ct = default) {
 			// Generate random secret
 			var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
-			await RegisterImplAsync(userData, secret, storeCredentials: true);
-			// TODO:
-			// - login with newly registered credentials to obtain session token
-			// - transfer session token from user client to logs client
-			// - hold on to re-login delegate for token refreshing, capturing needed credentials
-			// (Some of these will be done in RegisterImplAsync)
-			throw new NotImplementedException();
+			var userId = await RegisterImplAsync(userData, secret, storeCredentials: true);
+			var loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, userId, secret);
+			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			// login with newly registered credentials to obtain session token
+			await reloginDelegate(ct);
+			// hold on to re-login delegate for token refreshing, capturing needed credentials
+			lock (lockObject) {
+				refreshLoginDelegate = reloginDelegate;
+			}
 		}
 		public async Task<LoginAttemptResult> TryLoginWithStoredCredentialsAsync(CancellationToken ct = default) {
-			// TODO:
-			// - if no credentials present in root data store, return CredentialsNotAvailable
-			// - retrieve credentials and send login request
-			// - if failed, return Failed or NetworkProblem depending on reason
-			// - transfer session token from user client to logs client
-			// - hold on to re-login delegate for token refreshing, capturing needed credentials
-			throw new NotImplementedException();
+			var credentials = readStoredCredentials();
+			LoginRequestDTO loginDto;
+			if (!string.IsNullOrWhiteSpace(credentials.Username) && !string.IsNullOrWhiteSpace(credentials.UserSecret)) {
+				loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, credentials.Username, credentials.UserSecret);
+			}
+			else if (credentials.UserId.HasValue && !string.IsNullOrWhiteSpace(credentials.UserSecret)) {
+				loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, credentials.UserId.Value, credentials.UserSecret);
+			}
+			else {
+				return LoginAttemptResult.CredentialsNotAvailable;
+			}
+			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			try {
+				await reloginDelegate(ct);
+			}
+			catch (LoginFailedException ex) {
+				logger.LogError(ex, "Login with stored credentials failed.");
+				return LoginAttemptResult.Failed;
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "An error prevented logging in with stored credentials.");
+				return LoginAttemptResult.NetworkProblem;
+			}
+			// hold on to re-login delegate for token refreshing, capturing needed credentials
+			lock (lockObject) {
+				refreshLoginDelegate = reloginDelegate;
+			}
+			return LoginAttemptResult.Completed;
 		}
 		public async Task<LoginAttemptResult> TryLoginWithPasswordAsync(string loginName, string password, bool rememberCredentials = false, CancellationToken ct = default) {
-			// TODO:
-			// - send login request using provided credentials
-			// - if failed, return Failed or NetworkProblem depending on reason
-			// - transfer session token from user client to logs client
-			// - hold on to re-login delegate for token refreshing, capturing needed credentials
-			throw new NotImplementedException();
+			var loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, loginName, password);
+			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			try {
+				await reloginDelegate(ct);
+			}
+			catch (LoginFailedException ex) {
+				logger.LogError(ex, "Login with stored credentials failed.");
+				return LoginAttemptResult.Failed;
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "An error prevented logging in with stored credentials.");
+				return LoginAttemptResult.NetworkProblem;
+			}
+			// hold on to re-login delegate for token refreshing, capturing needed credentials
+			lock (lockObject) {
+				refreshLoginDelegate = reloginDelegate;
+			}
+			if (rememberCredentials) {
+				await storeCredentialsAsync(loginName, password, userRegistrationClient.AuthorizedUserId);
+			}
+			return LoginAttemptResult.Completed;
 		}
 		public async Task UseOfflineModeAsync(CancellationToken ct = default) {
 			// TODO:
