@@ -24,6 +24,8 @@ namespace SGL.Analytics.Client {
 		private readonly object lockObject = new object();
 		private string appName;
 		private string appAPIToken;
+		private Guid? loggedInUserId;
+		private AuthorizationData? sessionAuthorization = null;
 		private HttpClient httpClient;
 		private SglAnalyticsConfigurator configurator = new SglAnalyticsConfigurator();
 		private ICertificateValidator recipientCertificateValidator;
@@ -87,6 +89,26 @@ namespace SGL.Analytics.Client {
 
 		private readonly JsonSerializerOptions logJsonOptions = new JsonSerializerOptions(JsonOptions.LogEntryOptions);
 		private readonly JsonSerializerOptions userPropertiesJsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertiesOptions);
+
+		private AuthorizationData? SessionAuthorization {
+			get {
+				lock (lockObject) {
+					return sessionAuthorization;
+				}
+			}
+			set {
+				lock (lockObject) {
+					sessionAuthorization = value;
+				}
+			}
+		}
+		private bool SessionAuthorizationValid {
+			get {
+				lock (lockObject) {
+					return sessionAuthorization.HasValue && sessionAuthorization.Value.Valid;
+				}
+			}
+		}
 
 		private class LogQueue {
 			internal AsyncConsumerQueue<LogEntry> entryQueue = new AsyncConsumerQueue<LogEntry>();
@@ -247,7 +269,7 @@ namespace SGL.Analytics.Client {
 			var ct = cts.Token;
 			if (!logCollectorClient.IsActive) return;
 			try {
-				if (!logCollectorClient.Authorization.HasValue || !logCollectorClient.Authorization.Value.Valid) {
+				if (!SessionAuthorizationValid) {
 					await refreshLoginDelegate(ct);
 				}
 			}
@@ -259,7 +281,7 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "The login attempt failed due to an error. Exiting the upload process ...");
 				return;
 			}
-			if (!logCollectorClient.Authorization.HasValue || !logCollectorClient.Authorization.Value.Valid) {
+			if (!SessionAuthorizationValid) {
 				logger.LogError("No valid authorization token is present. This is unexpected at this point. Exiting the upload process ...");
 				return;
 			}
@@ -294,7 +316,7 @@ namespace SGL.Analytics.Client {
 						logger.LogError(ex, "The login attempt failed due to an error. Exiting the upload process ...");
 						return;
 					}
-					if (!logCollectorClient.Authorization.HasValue || !logCollectorClient.Authorization.Value.Valid) {
+					if (!SessionAuthorizationValid) {
 						logger.LogError("No valid authorization token is present. This is unexpected at this point. Exiting the upload process ...");
 						return;
 					}

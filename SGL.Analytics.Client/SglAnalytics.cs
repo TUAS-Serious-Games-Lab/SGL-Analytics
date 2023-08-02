@@ -78,6 +78,8 @@ namespace SGL.Analytics.Client {
 			logCollectorClient = configurator.LogCollectorClientFactory.Factory(factoryArgs);
 			userRegistrationClient.UserAuthenticated += async (s, e, ct) => {
 				await logCollectorClient.SetAuthorizationLockedAsync(e.Authorization, ct);
+				SessionAuthorization = e.Authorization;
+				LoggedInUserId = e.AuthenticatedUserId;
 			};
 			logCollectorClient.AuthorizationExpired += async (s, e, ct) => {
 				await refreshLoginDelegate(ct);
@@ -95,9 +97,20 @@ namespace SGL.Analytics.Client {
 		private ILoggerFactory LoggerFactory { get; }
 
 		/// <summary>
-		/// The id of the registered user, or null if not registered.
+		/// The id of the logged-in user, or null if no user is logged-in.
 		/// </summary>
-		public Guid? UserID => rootDataStore.UserID;
+		public Guid? LoggedInUserId {
+			get {
+				lock (lockObject) {
+					return loggedInUserId;
+				}
+			}
+			private set {
+				lock (lockObject) {
+					loggedInUserId = value;
+				}
+			}
+		}
 
 		/// <summary>
 		/// Checks if the user registration for this client was already done.
@@ -186,7 +199,7 @@ namespace SGL.Analytics.Client {
 
 		private void createUserLogStore(Guid? userId, string? username) {
 			var logStore = configurator.UserLogStorageFactory.Factory(new SglAnalyticsConfiguratorAuthenticatedFactoryArguments(appName, appAPIToken, httpClient,
-				dataDirectory, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories, userRegistrationClient.Authorization, userId, username));
+				dataDirectory, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories, SessionAuthorization, userId, username));
 			lock (lockObject) {
 				userLogStorage = logStore;
 				currentLogStorage = userLogStorage;
@@ -258,7 +271,7 @@ namespace SGL.Analytics.Client {
 				refreshLoginDelegate = reloginDelegate;
 			}
 			if (rememberCredentials) {
-				await storeCredentialsAsync(loginName, password, userRegistrationClient.AuthorizedUserId);
+				await storeCredentialsAsync(loginName, password, LoggedInUserId);
 			}
 			return LoginAttemptResult.Completed;
 		}

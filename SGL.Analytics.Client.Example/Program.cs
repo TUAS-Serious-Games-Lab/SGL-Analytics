@@ -120,7 +120,7 @@ namespace SGL.Analytics.Client.Example {
 				}
 			}
 			if (opts.UserIdFile != null) {
-				await File.WriteAllLinesAsync(opts.UserIdFile, Enumerable.Repeat(analytics.UserID.ToString() ?? "<null>", 1));
+				await File.WriteAllLinesAsync(opts.UserIdFile, Enumerable.Repeat(analytics.LoggedInUserId.ToString() ?? "<null>", 1));
 			}
 			TicTacToeController gameController = new TicTacToeController(analytics, opts.Verbose, Console.Out);
 			if (opts.MovesFiles.Any()) {
