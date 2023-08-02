@@ -265,37 +265,50 @@ namespace SGL.Analytics.Client {
 		public async Task UseOfflineModeAsync(CancellationToken ct = default) {
 			var credentials = readStoredCredentials();
 			if (credentials.UserId.HasValue || credentials.Username != null) {
-
+				createUserLogStore(credentials.UserId, credentials.Username);
 			}
 			else {
-
+				lock (lockObject) {
+					currentLogStorage = anonymousLogStorage;
+				}
 			}
-			// TODO:
-			// - if there is a stored user id, load it and store local logs under that identifier
-			// - otherwise store local logs under anonymous identifier, can be linked to user later using InheritAnonymousLogsAsync
-			// - enable local log writing
-			// - disable background upload, don't even attempt to authenticate
-			throw new NotImplementedException();
+			disableLogWriting = false;
+			lock (lockObject) {
+				disableLogUploading = true;
+			}
 		}
 		public async Task DeactivateAsync(CancellationToken ct = default) {
-			// TODO:
-			// - ensure finished
-			// - disable log writing
-			// - disable background upload
-			// - don't try to authenticate
-			// - set a flag that makes StartNewLog, FinishAsync, StartRetryUploads, Record* No-Ops
-			throw new NotImplementedException();
+			await FinishAsync();
+			disableLogWriting = true;
+			lock (lockObject) {
+				disableLogUploading = true;
+				currentLogStorage = null!;
+			}
 		}
 
-		public async Task<IList<(Guid Id, DateTime Start, DateTime End)>> CheckForAnonymousLogsAsync(CancellationToken ct = default) {
-			// TODO: Check if there are local, not yet uploaded logs for anonymous identifier (Guid.Empty), return list of ids and time ranges.
-			// App can call this and ask user if they are theirs and upon confirmation (or selection), call InheritAnonymousLogsAsync to take ownership.
-			throw new NotImplementedException();
+		public IList<(Guid Id, DateTime Start, DateTime End)> CheckForAnonymousLogsAsync(CancellationToken ct = default) {
+			List<ILogStorage.ILogFile> existingLogs;
+			lock (lockObject) {
+				existingLogs = anonymousLogStorage.EnumerateFinishedLogs().ToList();
+			}
+			return existingLogs.Select(log => (log.ID, log.CreationTime, log.EndTime)).ToList();
 		}
 		public async Task InheritAnonymousLogsAsync(IEnumerable<Guid> logIds, CancellationToken ct = default) {
-			// TODO: Retrieve logs from log storage and add them to upload queue of authenticated user.
-			// (Fail if no user session active)
-			throw new NotImplementedException();
+			// TODO: Fail if no user session active
+			if (disableLogUploading) {
+				throw new InvalidOperationException("Can't inherit anonymous logs for upload to user account while uploading is disabled.");
+			}
+			var logIdSet = logIds.ToHashSet();
+			List<ILogStorage.ILogFile> existingLogs;
+			lock (lockObject) {
+				existingLogs = anonymousLogStorage.EnumerateFinishedLogs().ToList();
+			}
+			var selectedLogs = existingLogs.Where(log => logIdSet.Contains(log.ID)).ToList();
+			if (selectedLogs.Count == 0) return;
+			foreach (var logFile in selectedLogs) {
+				uploadQueue.Enqueue(logFile);
+			}
+			startFileUploadingIfNotRunning();
 		}
 
 		/// <summary>

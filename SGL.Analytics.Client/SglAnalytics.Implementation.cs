@@ -31,7 +31,7 @@ namespace SGL.Analytics.Client {
 		private IRootDataStore rootDataStore;
 		private ILogStorage anonymousLogStorage;
 		private ILogStorage userLogStorage;
-		private ILogStorage currentLogStorage;
+		private ILogStorage currentLogStorage = null!;
 		private ILogCollectorClient logCollectorClient;
 		private IUserRegistrationClient userRegistrationClient;
 
