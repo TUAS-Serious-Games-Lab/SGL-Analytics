@@ -187,8 +187,10 @@ namespace SGL.Analytics.Client {
 			// login with newly registered credentials to obtain session token
 			await reloginDelegate(ct);
 			createUserLogStore(userId, userData.Username);
-			// hold on to re-login delegate for token refreshing, capturing needed credentials
+			disableLogWriting = false;
 			lock (lockObject) {
+				// hold on to re-login delegate for token refreshing, capturing needed credentials
+				disableLogUploading = false;
 				refreshLoginDelegate = reloginDelegate;
 			}
 		}
@@ -211,9 +213,11 @@ namespace SGL.Analytics.Client {
 			// login with newly registered credentials to obtain session token
 			await reloginDelegate(ct);
 			createUserLogStore(userId, userData.Username);
-			// hold on to re-login delegate for token refreshing, capturing needed credentials
+			disableLogWriting = false;
 			lock (lockObject) {
+				// hold on to re-login delegate for token refreshing, capturing needed credentials
 				refreshLoginDelegate = reloginDelegate;
+				disableLogUploading = false;
 			}
 		}
 		public async Task<LoginAttemptResult> TryLoginWithStoredCredentialsAsync(CancellationToken ct = default) {
@@ -241,9 +245,11 @@ namespace SGL.Analytics.Client {
 				return LoginAttemptResult.NetworkProblem;
 			}
 			createUserLogStore(credentials.UserId, credentials.Username);
-			// hold on to re-login delegate for token refreshing, capturing needed credentials
+			disableLogWriting = false;
 			lock (lockObject) {
+				// hold on to re-login delegate for token refreshing, capturing needed credentials
 				refreshLoginDelegate = reloginDelegate;
+				disableLogUploading = false;
 			}
 			startUploadingExistingLogs();
 			return LoginAttemptResult.Completed;
@@ -263,9 +269,11 @@ namespace SGL.Analytics.Client {
 				return LoginAttemptResult.NetworkProblem;
 			}
 			createUserLogStore(null, loginName);
-			// hold on to re-login delegate for token refreshing, capturing needed credentials
+			disableLogWriting = false;
 			lock (lockObject) {
+				// hold on to re-login delegate for token refreshing, capturing needed credentials
 				refreshLoginDelegate = reloginDelegate;
+				disableLogUploading = false;
 			}
 			if (rememberCredentials) {
 				await storeCredentialsAsync(loginName, password, LoggedInUserId);
