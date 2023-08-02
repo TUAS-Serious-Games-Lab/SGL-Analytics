@@ -110,12 +110,14 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <summary>
-		/// Checks if the user registration for this client was already done.
-		/// If this returns false, call RegisterAsync and ensure the registration before relying on logs being uploaded.
-		/// When logs are recorded on an unregistered client, they are stored locally and are not uploaded until the registration is completed and a user id is obtained.
+		/// Checks if the this client has stored credentials, i.e. either a device secret or a stored password.
+		/// If this returns true, <see cref="TryLoginWithStoredCredentialsAsync(CancellationToken)"/> can be used to authenticate using these credentials.
+		/// Otherwise, a user can be logged in with username and password using <see cref="TryLoginWithPasswordAsync(string, string, bool, CancellationToken)"/>,
+		/// or another user can be registered using <see cref="RegisterUserWithPasswordAsync(BaseUserData, string, bool, CancellationToken)"/> or
+		/// <see cref="RegisterUserWithDeviceSecretAsync(BaseUserData, CancellationToken)"/>.
 		/// </summary>
-		/// <returns>true if the client is already registered, false if the registration is not yet done.</returns>
-		public bool IsRegistered() {
+		/// <returns>true if the client has stored cedentials, false otherwise.</returns>
+		public bool HasStoredCredentials() {
 			lock (lockObject) {
 				return rootDataStore.UserID != null || rootDataStore.Username != null;
 			}
@@ -134,7 +136,7 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="HttpRequestException">Indicates either a network problem (if <see cref="HttpRequestException.StatusCode"/> is <see langword="null"/>) or a server-side error (if <see cref="HttpRequestException.StatusCode"/> has a value).</exception>
 		private async Task<Guid> RegisterImplAsync(BaseUserData userData, string secret, bool storeCredentials) {
 			try {
-				if (IsRegistered()) {
+				if (HasStoredCredentials()) {
 					throw new InvalidOperationException("User is already registered.");
 				}
 				logger.LogInformation("Starting user registration process...");
@@ -313,7 +315,9 @@ namespace SGL.Analytics.Client {
 			return existingLogs.Select(log => (log.ID, log.CreationTime, log.EndTime)).ToList();
 		}
 		public async Task InheritAnonymousLogsAsync(IEnumerable<Guid> logIds, CancellationToken ct = default) {
-			// TODO: Fail if no user session active
+			if (!SessionAuthorizationValid) {
+				throw new InvalidOperationException("Can't inherit anonymous logs for upload to user account without valid user session.");
+			}
 			if (disableLogUploading) {
 				throw new InvalidOperationException("Can't inherit anonymous logs for upload to user account while uploading is disabled.");
 			}

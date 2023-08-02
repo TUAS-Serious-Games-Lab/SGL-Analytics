@@ -139,7 +139,7 @@ namespace SGL.Analytics.EndToEndTest {
 				config.UseLoggerFactory(_ => LoggerFactory, false);
 				config.ConfigureCryptography(config => config.AllowSharedMessageKeyPair());
 			})) {
-				if (!analytics.IsRegistered()) {
+				if (!analytics.HasStoredCredentials()) {
 					await analytics.RegisterUserWithDeviceSecretAsync(new UserData { Foo = 42, Bar = "This is a Test", Obj = new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" } });
 				}
 				userId = analytics.LoggedInUserId ?? Guid.Empty;

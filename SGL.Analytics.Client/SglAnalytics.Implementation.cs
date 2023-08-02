@@ -399,7 +399,7 @@ namespace SGL.Analytics.Client {
 
 		private void startFileUploadingIfNotRunning() {
 			if (!logCollectorClient.IsActive) return;
-			if (!IsRegistered()) return; // IsRegistered does it's own locking
+			if (!HasStoredCredentials()) return; // IsRegistered does it's own locking
 			lock (lockObject) { // Ensure that only one log uploader is active
 				if (disableLogUploading) return;
 				if (logUploader is null || logUploader.IsCompleted) {
@@ -411,7 +411,7 @@ namespace SGL.Analytics.Client {
 
 		private void startUploadingExistingLogs() {
 			if (!logCollectorClient.IsActive) return;
-			if (!IsRegistered()) return;
+			if (!HasStoredCredentials()) return;
 			List<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
 				if (disableLogUploading) return;

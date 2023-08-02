@@ -632,7 +632,7 @@ namespace SGL.Analytics.Client.Tests {
 			var user = new TestUserData("Testuser") { Label = "This is a test!", SomeNumber = 42 };
 			string password = SecretGenerator.Instance.GenerateSecret(10);
 			await analytics.RegisterUserWithPasswordAsync(user, password, rememberCredentials: true);
-			Assert.True(analytics.IsRegistered());
+			Assert.True(analytics.HasStoredCredentials());
 			Assert.Single(userRegClient.RegistrationResults);
 			var userId = userRegClient.RegistrationResults.Single().UserId;
 			Assert.Equal(ds.UserID, userId);

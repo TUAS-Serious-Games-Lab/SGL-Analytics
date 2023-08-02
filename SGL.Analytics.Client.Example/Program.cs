@@ -103,7 +103,7 @@ namespace SGL.Analytics.Client.Example {
 					});
 				}
 			});
-			if (!analytics.IsRegistered()) {
+			if (!analytics.HasStoredCredentials()) {
 				try {
 					if (opts.NoUsername) {
 						await analytics.RegisterUserWithDeviceSecretAsync(new BaseUserData(null));
