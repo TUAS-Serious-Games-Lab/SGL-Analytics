@@ -84,9 +84,6 @@ namespace SGL.Analytics.Client {
 			logCollectorClient.AuthorizationExpired += async (s, e, ct) => {
 				await refreshLoginDelegate(ct);
 			};
-			if (IsRegistered()) {
-				startUploadingExistingLogs();
-			}
 		}
 
 		/// <summary>
@@ -151,7 +148,6 @@ namespace SGL.Analytics.Client {
 					await storeCredentialsAsync(userData.Username, secret, regResult.UserId);
 				}
 				logger.LogInformation("Successfully registered user.");
-				startUploadingExistingLogs(); // TODO: Move to better place
 				return regResult.UserId;
 			}
 			catch (UsernameAlreadyTakenException ex) {
@@ -249,6 +245,7 @@ namespace SGL.Analytics.Client {
 			lock (lockObject) {
 				refreshLoginDelegate = reloginDelegate;
 			}
+			startUploadingExistingLogs();
 			return LoginAttemptResult.Completed;
 		}
 		public async Task<LoginAttemptResult> TryLoginWithPasswordAsync(string loginName, string password, bool rememberCredentials = false, CancellationToken ct = default) {
@@ -273,6 +270,7 @@ namespace SGL.Analytics.Client {
 			if (rememberCredentials) {
 				await storeCredentialsAsync(loginName, password, LoggedInUserId);
 			}
+			startUploadingExistingLogs();
 			return LoginAttemptResult.Completed;
 		}
 		public async Task UseOfflineModeAsync(CancellationToken ct = default) {
