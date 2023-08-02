@@ -29,7 +29,9 @@ namespace SGL.Analytics.Client {
 		private ICertificateValidator recipientCertificateValidator;
 		private RandomGenerator randomGenerator = new RandomGenerator();
 		private IRootDataStore rootDataStore;
-		private ILogStorage logStorage;
+		private ILogStorage anonymousLogStorage;
+		private ILogStorage userLogStorage;
+		private ILogStorage currentLogStorage;
 		private ILogCollectorClient logCollectorClient;
 		private IUserRegistrationClient userRegistrationClient;
 
@@ -59,7 +61,8 @@ namespace SGL.Analytics.Client {
 			if (configurator.RecipientCertificateValidatorFactory.Dispose) await disposeIfDisposable(recipientCertificateValidator);
 			if (configurator.UserRegistrationClientFactory.Dispose) await disposeIfDisposable(userRegistrationClient);
 			if (configurator.LogCollectorClientFactory.Dispose) await disposeIfDisposable(logCollectorClient);
-			if (configurator.LogStorageFactory.Dispose) await disposeIfDisposable(logStorage);
+			if (configurator.AnonymousLogStorageFactory.Dispose) await disposeIfDisposable(anonymousLogStorage);
+			if (configurator.UserLogStorageFactory.Dispose) await disposeIfDisposable(userLogStorage);
 			if (configurator.RootDataStoreFactory.Dispose) await disposeIfDisposable(rootDataStore);
 			configurator.CustomArgumentFactories.Dispose();
 			cts.Cancel();
@@ -377,7 +380,7 @@ namespace SGL.Analytics.Client {
 			if (!IsRegistered()) return;
 			List<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
-				existingCompleteLogs = logStorage.EnumerateFinishedLogs().ToList();
+				existingCompleteLogs = currentLogStorage.EnumerateFinishedLogs().ToList();
 			}
 			if (existingCompleteLogs.Count == 0) return;
 			logger.LogDebug("Queueing existing data log files for upload...");

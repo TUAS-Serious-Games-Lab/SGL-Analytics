@@ -72,7 +72,8 @@ namespace SGL.Analytics.Client {
 			cryptoConfig = configurator.CryptoConfig();
 			recipientCertificateValidator = configurator.RecipientCertificateValidatorFactory.Factory(factoryArgs);
 			rootDataStore = configurator.RootDataStoreFactory.Factory(factoryArgs);
-			logStorage = configurator.LogStorageFactory.Factory(factoryArgs);
+			anonymousLogStorage = configurator.AnonymousLogStorageFactory.Factory(factoryArgs);
+			currentLogStorage = anonymousLogStorage;
 			userRegistrationClient = configurator.UserRegistrationClientFactory.Factory(factoryArgs);
 			logCollectorClient = configurator.LogCollectorClientFactory.Factory(factoryArgs);
 			userRegistrationClient.UserAuthenticated += async (s, e, ct) => {
@@ -170,18 +171,28 @@ namespace SGL.Analytics.Client {
 			if (userData.Username == null) {
 				throw new ArgumentNullException($"{nameof(userData)}.{nameof(BaseUserData.Username)}");
 			}
-			// TODO:
-			// - maybe: check password complexity
-			await RegisterImplAsync(userData, password, rememberCredentials);
+			// TODO: maybe: check password complexity
+			var userId = await RegisterImplAsync(userData, password, rememberCredentials);
 			var loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, userData.Username, password);
 			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			// login with newly registered credentials to obtain session token
 			await reloginDelegate(ct);
+			createUserLogStore(userId, userData.Username);
 			// hold on to re-login delegate for token refreshing, capturing needed credentials
 			lock (lockObject) {
 				refreshLoginDelegate = reloginDelegate;
 			}
 		}
+
+		private void createUserLogStore(Guid? userId, string? username) {
+			var logStore = configurator.UserLogStorageFactory.Factory(new SglAnalyticsConfiguratorAuthenticatedFactoryArguments(appName, appAPIToken, httpClient,
+				dataDirectory, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories, userRegistrationClient.Authorization, userId, username));
+			lock (lockObject) {
+				userLogStorage = logStore;
+				currentLogStorage = userLogStorage;
+			}
+		}
+
 		public async Task RegisterUserWithDeviceSecretAsync(BaseUserData userData, CancellationToken ct = default) {
 			// Generate random secret
 			var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
@@ -190,6 +201,7 @@ namespace SGL.Analytics.Client {
 			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			// login with newly registered credentials to obtain session token
 			await reloginDelegate(ct);
+			createUserLogStore(userId, userData.Username);
 			// hold on to re-login delegate for token refreshing, capturing needed credentials
 			lock (lockObject) {
 				refreshLoginDelegate = reloginDelegate;
@@ -219,6 +231,7 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "An error prevented logging in with stored credentials.");
 				return LoginAttemptResult.NetworkProblem;
 			}
+			createUserLogStore(credentials.UserId, credentials.Username);
 			// hold on to re-login delegate for token refreshing, capturing needed credentials
 			lock (lockObject) {
 				refreshLoginDelegate = reloginDelegate;
@@ -239,6 +252,7 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "An error prevented logging in with stored credentials.");
 				return LoginAttemptResult.NetworkProblem;
 			}
+			createUserLogStore(null, loginName);
 			// hold on to re-login delegate for token refreshing, capturing needed credentials
 			lock (lockObject) {
 				refreshLoginDelegate = reloginDelegate;
@@ -290,7 +304,7 @@ namespace SGL.Analytics.Client {
 			Guid logId;
 			lock (lockObject) {
 				oldLogQueue = currentLogQueue;
-				currentLogQueue = newLogQueue = new LogQueue(logStorage.CreateLogFile(out var logFile), logFile);
+				currentLogQueue = newLogQueue = new LogQueue(currentLogStorage.CreateLogFile(out var logFile), logFile);
 				logId = logFile.ID;
 			}
 			pendingLogQueues.Enqueue(newLogQueue);

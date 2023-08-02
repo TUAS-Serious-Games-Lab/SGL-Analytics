@@ -80,8 +80,13 @@ namespace SGL.Analytics.Client.Example {
 			httpClient.BaseAddress = opts.Backend;
 			await using SglAnalytics analytics = new SglAnalytics(opts.AppName, opts.AppApiToken, httpClient, config => {
 				if (opts.LogsDirectory != null) {
-					config.UseLogStorage(args => {
-						var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(args.DataDirectory, "DataLogs"));
+					config.UseAnonymousLogStorage(args => {
+						var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(args.DataDirectory, "DataLogs", "Anonymous"));
+						logStorage.Archiving = opts.KeepFiles;
+						return logStorage;
+					});
+					config.UseUserLogStorage(args => {
+						var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(args.DataDirectory, "DataLogs", args.Username ?? args.UserId?.ToString() ?? "Anonymous"));
 						logStorage.Archiving = opts.KeepFiles;
 						return logStorage;
 					});

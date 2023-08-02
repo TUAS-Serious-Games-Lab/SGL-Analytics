@@ -19,7 +19,8 @@ using Xunit.Abstractions;
 namespace SGL.Analytics.Client.Tests {
 	public class ClientMainUnitTest : IDisposable {
 
-		private InMemoryLogStorage storage = new InMemoryLogStorage();
+		private InMemoryLogStorage anonymousStorage = new InMemoryLogStorage();
+		private InMemoryLogStorage userStorage = new InMemoryLogStorage();
 		private FakeRootDataStore ds = new FakeRootDataStore();
 		private FakeLogCollectorClient logCollectorClient = new FakeLogCollectorClient() { IsActive = false };
 		private FakeUserRegistrationClient userRegClient = new FakeUserRegistrationClient();
@@ -59,7 +60,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -69,21 +71,22 @@ namespace SGL.Analytics.Client.Tests {
 
 		public void Dispose() {
 			analytics.DisposeAsync().AsTask().Wait();
-			storage.Dispose();
+			anonymousStorage.Dispose();
+			userStorage.Dispose();
 			httpClient.Dispose();
 		}
 
 		[Fact]
 		public async Task EachStartNewLogCreatesLogFile() {
-			Assert.Empty(storage.EnumerateLogs());
+			Assert.Empty(userStorage.EnumerateLogs());
 			analytics.StartNewLog();
-			Assert.Single(storage.EnumerateLogs());
+			Assert.Single(userStorage.EnumerateLogs());
 			analytics.StartNewLog();
-			Assert.Equal(2, storage.EnumerateLogs().Count());
+			Assert.Equal(2, userStorage.EnumerateLogs().Count());
 			analytics.StartNewLog();
-			Assert.Equal(3, storage.EnumerateLogs().Count());
+			Assert.Equal(3, userStorage.EnumerateLogs().Count());
 			analytics.StartNewLog();
-			Assert.Equal(4, storage.EnumerateLogs().Count());
+			Assert.Equal(4, userStorage.EnumerateLogs().Count());
 			await analytics.FinishAsync(); // Cleanup background tasks.
 		}
 
@@ -95,7 +98,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.StartNewLog();
 			analytics.StartNewLog();
 			await analytics.FinishAsync();
-			Assert.All(storage.EnumerateFinishedLogs().Cast<InMemoryLogStorage.LogFile>(), log => Assert.True(log.WriteClosed));
+			Assert.All(userStorage.EnumerateFinishedLogs().Cast<InMemoryLogStorage.LogFile>(), log => Assert.True(log.WriteClosed));
 		}
 
 		public class TestChildObject : ICloneable {
@@ -128,8 +131,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEvent("TestChannel", new ClonableTestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(storage.EnumerateFinishedLogs().Single());
-			await using (var stream = storage.EnumerateFinishedLogs().Single().OpenRead()) {
+			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
+			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -173,8 +176,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("TestChannel", new TestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(storage.EnumerateFinishedLogs().Single());
-			await using (var stream = storage.EnumerateFinishedLogs().Single().OpenRead()) {
+			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
+			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -223,8 +226,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("TestChannel", new TestEventB() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(storage.EnumerateFinishedLogs().Single());
-			await using (var stream = storage.EnumerateFinishedLogs().Single().OpenRead()) {
+			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
+			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -278,8 +281,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEvent("TestChannel", new ClonableTestEventB() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(storage.EnumerateFinishedLogs().Single());
-			await using (var stream = storage.EnumerateFinishedLogs().Single().OpenRead()) {
+			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
+			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -329,8 +332,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordSnapshotUnshared("TestChannel", 42, snap);
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(storage.EnumerateFinishedLogs().Single());
-			await using (var stream = storage.EnumerateFinishedLogs().Single().OpenRead()) {
+			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
+			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenRead()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -443,13 +446,13 @@ namespace SGL.Analytics.Client.Tests {
 
 			await analytics.FinishAsync();
 
-			foreach (var logFile in storage.EnumerateFinishedLogs()) {
+			foreach (var logFile in userStorage.EnumerateFinishedLogs()) {
 				output.WriteLine("");
 				output.WriteLine($"{logFile.ID}:");
 				output.WriteLogContents(logFile);
 			}
 
-			var logs = storage.EnumerateFinishedLogs().GetEnumerator();
+			var logs = userStorage.EnumerateFinishedLogs().GetEnumerator();
 			Assert.True(logs.MoveNext());
 			await using (var stream = logs.Current.OpenRead()) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
@@ -493,7 +496,7 @@ namespace SGL.Analytics.Client.Tests {
 
 			List<ILogStorage.ILogFile> logs = new();
 			for (int i = 0; i < 5; ++i) {
-				using (var writer = new StreamWriter(storage.CreateLogFile(out var logFile))) {
+				using (var writer = new StreamWriter(userStorage.CreateLogFile(out var logFile))) {
 					writer.WriteLine($"Dummy {i}");
 					logs.Add(logFile);
 				}
@@ -505,7 +508,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -528,7 +532,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -544,7 +549,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -562,7 +567,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -594,7 +600,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test J" });
 			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test K" });
 			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap F");
-			var lastLog = storage.EnumerateLogs().Last();
+			var lastLog = anonymousStorage.EnumerateLogs().Last();
 
 			await analytics.FinishAsync();
 
@@ -645,7 +651,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -664,7 +671,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -687,7 +695,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -715,7 +724,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -740,7 +750,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -764,7 +775,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -788,7 +800,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
@@ -814,7 +827,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);

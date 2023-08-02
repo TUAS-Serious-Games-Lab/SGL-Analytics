@@ -89,7 +89,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics(appName, appAPIToken, httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => rootDS, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => storage, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 				config.ConfigureCryptography(cryptoConf => {
 					cryptoConf.AllowSharedMessageKeyPair();

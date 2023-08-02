@@ -84,11 +84,18 @@ namespace SGL.Analytics.Client {
 		/// <summary>
 		/// The authorization token data for the user session.
 		/// </summary>
-		public AuthorizationData Authorization { get; }
+		public AuthorizationData? Authorization { get; }
+
+		public Guid? UserId { get; }
+
+		public string? Username { get; }
 
 		internal SglAnalyticsConfiguratorAuthenticatedFactoryArguments(string appName, string appApiToken, HttpClient httpClient, string neutralDataDirectory, ILoggerFactory loggerFactory, RandomGenerator random,
-			ConfiguratorCustomArgumentFactoryContainer<SglAnalyticsConfiguratorFactoryArguments, SglAnalyticsConfiguratorAuthenticatedFactoryArguments> customArgumentFactories, AuthorizationData authorization) : base(appName, appApiToken, httpClient, neutralDataDirectory, loggerFactory, random, customArgumentFactories) {
+			ConfiguratorCustomArgumentFactoryContainer<SglAnalyticsConfiguratorFactoryArguments, SglAnalyticsConfiguratorAuthenticatedFactoryArguments> customArgumentFactories, AuthorizationData? authorization,
+			Guid? userId, string? username) : base(appName, appApiToken, httpClient, neutralDataDirectory, loggerFactory, random, customArgumentFactories) {
 			Authorization = authorization;
+			UserId = userId;
+			Username = username;
 		}
 	}
 
@@ -164,7 +171,8 @@ namespace SGL.Analytics.Client {
 		/// <param name="logStorageFactory">The factory function to use.</param>
 		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
-		ISglAnalyticsConfigurator UseLogStorage(Func<SglAnalyticsConfiguratorFactoryArguments, ILogStorage> logStorageFactory, bool dispose = true);
+		ISglAnalyticsConfigurator UseAnonymousLogStorage(Func<SglAnalyticsConfiguratorFactoryArguments, ILogStorage> logStorageFactory, bool dispose = true);
+		ISglAnalyticsConfigurator UseUserLogStorage(Func<SglAnalyticsConfiguratorAuthenticatedFactoryArguments, ILogStorage> logStorageFactory, bool dispose = true);
 		/// <summary>
 		/// Sets the factory for the validator object that checks the certificates of data recipients to determine the authorized recipients for end-to-end encrypted data.
 		/// </summary>
