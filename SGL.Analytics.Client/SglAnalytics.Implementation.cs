@@ -37,6 +37,7 @@ namespace SGL.Analytics.Client {
 
 		private LogQueue? currentLogQueue;
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
+		private bool disableLogWriting = false;
 		private Task? logWriter = null;
 		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
 
@@ -44,6 +45,7 @@ namespace SGL.Analytics.Client {
 		private SynchronizationContext mainSyncContext;
 		private CancellationTokenSource cts = new CancellationTokenSource();
 		private string dataDirectory;
+		private bool disableLogUploading = false;
 		private Task? logUploader = null;
 
 		private ILogger<SglAnalytics> logger;
@@ -176,6 +178,12 @@ namespace SGL.Analytics.Client {
 						stream.Dispose();
 					}
 				}
+				lock (lockObject) {
+					if (disableLogUploading) {
+						logger.LogDebug("Finished writing entries for data log file {logFile}, but skipping upload, because uploading is disabled.", logQueue.logFile.ID);
+						continue;
+					}
+				}
 				logger.LogDebug("Finished writing entries for data log file {logFile}, queueing it for upload.", logQueue.logFile.ID);
 				uploadQueue.Enqueue(logQueue.logFile);
 				startFileUploadingIfNotRunning();
@@ -184,8 +192,11 @@ namespace SGL.Analytics.Client {
 			logger.LogDebug("Ending log writer because the pending log queue is finished.");
 		}
 
-		private void ensureLogWritingActive() {
+		private void startLogWritingIfNotRunning() {
 			lock (lockObject) { // Ensure that only one log writer is active
+				if (disableLogWriting) {
+					return;
+				}
 				if (logWriter is null || logWriter.IsCompleted) {
 					// Enforce that the log writer runs on some threadpool thread to avoid putting additional load on app thread.
 					logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
@@ -368,6 +379,7 @@ namespace SGL.Analytics.Client {
 			if (!logCollectorClient.IsActive) return;
 			if (!IsRegistered()) return; // IsRegistered does it's own locking
 			lock (lockObject) { // Ensure that only one log uploader is active
+				if (disableLogUploading) return;
 				if (logUploader is null || logUploader.IsCompleted) {
 					// Enforce that the uploader runs on some threadpool thread to avoid putting additional load on app thread.
 					logUploader = Task.Run(async () => await uploadFilesAsync().ConfigureAwait(false));
@@ -380,6 +392,7 @@ namespace SGL.Analytics.Client {
 			if (!IsRegistered()) return;
 			List<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
+				if (disableLogUploading) return;
 				existingCompleteLogs = currentLogStorage.EnumerateFinishedLogs().ToList();
 			}
 			if (existingCompleteLogs.Count == 0) return;

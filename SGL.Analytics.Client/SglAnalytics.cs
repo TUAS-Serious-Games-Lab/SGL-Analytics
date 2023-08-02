@@ -263,6 +263,13 @@ namespace SGL.Analytics.Client {
 			return LoginAttemptResult.Completed;
 		}
 		public async Task UseOfflineModeAsync(CancellationToken ct = default) {
+			var credentials = readStoredCredentials();
+			if (credentials.UserId.HasValue || credentials.Username != null) {
+
+			}
+			else {
+
+			}
 			// TODO:
 			// - if there is a stored user id, load it and store local logs under that identifier
 			// - otherwise store local logs under anonymous identifier, can be linked to user later using InheritAnonymousLogsAsync
@@ -299,6 +306,7 @@ namespace SGL.Analytics.Client {
 		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called concurrently with this.
 		/// </remarks>
 		public Guid StartNewLog() {
+			if (disableLogWriting) return Guid.Empty;
 			LogQueue? oldLogQueue;
 			LogQueue? newLogQueue;
 			Guid logId;
@@ -315,7 +323,7 @@ namespace SGL.Analytics.Client {
 			else {
 				logger.LogInformation("Started new data log file {newId} and finished old data log file {oldId}.", logId, oldLogQueue.logFile.ID);
 			}
-			ensureLogWritingActive();
+			startLogWritingIfNotRunning();
 			return logId;
 		}
 
@@ -392,6 +400,7 @@ namespace SGL.Analytics.Client {
 		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
 		/// </remarks>
 		public void RecordEvent(string channel, ICloneable eventObject) {
+			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			RecordEventUnshared(channel, eventObject.Clone());
 		}
@@ -412,6 +421,7 @@ namespace SGL.Analytics.Client {
 		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
 		/// </remarks>
 		public void RecordEvent(string channel, ICloneable eventObject, string eventType) {
+			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			RecordEventUnshared(channel, eventObject.Clone(), eventType);
 		}
@@ -432,6 +442,7 @@ namespace SGL.Analytics.Client {
 		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
 		/// </remarks>
 		public void RecordEventUnshared(string channel, object eventObject, string eventType) {
+			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewEventEntry(channel, DateTime.Now, eventType), eventObject));
 		}
@@ -447,6 +458,7 @@ namespace SGL.Analytics.Client {
 		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
 		/// </remarks>
 		public void RecordEventUnshared(string channel, object eventObject) {
+			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			var eventType = eventObject.GetType();
 			var attributes = eventType.GetCustomAttributes(typeof(EventTypeAttribute), false);
@@ -462,6 +474,7 @@ namespace SGL.Analytics.Client {
 		/// <param name="snapshotPayloadData">An object encapsulating the snapshotted object state to write to the log in JSON form. As the log recording to disk is done asynchronously, the ownership of the given object is transferred to the analytics client and must not be changed by the caller afterwards. The easiest way to ensure this is by creating the snapshot state object inside the call and not holding other references to it.</param>
 		/// <remarks>This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.</remarks>
 		public void RecordSnapshotUnshared(string channel, object objectId, object snapshotPayloadData) {
+			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewSnapshotEntry(channel, DateTime.Now, objectId), snapshotPayloadData));
 		}
