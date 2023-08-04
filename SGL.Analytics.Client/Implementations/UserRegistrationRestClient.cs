@@ -102,14 +102,19 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <inheritdoc/>
-		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, CancellationToken ct = default) {
+		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, AuthorizationToken? upstreamAuthToken = null, CancellationToken ct = default) {
 			if (userDTO.AppName != appName) {
 				throw new ArgumentException("AppName of passed DTO doesn't match appName of REST client.", nameof(userDTO));
 			}
 			try {
 				using var response = await SendRequest(HttpMethod.Post, "",
 					JsonContent.Create(userDTO, new MediaTypeHeaderValue("application/json"), jsonOptions),
-					addApiTokenHeader, jsonMT, ct, authenticated: false);
+					req => {
+						addApiTokenHeader(req);
+						if (upstreamAuthToken.HasValue) {
+							req.Headers.Authorization = upstreamAuthToken.Value.ToHttpHeaderValue();
+						}
+					}, jsonMT, ct, authenticated: false);
 				var result = response != null ? await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>(jsonOptions) : null;
 				if (result == null) {
 					throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
