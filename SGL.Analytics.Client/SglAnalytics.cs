@@ -184,7 +184,7 @@ namespace SGL.Analytics.Client {
 			}
 			// TODO: maybe: check password complexity
 			var userId = await RegisterImplAsync(userData, password, rememberCredentials);
-			var loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, userData.Username, password);
+			var loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, userId, password);
 			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			// login with newly registered credentials to obtain session token
 			await reloginDelegate(ct);
@@ -225,11 +225,11 @@ namespace SGL.Analytics.Client {
 		public async Task<LoginAttemptResult> TryLoginWithStoredCredentialsAsync(CancellationToken ct = default) {
 			var credentials = readStoredCredentials();
 			LoginRequestDTO loginDto;
-			if (!string.IsNullOrWhiteSpace(credentials.Username) && !string.IsNullOrWhiteSpace(credentials.UserSecret)) {
-				loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, credentials.Username, credentials.UserSecret);
-			}
-			else if (credentials.UserId.HasValue && !string.IsNullOrWhiteSpace(credentials.UserSecret)) {
+			if (credentials.UserId.HasValue && !string.IsNullOrWhiteSpace(credentials.UserSecret)) {
 				loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, credentials.UserId.Value, credentials.UserSecret);
+			}
+			else if (!string.IsNullOrWhiteSpace(credentials.Username) && !string.IsNullOrWhiteSpace(credentials.UserSecret)) {
+				loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, credentials.Username, credentials.UserSecret);
 			}
 			else {
 				return LoginAttemptResult.CredentialsNotAvailable;
