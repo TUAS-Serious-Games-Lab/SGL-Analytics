@@ -16,30 +16,43 @@ namespace SGL.Analytics.Client.Tests {
 		public List<LoginRequestDTO> LoginRequests { get; } = new();
 		public List<Certificate> RecipientCertificates { get; set; } = new List<Certificate> { };
 
-		public Task LoadRecipientCertificatesAsync(string appName, string appAPIToken, CertificateStore targetCertificateStore) {
+		public AuthorizationData? Authorization => new AuthorizationData(new AuthorizationToken("OK"), DateTime.MaxValue);
+		public Guid? AuthorizedUserId => Guid.NewGuid();
+
+		public event AsyncEventHandler<AuthorizationExpiredEventArgs>? AuthorizationExpired;
+		public event AsyncEventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
+
+		public Task LoadRecipientCertificatesAsync(CertificateStore targetCertificateStore, CancellationToken ct = default) {
 			targetCertificateStore.AddCertificatesWithValidation(RecipientCertificates, nameof(FakeUserRegistrationClient));
 			return Task.CompletedTask;
 		}
 
-		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO) {
+		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			LoginRequests.Add(loginDTO);
+			await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization!.Value, AuthorizedUserId!.Value), ct) ?? Task.CompletedTask);
 			return new AuthorizationToken("OK");
 		}
 
-		public Task<LoginResponseDTO> OpenSessionFromUpstream(string appName, string appApiToken, AuthorizationToken upstreamAuthToken, CancellationToken ct = default) {
-			// TODO: Implement
-			throw new NotImplementedException();
-		}
+        public Task<LoginResponseDTO> OpenSessionFromUpstream(AuthorizationToken upstreamAuthToken, CancellationToken ct = default)
+        {
+            // TODO: Implement
+            throw new NotImplementedException();
+        }
 
-		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken) {
+        public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			var resp = new HttpResponseMessage(StatusCode);
 			resp.EnsureSuccessStatusCode();
 			var result = new UserRegistrationResultDTO(Guid.NewGuid());
 			RegistrationResults.Add(result);
 			RegistrationData[result.UserId] = userDTO;
+			await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization!.Value, AuthorizedUserId!.Value), ct) ?? Task.CompletedTask);
 			return result;
+		}
+
+		public Task SetAuthorizationLockedAsync(AuthorizationData? value, CancellationToken ct = default) {
+			throw new NotSupportedException();
 		}
 	}
 }

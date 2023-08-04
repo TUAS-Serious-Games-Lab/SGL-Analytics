@@ -89,7 +89,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics(appName, appAPIToken, httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => rootDS, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => storage, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 				config.ConfigureCryptography(cryptoConf => {
 					cryptoConf.AllowSharedMessageKeyPair();
@@ -120,7 +120,7 @@ namespace SGL.Analytics.Client.Tests {
 		[InlineData(null)]
 		public async Task LogEventsAreRecordedAndUploadedAsLogFilesWithCorrectContentAfterRegistration(string? username) {
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2/").UsingPost()
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
 						.WithHeader("Content-Type", new ContentTypeMatcher("multipart/form-data"))
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
@@ -131,7 +131,7 @@ namespace SGL.Analytics.Client.Tests {
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
 						.WithBody(recipientCertsPem));
 			Guid userId = Guid.NewGuid();
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1/").UsingPost()
 					.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
 					.WithHeader("Content-Type", new ExactMatcher("application/json"))
 					.WithBody(b => b?.DetectedBodyType == WireMock.Types.BodyType.Json))
@@ -176,7 +176,13 @@ namespace SGL.Analytics.Client.Tests {
 					Test2 = "Hello World"
 				}
 			};
-			await analytics.RegisterAsync(user);
+			if (username == null) {
+				await analytics.RegisterUserWithDeviceSecretAsync(user);
+			}
+			else {
+				string password = SecretGenerator.Instance.GenerateSecret(10);
+				await analytics.RegisterUserWithPasswordAsync(user, password, rememberCredentials: true);
+			}
 
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test J" });
@@ -220,7 +226,7 @@ namespace SGL.Analytics.Client.Tests {
 			var keyDecryptorRecipient2 = new KeyDecryptor(recipient2KeyPair);
 
 			var successfulRegRequests = serverFixture.Server.LogEntries
-				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/user/v1")
+				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/user/v1/")
 				.Select(le => le.RequestMessage);
 			Assert.Single(successfulRegRequests);
 			await using (var stream = new MemoryStream(successfulRegRequests.Single().BodyAsBytes)) {
@@ -258,7 +264,7 @@ namespace SGL.Analytics.Client.Tests {
 			output.WriteLine("=============================================");
 
 			var successfulLogRequests = serverFixture.Server.LogEntries
-				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/log/v2")
+				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/log/v2/")
 				.Select(le => le.RequestMessage);
 			Assert.Equal(3, successfulLogRequests.Count());
 			var requestsEnumerator = successfulLogRequests.GetEnumerator();

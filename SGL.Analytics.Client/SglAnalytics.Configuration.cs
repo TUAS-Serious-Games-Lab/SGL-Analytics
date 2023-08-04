@@ -20,9 +20,10 @@ namespace SGL.Analytics.Client {
 					"SGL Analytics requires a synchronized SynchronizationContext that can be used to dispatch event handler invocations to the main thread.");
 				LoggerFactory = (args => NullLoggerFactory.Instance, true);
 				RootDataStoreFactory = (args => new FileRootDataStore(args.DataDirectory), true);
-				LogStorageFactory = (args => new DirectoryLogStorage(Path.Combine(args.DataDirectory, "DataLogs")), true);
-				LogCollectorClientFactory = (args => new LogCollectorRestClient(args.HttpClient), true);
-				UserRegistrationClientFactory = (args => new UserRegistrationRestClient(args.HttpClient), true);
+				AnonymousLogStorageFactory = (args => new DirectoryLogStorage(Path.Combine(args.DataDirectory, "DataLogs", "Anonymous")), true);
+				UserLogStorageFactory = (args => new DirectoryLogStorage(Path.Combine(args.DataDirectory, "DataLogs", args.Username ?? args.UserId?.ToString() ?? "Anonymous")), true);
+				LogCollectorClientFactory = (args => new LogCollectorRestClient(args.HttpClient, args.AppName, args.AppApiToken), true);
+				UserRegistrationClientFactory = (args => new UserRegistrationRestClient(args.HttpClient, args.AppName, args.AppApiToken), true);
 				RecipientCertificateValidatorFactory = (args => throw new MissingSglAnalyticsConfigurationException(nameof(ISglAnalyticsConfigurator.UseRecipientCertificateValidator)), true);
 			}
 
@@ -30,7 +31,8 @@ namespace SGL.Analytics.Client {
 			internal Func<SynchronizationContext> SynchronizationContextGetter { get; private set; }
 			internal (Func<SglAnalyticsConfiguratorFactoryArguments, ILoggerFactory> Factory, bool Dispose) LoggerFactory { get; private set; }
 			internal (Func<SglAnalyticsConfiguratorFactoryArguments, IRootDataStore> Factory, bool Dispose) RootDataStoreFactory { get; private set; }
-			internal (Func<SglAnalyticsConfiguratorFactoryArguments, ILogStorage> Factory, bool Dispose) LogStorageFactory { get; private set; }
+			internal (Func<SglAnalyticsConfiguratorFactoryArguments, ILogStorage> Factory, bool Dispose) AnonymousLogStorageFactory { get; private set; }
+			internal (Func<SglAnalyticsConfiguratorAuthenticatedFactoryArguments, ILogStorage> Factory, bool Dispose) UserLogStorageFactory { get; private set; }
 			internal (Func<SglAnalyticsConfiguratorFactoryArguments, ILogCollectorClient> Factory, bool Dispose) LogCollectorClientFactory { get; private set; }
 			internal (Func<SglAnalyticsConfiguratorFactoryArguments, IUserRegistrationClient> Factory, bool Dispose) UserRegistrationClientFactory { get; private set; }
 			internal (Func<SglAnalyticsConfiguratorFactoryArguments, ICertificateValidator> Factory, bool Dispose) RecipientCertificateValidatorFactory { get; private set; }
@@ -60,8 +62,12 @@ namespace SGL.Analytics.Client {
 				RootDataStoreFactory = (rootDataStoreFactory, dispose);
 				return this;
 			}
-			public ISglAnalyticsConfigurator UseLogStorage(Func<SglAnalyticsConfiguratorFactoryArguments, ILogStorage> logStorageFactory, bool dispose = true) {
-				LogStorageFactory = (logStorageFactory, dispose);
+			public ISglAnalyticsConfigurator UseAnonymousLogStorage(Func<SglAnalyticsConfiguratorFactoryArguments, ILogStorage> logStorageFactory, bool dispose = true) {
+				AnonymousLogStorageFactory = (logStorageFactory, dispose);
+				return this;
+			}
+			public ISglAnalyticsConfigurator UseUserLogStorage(Func<SglAnalyticsConfiguratorAuthenticatedFactoryArguments, ILogStorage> logStorageFactory, bool dispose = true) {
+				UserLogStorageFactory = (logStorageFactory, dispose);
 				return this;
 			}
 			public ISglAnalyticsConfigurator UseLogCollectorClient(Func<SglAnalyticsConfiguratorFactoryArguments, ILogCollectorClient> logCollectorClientFactory, bool dispose = true) {

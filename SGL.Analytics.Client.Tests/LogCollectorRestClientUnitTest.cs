@@ -18,6 +18,7 @@ using Xunit;
 namespace SGL.Analytics.Client.Tests {
 	[Collection("Mock Web Server")]
 	public class LogCollectorRestClientUnitTest : IDisposable {
+		private const string appName = "LogCollectorRestClientUnitTest";
 		private const string appAPIToken = "FakeApiToken";
 		private MockServerFixture serverFixture;
 		private LogCollectorRestClient client;
@@ -25,7 +26,7 @@ namespace SGL.Analytics.Client.Tests {
 
 		public LogCollectorRestClientUnitTest(MockServerFixture serverFixture) {
 			this.serverFixture = serverFixture;
-			client = new LogCollectorRestClient(serverFixture.Server.CreateClient());
+			client = new LogCollectorRestClient(serverFixture.Server.CreateClient(), appName, appAPIToken);
 			storage = new InMemoryLogStorage();
 		}
 
@@ -44,7 +45,7 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2/").UsingPost()
 						.WithHeader("App-API-Token", new ExactMatcher(appAPIToken))
 						.WithHeader("Content-Type", new ContentTypeMatcher("multipart/form-data"))
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
@@ -52,7 +53,8 @@ namespace SGL.Analytics.Client.Tests {
 
 			var metadataDTO = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding, EncryptionInfo.CreateUnencrypted());
 			await using var stream = logFile.OpenReadRaw();
-			await client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, new AuthorizationToken("OK"), metadataDTO, stream);
+			client.Authorization = new AuthorizationData(new AuthorizationToken("OK"), DateTime.UtcNow.AddHours(1));
+			await client.UploadLogFileAsync(metadataDTO, stream);
 
 			Assert.Single(serverFixture.Server.LogEntries);
 			var logEntry = serverFixture.Server.LogEntries.Single();
@@ -82,7 +84,7 @@ namespace SGL.Analytics.Client.Tests {
 			}
 
 			var guidMatcher = new RegexMatcher(@"[a-fA-F0-9]{8}[-]([a-fA-F0-9]{4}[-]){3}[a-fA-F0-9]{12}");
-			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2").UsingPost()
+			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/log/v2/").UsingPost()
 						.WithHeader("App-API-Token", new WildcardMatcher("*"))
 						.WithHeader("Content-Type", new ContentTypeMatcher("multipart/form-data"))
 						.WithHeader("Authorization", new ExactMatcher("Bearer OK")))
@@ -90,7 +92,8 @@ namespace SGL.Analytics.Client.Tests {
 
 			var metadataDTO = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding, EncryptionInfo.CreateUnencrypted());
 			await using var stream = logFile.OpenReadRaw();
-			var ex = await Assert.ThrowsAsync<HttpRequestException>(() => client.UploadLogFileAsync("LogCollectorRestClientUnitTest", appAPIToken, new AuthorizationToken("OK"), metadataDTO, stream));
+			client.Authorization = new AuthorizationData(new AuthorizationToken("OK"), DateTime.UtcNow.AddHours(1));
+			var ex = await Assert.ThrowsAsync<HttpApiResponseException>(() => client.UploadLogFileAsync(metadataDTO, stream));
 			Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
 		}
 	}

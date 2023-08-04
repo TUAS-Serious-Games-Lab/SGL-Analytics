@@ -70,22 +70,44 @@ namespace SGL.Analytics.Client {
 	/// <summary>
 	/// The interface that clients for the user registration backend need to implement.
 	/// </summary>
-	public interface IUserRegistrationClient : IRecipientCertificatesClient {
+	public interface IUserRegistrationClient : IApiClient, IRecipientCertificatesClient {
+		/// <summary>
+		/// After a successful call to <see cref="LoginAsync(LoginRequest, CancellationToken)"/> or <see cref="RegisterAsync(UserRegistrationData, PublicKey, byte[], string?, CancellationToken)"/>,
+		/// contains the Authorization token data obtained from the Users service. It can be used for the clients of other services to authorize requests.
+		/// Only unauthenticated APIs can be called while this is null, or while it contains an expired token.
+		/// </summary>
+		new AuthorizationData? Authorization { get; }
+		AuthorizationData? IApiClient.Authorization { get => Authorization; set => throw new NotSupportedException(); }
+
+		/// <summary>
+		/// After a successful call to <see cref="LoginAsync(LoginRequest, CancellationToken)"/> or <see cref="RegisterAsync(UserRegistrationData, PublicKey, byte[], string?, CancellationToken)"/>,
+		/// contains the id of the authenticated in user.
+		/// </summary>
+		Guid? AuthorizedUserId { get; }
+
+		/// <summary>
+		/// An event triggered when a user was authenticated and thus a new <see cref="AuthorizationToken"/> is now available in <see cref="Authorization"/>.
+		/// Allows other clients to be notified when a new token was obtained, either initially or through a re-login after a token has expired.
+		/// They can then use the new token for their requests as well.
+		/// </summary>
+		event AsyncEventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
+
+
 		/// <summary>
 		/// Asynchronously registers a new user with the given user data and the given application API token.
 		/// </summary>
 		/// <param name="userDTO">The data transfer object containing the user data.</param>
 		/// <param name="appAPIToken">The API token to authenticate the application.</param>
 		/// <returns>A task representing the registration operation, providing the response from the server as its result upon completion.</returns>
-		Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, string appAPIToken);
+		Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, CancellationToken ct = default);
 
 		/// <summary>
 		/// Asynchronously performs a login operation for a user and, if successful, obtains an authorization token that can be used to make other requests as the user.
 		/// </summary>
 		/// <param name="loginDTO">A data transfer object, bundling the application and user credentials to use for the login request.</param>
 		/// <returns>A task representing the login operation, providing the response from the server, containing an authorization token (if successful), as its result upon completion.</returns>
-		Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO);
+		Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default);
 
-		Task<LoginResponseDTO> OpenSessionFromUpstream(string appName, string appApiToken, AuthorizationToken upstreamAuthToken, CancellationToken ct = default);
+		Task<LoginResponseDTO> OpenSessionFromUpstream(AuthorizationToken upstreamAuthToken, CancellationToken ct = default);
 	}
 }

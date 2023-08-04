@@ -6,6 +6,7 @@ using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.EndToEnd;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
@@ -71,12 +72,18 @@ namespace SGL.Analytics.Client {
 			cryptoConfig = configurator.CryptoConfig();
 			recipientCertificateValidator = configurator.RecipientCertificateValidatorFactory.Factory(factoryArgs);
 			rootDataStore = configurator.RootDataStoreFactory.Factory(factoryArgs);
-			logStorage = configurator.LogStorageFactory.Factory(factoryArgs);
+			anonymousLogStorage = configurator.AnonymousLogStorageFactory.Factory(factoryArgs);
+			currentLogStorage = anonymousLogStorage;
 			userRegistrationClient = configurator.UserRegistrationClientFactory.Factory(factoryArgs);
 			logCollectorClient = configurator.LogCollectorClientFactory.Factory(factoryArgs);
-			if (IsRegistered()) {
-				startUploadingExistingLogs();
-			}
+			userRegistrationClient.UserAuthenticated += async (s, e, ct) => {
+				await logCollectorClient.SetAuthorizationLockedAsync(e.Authorization, ct);
+				SessionAuthorization = e.Authorization;
+				LoggedInUserId = e.AuthenticatedUserId;
+			};
+			logCollectorClient.AuthorizationExpired += async (s, e, ct) => {
+				await refreshLoginDelegate(ct);
+			};
 		}
 
 		/// <summary>
@@ -84,23 +91,33 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		public string AppName { get => appName; }
 
-		/// <summary>
-		/// The <see cref="ILoggerFactory"/> object that this client uses for logging.
-		/// </summary>
-		public ILoggerFactory LoggerFactory { get; }
+		private ILoggerFactory LoggerFactory { get; }
 
 		/// <summary>
-		/// The id of the registered user, or null if not registered.
+		/// The id of the logged-in user, or null if no user is logged-in.
 		/// </summary>
-		public Guid? UserID => rootDataStore.UserID;
+		public Guid? LoggedInUserId {
+			get {
+				lock (lockObject) {
+					return loggedInUserId;
+				}
+			}
+			private set {
+				lock (lockObject) {
+					loggedInUserId = value;
+				}
+			}
+		}
 
 		/// <summary>
-		/// Checks if the user registration for this client was already done.
-		/// If this returns false, call RegisterAsync and ensure the registration before relying on logs being uploaded.
-		/// When logs are recorded on an unregistered client, they are stored locally and are not uploaded until the registration is completed and a user id is obtained.
+		/// Checks if the this client has stored credentials, i.e. either a device secret or a stored password.
+		/// If this returns true, <see cref="TryLoginWithStoredCredentialsAsync(CancellationToken)"/> can be used to authenticate using these credentials.
+		/// Otherwise, a user can be logged in with username and password using <see cref="TryLoginWithPasswordAsync(string, string, bool, CancellationToken)"/>,
+		/// or another user can be registered using <see cref="RegisterUserWithPasswordAsync(BaseUserData, string, bool, CancellationToken)"/> or
+		/// <see cref="RegisterUserWithDeviceSecretAsync(BaseUserData, CancellationToken)"/>.
 		/// </summary>
-		/// <returns>true if the client is already registered, false if the registration is not yet done.</returns>
-		public bool IsRegistered() {
+		/// <returns>true if the client has stored cedentials, false otherwise.</returns>
+		public bool HasStoredCredentials() {
 			lock (lockObject) {
 				return rootDataStore.UserID != null || rootDataStore.Username != null;
 			}
@@ -117,77 +134,208 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="UsernameAlreadyTakenException">If <paramref name="userData"/> had the optional <see cref="BaseUserData.Username"/> property set and the given username is already taken for this application. If this happens, the user needs to pick a different name.</exception>
 		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
 		/// <exception cref="HttpRequestException">Indicates either a network problem (if <see cref="HttpRequestException.StatusCode"/> is <see langword="null"/>) or a server-side error (if <see cref="HttpRequestException.StatusCode"/> has a value).</exception>
-		public async Task RegisterAsync(BaseUserData userData) {
-			await RegisterImplAsync(userData, null);
-		}
-		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, AuthorizationToken upstreamAuthToken) {
-			await RegisterImplAsync(userData, upstreamAuthToken);
-		}
-		private async Task RegisterImplAsync(BaseUserData userData, AuthorizationToken? upstreamAuthToken) {
+		private async Task<Guid> RegisterImplAsync(BaseUserData userData, string secret, bool storeCredentials, AuthorizationToken? upstreamAuthToken = null) {
 			try {
-				if (IsRegistered()) {
+				if (HasStoredCredentials()) {
 					throw new InvalidOperationException("User is already registered.");
 				}
 				logger.LogInformation("Starting user registration process...");
-				var (unencryptedUserPropDict, encryptedUserPropDict) = userData.BuildUserProperties();
-				byte[]? encryptedUserProps = null;
-				EncryptionInfo? userPropsEncryptionInfo = null;
-				if (encryptedUserPropDict.Any()) {
-					var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(userRegistrationClient);
-					var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
-					if (!certList.Any()) {
-						const string msg = "Can't send registration because no authorized recipients for study-specific properties were found.";
-						logger.LogError(msg);
-						throw new InvalidOperationException(msg);
-					}
-					var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
-					(encryptedUserProps, userPropsEncryptionInfo) = await encryptUserProperties(encryptedUserPropDict, keyEncryptor);
-				}
-				var secret = upstreamAuthToken == null ? SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets) : null;
+				var (unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo) = await getUserProperties(userData);
 				var userDTO = new UserRegistrationDTO(appName, userData.Username, secret, unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
-				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, appAPIToken);
+				// submit registration request
+				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO);
 				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
-				lock (lockObject) {
-					rootDataStore.UserID = regResult.UserId;
-					rootDataStore.UserSecret = secret;
-					if (userData.Username != null) {
-						rootDataStore.Username = userData.Username;
-					}
+				if (storeCredentials) {
+					await storeCredentialsAsync(userData.Username, secret, regResult.UserId);
 				}
-				await rootDataStore.SaveAsync();
 				logger.LogInformation("Successfully registered user.");
-				startUploadingExistingLogs();
+				return regResult.UserId;
 			}
 			catch (UsernameAlreadyTakenException ex) {
 				logger.LogError(ex, "Registration failed because the specified username is already in use.");
+				throw;
 			}
 			catch (UserRegistrationResponseException ex) {
 				logger.LogError(ex, "Registration failed due to error with the registration response.");
 				throw;
 			}
-#if NET5_0_OR_GREATER
-			catch (HttpRequestException ex) when (ex.StatusCode is not null) {
+			catch (HttpApiResponseException ex) {
 				logger.LogError(ex, "Registration failed due to error from server.");
 				throw;
 			}
-			catch (HttpRequestException ex) {
+			catch (HttpApiRequestFailedException ex) {
 				logger.LogError(ex, "Registration failed due to communication problem with the backend server.");
 				throw;
 			}
-#else
-			catch (HttpRequestException ex) {
-				logger.LogError(ex, "Registration failed due to a backend server error.");
-				throw;
-			}
-#endif
 			catch (ValidationException ex) {
 				logger.LogError(ex, "Registration failed due to violating validation constraints.");
+				throw;
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "Registration failed due to unexpected error.");
 				throw;
 			}
+		}
+
+		public async Task RegisterUserWithPasswordAsync(BaseUserData userData, string password, bool rememberCredentials = false, CancellationToken ct = default) {
+			if (userData.Username == null) {
+				throw new ArgumentNullException($"{nameof(userData)}.{nameof(BaseUserData.Username)}");
+			}
+			// TODO: maybe: check password complexity
+			var userId = await RegisterImplAsync(userData, password, rememberCredentials);
+			var loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, userId, password);
+			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			// login with newly registered credentials to obtain session token
+			await reloginDelegate(ct);
+			createUserLogStore(userId, userData.Username);
+			disableLogWriting = false;
+			lock (lockObject) {
+				// hold on to re-login delegate for token refreshing, capturing needed credentials
+				disableLogUploading = false;
+				refreshLoginDelegate = reloginDelegate;
+			}
+		}
+
+		private void createUserLogStore(Guid? userId, string? username) {
+			var logStore = configurator.UserLogStorageFactory.Factory(new SglAnalyticsConfiguratorAuthenticatedFactoryArguments(appName, appAPIToken, httpClient,
+				dataDirectory, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories, SessionAuthorization, userId, username));
+			lock (lockObject) {
+				userLogStorage = logStore;
+				currentLogStorage = userLogStorage;
+			}
+		}
+
+		public async Task RegisterUserWithDeviceSecretAsync(BaseUserData userData, CancellationToken ct = default) {
+			// Generate random secret
+			var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
+			var userId = await RegisterImplAsync(userData, secret, storeCredentials: true);
+			var loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, userId, secret);
+			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			// login with newly registered credentials to obtain session token
+			await reloginDelegate(ct);
+			createUserLogStore(userId, userData.Username);
+			disableLogWriting = false;
+			lock (lockObject) {
+				// hold on to re-login delegate for token refreshing, capturing needed credentials
+				refreshLoginDelegate = reloginDelegate;
+				disableLogUploading = false;
+			}
+		}
+		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, AuthorizationToken upstreamAuthToken) {
+			await RegisterImplAsync(userData, null, storeCredentials: false, upstreamAuthToken);
+		}
+
+		public async Task<LoginAttemptResult> TryLoginWithStoredCredentialsAsync(CancellationToken ct = default) {
+			var credentials = readStoredCredentials();
+			LoginRequestDTO loginDto;
+			if (credentials.UserId.HasValue && !string.IsNullOrWhiteSpace(credentials.UserSecret)) {
+				loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, credentials.UserId.Value, credentials.UserSecret);
+			}
+			else if (!string.IsNullOrWhiteSpace(credentials.Username) && !string.IsNullOrWhiteSpace(credentials.UserSecret)) {
+				loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, credentials.Username, credentials.UserSecret);
+			}
+			else {
+				return LoginAttemptResult.CredentialsNotAvailable;
+			}
+			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			try {
+				await reloginDelegate(ct);
+			}
+			catch (LoginFailedException ex) {
+				logger.LogError(ex, "Login with stored credentials failed.");
+				return LoginAttemptResult.Failed;
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "An error prevented logging in with stored credentials.");
+				return LoginAttemptResult.NetworkProblem;
+			}
+			createUserLogStore(credentials.UserId, credentials.Username);
+			disableLogWriting = false;
+			lock (lockObject) {
+				// hold on to re-login delegate for token refreshing, capturing needed credentials
+				refreshLoginDelegate = reloginDelegate;
+				disableLogUploading = false;
+			}
+			startUploadingExistingLogs();
+			return LoginAttemptResult.Completed;
+		}
+		public async Task<LoginAttemptResult> TryLoginWithPasswordAsync(string loginName, string password, bool rememberCredentials = false, CancellationToken ct = default) {
+			var loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, loginName, password);
+			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			try {
+				await reloginDelegate(ct);
+			}
+			catch (LoginFailedException ex) {
+				logger.LogError(ex, "Login with stored credentials failed.");
+				return LoginAttemptResult.Failed;
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "An error prevented logging in with stored credentials.");
+				return LoginAttemptResult.NetworkProblem;
+			}
+			createUserLogStore(null, loginName);
+			disableLogWriting = false;
+			lock (lockObject) {
+				// hold on to re-login delegate for token refreshing, capturing needed credentials
+				refreshLoginDelegate = reloginDelegate;
+				disableLogUploading = false;
+			}
+			if (rememberCredentials) {
+				await storeCredentialsAsync(loginName, password, LoggedInUserId);
+			}
+			startUploadingExistingLogs();
+			return LoginAttemptResult.Completed;
+		}
+		public async Task UseOfflineModeAsync(CancellationToken ct = default) {
+			var credentials = readStoredCredentials();
+			if (credentials.UserId.HasValue || credentials.Username != null) {
+				createUserLogStore(credentials.UserId, credentials.Username);
+			}
+			else {
+				lock (lockObject) {
+					currentLogStorage = anonymousLogStorage;
+				}
+			}
+			disableLogWriting = false;
+			lock (lockObject) {
+				disableLogUploading = true;
+			}
+		}
+		public async Task DeactivateAsync(CancellationToken ct = default) {
+			await FinishAsync();
+			disableLogWriting = true;
+			lock (lockObject) {
+				disableLogUploading = true;
+				currentLogStorage = null!;
+			}
+		}
+
+		public IList<(Guid Id, DateTime Start, DateTime End)> CheckForAnonymousLogsAsync(CancellationToken ct = default) {
+			List<ILogStorage.ILogFile> existingLogs;
+			lock (lockObject) {
+				existingLogs = anonymousLogStorage.EnumerateFinishedLogs().ToList();
+			}
+			return existingLogs.Select(log => (log.ID, log.CreationTime, log.EndTime)).ToList();
+		}
+		public async Task InheritAnonymousLogsAsync(IEnumerable<Guid> logIds, CancellationToken ct = default) {
+			if (!SessionAuthorizationValid) {
+				throw new InvalidOperationException("Can't inherit anonymous logs for upload to user account without valid user session.");
+			}
+			if (disableLogUploading) {
+				throw new InvalidOperationException("Can't inherit anonymous logs for upload to user account while uploading is disabled.");
+			}
+			var logIdSet = logIds.ToHashSet();
+			List<ILogStorage.ILogFile> existingLogs;
+			lock (lockObject) {
+				existingLogs = anonymousLogStorage.EnumerateFinishedLogs().ToList();
+			}
+			var selectedLogs = existingLogs.Where(log => logIdSet.Contains(log.ID)).ToList();
+			if (selectedLogs.Count == 0) return;
+			foreach (var logFile in selectedLogs) {
+				uploadQueue.Enqueue(logFile);
+			}
+			startFileUploadingIfNotRunning();
 		}
 
 		/// <summary>
@@ -198,12 +346,13 @@ namespace SGL.Analytics.Client {
 		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called concurrently with this.
 		/// </remarks>
 		public Guid StartNewLog() {
+			if (disableLogWriting) return Guid.Empty;
 			LogQueue? oldLogQueue;
 			LogQueue? newLogQueue;
 			Guid logId;
 			lock (lockObject) {
 				oldLogQueue = currentLogQueue;
-				currentLogQueue = newLogQueue = new LogQueue(logStorage.CreateLogFile(out var logFile), logFile);
+				currentLogQueue = newLogQueue = new LogQueue(currentLogStorage.CreateLogFile(out var logFile), logFile);
 				logId = logFile.ID;
 			}
 			pendingLogQueues.Enqueue(newLogQueue);
@@ -214,7 +363,7 @@ namespace SGL.Analytics.Client {
 			else {
 				logger.LogInformation("Started new data log file {newId} and finished old data log file {oldId}.", logId, oldLogQueue.logFile.ID);
 			}
-			ensureLogWritingActive();
+			startLogWritingIfNotRunning();
 			return logId;
 		}
 
@@ -291,6 +440,7 @@ namespace SGL.Analytics.Client {
 		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
 		/// </remarks>
 		public void RecordEvent(string channel, ICloneable eventObject) {
+			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			RecordEventUnshared(channel, eventObject.Clone());
 		}
@@ -311,6 +461,7 @@ namespace SGL.Analytics.Client {
 		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
 		/// </remarks>
 		public void RecordEvent(string channel, ICloneable eventObject, string eventType) {
+			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			RecordEventUnshared(channel, eventObject.Clone(), eventType);
 		}
@@ -331,6 +482,7 @@ namespace SGL.Analytics.Client {
 		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
 		/// </remarks>
 		public void RecordEventUnshared(string channel, object eventObject, string eventType) {
+			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewEventEntry(channel, DateTime.Now, eventType), eventObject));
 		}
@@ -346,6 +498,7 @@ namespace SGL.Analytics.Client {
 		/// This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.
 		/// </remarks>
 		public void RecordEventUnshared(string channel, object eventObject) {
+			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			var eventType = eventObject.GetType();
 			var attributes = eventType.GetCustomAttributes(typeof(EventTypeAttribute), false);
@@ -361,6 +514,7 @@ namespace SGL.Analytics.Client {
 		/// <param name="snapshotPayloadData">An object encapsulating the snapshotted object state to write to the log in JSON form. As the log recording to disk is done asynchronously, the ownership of the given object is transferred to the analytics client and must not be changed by the caller afterwards. The easiest way to ensure this is by creating the snapshot state object inside the call and not holding other references to it.</param>
 		/// <remarks>This operation can be invoked concurrently with other <c>Record</c>... methods, but NOT concurrently with <c>StartNewLog</c> and <c>FinishAsync</c>.</remarks>
 		public void RecordSnapshotUnshared(string channel, object objectId, object snapshotPayloadData) {
+			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
 			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewSnapshotEntry(channel, DateTime.Now, objectId), snapshotPayloadData));
 		}

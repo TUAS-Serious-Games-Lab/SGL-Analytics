@@ -24,23 +24,30 @@ namespace SGL.Analytics.Client {
 		private readonly object lockObject = new object();
 		private string appName;
 		private string appAPIToken;
+		private Guid? loggedInUserId;
+		private AuthorizationData? sessionAuthorization = null;
 		private HttpClient httpClient;
 		private SglAnalyticsConfigurator configurator = new SglAnalyticsConfigurator();
 		private ICertificateValidator recipientCertificateValidator;
 		private RandomGenerator randomGenerator = new RandomGenerator();
 		private IRootDataStore rootDataStore;
-		private ILogStorage logStorage;
+		private ILogStorage anonymousLogStorage;
+		private ILogStorage userLogStorage;
+		private ILogStorage currentLogStorage = null!;
 		private ILogCollectorClient logCollectorClient;
 		private IUserRegistrationClient userRegistrationClient;
 
 		private LogQueue? currentLogQueue;
 		private AsyncConsumerQueue<LogQueue> pendingLogQueues = new AsyncConsumerQueue<LogQueue>();
+		private bool disableLogWriting = false;
 		private Task? logWriter = null;
 		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
 
-		private AuthorizationToken? authToken;
+		private Func<CancellationToken, Task> refreshLoginDelegate = async ct => throw new InvalidOperationException();
 		private SynchronizationContext mainSyncContext;
+		private CancellationTokenSource cts = new CancellationTokenSource();
 		private string dataDirectory;
+		private bool disableLogUploading = false;
 		private Task? logUploader = null;
 
 		private ILogger<SglAnalytics> logger;
@@ -58,9 +65,12 @@ namespace SGL.Analytics.Client {
 			if (configurator.RecipientCertificateValidatorFactory.Dispose) await disposeIfDisposable(recipientCertificateValidator);
 			if (configurator.UserRegistrationClientFactory.Dispose) await disposeIfDisposable(userRegistrationClient);
 			if (configurator.LogCollectorClientFactory.Dispose) await disposeIfDisposable(logCollectorClient);
-			if (configurator.LogStorageFactory.Dispose) await disposeIfDisposable(logStorage);
+			if (configurator.AnonymousLogStorageFactory.Dispose) await disposeIfDisposable(anonymousLogStorage);
+			if (configurator.UserLogStorageFactory.Dispose) await disposeIfDisposable(userLogStorage);
 			if (configurator.RootDataStoreFactory.Dispose) await disposeIfDisposable(rootDataStore);
 			configurator.CustomArgumentFactories.Dispose();
+			cts.Cancel();
+			cts.Dispose();
 			if (configurator.LoggerFactory.Dispose) await disposeIfDisposable(LoggerFactory);
 		}
 
@@ -80,6 +90,26 @@ namespace SGL.Analytics.Client {
 		private readonly JsonSerializerOptions logJsonOptions = new JsonSerializerOptions(JsonOptions.LogEntryOptions);
 		private readonly JsonSerializerOptions userPropertiesJsonOptions = new JsonSerializerOptions(JsonOptions.UserPropertiesOptions);
 
+		private AuthorizationData? SessionAuthorization {
+			get {
+				lock (lockObject) {
+					return sessionAuthorization;
+				}
+			}
+			set {
+				lock (lockObject) {
+					sessionAuthorization = value;
+				}
+			}
+		}
+		private bool SessionAuthorizationValid {
+			get {
+				lock (lockObject) {
+					return sessionAuthorization.HasValue && sessionAuthorization.Value.Valid;
+				}
+			}
+		}
+
 		private class LogQueue {
 			internal AsyncConsumerQueue<LogEntry> entryQueue = new AsyncConsumerQueue<LogEntry>();
 			internal Stream writeStream;
@@ -91,7 +121,37 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		private async Task<CertificateStore> loadAuthorizedRecipientCertificatesAsync(IRecipientCertificatesClient client) {
+		private async Task<(Dictionary<string, object?> unencryptedUserPropDict, byte[]? encryptedUserProps, EncryptionInfo? userPropsEncryptionInfo)> getUserProperties(BaseUserData userData) {
+			var ct = cts.Token;
+			var (unencryptedUserPropDict, encryptedUserPropDict) = userData.BuildUserProperties();
+			byte[]? encryptedUserProps = null;
+			EncryptionInfo? userPropsEncryptionInfo = null;
+			if (encryptedUserPropDict.Any()) {
+				var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(userRegistrationClient, ct);
+				var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
+				if (!certList.Any()) {
+					const string msg = "Can't send registration because no authorized recipients for study-specific properties were found.";
+					logger.LogError(msg);
+					throw new InvalidOperationException(msg);
+				}
+				var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
+				(encryptedUserProps, userPropsEncryptionInfo) = await encryptUserProperties(encryptedUserPropDict, keyEncryptor, ct);
+			}
+			return (unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
+		}
+
+		private async Task storeCredentialsAsync(string? username, string secret, Guid? userId) {
+			lock (lockObject) {
+				rootDataStore.UserID = userId;
+				rootDataStore.UserSecret = secret;
+				if (username != null) {
+					rootDataStore.Username = username;
+				}
+			}
+			await rootDataStore.SaveAsync();
+		}
+
+		private async Task<CertificateStore> loadAuthorizedRecipientCertificatesAsync(IRecipientCertificatesClient client, CancellationToken ct = default) {
 			var store = new CertificateStore(recipientCertificateValidator, LoggerFactory.CreateLogger<CertificateStore>(), (cert, logger) => {
 				if (!cert.AllowedKeyUsages.HasValue) {
 					logger.LogError("Recipient certificate with SubjectDN={subjDN} and KeyId={keyId} doesn't have allowed key usages specified. " +
@@ -107,7 +167,7 @@ namespace SGL.Analytics.Client {
 				}
 				return true;
 			});
-			await client.LoadRecipientCertificatesAsync(appName, appAPIToken, store);
+			await client.LoadRecipientCertificatesAsync(store, ct);
 			return store;
 		}
 
@@ -140,6 +200,12 @@ namespace SGL.Analytics.Client {
 						stream.Dispose();
 					}
 				}
+				lock (lockObject) {
+					if (disableLogUploading) {
+						logger.LogDebug("Finished writing entries for data log file {logFile}, but skipping upload, because uploading is disabled.", logQueue.logFile.ID);
+						continue;
+					}
+				}
 				logger.LogDebug("Finished writing entries for data log file {logFile}, queueing it for upload.", logQueue.logFile.ID);
 				uploadQueue.Enqueue(logQueue.logFile);
 				startFileUploadingIfNotRunning();
@@ -148,8 +214,11 @@ namespace SGL.Analytics.Client {
 			logger.LogDebug("Ending log writer because the pending log queue is finished.");
 		}
 
-		private void ensureLogWritingActive() {
+		private void startLogWritingIfNotRunning() {
 			lock (lockObject) { // Ensure that only one log writer is active
+				if (disableLogWriting) {
+					return;
+				}
 				if (logWriter is null || logWriter.IsCompleted) {
 					// Enforce that the log writer runs on some threadpool thread to avoid putting additional load on app thread.
 					logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
@@ -157,60 +226,52 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		private async Task<AuthorizationToken?> loginAsync(bool expired = false) {
+		private async Task loginAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
+			try {
+				if (string.IsNullOrEmpty(loginDTO.UserSecret)) {
+					throw new ArgumentNullException(nameof(loginDTO.UserSecret));
+				}
+				switch (loginDTO) {
+					case IdBasedLoginRequestDTO:
+						break;
+					case UsernameBasedLoginRequestDTO usernameBasedLoginRequestDTO:
+						if (string.IsNullOrEmpty(usernameBasedLoginRequestDTO.Username)) {
+							throw new ArgumentNullException(nameof(BaseUserData.Username));
+						}
+						break;
+					default:
+						throw new ArgumentException("Unsupported login DTO object type.", nameof(loginDTO));
+				}
+				logger.LogInformation("Logging in user {userIdent} ...", loginDTO.GetUserIdentifier());
+				Validator.ValidateObject(loginDTO, new ValidationContext(loginDTO), true);
+				await userRegistrationClient.LoginUserAsync(loginDTO, ct);
+				logger.LogInformation("Login was successful.");
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "Login for user {userIdent} failed with exception.", loginDTO.GetUserIdentifier());
+				throw;
+			}
+		}
+
+		private (Guid? UserId, string? Username, string? UserSecret) readStoredCredentials() {
 			Guid? userIDOpt;
 			string? usernameOpt;
 			string? userSecret;
-			AuthorizationToken? authToken;
 			lock (lockObject) {
 				userIDOpt = rootDataStore.UserID;
 				usernameOpt = rootDataStore.Username;
 				userSecret = rootDataStore.UserSecret;
-				authToken = this.authToken;
 			}
-			// Can't login without credentials, the user needs to be registered first.
-			if ((userIDOpt == null && usernameOpt == null) || userSecret is null) return null;
-			// We have loginData already and we weren't called because of expired loginData, return the already present ones.
-			if (authToken != null && !expired) return authToken;
-			logger.LogInformation("Logging in user {userId} ...", userIDOpt?.ToString() ?? usernameOpt);
-			var tcs = new TaskCompletionSource<AuthorizationToken>();
-			mainSyncContext.Post(async s => {
-				try {
-					LoginRequestDTO loginDTO;
-					if (userIDOpt != null) {
-						loginDTO = new IdBasedLoginRequestDTO(appName, appAPIToken, userIDOpt.Value, userSecret);
-					}
-					else if (usernameOpt != null) {
-						loginDTO = new UsernameBasedLoginRequestDTO(appName, appAPIToken, usernameOpt, userSecret);
-					}
-					else {
-						throw new Exception("UserId and Username are both missing although one of them was present before switching to main context.");
-					}
-					Validator.ValidateObject(loginDTO, new ValidationContext(loginDTO), true);
-					tcs.SetResult(await userRegistrationClient.LoginUserAsync(loginDTO));
-				}
-				catch (Exception ex) {
-					tcs.SetException(ex);
-				}
-			}, null);
-			try {
-				authToken = await tcs.Task;
-			}
-			catch (Exception ex) {
-				logger.LogError(ex, "Login for user {userId} failed with exception.", userIDOpt?.ToString() ?? usernameOpt);
-				throw;
-			}
-			lock (lockObject) {
-				this.authToken = authToken;
-			}
-			logger.LogInformation("Login was successful.");
-			return authToken;
+			return (userIDOpt, usernameOpt, userSecret);
 		}
 
 		private async Task uploadFilesAsync() {
+			var ct = cts.Token;
 			if (!logCollectorClient.IsActive) return;
 			try {
-				var authToken = await loginAsync();
+				if (!SessionAuthorizationValid) {
+					await refreshLoginDelegate(ct);
+				}
 			}
 			catch (LoginFailedException ex) {
 				logger.LogError(ex, "The login attempt failed due to incorrect credentials.");
@@ -220,32 +281,32 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "The login attempt failed due to an error. Exiting the upload process ...");
 				return;
 			}
-			if (authToken == null) {
-				logger.LogError("The registered login credentails are missing. This is unexpected at this point. Exiting the upload process ...");
+			if (!SessionAuthorizationValid) {
+				logger.LogError("No valid authorization token is present. This is unexpected at this point. Exiting the upload process ...");
 				return;
 			}
 			logger.LogDebug("Started log uploader to asynchronously upload finished data logs to the backend.");
 			var completedLogFiles = new HashSet<Guid>();
-			var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(logCollectorClient);
+			var recipientCertificates = await loadAuthorizedRecipientCertificatesAsync(logCollectorClient, ct);
 			var certList = recipientCertificates.ListKnownKeyIdsAndPublicKeys().ToList();
 			if (!certList.Any()) {
 				logger.LogError("Can't upload log files because no authorized recipients were found.");
 				return;
 			}
 			var keyEncryptor = new KeyEncryptor(certList, randomGenerator, cryptoConfig.AllowSharedMessageKeyPair);
-			await foreach (var logFile in uploadQueue.DequeueAllAsync()) {
+			await foreach (var logFile in uploadQueue.DequeueAllAsync(ct)) {
 				// If we already completed this file, it has been added to the queue twice,
 				// e.g. once by the writer worker and once by startUploadingExistingLogs.
 				// Since we removed the file after successfully uploading it, lets not try again, only to fail with a missing file exception.
 				if (completedLogFiles.Contains(logFile.ID)) continue;
 				try {
-					await attemptToUploadFileAsync((AuthorizationToken)authToken, logFile, keyEncryptor);
+					await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
 				}
 				catch (LoginRequiredException) {
 					logger.LogInformation("Uploading data log {logId} failed because the backend told us that we need to login first. " +
 						"The most likely reason is that our session token expired. Obtaining a new session token by logging in again, after which we will retry the upload ...", logFile.ID);
 					try {
-						authToken = await loginAsync(true);
+						await refreshLoginDelegate(ct);
 					}
 					catch (LoginFailedException ex) {
 						logger.LogError(ex, "The login attempt failed due to incorrect credentials.");
@@ -255,12 +316,12 @@ namespace SGL.Analytics.Client {
 						logger.LogError(ex, "The login attempt failed due to an error. Exiting the upload process ...");
 						return;
 					}
-					if (authToken == null) {
-						logger.LogError("The registered login credentails are missing. This is unexpected at this point. Exiting the upload process ...");
+					if (!SessionAuthorizationValid) {
+						logger.LogError("No valid authorization token is present. This is unexpected at this point. Exiting the upload process ...");
 						return;
 					}
 					try {
-						await attemptToUploadFileAsync((AuthorizationToken)authToken, logFile, keyEncryptor);
+						await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
 					}
 					catch (LoginRequiredException ex) {
 						logger.LogError(ex, "The upload for data log {logId} failed again after obtaining a fresh session token. " +
@@ -271,7 +332,7 @@ namespace SGL.Analytics.Client {
 				completedLogFiles.Add(logFile.ID);
 			}
 
-			async Task attemptToUploadFileAsync(AuthorizationToken authToken, ILogStorage.ILogFile logFile, KeyEncryptor keyEncryptor) {
+			async Task attemptToUploadFileAsync(ILogStorage.ILogFile logFile, KeyEncryptor keyEncryptor, CancellationToken ct = default) {
 				bool removing = false;
 				try {
 					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
@@ -295,7 +356,7 @@ namespace SGL.Analytics.Client {
 						var encryptionInfo = dataEncryptor.GenerateEncryptionInfo(keyEncryptor);
 						var metadataDTO = new LogMetadataDTO(logFileID, logFileCreationTime, logFileEndTime, logFileSuffix, logFileEncoding, encryptionInfo);
 						Validator.ValidateObject(metadataDTO, new ValidationContext(metadataDTO), true);
-						await logCollectorClient.UploadLogFileAsync(appName, appAPIToken, authToken, metadataDTO, encryptionStream);
+						await logCollectorClient.UploadLogFileAsync(metadataDTO, encryptionStream, ct);
 					}
 					finally {
 						await contentStream.DisposeAsync();
@@ -338,8 +399,9 @@ namespace SGL.Analytics.Client {
 
 		private void startFileUploadingIfNotRunning() {
 			if (!logCollectorClient.IsActive) return;
-			if (!IsRegistered()) return; // IsRegistered does it's own locking
+			if (!HasStoredCredentials()) return; // IsRegistered does it's own locking
 			lock (lockObject) { // Ensure that only one log uploader is active
+				if (disableLogUploading) return;
 				if (logUploader is null || logUploader.IsCompleted) {
 					// Enforce that the uploader runs on some threadpool thread to avoid putting additional load on app thread.
 					logUploader = Task.Run(async () => await uploadFilesAsync().ConfigureAwait(false));
@@ -349,10 +411,11 @@ namespace SGL.Analytics.Client {
 
 		private void startUploadingExistingLogs() {
 			if (!logCollectorClient.IsActive) return;
-			if (!IsRegistered()) return;
+			if (!HasStoredCredentials()) return;
 			List<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
-				existingCompleteLogs = logStorage.EnumerateFinishedLogs().ToList();
+				if (disableLogUploading) return;
+				existingCompleteLogs = currentLogStorage.EnumerateFinishedLogs().ToList();
 			}
 			if (existingCompleteLogs.Count == 0) return;
 			logger.LogDebug("Queueing existing data log files for upload...");
