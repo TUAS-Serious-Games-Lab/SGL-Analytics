@@ -306,6 +306,9 @@ namespace SGL.Analytics.Client {
 			startUploadingExistingLogs();
 			return LoginAttemptResult.Completed;
 		}
+		public async Task<LoginAttemptResult> TryLoginWithUpstreamDelegationAsync(Func<CancellationToken, Task<AuthorizationData>> getUpstreamAuthToken, CancellationToken ct = default) {
+			throw new NotImplementedException();
+		}
 		public async Task UseOfflineModeAsync(CancellationToken ct = default) {
 			var credentials = readStoredCredentials();
 			if (credentials.UserId.HasValue || credentials.Username != null) {
