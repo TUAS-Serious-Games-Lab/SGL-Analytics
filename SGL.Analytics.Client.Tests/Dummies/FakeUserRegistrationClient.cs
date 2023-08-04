@@ -30,6 +30,7 @@ namespace SGL.Analytics.Client.Tests {
 		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			LoginRequests.Add(loginDTO);
+			await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization!.Value, AuthorizedUserId!.Value), ct) ?? Task.CompletedTask);
 			return new AuthorizationToken("OK");
 		}
 
@@ -40,6 +41,7 @@ namespace SGL.Analytics.Client.Tests {
 			var result = new UserRegistrationResultDTO(Guid.NewGuid());
 			RegistrationResults.Add(result);
 			RegistrationData[result.UserId] = userDTO;
+			await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization!.Value, AuthorizedUserId!.Value), ct) ?? Task.CompletedTask);
 			return result;
 		}
 
