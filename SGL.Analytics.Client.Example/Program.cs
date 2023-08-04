@@ -119,6 +119,13 @@ namespace SGL.Analytics.Client.Example {
 					Environment.ExitCode = 2;
 				}
 			}
+			else {
+				var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+				if (loginResult != LoginAttemptResult.Completed) {
+					await Console.Error.WriteLineAsync($"Login Failed: {loginResult:G}");
+					Environment.ExitCode = 4;
+				}
+			}
 			if (opts.UserIdFile != null) {
 				await File.WriteAllLinesAsync(opts.UserIdFile, Enumerable.Repeat(analytics.LoggedInUserId.ToString() ?? "<null>", 1));
 			}
