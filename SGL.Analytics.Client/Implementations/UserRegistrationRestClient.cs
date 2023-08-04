@@ -49,7 +49,7 @@ namespace SGL.Analytics.Client {
 		public Guid? AuthorizedUserId { get; set; } = null;
 
 		/// <inheritdoc/>
-		public event EventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
+		public event AsyncEventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
 
 		/// <summary>
 		/// The clock tolerance for <see cref="IApiClient.Authorization"/>.
@@ -89,7 +89,7 @@ namespace SGL.Analytics.Client {
 					AuthorizedUserId = Guid.Empty;
 				}
 
-				UserAuthenticated?.Invoke(this, new UserAuthenticatedEventArgs(Authorization.Value, AuthorizedUserId.Value));
+				await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization.Value, AuthorizedUserId.Value)) ?? Task.CompletedTask);
 				return result?.Token ?? throw new LoginErrorException("Did not receive a valid response for the login request.");
 			}
 			catch (HttpApiResponseException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {

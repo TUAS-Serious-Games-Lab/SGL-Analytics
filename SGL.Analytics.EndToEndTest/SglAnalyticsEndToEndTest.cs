@@ -139,10 +139,14 @@ namespace SGL.Analytics.EndToEndTest {
 				config.UseLoggerFactory(_ => LoggerFactory, false);
 				config.ConfigureCryptography(config => config.AllowSharedMessageKeyPair());
 			})) {
-				if (!analytics.IsRegistered()) {
-					await analytics.RegisterAsync(new UserData { Foo = 42, Bar = "This is a Test", Obj = new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" } });
+				if (analytics.HasStoredCredentials()) {
+					var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+					Assert.Equal(LoginAttemptResult.Completed, loginResult);
 				}
-				userId = analytics.UserID ?? Guid.Empty;
+				else {
+					await analytics.RegisterUserWithDeviceSecretAsync(new UserData { Foo = 42, Bar = "This is a Test", Obj = new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" } });
+				}
+				userId = analytics.LoggedInUserId ?? Guid.Empty;
 				log1Id = analytics.StartNewLog();
 				analytics.RecordEventUnshared("Test1", new { X = 12345, Y = 9876, Msg = "Hello World!" }, "TestEvent");
 				analytics.RecordEventUnshared("Test1", new { X = 123.45, Y = 98.76, Msg = "Test!Test!Test!" }, "OtherTestEvent");

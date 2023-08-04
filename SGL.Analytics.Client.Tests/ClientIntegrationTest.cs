@@ -89,7 +89,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics = new SglAnalytics(appName, appAPIToken, httpClient, config => {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => rootDS, dispose: false);
-				config.UseLogStorage(_ => storage, dispose: false);
+				config.UseAnonymousLogStorage(_ => storage, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 				config.ConfigureCryptography(cryptoConf => {
 					cryptoConf.AllowSharedMessageKeyPair();
@@ -176,7 +176,13 @@ namespace SGL.Analytics.Client.Tests {
 					Test2 = "Hello World"
 				}
 			};
-			await analytics.RegisterAsync(user);
+			if (username == null) {
+				await analytics.RegisterUserWithDeviceSecretAsync(user);
+			}
+			else {
+				string password = SecretGenerator.Instance.GenerateSecret(10);
+				await analytics.RegisterUserWithPasswordAsync(user, password, rememberCredentials: true);
+			}
 
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test J" });

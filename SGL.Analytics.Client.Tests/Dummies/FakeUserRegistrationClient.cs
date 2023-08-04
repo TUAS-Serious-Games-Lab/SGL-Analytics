@@ -20,7 +20,7 @@ namespace SGL.Analytics.Client.Tests {
 		public Guid? AuthorizedUserId => Guid.NewGuid();
 
 		public event AsyncEventHandler<AuthorizationExpiredEventArgs>? AuthorizationExpired;
-		public event EventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
+		public event AsyncEventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
 
 		public Task LoadRecipientCertificatesAsync(CertificateStore targetCertificateStore, CancellationToken ct = default) {
 			targetCertificateStore.AddCertificatesWithValidation(RecipientCertificates, nameof(FakeUserRegistrationClient));
@@ -30,6 +30,7 @@ namespace SGL.Analytics.Client.Tests {
 		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			LoginRequests.Add(loginDTO);
+			await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization!.Value, AuthorizedUserId!.Value), ct) ?? Task.CompletedTask);
 			return new AuthorizationToken("OK");
 		}
 
@@ -40,8 +41,12 @@ namespace SGL.Analytics.Client.Tests {
 			var result = new UserRegistrationResultDTO(Guid.NewGuid());
 			RegistrationResults.Add(result);
 			RegistrationData[result.UserId] = userDTO;
+			await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization!.Value, AuthorizedUserId!.Value), ct) ?? Task.CompletedTask);
 			return result;
 		}
 
+		public Task SetAuthorizationLockedAsync(AuthorizationData? value, CancellationToken ct = default) {
+			throw new NotSupportedException();
+		}
 	}
 }

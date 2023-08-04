@@ -80,8 +80,13 @@ namespace SGL.Analytics.Client.Example {
 			httpClient.BaseAddress = opts.Backend;
 			await using SglAnalytics analytics = new SglAnalytics(opts.AppName, opts.AppApiToken, httpClient, config => {
 				if (opts.LogsDirectory != null) {
-					config.UseLogStorage(args => {
-						var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(args.DataDirectory, "DataLogs"));
+					config.UseAnonymousLogStorage(args => {
+						var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(args.DataDirectory, "DataLogs", "Anonymous"));
+						logStorage.Archiving = opts.KeepFiles;
+						return logStorage;
+					});
+					config.UseUserLogStorage(args => {
+						var logStorage = new DirectoryLogStorage(opts.LogsDirectory ?? Path.Combine(args.DataDirectory, "DataLogs", args.Username ?? args.UserId?.ToString() ?? "Anonymous"));
 						logStorage.Archiving = opts.KeepFiles;
 						return logStorage;
 					});
@@ -98,17 +103,31 @@ namespace SGL.Analytics.Client.Example {
 					});
 				}
 			});
-			if (!analytics.IsRegistered()) {
+			if (!analytics.HasStoredCredentials()) {
 				try {
-					await analytics.RegisterAsync(new BaseUserData(opts.NoUsername ? null : opts.Username));
+					if (opts.NoUsername) {
+						await analytics.RegisterUserWithDeviceSecretAsync(new BaseUserData(null));
+					}
+					else {
+						string password = SecretGenerator.Instance.GenerateSecret(10);
+						await Console.Out.WriteLineAsync($"Generated password: {password}");
+						await analytics.RegisterUserWithPasswordAsync(new BaseUserData(opts.Username), password);
+					}
 				}
 				catch (Exception ex) {
 					await Console.Error.WriteLineAsync($"Registration Error: {ex.Message}");
 					Environment.ExitCode = 2;
 				}
 			}
+			else {
+				var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+				if (loginResult != LoginAttemptResult.Completed) {
+					await Console.Error.WriteLineAsync($"Login Failed: {loginResult:G}");
+					Environment.ExitCode = 4;
+				}
+			}
 			if (opts.UserIdFile != null) {
-				await File.WriteAllLinesAsync(opts.UserIdFile, Enumerable.Repeat(analytics.UserID.ToString() ?? "<null>", 1));
+				await File.WriteAllLinesAsync(opts.UserIdFile, Enumerable.Repeat(analytics.LoggedInUserId.ToString() ?? "<null>", 1));
 			}
 			TicTacToeController gameController = new TicTacToeController(analytics, opts.Verbose, Console.Out);
 			if (opts.MovesFiles.Any()) {
