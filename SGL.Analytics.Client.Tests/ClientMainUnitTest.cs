@@ -825,7 +825,7 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
 		}
 		[Fact]
-		public async Task LoginAfterRegistrationWithUsernameUsesId() {
+		public async Task LoginAfterRegistrationWithUsernameUsingStoredCredentialsUsesId() {
 			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
 			ds.UserID = null;
 			ds.Username = null;
@@ -847,6 +847,46 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync();
 			var loginReq = Assert.IsAssignableFrom<IdBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
 			Assert.Equal(ds.UserID, loginReq.UserId);
+			Assert.Equal("SglAnalyticsUnitTests", loginReq.AppName);
+			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
+		}
+		[Fact]
+		public async Task LoginAfterRegistrationWithUsernameUsingPassedCredentialsUsesUsername() {
+			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
+			ds.UserID = null;
+			ds.Username = null;
+			logCollectorClient = new FakeLogCollectorClient();
+			logCollectorClient.RecipientCertificates = new List<Certificate> { recipient1Cert, recipient2Cert };
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
+			string password = SecretGenerator.Instance.GenerateSecret(10);
+			await analytics.RegisterUserWithPasswordAsync(new BaseUserData("Testuser"), password, rememberCredentials: true);
+			await analytics.FinishAsync();
+			await analytics.DisposeAsync();
+
+			userRegClient.LoginRequests.Clear();
+			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
+				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
+				config.UseRootDataStore(_ => ds, dispose: false);
+				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
+				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
+				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
+				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
+			});
+			await analytics.TryLoginWithPasswordAsync("Testuser", password, rememberCredentials: false);
+			analytics.StartNewLog();
+			analytics.RecordEventUnshared("Test", "Testdata");
+			await analytics.FinishAsync();
+			var loginReq = Assert.IsAssignableFrom<UsernameBasedLoginRequestDTO>(Assert.Single(userRegClient.LoginRequests));
+			Assert.Equal(ds.Username, loginReq.Username);
 			Assert.Equal("SglAnalyticsUnitTests", loginReq.AppName);
 			Assert.Equal("FakeApiKey", loginReq.AppApiToken);
 		}
