@@ -134,7 +134,7 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="UsernameAlreadyTakenException">If <paramref name="userData"/> had the optional <see cref="BaseUserData.Username"/> property set and the given username is already taken for this application. If this happens, the user needs to pick a different name.</exception>
 		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
 		/// <exception cref="HttpRequestException">Indicates either a network problem (if <see cref="HttpRequestException.StatusCode"/> is <see langword="null"/>) or a server-side error (if <see cref="HttpRequestException.StatusCode"/> has a value).</exception>
-		private async Task<Guid> RegisterImplAsync(BaseUserData userData, string secret, bool storeCredentials, AuthorizationToken? upstreamAuthToken = null) {
+		private async Task<Guid> RegisterImplAsync(BaseUserData userData, string? secret, bool storeCredentials, AuthorizationToken? upstreamAuthToken = null) {
 			try {
 				if (HasStoredCredentials()) {
 					throw new InvalidOperationException("User is already registered.");
@@ -147,7 +147,7 @@ namespace SGL.Analytics.Client {
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, upstreamAuthToken);
 				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
 				if (storeCredentials) {
-					await storeCredentialsAsync(userData.Username, secret, regResult.UserId);
+					await storeCredentialsAsync(userData.Username, secret ?? "", regResult.UserId);
 				}
 				logger.LogInformation("Successfully registered user.");
 				return regResult.UserId;
@@ -222,8 +222,27 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = false;
 			}
 		}
-		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, AuthorizationToken upstreamAuthToken) {
-			await RegisterImplAsync(userData, null, storeCredentials: false, upstreamAuthToken);
+		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, AuthorizationToken upstreamAuthToken, CancellationToken ct = default) {
+			var userId = await RegisterImplAsync(userData, null, storeCredentials: false, upstreamAuthToken);
+			Func<CancellationToken, Task> reloginDelegate = async ct2 => {
+				try {
+					logger.LogInformation("Logging in user with upstream delegation ...");
+					await userRegistrationClient.OpenSessionFromUpstream(upstreamAuthToken, ct2);
+					logger.LogInformation("Login was successful.");
+				}
+				catch (Exception ex) {
+					logger.LogError(ex, "Login with upstream delegation failed with exception.");
+					throw;
+				}
+			};
+			await reloginDelegate(ct);
+			createUserLogStore(userId, userData.Username);
+			disableLogWriting = false;
+			lock (lockObject) {
+				// hold on to re-login delegate for token refreshing, capturing needed credentials
+				refreshLoginDelegate = reloginDelegate;
+				disableLogUploading = false;
+			}
 		}
 
 		public async Task<LoginAttemptResult> TryLoginWithStoredCredentialsAsync(CancellationToken ct = default) {
