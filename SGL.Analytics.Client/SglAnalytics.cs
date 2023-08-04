@@ -134,7 +134,7 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="UsernameAlreadyTakenException">If <paramref name="userData"/> had the optional <see cref="BaseUserData.Username"/> property set and the given username is already taken for this application. If this happens, the user needs to pick a different name.</exception>
 		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
 		/// <exception cref="HttpRequestException">Indicates either a network problem (if <see cref="HttpRequestException.StatusCode"/> is <see langword="null"/>) or a server-side error (if <see cref="HttpRequestException.StatusCode"/> has a value).</exception>
-		private async Task<Guid> RegisterImplAsync(BaseUserData userData, string? secret, bool storeCredentials, AuthorizationToken? upstreamAuthToken = null) {
+		private async Task<Guid> RegisterImplAsync(BaseUserData userData, string? secret, bool storeCredentials, AuthorizationData? upstreamAuthToken = null) {
 			try {
 				if (HasStoredCredentials()) {
 					throw new InvalidOperationException("User is already registered.");
@@ -222,12 +222,12 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = false;
 			}
 		}
-		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, AuthorizationToken upstreamAuthToken, CancellationToken ct = default) {
-			var userId = await RegisterImplAsync(userData, null, storeCredentials: false, upstreamAuthToken);
+		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, Func<CancellationToken, Task<AuthorizationData>> getUpstreamAuthToken, CancellationToken ct = default) {
+			var userId = await RegisterImplAsync(userData, null, storeCredentials: false, await getUpstreamAuthToken(ct));
 			Func<CancellationToken, Task> reloginDelegate = async ct2 => {
 				try {
 					logger.LogInformation("Logging in user with upstream delegation ...");
-					await userRegistrationClient.OpenSessionFromUpstream(upstreamAuthToken, ct2);
+					await userRegistrationClient.OpenSessionFromUpstream(await getUpstreamAuthToken(ct2), ct2);
 					logger.LogInformation("Login was successful.");
 				}
 				catch (Exception ex) {

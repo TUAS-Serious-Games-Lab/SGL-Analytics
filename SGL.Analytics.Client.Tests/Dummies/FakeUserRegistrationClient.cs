@@ -34,12 +34,12 @@ namespace SGL.Analytics.Client.Tests {
 			return new AuthorizationToken("OK");
 		}
 
-		public Task<LoginResponseDTO> OpenSessionFromUpstream(AuthorizationToken upstreamAuthToken, CancellationToken ct = default) {
+		public Task<LoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default) {
 			// TODO: Implement
 			throw new NotImplementedException();
 		}
 
-		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, AuthorizationToken? upstreamAuthToken = null, CancellationToken ct = default) {
+		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, AuthorizationData? upstreamAuthToken = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			var resp = new HttpResponseMessage(StatusCode);
 			resp.EnsureSuccessStatusCode();
