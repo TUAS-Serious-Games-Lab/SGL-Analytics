@@ -78,6 +78,8 @@ namespace SGL.Analytics.Client.Tests {
 
 		[Fact]
 		public async Task EachStartNewLogCreatesLogFile() {
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			Assert.Empty(userStorage.EnumerateLogs());
 			analytics.StartNewLog();
 			Assert.Single(userStorage.EnumerateLogs());
@@ -92,6 +94,8 @@ namespace SGL.Analytics.Client.Tests {
 
 		[Fact]
 		public async Task AllLogsAreClosedAfterFinish() {
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			analytics.StartNewLog();
 			analytics.StartNewLog();
 			analytics.StartNewLog();
@@ -127,6 +131,8 @@ namespace SGL.Analytics.Client.Tests {
 
 		[Fact]
 		public async Task SharedEventWithoutCustomNameIsStoredAsExpected() {
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			analytics.StartNewLog();
 			analytics.RecordEvent("TestChannel", new ClonableTestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
@@ -172,6 +178,8 @@ namespace SGL.Analytics.Client.Tests {
 
 		[Fact]
 		public async Task UnsharedEventWithoutCustomNameIsStoredAsExpected() {
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("TestChannel", new TestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
 			await analytics.FinishAsync();
@@ -222,6 +230,8 @@ namespace SGL.Analytics.Client.Tests {
 
 		[Fact]
 		public async Task UnsharedEventWithCustomNameIsStoredAsExpected() {
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("TestChannel", new TestEventB() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
 			await analytics.FinishAsync();
@@ -277,6 +287,8 @@ namespace SGL.Analytics.Client.Tests {
 
 		[Fact]
 		public async Task SharedEventWithCustomNameIsStoredAsExpected() {
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			analytics.StartNewLog();
 			analytics.RecordEvent("TestChannel", new ClonableTestEventB() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
@@ -322,6 +334,8 @@ namespace SGL.Analytics.Client.Tests {
 
 		[Fact]
 		public async Task SnapshotIsStoredAsExpected() {
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			analytics.StartNewLog();
 			var snap = new Dictionary<string, object?>();
 			snap["TestNumber"] = 12345;
@@ -421,6 +435,8 @@ namespace SGL.Analytics.Client.Tests {
 
 		[Fact]
 		public async Task RecordedEntriesAreWrittenToTheCorrectLogFile() {
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test A" });
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test B" });
@@ -514,6 +530,8 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			await analytics.FinishAsync();
 
 			Assert.Equal(5, collectorClient.UploadedLogFileIds.Count);
@@ -539,6 +557,8 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
 			List<Guid> logIds = new();
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
@@ -550,10 +570,13 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseRecipientCertificateValidator(_ => recipientCertificateValidator, dispose: false);
 				config.UseRootDataStore(_ => ds, dispose: false);
 				config.UseAnonymousLogStorage(_ => anonymousStorage, dispose: false);
+				config.UseUserLogStorage(_ => userStorage, dispose: false);
 				config.UseUserRegistrationClient(_ => userRegClient, dispose: false);
 				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
+			loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			await analytics.FinishAsync();
 			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
 		}
@@ -573,6 +596,8 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			List<Guid> logIds = new();
 
 			logIds.Add(analytics.StartNewLog());
@@ -600,7 +625,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test J" });
 			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test K" });
 			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap F");
-			var lastLog = anonymousStorage.EnumerateLogs().Last();
+			var lastLog = userStorage.EnumerateLogs().Last();
 
 			await analytics.FinishAsync();
 
@@ -645,7 +670,7 @@ namespace SGL.Analytics.Client.Tests {
 		}
 
 		[Fact]
-		public async Task PendingUploadsAreRetriedOnSuccessfulRegistration() {
+		public async Task AnonymouslyCollectedLogsCanBeINheritedUponSuccessfulRegistration() {
 			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
 			ds.UserID = null;
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
@@ -657,6 +682,7 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
+			await analytics.UseOfflineModeAsync();
 			List<Guid> logIds = new();
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
@@ -681,6 +707,9 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Empty(collectorClient.UploadedLogFileIds);
 			string password = SecretGenerator.Instance.GenerateSecret(10);
 			await analytics.RegisterUserWithPasswordAsync(user, password, rememberCredentials: true);
+			var anonLogs = analytics.CheckForAnonymousLogsAsync();
+			Assert.All(logIds, logId => Assert.Contains(anonLogs, log => log.Id == logId));
+			await analytics.InheritAnonymousLogsAsync(anonLogs.Select(log => log.Id));
 			await analytics.FinishAsync();
 			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
 		}
@@ -701,6 +730,8 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLogCollectorClient(_ => collectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			List<Guid> logIds = new();
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
@@ -730,7 +761,8 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
-			// Record something and finish to force a login for the triggered upload.
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
 			await analytics.FinishAsync();
@@ -756,7 +788,8 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
-			// Record something and finish to force a login for the triggered upload.
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
 			await analytics.FinishAsync();
@@ -781,7 +814,8 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
-			// Record something and finish to force a login for the triggered upload.
+			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
+			Assert.Equal(LoginAttemptResult.Completed, loginResult);
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
 			await analytics.FinishAsync();
@@ -808,7 +842,6 @@ namespace SGL.Analytics.Client.Tests {
 			});
 			string password = SecretGenerator.Instance.GenerateSecret(10);
 			await analytics.RegisterUserWithPasswordAsync(new BaseUserData("Testuser"), password, rememberCredentials: true);
-			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
 			await analytics.FinishAsync();
@@ -834,7 +867,6 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
 			await analytics.RegisterUserWithDeviceSecretAsync(new BaseUserData());
-			// Record something and finish to force a login for the triggered upload.
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Test", "Testdata");
 			await analytics.FinishAsync();
