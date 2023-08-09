@@ -320,7 +320,18 @@ namespace SGL.Analytics.Client {
 					throw;
 				}
 			};
-			var loginResponse = await reloginDelegate(ct);
+			DelegatedLoginResponseDTO loginResponse;
+			try {
+				loginResponse = await reloginDelegate(ct);
+			}
+			catch (LoginFailedException ex) {
+				logger.LogError(ex, "Login with upstream delegation failed.");
+				return LoginAttemptResult.Failed;
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "An error prevented logging in with upstream delegation.");
+				return LoginAttemptResult.NetworkProblem;
+			}
 			createUserLogStore(loginResponse.UpstreamUserId, null);
 			disableLogWriting = false;
 			lock (lockObject) {
@@ -328,7 +339,8 @@ namespace SGL.Analytics.Client {
 				refreshLoginDelegate = async ct => await reloginDelegate(ct);
 				disableLogUploading = false;
 			}
-			throw new NotImplementedException();
+			startUploadingExistingLogs();
+			return LoginAttemptResult.Completed;
 		}
 		public async Task UseOfflineModeAsync(CancellationToken ct = default) {
 			var credentials = readStoredCredentials();
