@@ -357,6 +357,13 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = true;
 			}
 		}
+		public async Task UseOfflineModeForDelegatedUserAsync(Guid upstreamUserId, CancellationToken ct = default) {
+			createUserLogStore(upstreamUserId, null);
+			disableLogWriting = false;
+			lock (lockObject) {
+				disableLogUploading = true;
+			}
+		}
 		public async Task DeactivateAsync(CancellationToken ct = default) {
 			await FinishAsync();
 			disableLogWriting = true;
