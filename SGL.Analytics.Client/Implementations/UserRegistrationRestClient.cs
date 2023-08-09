@@ -135,9 +135,26 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		public Task<DelegatedLoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default) {
-			// TODO: Implement
-			throw new NotImplementedException();
+		public async Task<DelegatedLoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default) {
+			try {
+				using var response = await SendRequest(HttpMethod.Post, "open-session-from-upstream",
+					new Dictionary<string, string> { ["appName"] = appName }, null,
+					req => {
+						addApiTokenHeader(req);
+						req.Headers.Authorization = upstreamAuthToken.Token.ToHttpHeaderValue();
+					}, jsonMT, ct, authenticated: false);
+				var result = (await response.Content.ReadFromJsonAsync<DelegatedLoginResponseDTO>(jsonOptions)) ?? throw new JsonException("Got null from response.");
+				Authorization = new AuthorizationData(result.Token, result.TokenExpiry ?? throw new LoginErrorException("Token expiry time missing.", new NullReferenceException()));
+				AuthorizedUserId = result.UserId ?? throw new LoginErrorException("User ID missing.", new NullReferenceException());
+				await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization.Value, AuthorizedUserId.Value)) ?? Task.CompletedTask);
+				return result;
+			}
+			catch (HttpApiResponseException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
+				throw new LoginFailedException();
+			}
+			catch (Exception ex) {
+				throw new LoginErrorException(ex);
+			}
 		}
 	}
 }
