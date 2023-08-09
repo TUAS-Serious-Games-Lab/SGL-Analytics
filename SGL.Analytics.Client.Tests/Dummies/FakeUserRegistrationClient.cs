@@ -27,11 +27,11 @@ namespace SGL.Analytics.Client.Tests {
 			return Task.CompletedTask;
 		}
 
-		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
+		public async Task<LoginResponseDTO> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			LoginRequests.Add(loginDTO);
 			await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization!.Value, AuthorizedUserId!.Value), ct) ?? Task.CompletedTask);
-			return new AuthorizationToken("OK");
+			return new LoginResponseDTO(Authorization!.Value.Token, AuthorizedUserId, Authorization.Value.Expiry);
 		}
 
 		public Task<LoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default) {

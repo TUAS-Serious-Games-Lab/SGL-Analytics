@@ -185,7 +185,7 @@ namespace SGL.Analytics.Client {
 			// TODO: maybe: check password complexity
 			var userId = await RegisterImplAsync(userData, password, rememberCredentials);
 			var loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, userId, password);
-			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			// login with newly registered credentials to obtain session token
 			await reloginDelegate(ct);
 			createUserLogStore(userId, userData.Username);
@@ -211,7 +211,7 @@ namespace SGL.Analytics.Client {
 			var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
 			var userId = await RegisterImplAsync(userData, secret, storeCredentials: true);
 			var loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, userId, secret);
-			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			// login with newly registered credentials to obtain session token
 			await reloginDelegate(ct);
 			createUserLogStore(userId, userData.Username);
@@ -224,11 +224,12 @@ namespace SGL.Analytics.Client {
 		}
 		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, Func<CancellationToken, Task<AuthorizationData>> getUpstreamAuthToken, CancellationToken ct = default) {
 			var userId = await RegisterImplAsync(userData, null, storeCredentials: false, await getUpstreamAuthToken(ct));
-			Func<CancellationToken, Task> reloginDelegate = async ct2 => {
+			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => {
 				try {
 					logger.LogInformation("Logging in user with upstream delegation ...");
-					await userRegistrationClient.OpenSessionFromUpstream(await getUpstreamAuthToken(ct2), ct2);
+					var response = await userRegistrationClient.OpenSessionFromUpstream(await getUpstreamAuthToken(ct2), ct2);
 					logger.LogInformation("Login was successful.");
+					return response;
 				}
 				catch (Exception ex) {
 					logger.LogError(ex, "Login with upstream delegation failed with exception.");
@@ -257,7 +258,7 @@ namespace SGL.Analytics.Client {
 			else {
 				return LoginAttemptResult.CredentialsNotAvailable;
 			}
-			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			try {
 				await reloginDelegate(ct);
 			}
@@ -281,7 +282,7 @@ namespace SGL.Analytics.Client {
 		}
 		public async Task<LoginAttemptResult> TryLoginWithPasswordAsync(string loginName, string password, bool rememberCredentials = false, CancellationToken ct = default) {
 			var loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, loginName, password);
-			Func<CancellationToken, Task> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			try {
 				await reloginDelegate(ct);
 			}

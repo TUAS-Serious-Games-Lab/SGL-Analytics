@@ -106,7 +106,7 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="loginDTO">A data transfer object, bundling the application and user credentials to use for the login request.</param>
 		/// <returns>A task representing the login operation, providing the response from the server, containing an authorization token (if successful), as its result upon completion.</returns>
-		Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default);
+		Task<LoginResponseDTO> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default);
 
 		Task<LoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default);
 	}
