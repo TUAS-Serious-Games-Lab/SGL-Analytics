@@ -135,7 +135,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		public Task<LoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default) {
+		public Task<DelegatedLoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default) {
 			// TODO: Implement
 			throw new NotImplementedException();
 		}

@@ -260,7 +260,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpPost("open-session-from-upstream")]
-		public async Task<ActionResult<LoginResponseDTO>> OpenSessionFromUpstream([FromQuery] string appName,
+		public async Task<ActionResult<DelegatedLoginResponseDTO>> OpenSessionFromUpstream([FromQuery] string appName,
 				[FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, CancellationToken ct = default) {
 
 			throw new NotImplementedException();

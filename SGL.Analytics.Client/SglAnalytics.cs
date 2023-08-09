@@ -224,7 +224,7 @@ namespace SGL.Analytics.Client {
 		}
 		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, Func<CancellationToken, Task<AuthorizationData>> getUpstreamAuthToken, CancellationToken ct = default) {
 			var userId = await RegisterImplAsync(userData, null, storeCredentials: false, await getUpstreamAuthToken(ct));
-			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => {
+			Func<CancellationToken, Task<DelegatedLoginResponseDTO>> reloginDelegate = async ct2 => {
 				try {
 					logger.LogInformation("Logging in user with upstream delegation ...");
 					var response = await userRegistrationClient.OpenSessionFromUpstream(await getUpstreamAuthToken(ct2), ct2);
@@ -236,12 +236,12 @@ namespace SGL.Analytics.Client {
 					throw;
 				}
 			};
-			await reloginDelegate(ct);
-			createUserLogStore(userId, userData.Username);
+			var loginResponse = await reloginDelegate(ct);
+			createUserLogStore(loginResponse.UpstreamUserId, null);
 			disableLogWriting = false;
 			lock (lockObject) {
 				// hold on to re-login delegate for token refreshing, capturing needed credentials
-				refreshLoginDelegate = reloginDelegate;
+				refreshLoginDelegate = async ct => await reloginDelegate(ct);
 				disableLogUploading = false;
 			}
 		}
@@ -308,6 +308,26 @@ namespace SGL.Analytics.Client {
 			return LoginAttemptResult.Completed;
 		}
 		public async Task<LoginAttemptResult> TryLoginWithUpstreamDelegationAsync(Func<CancellationToken, Task<AuthorizationData>> getUpstreamAuthToken, CancellationToken ct = default) {
+			Func<CancellationToken, Task<DelegatedLoginResponseDTO>> reloginDelegate = async ct2 => {
+				try {
+					logger.LogInformation("Logging in user with upstream delegation ...");
+					var result = await userRegistrationClient.OpenSessionFromUpstream(await getUpstreamAuthToken(ct2), ct2);
+					logger.LogInformation("Login was successful.");
+					return result;
+				}
+				catch (Exception ex) {
+					logger.LogError(ex, "Login with upstream delegation failed with exception.");
+					throw;
+				}
+			};
+			var loginResponse = await reloginDelegate(ct);
+			createUserLogStore(loginResponse.UpstreamUserId, null);
+			disableLogWriting = false;
+			lock (lockObject) {
+				// hold on to re-login delegate for token refreshing, capturing needed credentials
+				refreshLoginDelegate = async ct => await reloginDelegate(ct);
+				disableLogUploading = false;
+			}
 			throw new NotImplementedException();
 		}
 		public async Task UseOfflineModeAsync(CancellationToken ct = default) {

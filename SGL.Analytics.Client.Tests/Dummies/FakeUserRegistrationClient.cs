@@ -34,7 +34,7 @@ namespace SGL.Analytics.Client.Tests {
 			return new LoginResponseDTO(Authorization!.Value.Token, AuthorizedUserId, Authorization.Value.Expiry);
 		}
 
-		public Task<LoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default) {
+		public Task<DelegatedLoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default) {
 			// TODO: Implement
 			throw new NotImplementedException();
 		}
