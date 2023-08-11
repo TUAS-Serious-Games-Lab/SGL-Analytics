@@ -5,6 +5,7 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
+using SGL.Utilities;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Crypto.EndToEnd;
@@ -12,6 +13,7 @@ using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -144,8 +146,33 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			return result;
 		}
 
-		public Task<DelegatedLoginResponseDTO> OpenSessionFromUpstreamAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default) {
-			throw new NotImplementedException();
+		public async Task<DelegatedLoginResponseDTO> OpenSessionFromUpstreamAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default) {
+			if (app.BasicFederationUpstreamAuthUrl == null) {
+				throw new NoUpstreamBackendConfiguredException($"No upstream backend URL configured for the app {app.Name}.");
+			}
+			DTO.UpstreamTokenCheckResponse upstreamResponse;
+			try {
+				upstreamResponse = await upstreamTokenClient.Value.CheckUpstreamAuthTokenAsync(app.Name, app.BasicFederationUpstreamAuthUrl.ToString(), authHeader, ct);
+			}
+			catch (HttpApiResponseException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or HttpStatusCode.NotFound) {
+				throw new UpstreamTokenRejectedException("Token was rejected by upstream backend.", ex);
+			}
+			catch (HttpApiResponseException ex) {
+				throw new UpstreamTokenCheckFailedException("Token check with upstream backend failed due to error repsonse.", ex);
+			}
+			catch (HttpApiRequestFailedException ex) {
+				throw new UpstreamTokenCheckFailedException("Token check with upstream backend failed due to connection issue.", ex);
+			}
+			catch (Exception ex) {
+				throw new UpstreamTokenCheckFailedException("Token check with upstream backend failed due to unexpected error.", ex);
+			}
+			var user = await userRepo.GetUserByBasicFederationUpstreamUserIdAsync(upstreamResponse.UserId, ct: ct);
+			if (user == null) {
+				throw new NoUserForUpstreamIdException(upstreamResponse.UserId, "The upstream user is not registered in the user database.");
+			}
+			AuthorizationToken? downstreamAuthToken = null;
+			// TODO: Issue token
+			return new DelegatedLoginResponseDTO(downstreamAuthToken ?? throw new NotImplementedException(), user.Id, upstreamResponse.TokenExpiry, upstreamResponse.UserId);
 		}
 
 		/// <inheritdoc/>

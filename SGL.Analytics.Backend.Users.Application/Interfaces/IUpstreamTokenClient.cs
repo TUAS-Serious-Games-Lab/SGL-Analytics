@@ -8,6 +8,6 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 	public interface IUpstreamTokenClient {
-		Task<UpstreamTokenCheckResponse> CheckUpstreamAuthTokenAsync(string appName, string upstreamBackendUrl, string authToken, CancellationToken ct = default);
+		Task<UpstreamTokenCheckResponse> CheckUpstreamAuthTokenAsync(string appName, string upstreamBackendUrl, string authHeader, CancellationToken ct = default);
 	}
 }

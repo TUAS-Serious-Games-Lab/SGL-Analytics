@@ -31,4 +31,7 @@ namespace SGL.Analytics.Backend.Users.Application {
 	public class UpstreamTokenCheckFailedException : Exception {
 		public UpstreamTokenCheckFailedException(string message, Exception? innerException = null) : base(message, innerException) { }
 	}
+	public class NoUpstreamBackendConfiguredException : Exception {
+		public NoUpstreamBackendConfiguredException(string message, Exception? innerException = null) : base(message, innerException) { }
+	}
 }

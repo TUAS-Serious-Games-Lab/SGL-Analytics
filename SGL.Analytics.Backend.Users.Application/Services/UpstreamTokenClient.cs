@@ -20,9 +20,9 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 
 		public UpstreamTokenClient(HttpClient httpClient) : base(httpClient, null, "") { }
 
-		public async Task<UpstreamTokenCheckResponse> CheckUpstreamAuthTokenAsync(string appName, string upstreamBackendUrl, string authToken, CancellationToken ct = default) {
+		public async Task<UpstreamTokenCheckResponse> CheckUpstreamAuthTokenAsync(string appName, string upstreamBackendUrl, string authHeader, CancellationToken ct = default) {
 			var response = await SendRequest(HttpMethod.Post, upstreamBackendUrl, JsonContent.Create(new UpstreamTokenCheckRequest(appName), jsonMT, jsonOptions),
-				req => req.Headers.Authorization = AuthenticationHeaderValue.Parse(authToken),
+				req => req.Headers.Authorization = AuthenticationHeaderValue.Parse(authHeader),
 				accept: jsonMT, ct: ct, authenticated: false);
 			var result = (await response.Content.ReadFromJsonAsync<UpstreamTokenCheckResponse>(jsonOptions)) ?? throw new JsonException("Got null from response.");
 			return result;
