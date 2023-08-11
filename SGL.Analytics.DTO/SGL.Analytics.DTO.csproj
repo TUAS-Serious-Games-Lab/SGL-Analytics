@@ -17,7 +17,7 @@
 	<ItemGroup>
 		<PackageReference Include="SGL.Utilities.Crypto.Abstractions" Version="0.11.10" />
 		<PackageReference Include="System.Text.Json" Version="6.0.8" />
-		<PackageReference Include="SGL.Utilities" Version="0.11.10" />
+		<PackageReference Include="SGL.Utilities" Version="0.11.11-1-g29f1850-main" />
 	</ItemGroup>
 
 </Project>

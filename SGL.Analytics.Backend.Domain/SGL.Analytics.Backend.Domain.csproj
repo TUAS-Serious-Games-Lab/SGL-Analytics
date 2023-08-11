@@ -14,7 +14,7 @@
 	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="SGL.Utilities" Version="0.11.10" />
+		<PackageReference Include="SGL.Utilities" Version="0.11.11-1-g29f1850-main" />
 		<PackageReference Include="SGL.Utilities.Backend.Abstractions" Version="0.11.10" />
 		<PackageReference Include="SGL.Utilities.Crypto" Version="0.11.10" />
 	</ItemGroup>
