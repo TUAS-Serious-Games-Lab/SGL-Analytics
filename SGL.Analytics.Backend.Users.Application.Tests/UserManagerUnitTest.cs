@@ -31,7 +31,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			this.output = output;
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
 			userMgr = new UserManager(appRepo, userRepo, loggerFactory.CreateLogger<UserManager>(),
-				Options.Create(new UserManagerOptions { }));
+				Options.Create(new UserManagerOptions { }), new Lazy<IUpstreamTokenClient>(() => throw new NotImplementedException()));
 		}
 
 		[Fact]

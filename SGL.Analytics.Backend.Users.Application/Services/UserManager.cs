@@ -30,6 +30,8 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		private UserManagerOptions options;
 		private ILogger<UserManager> logger;
 
+		private Lazy<IUpstreamTokenClient> upstreamTokenClient;
+
 		/// <summary>
 		/// Creates a <see cref="UserManager"/> using the given repository implementation objects and the given logger for diagnostics logging.
 		/// </summary>
@@ -37,11 +39,13 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <param name="userRepo">The user registration repository to use.</param>
 		/// <param name="logger">A logger to log status, warning and error messages to.</param>
 		/// <param name="options">Configuration options for the UserManager service.</param>
-		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger, IOptions<UserManagerOptions> options) {
+		/// <param name="upstreamTokenClient">The API client to use for checking upstream auth delegation tokens with the upstream backend.</param>
+		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger, IOptions<UserManagerOptions> options, Lazy<IUpstreamTokenClient> upstreamTokenClient) {
 			this.appRepo = appRepo;
 			this.userRepo = userRepo;
 			this.logger = logger;
 			this.options = options.Value;
+			this.upstreamTokenClient = upstreamTokenClient;
 		}
 
 		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct) {
