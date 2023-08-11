@@ -262,8 +262,15 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[HttpPost("open-session-from-upstream")]
 		public async Task<ActionResult<DelegatedLoginResponseDTO>> OpenSessionFromUpstream([FromQuery] string appName,
 				[FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, CancellationToken ct = default) {
-
-			throw new NotImplementedException();
+			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			// TODO: Check app credentials.
+			var authHeader = HttpContext.Request.Headers.Authorization.FirstOrDefault();
+			if (authHeader == null) {
+				return Unauthorized();
+			}
+			DelegatedLoginResponseDTO response = await userManager.OpenSessionFromUpstreamAsync(app, authHeader!, ct);
+			// TODO: Add error checks.
+			return response;
 		}
 
 		[HttpGet("recipient-certificates")]

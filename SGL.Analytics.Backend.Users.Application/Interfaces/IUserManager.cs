@@ -1,4 +1,5 @@
-﻿using SGL.Analytics.Backend.Users.Application.Model;
+﻿using SGL.Analytics.Backend.Domain.Entity;
+using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.Crypto.Keys;
@@ -35,6 +36,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		Task<User?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default);
 		Task<IEnumerable<Guid>> ListUserIdsAsync(string appName, string exporterDN, CancellationToken ct);
 		Task<IEnumerable<User>> ListUsersAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct);
+		Task<DelegatedLoginResponseDTO> OpenSessionFromUpstreamAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default);
 
 		/// <summary>
 		/// Asynchronously registers a user with the registration data from the given <see cref="UserRegistrationDTO"/> reveived from the client.

@@ -140,6 +140,10 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			return result;
 		}
 
+		public Task<DelegatedLoginResponseDTO> OpenSessionFromUpstreamAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default) {
+			throw new NotImplementedException();
+		}
+
 		/// <inheritdoc/>
 		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO, CancellationToken ct = default) {
 			if (userRegDTO.EncryptedProperties != null) {

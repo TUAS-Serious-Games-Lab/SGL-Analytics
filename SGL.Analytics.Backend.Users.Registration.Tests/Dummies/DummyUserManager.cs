@@ -128,5 +128,9 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 				.Take(RekeyingQueryLimit)
 				.ToList().ToDictionary(u => u.Id, u => u.PropertyEncryptionInfo));
 		}
+
+		public Task<DelegatedLoginResponseDTO> OpenSessionFromUpstreamAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default) {
+			throw new NotImplementedException();
+		}
 	}
 }
