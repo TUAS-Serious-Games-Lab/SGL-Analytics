@@ -34,8 +34,8 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the following result: The user object if the user exists, or <see langword="null"/> otherwise.</returns>
 		Task<User?> GetUserByUsernameAndAppNameAsync(string username, string appName, CancellationToken ct = default);
-		Task<IEnumerable<Guid>> ListUserIdsAsync(string appName, string exporterDN, CancellationToken ct);
-		Task<IEnumerable<User>> ListUsersAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct);
+		Task<IEnumerable<Guid>> ListUserIdsAsync(string appName, string exporterDN, CancellationToken ct = default);
+		Task<IEnumerable<User>> ListUsersAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct = default);
 		Task<DelegatedLoginResponseDTO> OpenSessionFromUpstreamAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default);
 
 		/// <summary>
