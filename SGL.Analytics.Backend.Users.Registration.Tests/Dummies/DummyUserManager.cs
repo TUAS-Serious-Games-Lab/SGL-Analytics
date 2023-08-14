@@ -63,7 +63,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 				throw new ApplicationDoesNotExistException(userRegistrationData.AppName);
 			}
 
-			string hashedSecret = SecretHashing.CreateHashedSecret(userRegistrationData.Secret);
+			string? hashedSecret = userRegistrationData.Secret != null ? SecretHashing.CreateHashedSecret(userRegistrationData.Secret) : null;
 			UserRegistration userReg = userRegistrationData.Username != null ?
 				UserRegistration.Create(app!, userRegistrationData.Username, hashedSecret) :
 				UserRegistration.Create(app!, hashedSecret);

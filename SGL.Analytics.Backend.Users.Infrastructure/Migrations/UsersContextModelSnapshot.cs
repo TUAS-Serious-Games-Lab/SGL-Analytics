@@ -120,7 +120,6 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
                         .HasColumnType("bytea");
 
                     b.Property<string>("HashedSecret")
-                        .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 

@@ -6,6 +6,16 @@ using System;
 namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations {
 	public partial class AddBasicFederationAuthentication : Migration {
 		protected override void Up(MigrationBuilder migrationBuilder) {
+			migrationBuilder.AlterColumn<string>(
+				name: "HashedSecret",
+				table: "UserRegistrations",
+				type: "character varying(128)",
+				maxLength: 128,
+				nullable: true,
+				oldClrType: typeof(string),
+				oldType: "character varying(128)",
+				oldMaxLength: 128);
+
 			migrationBuilder.AddColumn<Guid>(
 				name: "BasicFederationUpstreamUserId",
 				table: "UserRegistrations",
@@ -38,6 +48,18 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations {
 			migrationBuilder.DropColumn(
 				name: "BasicFederationUpstreamAuthUrl",
 				table: "Applications");
+
+			migrationBuilder.AlterColumn<string>(
+				name: "HashedSecret",
+				table: "UserRegistrations",
+				type: "character varying(128)",
+				maxLength: 128,
+				nullable: false,
+				defaultValue: "",
+				oldClrType: typeof(string),
+				oldType: "character varying(128)",
+				oldMaxLength: 128,
+				oldNullable: true);
 		}
 	}
 }

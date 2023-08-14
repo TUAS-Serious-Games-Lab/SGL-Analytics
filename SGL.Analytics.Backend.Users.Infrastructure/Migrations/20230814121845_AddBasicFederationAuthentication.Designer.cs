@@ -12,7 +12,7 @@ using SGL.Analytics.Backend.Users.Infrastructure.Data;
 namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
 {
     [DbContext(typeof(UsersContext))]
-    [Migration("20230725153118_AddBasicFederationAuthentication")]
+    [Migration("20230814121845_AddBasicFederationAuthentication")]
     partial class AddBasicFederationAuthentication
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -122,7 +122,6 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
                         .HasColumnType("bytea");
 
                     b.Property<string>("HashedSecret")
-                        .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 

@@ -219,7 +219,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				}
 				var token = await loginService.LoginAsync(userid, loginRequest.UserSecret,
 					getUser,
-					user => user.HashedSecret,
+					user => user.HashedSecret ?? throw new ArgumentNullException(nameof(user.HashedSecret),
+						"The user has no hashed secret. Can't login using user secret, but only by delegated authentication."),
 					async (user, hashedSecret) => {
 						user.HashedSecret = hashedSecret;
 						await userManager.UpdateUserAsync(user, ct);

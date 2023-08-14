@@ -50,7 +50,7 @@ namespace SGL.Analytics.Backend.Users.Application.Model {
 		/// <summary>
 		/// The login secret of the user in hashed and salted form.
 		/// </summary>
-		public string HashedSecret { get => userReg.HashedSecret; set => userReg.HashedSecret = value; }
+		public string? HashedSecret { get => userReg.HashedSecret; set => userReg.HashedSecret = value; }
 
 		/// <summary>
 		/// The application-specific properties for this user mapped as a (potentially complex) dictionary.
