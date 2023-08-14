@@ -34,6 +34,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		private ILogger<UserManager> logger;
 
 		private Lazy<IUpstreamTokenClient> upstreamTokenClient;
+		private IExplicitTokenService explicitTokenService;
 
 		/// <summary>
 		/// Creates a <see cref="UserManager"/> using the given repository implementation objects and the given logger for diagnostics logging.
@@ -43,12 +44,13 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <param name="logger">A logger to log status, warning and error messages to.</param>
 		/// <param name="options">Configuration options for the UserManager service.</param>
 		/// <param name="upstreamTokenClient">The API client to use for checking upstream auth delegation tokens with the upstream backend.</param>
-		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger, IOptions<UserManagerOptions> options, Lazy<IUpstreamTokenClient> upstreamTokenClient) {
+		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger, IOptions<UserManagerOptions> options, Lazy<IUpstreamTokenClient> upstreamTokenClient, IExplicitTokenService explicitTokenService) {
 			this.appRepo = appRepo;
 			this.userRepo = userRepo;
 			this.logger = logger;
 			this.options = options.Value;
 			this.upstreamTokenClient = upstreamTokenClient;
+			this.explicitTokenService = explicitTokenService;
 		}
 
 		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct) {
@@ -176,9 +178,10 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			if (user == null) {
 				throw new NoUserForUpstreamIdException(upstreamResponse.UserId, "The upstream user is not registered in the user database.");
 			}
-			AuthorizationToken? downstreamAuthToken = null;
-			// TODO: Issue token
-			return new DelegatedLoginResponseDTO(downstreamAuthToken ?? throw new NotImplementedException(), user.Id, upstreamResponse.TokenExpiry, upstreamResponse.UserId);
+			var downstreamAuthToken = explicitTokenService.IssueAuthenticationToken(upstreamResponse.TokenExpiry,
+				("userid", $"{user.Id:D}"), ("appname", app.Name));
+			logger.LogDebug("Issuing session token for user {userId} in app {appName} with upstream user id {upstreamUserId}, valid until {expiry}.", user.Id, app.Name, upstreamResponse.UserId, downstreamAuthToken.Expiry);
+			return new DelegatedLoginResponseDTO(downstreamAuthToken.Token, user.Id, downstreamAuthToken.Expiry, upstreamResponse.UserId);
 		}
 
 		/// <inheritdoc/>

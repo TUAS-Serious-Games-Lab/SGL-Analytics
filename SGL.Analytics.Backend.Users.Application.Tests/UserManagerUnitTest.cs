@@ -8,6 +8,7 @@ using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Analytics.Backend.Users.Application.Tests.Dummies;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
+using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Backend.TestUtilities.Applications;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
@@ -31,7 +32,15 @@ namespace SGL.Analytics.Backend.Users.Application.Tests {
 			this.output = output;
 			loggerFactory = LoggerFactory.Create(c => c.AddXUnit(output).SetMinimumLevel(LogLevel.Trace));
 			userMgr = new UserManager(appRepo, userRepo, loggerFactory.CreateLogger<UserManager>(),
-				Options.Create(new UserManagerOptions { }), new Lazy<IUpstreamTokenClient>(() => throw new NotImplementedException()));
+				Options.Create(new UserManagerOptions { }), new Lazy<IUpstreamTokenClient>(() => throw new NotImplementedException()),
+				new JwtExplicitTokenService(loggerFactory.CreateLogger<JwtExplicitTokenService>(), Options.Create(new JwtOptions {
+					Audience = "UserManagerUnitTest",
+					Issuer = "UserManagerUnitTest",
+					SymmetricKey = "TestingSecretKeyTestingSecretKeyTestingSecretKey",
+					Explicit = new JwtExplicitTokenServiceOptions() {
+						ExpirationTime = TimeSpan.FromMinutes(5)
+					}
+				})));
 		}
 
 		[Fact]

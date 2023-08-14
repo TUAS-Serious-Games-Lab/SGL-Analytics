@@ -46,6 +46,7 @@ namespace SGL.Analytics.Backend.Users.Registration {
 			services.UseUsersBackendInfrastructure(Configuration);
 			services.UseUsersBackendAppplicationLayer(Configuration);
 			services.UseJwtLoginService(Configuration);
+			services.UseJwtExplicitTokenService(Configuration);
 			services.UseJwtBearerAuthentication(Configuration);
 			services.AddAuthorization(options => {
 				options.AddPolicy("ExporterUser", p => p.RequireClaim("keyid").RequireClaim("appname").RequireClaim("exporter-dn"));
