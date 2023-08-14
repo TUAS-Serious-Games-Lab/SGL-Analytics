@@ -176,7 +176,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		}
 
 		/// <inheritdoc/>
-		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO, CancellationToken ct = default) {
+		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO, string? authHeader = null, CancellationToken ct = default) {
 			if (userRegDTO.EncryptedProperties != null) {
 				if (userRegDTO.PropertyEncryptionInfo == null) {
 					throw new EncryptedDataWithoutEncryptionMetadataException("User registration with encrypted properties is missing the associated encryption metadata.");

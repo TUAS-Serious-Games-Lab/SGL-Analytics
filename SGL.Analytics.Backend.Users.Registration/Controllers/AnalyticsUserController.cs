@@ -95,9 +95,15 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				metrics.HandleIncorrectAppApiTokenError(userRegistration.AppName);
 				return Unauthorized(appCredentialsErrorMessage);
 			}
-
+			string? authHeader = null; ;
+			if (userRegistration.Secret == null) { // If we are registering an account with authentication delegation, pass on the auth header:
+				authHeader = HttpContext.Request.Headers.Authorization.SingleOrDefault();
+				if (authHeader == null) {
+					return Unauthorized("The operation failed due to missing upstream authorization token.");
+				}
+			}
 			try {
-				var user = await userManager.RegisterUserAsync(userRegistration, ct);
+				var user = await userManager.RegisterUserAsync(userRegistration, authHeader, ct);
 				var result = user.AsRegistrationResult();
 				using var userScope = logger.BeginUserScope(user.Id);
 				logger.LogInformation("Successfully registered user {username} with id {userid} for application {appName}", user.Username, user.Id, user.App.Name);
