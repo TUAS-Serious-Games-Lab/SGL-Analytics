@@ -121,6 +121,11 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				metrics.HandleUsernameAlreadyTakenError(userRegistration.AppName);
 				return Conflict("The requested username is already taken.");
 			}
+			catch (EntityUniquenessConflictException ex) when (ex.ConflictingPropertyName == nameof(UserRegistration.BasicFederationUpstreamUserId)) {
+				logger.LogInformation(ex, "RegisterUser POST request failed because the upstream user id {upstreamUserId} is already registered.", ex.ConflictingPropertyValue);
+				// TODO: metrics
+				return Conflict("The provided upstream user id is already registered.");
+			}
 			catch (EntityUniquenessConflictException ex) {
 				// The other source of EntityUniquenessConflictExceptions would be a conflict of the user id, which is extremely unlikely (128-bit Guid collision).
 				// Let that case go to the 500 - ISE handler, triggering the client to retry later.
