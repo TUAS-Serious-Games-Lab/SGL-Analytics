@@ -95,10 +95,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 				// To check if ex is a unique constraint violation, we would need to inspect its inner exception and switch over exception types for all supported providers and their internal error classifications.
 				// To avoid this coupling, rather pay the perf cost of querrying again in this rare case.
 				if (await context.UserRegistrations.CountAsync(u => u.Username == userReg.Username && u.AppId == userReg.App.Id, ct) > 0) {
-					throw new EntityUniquenessConflictException("UserRegistration", "Username", userReg.Username, ex);
+					throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.Username), userReg.Username, ex);
 				}
 				else if (await context.UserRegistrations.CountAsync(u => u.Id == userReg.Id, ct) > 0) {
-					throw new EntityUniquenessConflictException("UserRegistration", "Id", userReg.Id, ex);
+					throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.Id), userReg.Id, ex);
 				}
 				else throw;
 			}

@@ -76,8 +76,8 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 		public async Task<UserRegistration> RegisterUserAsync(UserRegistration userReg, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			if (userReg.Id == Guid.Empty) userReg.Id = Guid.NewGuid();
-			if (users.ContainsKey(userReg.Id)) throw new EntityUniquenessConflictException("UserRegistration", "Id", userReg.Id);
-			if (users.Values.Any(u => u.Username == userReg.Username)) throw new EntityUniquenessConflictException("UserRegistration", "Username", userReg.Username);
+			if (users.ContainsKey(userReg.Id)) throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.Username), userReg.Id);
+			if (users.Values.Any(u => u.Username == userReg.Username)) throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.Id), userReg.Username);
 			assignPropertyInstanceIds(userReg);
 			userReg.ValidateProperties();
 			ct.ThrowIfCancellationRequested();
