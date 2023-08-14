@@ -14,9 +14,9 @@
 	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="SGL.Utilities" Version="0.11.11-1-g29f1850-main" />
-		<PackageReference Include="SGL.Utilities.Backend.Abstractions" Version="0.11.10" />
-		<PackageReference Include="SGL.Utilities.Crypto" Version="0.11.10" />
+		<PackageReference Include="SGL.Utilities" Version="0.11.11-4-g6ddda0c-main" />
+		<PackageReference Include="SGL.Utilities.Backend.Abstractions" Version="0.11.11-4-g6ddda0c-main" />
+		<PackageReference Include="SGL.Utilities.Crypto" Version="0.11.11-4-g6ddda0c-main" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />

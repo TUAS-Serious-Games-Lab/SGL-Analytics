@@ -11,9 +11,9 @@
 		<PackageReference Include="JunitXml.TestLogger" Version="3.0.125" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.3" />
-		<PackageReference Include="SGL.Utilities.Backend.Security" Version="0.11.10" />
-		<PackageReference Include="SGL.Utilities.Backend.TestUtilities" Version="0.11.10" />
-		<PackageReference Include="SGL.Utilities.TestUtilities.XUnit" Version="0.11.10" />
+		<PackageReference Include="SGL.Utilities.Backend.Security" Version="0.11.11-4-g6ddda0c-main" />
+		<PackageReference Include="SGL.Utilities.Backend.TestUtilities" Version="0.11.11-4-g6ddda0c-main" />
+		<PackageReference Include="SGL.Utilities.TestUtilities.XUnit" Version="0.11.11-4-g6ddda0c-main" />
 		<PackageReference Include="xunit" Version="2.5.0" />
 		<PackageReference Include="xunit.runner.visualstudio" Version="2.5.0">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
