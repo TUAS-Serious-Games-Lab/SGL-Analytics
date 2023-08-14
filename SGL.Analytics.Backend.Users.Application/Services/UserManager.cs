@@ -214,11 +214,18 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 					   userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted());
 				user = new User(userReg);
 			}
-			else {
-				var upstreamResponse = await CheckUpstreamAuthTokenAsync(app, authHeader, ct);
-
+			else if (authHeader != null) {
 				// Register user account using federated authentication against upstream backend:
-				throw new NotImplementedException("Federated authentication is not yet implemented!");
+				var upstreamResponse = await CheckUpstreamAuthTokenAsync(app, authHeader, ct);
+				userReg = userRegDTO.Username != null ?
+				   UserRegistration.Create(app, userRegDTO.Username, null, userRegDTO.EncryptedProperties ?? new byte[0],
+				   userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted(), upstreamResponse.UserId) :
+				   UserRegistration.Create(app, null, userRegDTO.EncryptedProperties ?? new byte[0],
+				   userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted(), upstreamResponse.UserId);
+				user = new User(userReg);
+			}
+			else {
+				throw new ArgumentException("Neither a user secret nor an upstream authorization header was provided. Refusing to register user with no authentication path.");
 			}
 			foreach (var prop in userRegDTO.StudySpecificProperties) {
 				user.AppSpecificProperties[prop.Key] = prop.Value;
