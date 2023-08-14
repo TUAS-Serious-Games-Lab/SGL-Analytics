@@ -15,9 +15,9 @@
 	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="SGL.Utilities.Crypto.Abstractions" Version="0.11.11-4-g6ddda0c-main" />
+		<PackageReference Include="SGL.Utilities.Crypto.Abstractions" Version="0.11.11-5-gec04ce5-main" />
 		<PackageReference Include="System.Text.Json" Version="6.0.8" />
-		<PackageReference Include="SGL.Utilities" Version="0.11.11-4-g6ddda0c-main" />
+		<PackageReference Include="SGL.Utilities" Version="0.11.11-5-gec04ce5-main" />
 	</ItemGroup>
 
 </Project>
