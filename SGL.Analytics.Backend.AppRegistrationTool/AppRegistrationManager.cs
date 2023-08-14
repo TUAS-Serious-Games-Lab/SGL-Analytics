@@ -228,7 +228,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 						logger.LogInformation("Application {appName} is already registered in UsersAPI, but the user properties [{newlyOptionalProps}] were previously optional but are now required. " +
 							"Changing them to optional ...", application.Name, string.Join(", ", newlyOptionalProps.Select(p => p.prop.Name)));
 						foreach (var (prop, exProp) in newlyOptionalProps) {
-							exProp.Required = false;
+							exProp!.Required = false;
 						}
 					}
 					if (changed) {

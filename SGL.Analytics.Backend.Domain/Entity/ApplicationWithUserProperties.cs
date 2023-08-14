@@ -52,7 +52,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// The <see cref="UserProperties"/> are initialized with an empty collection object, that can be filled with <see cref="AddProperty(string, UserPropertyType, bool)"/>.
 		/// </summary>
 		/// <returns>The created object.</returns>
-		public static new ApplicationWithUserProperties Create(string name, string apiToken, Uri? basicFederationUpstreamAuthUrl = null) {
+		public static ApplicationWithUserProperties Create(string name, string apiToken, Uri? basicFederationUpstreamAuthUrl = null) {
 			return Create(Guid.NewGuid(), name, apiToken, basicFederationUpstreamAuthUrl);
 		}
 
