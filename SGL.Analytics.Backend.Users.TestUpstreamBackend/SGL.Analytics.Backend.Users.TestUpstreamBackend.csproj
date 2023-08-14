@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>cbe9d4fc-b76f-4b48-90bf-96b385cebdfe</UserSecretsId>
+	  <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	  <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+	  <DockerfileBuildArguments>--build-arg SGL_PKG_USER --build-arg SGL_PKG_TOKEN</DockerfileBuildArguments>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
+    <PackageReference Include="prometheus-net" Version="6.0.0" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="6.0.0" />
+    <PackageReference Include="prometheus-net.AspNetCore.HealthChecks" Version="6.0.0" />
+    <PackageReference Include="SGL.Utilities" Version="0.11.11-5-gec04ce5-main" />
+    <PackageReference Include="SGL.Utilities.Backend.AspNetCore" Version="0.11.11-5-gec04ce5-main" />
+    <PackageReference Include="SGL.Utilities.Backend.Security" Version="0.11.11-5-gec04ce5-main" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SGL.Analytics.Backend.Users.Application\SGL.Analytics.Backend.Users.Application.csproj" />
+    <ProjectReference Include="..\SGL.Analytics.DTO\SGL.Analytics.DTO.csproj" />
+  </ItemGroup>
+
+</Project>
