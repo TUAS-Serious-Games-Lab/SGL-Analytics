@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
+using SGL.Analytics.Backend.Users.Application.DTO;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
@@ -146,11 +147,11 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			return result;
 		}
 
-		public async Task<DelegatedLoginResponseDTO> OpenSessionFromUpstreamAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default) {
+		private async Task<UpstreamTokenCheckResponse> CheckUpstreamAuthTokenAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default) {
 			if (app.BasicFederationUpstreamAuthUrl == null) {
 				throw new NoUpstreamBackendConfiguredException($"No upstream backend URL configured for the app {app.Name}.");
 			}
-			DTO.UpstreamTokenCheckResponse upstreamResponse;
+			UpstreamTokenCheckResponse upstreamResponse;
 			try {
 				upstreamResponse = await upstreamTokenClient.Value.CheckUpstreamAuthTokenAsync(app.Name, app.BasicFederationUpstreamAuthUrl.ToString(), authHeader, ct);
 			}
@@ -166,6 +167,11 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			catch (Exception ex) {
 				throw new UpstreamTokenCheckFailedException("Token check with upstream backend failed due to unexpected error.", ex);
 			}
+			return upstreamResponse;
+		}
+
+		public async Task<DelegatedLoginResponseDTO> OpenSessionFromUpstreamAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default) {
+			var upstreamResponse = await CheckUpstreamAuthTokenAsync(app, authHeader, ct);
 			var user = await userRepo.GetUserByBasicFederationUpstreamUserIdAsync(upstreamResponse.UserId, app.Name, ct: ct);
 			if (user == null) {
 				throw new NoUserForUpstreamIdException(upstreamResponse.UserId, "The upstream user is not registered in the user database.");
@@ -209,6 +215,8 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				user = new User(userReg);
 			}
 			else {
+				var upstreamResponse = await CheckUpstreamAuthTokenAsync(app, authHeader, ct);
+
 				// Register user account using federated authentication against upstream backend:
 				throw new NotImplementedException("Federated authentication is not yet implemented!");
 			}
