@@ -97,7 +97,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 				if (await context.UserRegistrations.CountAsync(u => u.Username == userReg.Username && u.AppId == userReg.App.Id, ct) > 0) {
 					throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.Username), userReg.Username, ex);
 				}
-				else if (await context.UserRegistrations.CountAsync(u => u.AppId == userReg.App.Id && u.BasicFederationUpstreamUserId == userReg.BasicFederationUpstreamUserId, ct) > 0) {
+				else if (userReg.BasicFederationUpstreamUserId != null && await context.UserRegistrations.CountAsync(u => u.AppId == userReg.App.Id && u.BasicFederationUpstreamUserId == userReg.BasicFederationUpstreamUserId, ct) > 0) {
 					throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.BasicFederationUpstreamUserId), userReg.BasicFederationUpstreamUserId!, ex);
 				}
 				else if (await context.UserRegistrations.CountAsync(u => u.Id == userReg.Id, ct) > 0) {

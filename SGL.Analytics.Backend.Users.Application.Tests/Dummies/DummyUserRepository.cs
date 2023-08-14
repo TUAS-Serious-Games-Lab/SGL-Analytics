@@ -78,7 +78,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 			if (userReg.Id == Guid.Empty) userReg.Id = Guid.NewGuid();
 			if (users.ContainsKey(userReg.Id)) throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.Username), userReg.Id);
 			if (users.Values.Any(u => u.Username == userReg.Username)) throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.Id), userReg.Username);
-			if (users.Values.Any(u => u.AppId == userReg.App.Id && u.BasicFederationUpstreamUserId == userReg.BasicFederationUpstreamUserId)) throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.BasicFederationUpstreamUserId), userReg.BasicFederationUpstreamUserId!);
+			if (userReg.BasicFederationUpstreamUserId != null && users.Values.Any(u => u.AppId == userReg.App.Id && u.BasicFederationUpstreamUserId == userReg.BasicFederationUpstreamUserId)) throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.BasicFederationUpstreamUserId), userReg.BasicFederationUpstreamUserId!);
 			assignPropertyInstanceIds(userReg);
 			userReg.ValidateProperties();
 			ct.ThrowIfCancellationRequested();
