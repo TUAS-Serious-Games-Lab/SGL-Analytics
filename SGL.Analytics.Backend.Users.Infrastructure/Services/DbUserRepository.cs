@@ -158,9 +158,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			return await query.ToListAsync(ct);
 		}
 
-		public Task<UserRegistration?> GetUserByBasicFederationUpstreamUserIdAsync(Guid upstreamUserId, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
-			// TODO: Implement
-			throw new NotImplementedException();
+		public async Task<UserRegistration?> GetUserByBasicFederationUpstreamUserIdAsync(Guid upstreamUserId, string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			var query = context.UserRegistrations.Where(u => u.App.Name == appName && u.BasicFederationUpstreamUserId == upstreamUserId);
+			query = ApplyQueryOptions(query, queryOptions);
+			return await query.SingleOrDefaultAsync<UserRegistration?>(ct);
 		}
 	}
 }

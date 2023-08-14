@@ -16,7 +16,7 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 		private readonly Dictionary<Guid, UserRegistration> users = new Dictionary<Guid, UserRegistration>();
 		private int nextPropertyInstanceId = 1;
 
-		public Task<UserRegistration?> GetUserByBasicFederationUpstreamUserIdAsync(Guid upstreamUserId, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+		public Task<UserRegistration?> GetUserByBasicFederationUpstreamUserIdAsync(Guid upstreamUserId, string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			// TODO: Implement
 			throw new NotImplementedException();
 		}

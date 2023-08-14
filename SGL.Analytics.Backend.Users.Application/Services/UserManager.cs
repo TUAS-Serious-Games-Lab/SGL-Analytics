@@ -166,7 +166,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			catch (Exception ex) {
 				throw new UpstreamTokenCheckFailedException("Token check with upstream backend failed due to unexpected error.", ex);
 			}
-			var user = await userRepo.GetUserByBasicFederationUpstreamUserIdAsync(upstreamResponse.UserId, ct: ct);
+			var user = await userRepo.GetUserByBasicFederationUpstreamUserIdAsync(upstreamResponse.UserId, app.Name, ct: ct);
 			if (user == null) {
 				throw new NoUserForUpstreamIdException(upstreamResponse.UserId, "The upstream user is not registered in the user database.");
 			}
