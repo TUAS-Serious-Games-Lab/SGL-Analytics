@@ -36,6 +36,13 @@ services:
     environment:
       - VS_CERT_SECRET_ID=fb10d495-0e38-4cea-b398-a7dd25f58472
       - VS_CERT_NAME=SGL.Analytics.Backend.Logs.Collector
+  test-upstream-backend:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Logging__File__BaseDirectory=/var/log/SGL.Analytics.Test.Upstream
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
 
 volumes:
   vs_certs:

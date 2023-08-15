@@ -51,3 +51,11 @@ services:
       context: SGL.Analytics.Backend.APIGW
       dockerfile: Dockerfile
       target: final
+  test-upstream-backend:
+    build:
+      context: .
+      dockerfile: SGL.Analytics.Backend.Users.TestUpstreamBackend/Dockerfile
+      target: final
+      args:
+        SGL_PKG_USER:
+        SGL_PKG_TOKEN:

@@ -65,3 +65,6 @@ services:
   jwt-secret-key-gen:
     # set restart to ensure a restart at host boot to generate a key in the cleared tmpfs.
     restart: unless-stopped
+  test-upstream-backend:
+    profiles:
+    - DontLaunchOnProd
