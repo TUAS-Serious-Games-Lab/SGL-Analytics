@@ -3,6 +3,7 @@ using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
+using SGL.Utilities.Logging.FileLogging;
 
 public class Startup {
 	/// <summary>
@@ -21,9 +22,9 @@ public class Startup {
 	/// This method gets called by the runtime to add services to the container.
 	/// </summary>
 	public void ConfigureServices(IServiceCollection services) {
-		//services.Configure<FileLoggingProviderOptions>(config => {
-		//	config.Constants.TryAdd("ServiceName", "SGL.Analytics.UserRegistration");
-		//});
+		services.Configure<FileLoggingProviderOptions>(config => {
+			config.Constants.TryAdd("ServiceName", "SGL.Analytics.Test.Upstream");
+		});
 
 		services.UseJwtLoginService(Configuration);
 		services.UseJwtExplicitTokenService(Configuration);
