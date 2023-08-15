@@ -328,6 +328,10 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "Login with upstream delegation failed.");
 				return LoginAttemptResult.Failed;
 			}
+			catch (NoDelegatedUserException ex) {
+				logger.LogError(ex, "Login with upstream delegation did not succeed because the upstream user is not registered yet.");
+				return LoginAttemptResult.CredentialsNotAvailable;
+			}
 			catch (Exception ex) {
 				logger.LogError(ex, "An error prevented logging in with upstream delegation.");
 				return LoginAttemptResult.NetworkProblem;

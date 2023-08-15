@@ -152,6 +152,9 @@ namespace SGL.Analytics.Client {
 			catch (HttpApiResponseException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
 				throw new LoginFailedException();
 			}
+			catch (HttpApiResponseException ex) when (ex.StatusCode == HttpStatusCode.NotFound) {
+				throw new NoDelegatedUserException();
+			}
 			catch (Exception ex) {
 				throw new LoginErrorException(ex);
 			}

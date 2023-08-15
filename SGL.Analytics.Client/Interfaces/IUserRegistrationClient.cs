@@ -15,6 +15,15 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		public LoginFailedException() : base("Login failed due to invalid credentials.") { }
 	}
+	/// <summary>
+	/// Indicates that a delegated login failed because the upstream user id is not registered.
+	/// </summary>
+	public class NoDelegatedUserException : Exception {
+		/// <summary>
+		/// Instantiates the exception with the given parameters.
+		/// </summary>
+		public NoDelegatedUserException() : base("No account registered for delegated authentication.") { }
+	}
 
 	/// <summary>
 	/// Indicates a general error during a login request.
