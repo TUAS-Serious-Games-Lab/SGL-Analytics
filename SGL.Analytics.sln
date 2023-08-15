@@ -95,6 +95,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api_conf.d", "api_conf.d", "{13A0FB28-A928-47AD-BF5E-3D83EE59B337}"
 	ProjectSection(SolutionItems) = preProject
 		SGL.Analytics.Backend.APIGW\etc\api_conf.d\Analytics.LogCollector.conf = SGL.Analytics.Backend.APIGW\etc\api_conf.d\Analytics.LogCollector.conf
+		SGL.Analytics.Backend.APIGW\etc\api_conf.d\Analytics.TestUpstreamBackend.conf = SGL.Analytics.Backend.APIGW\etc\api_conf.d\Analytics.TestUpstreamBackend.conf
 		SGL.Analytics.Backend.APIGW\etc\api_conf.d\Analytics.UserRegistration.conf = SGL.Analytics.Backend.APIGW\etc\api_conf.d\Analytics.UserRegistration.conf
 	EndProjectSection
 EndProject
