@@ -32,6 +32,7 @@ namespace SGL.Analytics.EndToEndTest {
 		private string appName;
 		private string appApiToken;
 		private HttpClient httpClient;
+		private string testUpstreamSecret;
 		public ILoggerFactory LoggerFactory { get; }
 		private ILogger<SglAnalyticsEndToEndTest> logger;
 		private readonly ITestOutputHelper output;
@@ -52,6 +53,9 @@ namespace SGL.Analytics.EndToEndTest {
 			logger = LoggerFactory.CreateLogger<SglAnalyticsEndToEndTest>();
 			appName = Environment.GetEnvironmentVariable("TEST_APPNAME") ?? "TestApp1";
 			appApiToken = Environment.GetEnvironmentVariable("TEST_APP_API_TOKEN") ?? "JdXRSl5QWnb9JVbLGE+zLKcpDUx7qJPMtGEu59e5oeM=";
+			testUpstreamSecret = Environment.GetEnvironmentVariable("TEST_UPSTREAM_SECRET") ??
+				"LocalDevTestingSecret-FyEMGwNq0TOW0QdnchQefrjfbALK2yZ6";
+
 			recipientCaCertPemFile = Environment.GetEnvironmentVariable("TEST_RECIPIENT_CA_FILE");
 			if (recipientCaCertPemFile == null) {
 				recipientCaCertPemText = Environment.GetEnvironmentVariable("TEST_RECIPIENT_CA_PEM");
