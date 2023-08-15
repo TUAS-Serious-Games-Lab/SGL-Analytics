@@ -148,6 +148,8 @@ package-client-example:
     UsersRegistration_PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/users-registration"
     AppRegistrationTool_PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.AppRegistrationTool"
     AppRegistrationTool_PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/app-registration"
+    TestUpstreamBackend_PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.Users.TestUpstreamBackend"
+    TestUpstreamBackend_PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/test-upstream-backend"
     DB_PACKAGE_IMAGE_DIR: "SGL.Analytics.Backend.DB"
     DB_PACKAGE_IMAGE: "${CI_REGISTRY_IMAGE}/db"
     DB_PACKAGE_IMAGE_CONTEXT: "${CI_PROJECT_DIR}/SGL.Analytics.Backend.DB"
@@ -162,6 +164,7 @@ package-client-example:
     - IMAGE_NAME: LogsCollector
     - IMAGE_NAME: UsersRegistration
     - IMAGE_NAME: AppRegistrationTool
+    - IMAGE_NAME: TestUpstreamBackend
     - IMAGE_NAME: DB
     - IMAGE_NAME: APIGW
 
