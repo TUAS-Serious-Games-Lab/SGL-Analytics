@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Options;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
-using SGL.Analytics.Backend.Users.Application.DTO;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;

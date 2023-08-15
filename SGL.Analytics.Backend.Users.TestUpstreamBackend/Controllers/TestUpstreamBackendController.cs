@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using SGL.Analytics.Backend.Users.Application.DTO;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Backend.Security;

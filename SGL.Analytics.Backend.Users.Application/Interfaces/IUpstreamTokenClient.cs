@@ -1,4 +1,4 @@
-﻿using SGL.Analytics.Backend.Users.Application.DTO;
+﻿using SGL.Analytics.DTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;

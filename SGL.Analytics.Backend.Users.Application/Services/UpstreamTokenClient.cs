@@ -1,5 +1,4 @@
-﻿using SGL.Analytics.Backend.Users.Application.DTO;
-using SGL.Analytics.Backend.Users.Application.Interfaces;
+﻿using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
 using System;
