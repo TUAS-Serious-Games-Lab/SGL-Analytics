@@ -154,7 +154,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			}
 			UpstreamTokenCheckResponse upstreamResponse;
 			try {
-				upstreamResponse = await upstreamTokenClient.Value.CheckUpstreamAuthTokenAsync(app.Name, app.BasicFederationUpstreamAuthUrl.ToString(), authHeader, ct);
+				upstreamResponse = await upstreamTokenClient.Value.CheckUpstreamAuthTokenAsync(app.Name, app.ApiToken, app.BasicFederationUpstreamAuthUrl.ToString(), authHeader, ct);
 			}
 			catch (HttpApiResponseException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or HttpStatusCode.NotFound) {
 				throw new UpstreamTokenRejectedException("Token was rejected by upstream backend.", ex);
