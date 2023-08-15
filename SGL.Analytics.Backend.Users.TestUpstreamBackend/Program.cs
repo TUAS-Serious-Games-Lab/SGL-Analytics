@@ -18,6 +18,7 @@ builder.Logging.AddFile(builder => {
 	builder.AddUserIdScopePlaceholder();
 	builder.AddAppNameScopePlaceholder();
 });
+builder.Services.AddControllers();
 builder.Services.Configure<FileLoggingProviderOptions>(config => {
 	config.Constants.TryAdd("ServiceName", "SGL.Analytics.Test.Upstream");
 });
