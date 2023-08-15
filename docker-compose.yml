@@ -150,4 +150,5 @@ services:
     volumes:
     - "test-jwt-key-config:/etc/SGL.Analytics.Test.Upstream/JWT-Key"
     environment:
+      ASPNETCORE_URLS: "http://+:80;http://+:8080"
       Sgla__TestUpstream__Secret:
