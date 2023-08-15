@@ -1,4 +1,5 @@
 using Prometheus;
+using SGL.Analytics.Backend.Users.TestUpstreamBackend;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Logging.FileLogging;
@@ -20,6 +21,7 @@ builder.Logging.AddFile(builder => {
 builder.Services.Configure<FileLoggingProviderOptions>(config => {
 	config.Constants.TryAdd("ServiceName", "SGL.Analytics.Test.Upstream");
 });
+builder.Services.Configure<TestUpstreamBackendOptions>(builder.Configuration.GetSection(TestUpstreamBackendOptions.ConfigSectionName));
 
 builder.Services.UseJwtLoginService(builder.Configuration);
 builder.Services.UseJwtExplicitTokenService(builder.Configuration);

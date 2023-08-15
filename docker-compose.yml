@@ -150,4 +150,4 @@ services:
     volumes:
     - "test-jwt-key-config:/etc/SGL.Analytics.Test.Upstream/JWT-Key"
     environment:
-      SGLA__TestUpstream__SECRET:
+      Sgla__TestUpstream__Secret:
