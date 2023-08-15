@@ -1,6 +1,7 @@
 {
   "Name": "TestApp1",
   "ApiToken": "JdXRSl5QWnb9JVbLGE+zLKcpDUx7qJPMtGEu59e5oeM=",
+  "BasicFederationUpstreamAuthUrl": "http://test-upstream-backend/api/analytics/test/upstream/v1/check-token",
   "UserProperties": [
     {
       "Name": "Foo",
