@@ -12,7 +12,7 @@ using System.Text.Json;
 using Xunit.Abstractions;
 
 namespace SGL.Analytics.EndToEndTest {
-	public class SglAnalyticsEndToEndTest {
+	public partial class SglAnalyticsEndToEndTest {
 		public static bool ShouldRun() {
 			var backendUrl = Environment.GetEnvironmentVariable("TEST_BACKEND");
 			if (backendUrl != null) {
@@ -147,17 +147,7 @@ namespace SGL.Analytics.EndToEndTest {
 					await analytics.RegisterUserWithDeviceSecretAsync(new UserData { Foo = 42, Bar = "This is a Test", Obj = new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" } });
 				}
 				userId = analytics.LoggedInUserId ?? Guid.Empty;
-				log1Id = analytics.StartNewLog();
-				analytics.RecordEventUnshared("Test1", new { X = 12345, Y = 9876, Msg = "Hello World!" }, "TestEvent");
-				analytics.RecordEventUnshared("Test1", new { X = 123.45, Y = 98.76, Msg = "Test!Test!Test!" }, "OtherTestEvent");
-				analytics.RecordSnapshotUnshared("Test2", snapShotId, new {
-					Position = new { X = 123, Y = 345 },
-					Energy = 1000,
-					Name = "JohnDoe",
-					Inventory = new[] { "Apple", "Orange", "WaterBottle" }
-				});
-				log2Id = analytics.StartNewLog();
-				await analytics.FinishAsync();
+				(log1Id, log2Id) = await RecordTestData(analytics, snapShotId, ct);
 			}
 			var endTime = DateTime.Now;
 
@@ -236,6 +226,23 @@ namespace SGL.Analytics.EndToEndTest {
 				await exporter.UseKeyFileAsync(rekeyTargetKeyFile, ct);
 				await ValidateTestData(exporter, userId, log1Id, log2Id, snapShotId, beginTime, endTime, ct);
 			}
+		}
+
+		private async Task<(Guid Log1Id, Guid Log2Id)> RecordTestData(SglAnalytics analytics, Guid snapShotId, CancellationToken ct = default) {
+			Guid log1Id;
+			Guid log2Id;
+			log1Id = analytics.StartNewLog();
+			analytics.RecordEventUnshared("Test1", new { X = 12345, Y = 9876, Msg = "Hello World!" }, "TestEvent");
+			analytics.RecordEventUnshared("Test1", new { X = 123.45, Y = 98.76, Msg = "Test!Test!Test!" }, "OtherTestEvent");
+			analytics.RecordSnapshotUnshared("Test2", snapShotId, new {
+				Position = new { X = 123, Y = 345 },
+				Energy = 1000,
+				Name = "JohnDoe",
+				Inventory = new[] { "Apple", "Orange", "WaterBottle" }
+			});
+			log2Id = analytics.StartNewLog();
+			await analytics.FinishAsync();
+			return (log1Id, log2Id);
 		}
 
 		private async Task ValidateTestData(SglAnalyticsExporter exporter, Guid userId, Guid log1Id, Guid log2Id, Guid snapShotId, DateTime beginTime, DateTime endTime, CancellationToken ct) {
