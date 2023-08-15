@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SGL.Analytics.Backend.Users.Application.DTO {
+namespace SGL.Analytics.DTO {
 	public class UpstreamTokenCheckRequest {
 		/// <summary>
 		/// The app name of the app requesting the token check.
