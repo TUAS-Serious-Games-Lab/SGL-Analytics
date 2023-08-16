@@ -14,6 +14,7 @@ volumes:
   game-logs:
   log-collector-log-files:
   user-registration-log-files:
+  test-upstream-backend-log-files:
   jwt-key-config:
     driver_opts:
       type: tmpfs
@@ -24,6 +25,7 @@ volumes:
       device: tmpfs
   log-collector-conf:
   user-registration-conf:
+  test-upstream-backend-conf:
 
 services:
   db:
@@ -148,7 +150,9 @@ services:
     networks:
     - proxy
     volumes:
+    - "test-upstream-backend-log-files:/var/log/SGL.Analytics.Test.Upstream"
     - "test-jwt-key-config:/etc/SGL.Analytics.Test.Upstream/JWT-Key"
+    - "test-upstream-backend-conf:/etc/SGL.Analytics/TestUpstreamBackend/"
     environment:
       ASPNETCORE_URLS: "http://+:80;http://+:8080"
       Sgla__TestUpstream__Secret:
