@@ -59,11 +59,10 @@ namespace SGL.Analytics.EndToEndTest {
 				config.UseLoggerFactory(_ => LoggerFactory, false);
 				config.ConfigureCryptography(config => config.AllowSharedMessageKeyPair());
 			})) {
-				await testUpstreamClient.StartSession(testUpstreamSecret, ct);
 				var loginResult = await analytics.TryLoginWithUpstreamDelegationAsync(ct => Task.FromResult(testUpstreamClient.Authorization!.Value), ct);
 				Assert.Equal(LoginAttemptResult.Completed, loginResult);
-				Assert.Equal(userId, analytics.LoggedInUserId);
 				Assert.True(analytics.LoggedInUserId.HasValue);
+				Assert.Equal(userId, analytics.LoggedInUserId);
 				userId = analytics.LoggedInUserId.Value;
 				(log3Id, log4Id) = await RecordTestData(analytics, snapShot2Id, ct);
 			}
