@@ -25,14 +25,17 @@ namespace SGL.Analytics.Backend.Users.TestUpstreamBackend.Controllers {
 		[HttpPost("start-session")]
 		public async Task<ActionResult<LoginResponseDTO>> StartSession([FromBody] string secret, CancellationToken ct = default) {
 			if (string.IsNullOrWhiteSpace(secret) || secret.Length < 10) {
+				logger.LogError("Bad secret.");
 				return BadRequest("Bad secret.");
 			}
 			if (options.Secret != secret) {
+				logger.LogError("Incorrect secret.");
 				return Unauthorized("Incorrect secret.");
 			}
 			else {
 				var fakeUserId = Guid.NewGuid();
 				var token = explicitTokenService.IssueAuthenticationToken(("userid", $"{fakeUserId:D}"), ("appname", options.AppName));
+				logger.LogInformation("Starting session for user {userId}.", fakeUserId);
 				return new LoginResponseDTO(token.Token, fakeUserId, token.Expiry);
 			}
 		}
@@ -53,9 +56,11 @@ namespace SGL.Analytics.Backend.Users.TestUpstreamBackend.Controllers {
 				return false;
 			});
 			if (options.AppName != tokenAppName) {
+				logger.LogError("Failing token check due to invalid token.");
 				return Unauthorized("Invalid token.");
 			}
 			if (tokenAppName != request.RequestingAppName) {
+				logger.LogError("Failing token check due to incorrect app name.");
 				return Unauthorized("Token doesn't match requesting app.");
 			}
 			return new UpstreamTokenCheckResponse(tokenUserId, tokenExpiry);
