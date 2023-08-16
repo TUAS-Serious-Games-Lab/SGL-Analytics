@@ -20,6 +20,8 @@ namespace SGL.Analytics.Backend.Users.TestUpstreamBackend.Controllers {
 			this.explicitTokenService = explicitTokenService;
 		}
 
+		[ProducesResponseType(typeof(LoginResponseDTO), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[HttpPost("start-session")]
 		public async Task<ActionResult<LoginResponseDTO>> StartSession([FromBody] string secret, CancellationToken ct = default) {
 			if (string.IsNullOrWhiteSpace(secret) || secret.Length < 10) {
@@ -37,6 +39,8 @@ namespace SGL.Analytics.Backend.Users.TestUpstreamBackend.Controllers {
 
 		[Authorize]
 		[HttpPost("check-token")]
+		[ProducesResponseType(typeof(UpstreamTokenCheckResponse), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		public async Task<ActionResult<UpstreamTokenCheckResponse>> CheckToken([FromBody] UpstreamTokenCheckRequest request, CancellationToken ct = default) {
 			var tokenUserId = HttpContext.User.GetClaim<Guid>("userid", Guid.TryParse);
 			var tokenAppName = HttpContext.User.GetClaimOrNull("appname");
