@@ -1,4 +1,5 @@
-﻿using SGL.Analytics.Client;
+﻿using Microsoft.Extensions.Logging;
+using SGL.Analytics.Client;
 using SGL.Analytics.ExporterClient;
 using SGL.Utilities;
 using SGL.Utilities.TestUtilities.XUnit;
@@ -44,6 +45,7 @@ namespace SGL.Analytics.EndToEndTest {
 				Assert.Equal(testUpstreamClient.AuthorizedUserId, analytics.LoggedInUserId);
 				Assert.True(analytics.LoggedInUserId.HasValue);
 				userId = analytics.LoggedInUserId.Value;
+				logger.LogInformation("Registered user {userId}.", userId);
 				(log1Id, log2Id) = await RecordTestData(analytics, snapShot1Id, ct);
 			}
 			var midTime = DateTime.Now;
