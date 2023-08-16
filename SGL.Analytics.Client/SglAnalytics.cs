@@ -145,11 +145,11 @@ namespace SGL.Analytics.Client {
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				// submit registration request
 				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, upstreamAuthToken);
-				logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
 				if (storeCredentials) {
+					logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
 					await storeCredentialsAsync(userData.Username, secret ?? "", regResult.UserId);
 				}
-				logger.LogInformation("Successfully registered user.");
+				logger.LogInformation("Successfully registered user {userId}.", regResult.UserId);
 				return regResult.UserId;
 			}
 			catch (UsernameAlreadyTakenException ex) {
