@@ -312,7 +312,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				throw;
 			}
 			catch (NoUserForUpstreamIdException ex) {
-				logger.LogError(ex, "OpenSessionFromUpstream POST request for app {appName} failed because there was no user for the upstream user id {uuid}.", appName, ex.UpstreamId);
+				logger.LogInformation(ex, "OpenSessionFromUpstream POST request for app {appName} could not complete because there was no user for the upstream user id {uuid}. " +
+					"The client needs to perform registration first.", appName, ex.UpstreamId);
 				// TODO: metrics
 				return NotFound("No user account for the upstream user id in the given auth token found.");
 			}
