@@ -95,15 +95,13 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				metrics.HandleIncorrectAppApiTokenError(userRegistration.AppName);
 				return Unauthorized(appCredentialsErrorMessage);
 			}
-			string? authHeader = null; ;
-			if (userRegistration.Secret == null) { // If we are registering an account with authentication delegation, pass on the auth header:
-				authHeader = HttpContext.Request.Headers.Authorization.SingleOrDefault();
-				if (authHeader == null) {
+			if (userRegistration.Secret == null) { // If we are registering an account with authentication delegation, pass on the provided auth header:
+				if (userRegistration.UpstreamAuthorizationHeader == null) {
 					return Unauthorized("The operation failed due to missing upstream authorization token.");
 				}
 			}
 			try {
-				var user = await userManager.RegisterUserAsync(userRegistration, authHeader, ct);
+				var user = await userManager.RegisterUserAsync(userRegistration, ct);
 				var result = user.AsRegistrationResult();
 				using var userScope = logger.BeginUserScope(user.Id);
 				logger.LogInformation("Successfully registered user {username} with id {userid} for application {appName}", user.Username, user.Id, user.App.Name);
@@ -274,8 +272,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status503ServiceUnavailable)]
 		[HttpPost("open-session-from-upstream")]
-		public async Task<ActionResult<DelegatedLoginResponseDTO>> OpenSessionFromUpstream([FromQuery] string appName,
-				[FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, CancellationToken ct = default) {
+		public async Task<ActionResult<DelegatedLoginResponseDTO>> OpenSessionFromUpstream([FromBody] UpstreamSessionRequestDTO requestDto, CancellationToken ct = default) {
+			var appName = requestDto.AppName;
 			using var appScope = logger.BeginApplicationScope(appName);
 			ApplicationWithUserProperties? app = null;
 			try {
@@ -295,17 +293,16 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				metrics.HandleUnknownAppError(appName);
 				return Unauthorized("The operation failed due to invalid application credentials.");
 			}
-			else if (app.ApiToken != appApiToken) {
+			else if (app.ApiToken != requestDto.AppApiToken) {
 				logger.LogError("RegisterUser POST request failed due to incorrect API token for application {appName}.", appName);
 				metrics.HandleIncorrectAppApiTokenError(appName);
 				return Unauthorized("The operation failed due to invalid application credentials.");
 			}
-			var authHeader = HttpContext.Request.Headers.Authorization.SingleOrDefault();
-			if (authHeader == null) {
+			if (requestDto.UpstreamAuthorizationHeader == null) {
 				return Unauthorized("The operation failed due to missing upstream authorization token.");
 			}
 			try {
-				DelegatedLoginResponseDTO response = await userManager.OpenSessionFromUpstreamAsync(app, authHeader!, ct);
+				DelegatedLoginResponseDTO response = await userManager.OpenSessionFromUpstreamAsync(app, requestDto.UpstreamAuthorizationHeader, ct);
 				// TODO: metrics
 				return response;
 			}

@@ -44,7 +44,7 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// <param name="userRegistration">Contains the data for the user that is being created.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the created user object as its result upon success.</returns>
-		Task<User> RegisterUserAsync(UserRegistrationDTO userRegistration, string? authHeader = null, CancellationToken ct = default);
+		Task<User> RegisterUserAsync(UserRegistrationDTO userRegistration, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously updates the data of the given user.
 		/// </summary>

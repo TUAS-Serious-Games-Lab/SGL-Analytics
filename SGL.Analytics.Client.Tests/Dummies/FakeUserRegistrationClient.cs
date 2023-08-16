@@ -39,7 +39,7 @@ namespace SGL.Analytics.Client.Tests {
 			throw new NotImplementedException();
 		}
 
-		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, AuthorizationData? upstreamAuthToken = null, CancellationToken ct = default) {
+		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			var resp = new HttpResponseMessage(StatusCode);
 			resp.EnsureSuccessStatusCode();

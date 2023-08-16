@@ -108,7 +108,7 @@ namespace SGL.Analytics.Client {
 		/// <param name="userDTO">The data transfer object containing the user data.</param>
 		/// <param name="appAPIToken">The API token to authenticate the application.</param>
 		/// <returns>A task representing the registration operation, providing the response from the server as its result upon completion.</returns>
-		Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, AuthorizationData? upstreamAuthToken = null, CancellationToken ct = default);
+		Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, CancellationToken ct = default);
 
 		/// <summary>
 		/// Asynchronously performs a login operation for a user and, if successful, obtains an authorization token that can be used to make other requests as the user.

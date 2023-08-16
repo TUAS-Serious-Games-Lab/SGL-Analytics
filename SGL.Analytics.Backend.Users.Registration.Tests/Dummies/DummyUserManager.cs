@@ -53,7 +53,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 			return users.Values.Where(u => u.Username == username && u.App.Name == appName).SingleOrDefault<User?>();
 		}
 
-		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegistrationData, string? authHeader = null, CancellationToken ct = default) {
+		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegistrationData, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			if (userRegistrationData.Username != null && users.Values.Count(u => u.Username == userRegistrationData.Username) > 0) {
 				throw new EntityUniquenessConflictException("User", "Username", userRegistrationData.Username);

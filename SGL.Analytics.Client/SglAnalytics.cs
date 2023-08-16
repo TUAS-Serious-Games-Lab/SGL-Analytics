@@ -141,10 +141,12 @@ namespace SGL.Analytics.Client {
 				}
 				logger.LogInformation("Starting user registration process...");
 				var (unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo) = await getUserProperties(userData);
-				var userDTO = new UserRegistrationDTO(appName, userData.Username, secret, unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
+				var userDTO = new UserRegistrationDTO(appName, userData.Username, secret,
+					upstreamAuthToken != null ? upstreamAuthToken.Value.Token.ToString() : null,
+					unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				// submit registration request
-				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, upstreamAuthToken);
+				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO);
 				if (storeCredentials) {
 					logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
 					await storeCredentialsAsync(userData.Username, secret ?? "", regResult.UserId);

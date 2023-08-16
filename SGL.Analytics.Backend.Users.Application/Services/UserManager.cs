@@ -184,7 +184,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		}
 
 		/// <inheritdoc/>
-		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO, string? authHeader = null, CancellationToken ct = default) {
+		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO, CancellationToken ct = default) {
 			if (userRegDTO.EncryptedProperties != null) {
 				if (userRegDTO.PropertyEncryptionInfo == null) {
 					throw new EncryptedDataWithoutEncryptionMetadataException("User registration with encrypted properties is missing the associated encryption metadata.");
@@ -216,9 +216,9 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 					   userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted());
 				user = new User(userReg);
 			}
-			else if (authHeader != null) {
+			else if (userRegDTO.UpstreamAuthorizationHeader != null) {
 				// Register user account using federated authentication against upstream backend:
-				var upstreamResponse = await CheckUpstreamAuthTokenAsync(app, authHeader, ct);
+				var upstreamResponse = await CheckUpstreamAuthTokenAsync(app, userRegDTO.UpstreamAuthorizationHeader, ct);
 				userReg = userRegDTO.Username != null ?
 				   UserRegistration.Create(app, userRegDTO.Username, null, userRegDTO.EncryptedProperties ?? new byte[0],
 				   userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted(), upstreamResponse.UserId) :

@@ -108,19 +108,14 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <inheritdoc/>
-		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, AuthorizationData? upstreamAuthToken = null, CancellationToken ct = default) {
+		public async Task<UserRegistrationResultDTO> RegisterUserAsync(UserRegistrationDTO userDTO, CancellationToken ct = default) {
 			if (userDTO.AppName != appName) {
 				throw new ArgumentException("AppName of passed DTO doesn't match appName of REST client.", nameof(userDTO));
 			}
 			try {
 				using var response = await SendRequest(HttpMethod.Post, "",
 					JsonContent.Create(userDTO, new MediaTypeHeaderValue("application/json"), jsonOptions),
-					req => {
-						addApiTokenHeader(req);
-						if (upstreamAuthToken.HasValue) {
-							req.Headers.Authorization = upstreamAuthToken.Value.Token.ToHttpHeaderValue();
-						}
-					}, jsonMT, ct, authenticated: false);
+					addApiTokenHeader, jsonMT, ct, authenticated: false);
 				var result = response != null ? await response.Content.ReadFromJsonAsync<UserRegistrationResultDTO>(jsonOptions) : null;
 				if (result == null) {
 					throw new UserRegistrationResponseException("Did not receive a valid response for the user registration request.");
@@ -138,11 +133,9 @@ namespace SGL.Analytics.Client {
 		public async Task<DelegatedLoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default) {
 			try {
 				using var response = await SendRequest(HttpMethod.Post, "open-session-from-upstream",
-					new Dictionary<string, string> { ["appName"] = appName }, null,
-					req => {
-						addApiTokenHeader(req);
-						req.Headers.Authorization = upstreamAuthToken.Token.ToHttpHeaderValue();
-					}, jsonMT, ct, authenticated: false);
+					new Dictionary<string, string> { ["appName"] = appName }, JsonContent.Create(
+						new UpstreamSessionRequestDTO(appName, appApiToken, upstreamAuthToken.Token.ToString() ?? throw new NullReferenceException()),
+						jsonMT, jsonOptions), addApiTokenHeader, jsonMT, ct, authenticated: false);
 				var result = (await response.Content.ReadFromJsonAsync<DelegatedLoginResponseDTO>(jsonOptions, ct)) ?? throw new JsonException("Got null from response.");
 				Authorization = new AuthorizationData(result.Token, result.TokenExpiry ?? throw new LoginErrorException("Token expiry time missing.", new NullReferenceException()));
 				AuthorizedUserId = result.UserId ?? throw new LoginErrorException("User ID missing.", new NullReferenceException());
