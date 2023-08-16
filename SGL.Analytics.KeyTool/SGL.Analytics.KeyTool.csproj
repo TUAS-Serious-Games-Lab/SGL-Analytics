@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SGL.Utilities.Crypto" Version="0.11.11-5-gec04ce5-main" />
+    <PackageReference Include="SGL.Utilities.Crypto" Version="0.11.11" />
   </ItemGroup>
 
 </Project>

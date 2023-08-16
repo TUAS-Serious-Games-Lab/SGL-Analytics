@@ -5,7 +5,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="SGL.Utilities" Version="0.11.11-5-gec04ce5-main" />
+		<PackageReference Include="SGL.Utilities" Version="0.11.11" />
 		<PackageReference Include="System.Text.Json" Version="6.0.8" />
 	</ItemGroup>
 
