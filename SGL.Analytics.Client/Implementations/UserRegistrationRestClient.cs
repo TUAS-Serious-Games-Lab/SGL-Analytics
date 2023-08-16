@@ -143,7 +143,7 @@ namespace SGL.Analytics.Client {
 						addApiTokenHeader(req);
 						req.Headers.Authorization = upstreamAuthToken.Token.ToHttpHeaderValue();
 					}, jsonMT, ct, authenticated: false);
-				var result = (await response.Content.ReadFromJsonAsync<DelegatedLoginResponseDTO>(jsonOptions)) ?? throw new JsonException("Got null from response.");
+				var result = (await response.Content.ReadFromJsonAsync<DelegatedLoginResponseDTO>(jsonOptions, ct)) ?? throw new JsonException("Got null from response.");
 				Authorization = new AuthorizationData(result.Token, result.TokenExpiry ?? throw new LoginErrorException("Token expiry time missing.", new NullReferenceException()));
 				AuthorizedUserId = result.UserId ?? throw new LoginErrorException("User ID missing.", new NullReferenceException());
 				await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization.Value, AuthorizedUserId.Value)) ?? Task.CompletedTask);
