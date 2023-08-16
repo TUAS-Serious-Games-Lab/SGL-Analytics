@@ -131,6 +131,7 @@ namespace SGL.Analytics.EndToEndTest {
 			Guid log1Id;
 			Guid snapShotId = Guid.NewGuid();
 			Guid log2Id;
+			UserData userData = new UserData { Foo = 42, Bar = "This is a Test", Obj = new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" } };
 			var beginTime = DateTime.Now;
 			await using (var analytics = new SglAnalytics(appName, appApiToken, httpClient, config => {
 				if (recipientCaCertPemFile != null) {
@@ -148,7 +149,7 @@ namespace SGL.Analytics.EndToEndTest {
 					Assert.Equal(LoginAttemptResult.Completed, loginResult);
 				}
 				else {
-					await analytics.RegisterUserWithDeviceSecretAsync(new UserData { Foo = 42, Bar = "This is a Test", Obj = new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" } });
+					await analytics.RegisterUserWithDeviceSecretAsync(userData);
 				}
 				userId = analytics.LoggedInUserId ?? Guid.Empty;
 				(log1Id, log2Id) = await RecordTestData(analytics, snapShotId, ct);
@@ -198,7 +199,7 @@ namespace SGL.Analytics.EndToEndTest {
 				else {
 					throw new FileNotFoundException("Couldn't find key file.");
 				}
-				await ValidateTestData(exporter, userId, log1Id, log2Id, snapShotId, beginTime, endTime, ct);
+				await ValidateTestData(exporter, userId, log1Id, log2Id, snapShotId, beginTime, endTime, userData, ct);
 				{
 					// Grant access to recipient that was ignored during recording because the in-game client doesn't have their certificate:
 					CACertTrustValidator keyCertValidator;
@@ -228,7 +229,7 @@ namespace SGL.Analytics.EndToEndTest {
 				config.UseLoggerFactory(_ => LoggerFactory, false);
 			})) {
 				await exporter.UseKeyFileAsync(rekeyTargetKeyFile, ct);
-				await ValidateTestData(exporter, userId, log1Id, log2Id, snapShotId, beginTime, endTime, ct);
+				await ValidateTestData(exporter, userId, log1Id, log2Id, snapShotId, beginTime, endTime, userData, ct);
 			}
 		}
 
@@ -249,7 +250,7 @@ namespace SGL.Analytics.EndToEndTest {
 			return (log1Id, log2Id);
 		}
 
-		private async Task ValidateTestData(SglAnalyticsExporter exporter, Guid userId, Guid log1Id, Guid log2Id, Guid snapShotId, DateTime beginTime, DateTime endTime, CancellationToken ct) {
+		private async Task ValidateTestData(SglAnalyticsExporter exporter, Guid userId, Guid log1Id, Guid log2Id, Guid snapShotId, DateTime beginTime, DateTime endTime, UserData userData, CancellationToken ct) {
 			await exporter.SwitchToApplicationAsync(appName);
 			{
 				var log1 = await exporter.GetDecryptedLogFileByIdAsync(log1Id);
@@ -299,9 +300,9 @@ namespace SGL.Analytics.EndToEndTest {
 				var userReg = await exporter.GetDecryptedUserRegistrationByIdAsync(userId, ct);
 				Assert.NotNull(userReg);
 				Assert.NotNull(userReg.DecryptedStudySpecificProperties);
-				Assert.Equal(42, Assert.Contains("Foo", userReg.DecryptedStudySpecificProperties));
-				Assert.Equal("This is a Test", Assert.Contains("Bar", userReg.DecryptedStudySpecificProperties));
-				Assert.Equal(new Dictionary<string, string> { ["A"] = "X", ["B"] = "Y" }, Assert.Contains("Obj", userReg.DecryptedStudySpecificProperties));
+				Assert.Equal(userData.Foo, Assert.Contains("Foo", userReg.DecryptedStudySpecificProperties));
+				Assert.Equal(userData.Bar, Assert.Contains("Bar", userReg.DecryptedStudySpecificProperties));
+				Assert.Equal(userData.Obj, Assert.Contains("Obj", userReg.DecryptedStudySpecificProperties));
 			}
 		}
 

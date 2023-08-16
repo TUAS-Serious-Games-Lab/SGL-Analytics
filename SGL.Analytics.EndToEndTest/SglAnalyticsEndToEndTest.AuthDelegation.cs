@@ -23,6 +23,7 @@ namespace SGL.Analytics.EndToEndTest {
 			Guid log3Id;
 			Guid snapShot2Id = Guid.NewGuid();
 			Guid log4Id;
+			UserData userData = new UserData { Foo = 4242, Bar = "This is a Test!!", Obj = new Dictionary<string, string> { ["A"] = "Y", ["B"] = "X" } };
 			var beginTime = DateTime.Now;
 			var testUpstreamClient = new TestUpstreamClient(httpClient);
 			await using (var analytics = new SglAnalytics(appName, appApiToken, httpClient, config => {
@@ -39,7 +40,6 @@ namespace SGL.Analytics.EndToEndTest {
 				await testUpstreamClient.StartSession(testUpstreamSecret, ct);
 				var loginResult = await analytics.TryLoginWithUpstreamDelegationAsync(ct => Task.FromResult(testUpstreamClient.Authorization!.Value), ct);
 				Assert.Equal(LoginAttemptResult.CredentialsNotAvailable, loginResult);
-				var userData = new UserData { Foo = 4242, Bar = "This is a Test!!", Obj = new Dictionary<string, string> { ["A"] = "Y", ["B"] = "X" } };
 				await analytics.RegisterWithUpstreamDelegationAsync(userData, ct => Task.FromResult(testUpstreamClient.Authorization!.Value), ct);
 				Assert.Equal(testUpstreamClient.AuthorizedUserId, analytics.LoggedInUserId);
 				Assert.True(analytics.LoggedInUserId.HasValue);
@@ -90,8 +90,8 @@ namespace SGL.Analytics.EndToEndTest {
 				else {
 					throw new FileNotFoundException("Couldn't find key file.");
 				}
-				await ValidateTestData(exporter, userId, log1Id, log2Id, snapShot1Id, beginTime, midTime, ct);
-				await ValidateTestData(exporter, userId, log3Id, log4Id, snapShot2Id, midTime, endTime, ct);
+				await ValidateTestData(exporter, userId, log1Id, log2Id, snapShot1Id, beginTime, midTime, userData, ct);
+				await ValidateTestData(exporter, userId, log3Id, log4Id, snapShot2Id, midTime, endTime, userData, ct);
 			}
 		}
 	}
