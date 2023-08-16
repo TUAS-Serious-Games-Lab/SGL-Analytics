@@ -134,7 +134,7 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="UsernameAlreadyTakenException">If <paramref name="userData"/> had the optional <see cref="BaseUserData.Username"/> property set and the given username is already taken for this application. If this happens, the user needs to pick a different name.</exception>
 		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
 		/// <exception cref="HttpRequestException">Indicates either a network problem (if <see cref="HttpRequestException.StatusCode"/> is <see langword="null"/>) or a server-side error (if <see cref="HttpRequestException.StatusCode"/> has a value).</exception>
-		private async Task<Guid> RegisterImplAsync(BaseUserData userData, string? secret, bool storeCredentials, AuthorizationData? upstreamAuthToken = null) {
+		private async Task<Guid> RegisterImplAsync(BaseUserData userData, string? secret, bool storeCredentials, AuthorizationData? upstreamAuthToken = null, CancellationToken ct = default) {
 			try {
 				if (HasStoredCredentials()) {
 					throw new InvalidOperationException("User is already registered.");
@@ -146,7 +146,7 @@ namespace SGL.Analytics.Client {
 					unencryptedUserPropDict, encryptedUserProps, userPropsEncryptionInfo);
 				Validator.ValidateObject(userDTO, new ValidationContext(userDTO), true);
 				// submit registration request
-				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO);
+				var regResult = await userRegistrationClient.RegisterUserAsync(userDTO, ct);
 				if (storeCredentials) {
 					logger.LogInformation("Registration with backend succeeded. Got user id {userId}. Proceeding to store user id locally...", regResult.UserId);
 					await storeCredentialsAsync(userData.Username, secret ?? "", regResult.UserId);
@@ -185,7 +185,7 @@ namespace SGL.Analytics.Client {
 				throw new ArgumentNullException($"{nameof(userData)}.{nameof(BaseUserData.Username)}");
 			}
 			// TODO: maybe: check password complexity
-			var userId = await RegisterImplAsync(userData, password, rememberCredentials);
+			var userId = await RegisterImplAsync(userData, password, rememberCredentials, ct: ct);
 			var loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, userId, password);
 			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			// login with newly registered credentials to obtain session token
@@ -211,7 +211,7 @@ namespace SGL.Analytics.Client {
 		public async Task RegisterUserWithDeviceSecretAsync(BaseUserData userData, CancellationToken ct = default) {
 			// Generate random secret
 			var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
-			var userId = await RegisterImplAsync(userData, secret, storeCredentials: true);
+			var userId = await RegisterImplAsync(userData, secret, storeCredentials: true, ct: ct);
 			var loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, userId, secret);
 			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			// login with newly registered credentials to obtain session token
@@ -225,7 +225,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, Func<CancellationToken, Task<AuthorizationData>> getUpstreamAuthToken, CancellationToken ct = default) {
-			var userId = await RegisterImplAsync(userData, null, storeCredentials: false, await getUpstreamAuthToken(ct));
+			var userId = await RegisterImplAsync(userData, null, storeCredentials: false, await getUpstreamAuthToken(ct), ct: ct);
 			Func<CancellationToken, Task<DelegatedLoginResponseDTO>> reloginDelegate = async ct2 => {
 				try {
 					logger.LogInformation("Logging in user with upstream delegation ...");
