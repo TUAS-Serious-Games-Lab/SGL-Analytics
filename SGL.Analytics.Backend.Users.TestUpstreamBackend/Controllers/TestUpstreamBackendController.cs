@@ -14,9 +14,10 @@ namespace SGL.Analytics.Backend.Users.TestUpstreamBackend.Controllers {
 		private readonly TestUpstreamBackendOptions options;
 		private readonly IExplicitTokenService explicitTokenService;
 
-		public TestUpstreamBackendController(IOptions<TestUpstreamBackendOptions> options, ILogger<TestUpstreamBackendController> logger) {
+		public TestUpstreamBackendController(IOptions<TestUpstreamBackendOptions> options, ILogger<TestUpstreamBackendController> logger, IExplicitTokenService explicitTokenService) {
 			this.options = options.Value;
 			this.logger = logger;
+			this.explicitTokenService = explicitTokenService;
 		}
 
 		[HttpPost("start-session")]
