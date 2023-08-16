@@ -152,3 +152,4 @@ services:
     environment:
       ASPNETCORE_URLS: "http://+:80;http://+:8080"
       Sgla__TestUpstream__Secret:
+      Sgla__TestUpstream__AppName:
