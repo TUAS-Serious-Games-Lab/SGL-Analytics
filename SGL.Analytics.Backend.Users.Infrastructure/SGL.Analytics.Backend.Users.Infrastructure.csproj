@@ -27,9 +27,9 @@
 		</PackageReference>
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.8" />
 		<PackageReference Include="prometheus-net" Version="6.0.0" />
-		<PackageReference Include="SGL.Utilities.Backend" Version="0.11.10" />
-		<PackageReference Include="SGL.Utilities.Crypto.EntityFrameworkCore" Version="0.11.10" />
-		<PackageReference Include="SGL.Utilities.PrometheusNet" Version="0.11.10" />
+		<PackageReference Include="SGL.Utilities.Backend" Version="0.11.11" />
+		<PackageReference Include="SGL.Utilities.Crypto.EntityFrameworkCore" Version="0.11.11" />
+		<PackageReference Include="SGL.Utilities.PrometheusNet" Version="0.11.11" />
 	</ItemGroup>
 
 	<ItemGroup>

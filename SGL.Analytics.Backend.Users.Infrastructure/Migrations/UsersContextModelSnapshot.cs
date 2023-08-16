@@ -17,7 +17,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.8")
+                .HasAnnotation("ProductVersion", "6.0.19")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -62,6 +62,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<string>("BasicFederationUpstreamAuthUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -108,12 +112,14 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
                     b.Property<Guid>("AppId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BasicFederationUpstreamUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<byte[]>("EncryptedProperties")
                         .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<string>("HashedSecret")
-                        .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
@@ -133,6 +139,9 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
                         .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AppId", "BasicFederationUpstreamUserId")
+                        .IsUnique();
 
                     b.HasIndex("AppId", "Username")
                         .IsUnique();

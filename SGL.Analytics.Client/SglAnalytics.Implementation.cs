@@ -43,7 +43,7 @@ namespace SGL.Analytics.Client {
 		private Task? logWriter = null;
 		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
 
-		private Func<CancellationToken, Task> refreshLoginDelegate = async ct => throw new InvalidOperationException();
+		private Func<CancellationToken, Task<LoginResponseDTO>> refreshLoginDelegate = async ct => throw new InvalidOperationException();
 		private SynchronizationContext mainSyncContext;
 		private CancellationTokenSource cts = new CancellationTokenSource();
 		private string dataDirectory;
@@ -226,7 +226,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		private async Task loginAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
+		private async Task<LoginResponseDTO> loginAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
 			try {
 				if (string.IsNullOrEmpty(loginDTO.UserSecret)) {
 					throw new ArgumentNullException(nameof(loginDTO.UserSecret));
@@ -244,8 +244,9 @@ namespace SGL.Analytics.Client {
 				}
 				logger.LogInformation("Logging in user {userIdent} ...", loginDTO.GetUserIdentifier());
 				Validator.ValidateObject(loginDTO, new ValidationContext(loginDTO), true);
-				await userRegistrationClient.LoginUserAsync(loginDTO, ct);
+				var response = await userRegistrationClient.LoginUserAsync(loginDTO, ct);
 				logger.LogInformation("Login was successful.");
+				return response;
 			}
 			catch (Exception ex) {
 				logger.LogError(ex, "Login for user {userIdent} failed with exception.", loginDTO.GetUserIdentifier());
@@ -399,7 +400,6 @@ namespace SGL.Analytics.Client {
 
 		private void startFileUploadingIfNotRunning() {
 			if (!logCollectorClient.IsActive) return;
-			if (!HasStoredCredentials()) return; // IsRegistered does it's own locking
 			lock (lockObject) { // Ensure that only one log uploader is active
 				if (disableLogUploading) return;
 				if (logUploader is null || logUploader.IsCompleted) {
@@ -411,7 +411,6 @@ namespace SGL.Analytics.Client {
 
 		private void startUploadingExistingLogs() {
 			if (!logCollectorClient.IsActive) return;
-			if (!HasStoredCredentials()) return;
 			List<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
 				if (disableLogUploading) return;

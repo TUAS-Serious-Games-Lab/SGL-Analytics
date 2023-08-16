@@ -23,5 +23,7 @@ services:
     image: sgl-analytics-logs-collector:vs-debug
   users-registration-app:
     image: sgl-analytics-users-registration:vs-debug
+  test-upstream-backend:
+    image: test-upstream-backend:vs-debug
   api-gateway:
     image: sgl-analytics-api-gateway:vs-debug

@@ -5,6 +5,7 @@ using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
+using SGL.Utilities;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Crypto.EndToEnd;
@@ -12,6 +13,7 @@ using SGL.Utilities.Crypto.Keys;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,6 +32,9 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		private UserManagerOptions options;
 		private ILogger<UserManager> logger;
 
+		private Lazy<IUpstreamTokenClient> upstreamTokenClient;
+		private IExplicitTokenService explicitTokenService;
+
 		/// <summary>
 		/// Creates a <see cref="UserManager"/> using the given repository implementation objects and the given logger for diagnostics logging.
 		/// </summary>
@@ -37,11 +42,14 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <param name="userRepo">The user registration repository to use.</param>
 		/// <param name="logger">A logger to log status, warning and error messages to.</param>
 		/// <param name="options">Configuration options for the UserManager service.</param>
-		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger, IOptions<UserManagerOptions> options) {
+		/// <param name="upstreamTokenClient">The API client to use for checking upstream auth delegation tokens with the upstream backend.</param>
+		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger, IOptions<UserManagerOptions> options, Lazy<IUpstreamTokenClient> upstreamTokenClient, IExplicitTokenService explicitTokenService) {
 			this.appRepo = appRepo;
 			this.userRepo = userRepo;
 			this.logger = logger;
 			this.options = options.Value;
+			this.upstreamTokenClient = upstreamTokenClient;
+			this.explicitTokenService = explicitTokenService;
 		}
 
 		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct) {
@@ -140,6 +148,41 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			return result;
 		}
 
+		private async Task<UpstreamTokenCheckResponse> CheckUpstreamAuthTokenAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default) {
+			if (app.BasicFederationUpstreamAuthUrl == null) {
+				throw new NoUpstreamBackendConfiguredException($"No upstream backend URL configured for the app {app.Name}.");
+			}
+			UpstreamTokenCheckResponse upstreamResponse;
+			try {
+				upstreamResponse = await upstreamTokenClient.Value.CheckUpstreamAuthTokenAsync(app.Name, app.ApiToken, app.BasicFederationUpstreamAuthUrl.ToString(), authHeader, ct);
+			}
+			catch (HttpApiResponseException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or HttpStatusCode.NotFound) {
+				throw new UpstreamTokenRejectedException("Token was rejected by upstream backend.", ex);
+			}
+			catch (HttpApiResponseException ex) {
+				throw new UpstreamTokenCheckFailedException("Token check with upstream backend failed due to error repsonse.", ex);
+			}
+			catch (HttpApiRequestFailedException ex) {
+				throw new UpstreamTokenCheckFailedException("Token check with upstream backend failed due to connection issue.", ex);
+			}
+			catch (Exception ex) {
+				throw new UpstreamTokenCheckFailedException("Token check with upstream backend failed due to unexpected error.", ex);
+			}
+			return upstreamResponse;
+		}
+
+		public async Task<DelegatedLoginResponseDTO> OpenSessionFromUpstreamAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default) {
+			var upstreamResponse = await CheckUpstreamAuthTokenAsync(app, authHeader, ct);
+			var user = await userRepo.GetUserByBasicFederationUpstreamUserIdAsync(upstreamResponse.UserId, app.Name, ct: ct);
+			if (user == null) {
+				throw new NoUserForUpstreamIdException(upstreamResponse.UserId, "The upstream user is not registered in the user database.");
+			}
+			var downstreamAuthToken = explicitTokenService.IssueAuthenticationToken(upstreamResponse.TokenExpiry,
+				("userid", $"{user.Id:D}"), ("appname", app.Name));
+			logger.LogDebug("Issuing session token for user {userId} in app {appName} with upstream user id {upstreamUserId}, valid until {expiry}.", user.Id, app.Name, upstreamResponse.UserId, downstreamAuthToken.Expiry);
+			return new DelegatedLoginResponseDTO(downstreamAuthToken.Token, user.Id, downstreamAuthToken.Expiry, upstreamResponse.UserId);
+		}
+
 		/// <inheritdoc/>
 		public async Task<User> RegisterUserAsync(UserRegistrationDTO userRegDTO, CancellationToken ct = default) {
 			if (userRegDTO.EncryptedProperties != null) {
@@ -161,14 +204,31 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				logger.LogError("Attempt to register user {username} for non-existent application {appName}.", userRegDTO.Username, userRegDTO.AppName);
 				throw new ApplicationDoesNotExistException(userRegDTO.AppName);
 			}
-
-			var hashedSecret = SecretHashing.CreateHashedSecret(userRegDTO.Secret);
-			var userReg = userRegDTO.Username != null ?
-				UserRegistration.Create(app, userRegDTO.Username, hashedSecret,
-					userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted()) :
-				UserRegistration.Create(app, hashedSecret,
-					userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted());
-			User user = new User(userReg);
+			UserRegistration userReg;
+			User user;
+			if (userRegDTO.Secret != null) {
+				// Register full user account, including credentials:
+				var hashedSecret = SecretHashing.CreateHashedSecret(userRegDTO.Secret);
+				userReg = userRegDTO.Username != null ?
+				   UserRegistration.Create(app, userRegDTO.Username, hashedSecret,
+					   userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted()) :
+				   UserRegistration.Create(app, hashedSecret,
+					   userRegDTO.EncryptedProperties ?? new byte[0], userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted());
+				user = new User(userReg);
+			}
+			else if (userRegDTO.UpstreamAuthorizationHeader != null) {
+				// Register user account using federated authentication against upstream backend:
+				var upstreamResponse = await CheckUpstreamAuthTokenAsync(app, userRegDTO.UpstreamAuthorizationHeader, ct);
+				userReg = userRegDTO.Username != null ?
+				   UserRegistration.Create(app, userRegDTO.Username, null, userRegDTO.EncryptedProperties ?? new byte[0],
+				   userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted(), upstreamResponse.UserId) :
+				   UserRegistration.Create(app, null, userRegDTO.EncryptedProperties ?? new byte[0],
+				   userRegDTO.PropertyEncryptionInfo ?? EncryptionInfo.CreateUnencrypted(), upstreamResponse.UserId);
+				user = new User(userReg);
+			}
+			else {
+				throw new ArgumentException("Neither a user secret nor an upstream authorization header was provided. Refusing to register user with no authentication path.");
+			}
 			foreach (var prop in userRegDTO.StudySpecificProperties) {
 				user.AppSpecificProperties[prop.Key] = prop.Value;
 			}

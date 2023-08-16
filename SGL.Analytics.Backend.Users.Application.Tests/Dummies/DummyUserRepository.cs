@@ -16,6 +16,11 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 		private readonly Dictionary<Guid, UserRegistration> users = new Dictionary<Guid, UserRegistration>();
 		private int nextPropertyInstanceId = 1;
 
+		public async Task<UserRegistration?> GetUserByBasicFederationUpstreamUserIdAsync(Guid upstreamUserId, string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
+			await Task.CompletedTask;
+			return users.Values.Where(u => u.App.Name == appName && u.BasicFederationUpstreamUserId == upstreamUserId).SingleOrDefault<UserRegistration?>();
+		}
+
 		public async Task<UserRegistration?> GetUserByIdAsync(Guid id, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			ct.ThrowIfCancellationRequested();
@@ -71,8 +76,9 @@ namespace SGL.Analytics.Backend.Users.Application.Tests.Dummies {
 		public async Task<UserRegistration> RegisterUserAsync(UserRegistration userReg, CancellationToken ct = default) {
 			await Task.CompletedTask;
 			if (userReg.Id == Guid.Empty) userReg.Id = Guid.NewGuid();
-			if (users.ContainsKey(userReg.Id)) throw new EntityUniquenessConflictException("UserRegistration", "Id", userReg.Id);
-			if (users.Values.Any(u => u.Username == userReg.Username)) throw new EntityUniquenessConflictException("UserRegistration", "Username", userReg.Username);
+			if (users.ContainsKey(userReg.Id)) throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.Username), userReg.Id);
+			if (users.Values.Any(u => u.Username == userReg.Username)) throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.Id), userReg.Username);
+			if (userReg.BasicFederationUpstreamUserId != null && users.Values.Any(u => u.AppId == userReg.App.Id && u.BasicFederationUpstreamUserId == userReg.BasicFederationUpstreamUserId)) throw new EntityUniquenessConflictException(nameof(UserRegistration), nameof(UserRegistration.BasicFederationUpstreamUserId), userReg.BasicFederationUpstreamUserId!);
 			assignPropertyInstanceIds(userReg);
 			userReg.ValidateProperties();
 			ct.ThrowIfCancellationRequested();

@@ -10,6 +10,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 	/// </summary>
 	public class ApplicationWithUserProperties : Application {
 
+		public Uri? BasicFederationUpstreamAuthUrl { get; set; } = null;
 		/// <summary>
 		/// A collection containing the per-user property definitions for this application.
 		/// It indicates which properties are supported or required.
@@ -26,18 +27,20 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 
 		/// <summary>
 		/// Creates an <see cref="ApplicationWithUserProperties"/> with the given data values, leaving <see cref="UserProperties"/> and <see cref="UserRegistrations"/> empty.
-		/// This constructor is intended to be used by the OR mapper. To create a new application, see <see cref="Create(string, string)"/>.
+		/// This constructor is intended to be used by the OR mapper. To create a new application, see <see cref="Create(string, string, Uri?)"/>.
 		/// </summary>
-		public ApplicationWithUserProperties(Guid id, string name, string apiToken) :
-			base(id, name, apiToken) { }
+		public ApplicationWithUserProperties(Guid id, string name, string apiToken, Uri? basicFederationUpstreamAuthUrl = null) :
+			base(id, name, apiToken) {
+			BasicFederationUpstreamAuthUrl = basicFederationUpstreamAuthUrl;
+		}
 
 		/// <summary>
 		/// Creates an application object with the given id and data values.
 		/// The <see cref="UserProperties"/> are initialized with an empty collection object, that can be filled with <see cref="AddProperty(string, UserPropertyType, bool)"/>.
 		/// </summary>
 		/// <returns>The created object.</returns>
-		public static ApplicationWithUserProperties Create(Guid id, string name, string apiToken) {
-			var app = new ApplicationWithUserProperties(id, name, apiToken);
+		public static ApplicationWithUserProperties Create(Guid id, string name, string apiToken, Uri? basicFederationUpstreamAuthUrl = null) {
+			var app = new ApplicationWithUserProperties(id, name, apiToken, basicFederationUpstreamAuthUrl);
 			app.UserProperties = new List<ApplicationUserPropertyDefinition>();
 			app.DataRecipients = new List<Recipient>();
 			app.AuthorizedExporters = new List<ExporterKeyAuthCertificate>();
@@ -49,8 +52,8 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// The <see cref="UserProperties"/> are initialized with an empty collection object, that can be filled with <see cref="AddProperty(string, UserPropertyType, bool)"/>.
 		/// </summary>
 		/// <returns>The created object.</returns>
-		public static new ApplicationWithUserProperties Create(string name, string apiToken) {
-			return Create(Guid.NewGuid(), name, apiToken);
+		public static ApplicationWithUserProperties Create(string name, string apiToken, Uri? basicFederationUpstreamAuthUrl = null) {
+			return Create(Guid.NewGuid(), name, apiToken, basicFederationUpstreamAuthUrl);
 		}
 
 		/// <summary>

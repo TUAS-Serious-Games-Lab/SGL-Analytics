@@ -18,6 +18,10 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
+  test-jwt-key-config:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
   log-collector-conf:
   user-registration-conf:
 
@@ -42,6 +46,10 @@ services:
         && if [ -f 'Jwt__SymmetricKey' ]; then echo 'Using existing JWT key.'; exit 0; fi
         && (head -c 512 /dev/urandom | base64 -w 0 > ignore.NewKey)
         && chmod 600 ignore.NewKey && mv ignore.NewKey Jwt__SymmetricKey)
+        && (cd /etc/SGL.Analytics.Test.Upstream/JWT-Key/
+        && if [ -f 'Jwt__SymmetricKey' ]; then echo 'Using existing JWT key.'; exit 0; fi
+        && (head -c 512 /dev/urandom | base64 -w 0 > ignore.NewKey)
+        && chmod 600 ignore.NewKey && mv ignore.NewKey Jwt__SymmetricKey)
         && tail -f /dev/null"
         # The tail at the end keeps container alive to prevent restart loops when restart policy is set for staging and production environment.
     healthcheck:
@@ -49,6 +57,7 @@ services:
       start_period: 10s
     volumes:
     - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
+    - "test-jwt-key-config:/etc/SGL.Analytics.Test.Upstream/JWT-Key"
 
   logs-collector-migrations:
     image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/logs-collector:${DOCKER_TAG-latest}
@@ -133,3 +142,14 @@ services:
     networks:
     - proxy
     - frontend
+
+  test-upstream-backend:
+    image: ${DOCKER_REGISTRY_IMAGE_BASE-localhost:5000/sgl-analytics}/test-upstream-backend:${DOCKER_TAG-latest}
+    networks:
+    - proxy
+    volumes:
+    - "test-jwt-key-config:/etc/SGL.Analytics.Test.Upstream/JWT-Key"
+    environment:
+      ASPNETCORE_URLS: "http://+:80;http://+:8080"
+      Sgla__TestUpstream__Secret:
+      Sgla__TestUpstream__AppName:

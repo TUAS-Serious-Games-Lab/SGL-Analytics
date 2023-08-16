@@ -66,7 +66,7 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <inheritdoc/>
-		public async Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
+		public async Task<LoginResponseDTO> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default) {
 			if (loginDTO.AppName != appName) {
 				throw new ArgumentException("AppName of passed DTO doesn't match appName of REST client.", nameof(loginDTO));
 			}
@@ -77,20 +77,26 @@ namespace SGL.Analytics.Client {
 				using var response = await SendRequest(HttpMethod.Post, "login", JsonContent.Create(loginDTO, jsonMT, jsonOptions),
 					_ => { }, jsonMT, ct, authenticated: false);
 				var result = (await response.Content.ReadFromJsonAsync<LoginResponseDTO>(jsonOptions)) ?? throw new JsonException("Got null from response.");
-				//TODO: Consider replacing this by having the server return the user id and expiry time separately.
-				//      If we do so, we can remove the dependency on System.IdentityModel.Tokens.Jwt.
-				try {
-					var token = (new JwtSecurityTokenHandler()).ReadJwtToken(result.Token.Value);
-					Authorization = new AuthorizationData(result.Token, token.ValidTo.ToUniversalTime() - AuthorizationExpiryClockTolerance);
-					AuthorizedUserId = Guid.TryParse(token.Claims.FirstOrDefault(c => c.Type == "userid")?.Value, out var userId) ? userId : Guid.Empty;
+				DateTime? expiry = result.TokenExpiry;
+				Guid? userId = result.UserId;
+				if (!(expiry.HasValue && userId.HasValue)) {
+					// New backend should provide decoded expiry and userId. If it doesn't decode it ourself and complete response DTO:
+					try {
+						var token = (new JwtSecurityTokenHandler()).ReadJwtToken(result.Token.Value);
+						expiry ??= token.ValidTo.ToUniversalTime() - AuthorizationExpiryClockTolerance;
+						userId ??= Guid.TryParse(token.Claims.FirstOrDefault(c => c.Type == "userid")?.Value, out var uId) ? uId : Guid.Empty;
+					}
+					catch {
+						expiry ??= DateTime.UtcNow.AddMinutes(5);
+						userId ??= Guid.Empty;
+					}
+					result = new LoginResponseDTO(result.Token, userId, expiry);
 				}
-				catch {
-					Authorization = new AuthorizationData(result.Token, DateTime.UtcNow.AddMinutes(5));
-					AuthorizedUserId = Guid.Empty;
-				}
+				Authorization = new AuthorizationData(result.Token, expiry.Value);
+				AuthorizedUserId = userId;
 
 				await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization.Value, AuthorizedUserId.Value)) ?? Task.CompletedTask);
-				return result?.Token ?? throw new LoginErrorException("Did not receive a valid response for the login request.");
+				return result;
 			}
 			catch (HttpApiResponseException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
 				throw new LoginFailedException();
@@ -121,6 +127,29 @@ namespace SGL.Analytics.Client {
 			}
 			catch (Exception) {
 				throw;
+			}
+		}
+
+		public async Task<DelegatedLoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default) {
+			try {
+				using var response = await SendRequest(HttpMethod.Post, "open-session-from-upstream",
+					new Dictionary<string, string> { ["appName"] = appName }, JsonContent.Create(
+						new UpstreamSessionRequestDTO(appName, appApiToken, upstreamAuthToken.Token.ToString() ?? throw new NullReferenceException()),
+						jsonMT, jsonOptions), addApiTokenHeader, jsonMT, ct, authenticated: false);
+				var result = (await response.Content.ReadFromJsonAsync<DelegatedLoginResponseDTO>(jsonOptions, ct)) ?? throw new JsonException("Got null from response.");
+				Authorization = new AuthorizationData(result.Token, result.TokenExpiry ?? throw new LoginErrorException("Token expiry time missing.", new NullReferenceException()));
+				AuthorizedUserId = result.UserId ?? throw new LoginErrorException("User ID missing.", new NullReferenceException());
+				await (UserAuthenticated?.InvokeAllAsync(this, new UserAuthenticatedEventArgs(Authorization.Value, AuthorizedUserId.Value)) ?? Task.CompletedTask);
+				return result;
+			}
+			catch (HttpApiResponseException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized) {
+				throw new LoginFailedException();
+			}
+			catch (HttpApiResponseException ex) when (ex.StatusCode == HttpStatusCode.NotFound) {
+				throw new NoDelegatedUserException();
+			}
+			catch (Exception ex) {
+				throw new LoginErrorException(ex);
 			}
 		}
 	}

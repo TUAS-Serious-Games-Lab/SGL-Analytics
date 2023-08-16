@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Entity;
 using SGL.Analytics.Backend.Domain.Exceptions;
+using SGL.Analytics.Backend.Users.Application;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
 using SGL.Analytics.Backend.Users.Application.Model;
 using SGL.Analytics.DTO;
@@ -94,7 +95,11 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				metrics.HandleIncorrectAppApiTokenError(userRegistration.AppName);
 				return Unauthorized(appCredentialsErrorMessage);
 			}
-
+			if (userRegistration.Secret == null) { // If we are registering an account with authentication delegation, pass on the provided auth header:
+				if (userRegistration.UpstreamAuthorizationHeader == null) {
+					return Unauthorized("The operation failed due to missing upstream authorization token.");
+				}
+			}
 			try {
 				var user = await userManager.RegisterUserAsync(userRegistration, ct);
 				var result = user.AsRegistrationResult();
@@ -119,6 +124,11 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				logger.LogInformation(ex, "RegisterUser POST request failed because the username {username} is already taken.", userRegistration.Username);
 				metrics.HandleUsernameAlreadyTakenError(userRegistration.AppName);
 				return Conflict("The requested username is already taken.");
+			}
+			catch (EntityUniquenessConflictException ex) when (ex.ConflictingPropertyName == nameof(UserRegistration.BasicFederationUpstreamUserId)) {
+				logger.LogInformation(ex, "RegisterUser POST request failed because the upstream user id {upstreamUserId} is already registered.", ex.ConflictingPropertyValue);
+				// TODO: metrics
+				return Conflict("The provided upstream user id is already registered.");
 			}
 			catch (EntityUniquenessConflictException ex) {
 				// The other source of EntityUniquenessConflictExceptions would be a conflict of the user id, which is extremely unlikely (128-bit Guid collision).
@@ -207,7 +217,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				}
 				var token = await loginService.LoginAsync(userid, loginRequest.UserSecret,
 					getUser,
-					user => user.HashedSecret,
+					user => user.HashedSecret ?? throw new ArgumentNullException(nameof(user.HashedSecret),
+						"The user has no hashed secret. Can't login using user secret, but only by delegated authentication."),
 					async (user, hashedSecret) => {
 						user.HashedSecret = hashedSecret;
 						await userManager.UpdateUserAsync(user, ct);
@@ -252,6 +263,73 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 			catch (OperationCanceledException) {
 				logger.LogDebug("Login attempt for user {userId} was cancelled.", loginRequest.GetUserIdentifier());
+				throw;
+			}
+		}
+
+		[ProducesResponseType(typeof(LoginResponseDTO), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status503ServiceUnavailable)]
+		[HttpPost("open-session-from-upstream")]
+		public async Task<ActionResult<DelegatedLoginResponseDTO>> OpenSessionFromUpstream([FromBody] UpstreamSessionRequestDTO requestDto, CancellationToken ct = default) {
+			var appName = requestDto.AppName;
+			using var appScope = logger.BeginApplicationScope(appName);
+			ApplicationWithUserProperties? app = null;
+			try {
+				app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
+			}
+			catch (OperationCanceledException) {
+				logger.LogDebug("OpenSessionFromUpstream POST request for app {appName} was cancelled while fetching application metadata.", appName);
+				throw;
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "OpenSessionFromUpstream POST request for app {appName} failed due to an unexpected exception.", appName);
+				metrics.HandleUnexpectedError(appName, ex);
+				throw;
+			}
+			if (app is null) {
+				logger.LogError("OpenSessionFromUpstream POST request failed due to unknown application {appName}.", appName);
+				metrics.HandleUnknownAppError(appName);
+				return Unauthorized("The operation failed due to invalid application credentials.");
+			}
+			else if (app.ApiToken != requestDto.AppApiToken) {
+				logger.LogError("RegisterUser POST request failed due to incorrect API token for application {appName}.", appName);
+				metrics.HandleIncorrectAppApiTokenError(appName);
+				return Unauthorized("The operation failed due to invalid application credentials.");
+			}
+			if (requestDto.UpstreamAuthorizationHeader == null) {
+				return Unauthorized("The operation failed due to missing upstream authorization token.");
+			}
+			try {
+				DelegatedLoginResponseDTO response = await userManager.OpenSessionFromUpstreamAsync(app, requestDto.UpstreamAuthorizationHeader, ct);
+				// TODO: metrics
+				return response;
+			}
+			catch (OperationCanceledException) {
+				logger.LogDebug("OpenSessionFromUpstream POST request for app {appName} was cancelled while checking with upstream and looking up user.", appName);
+				// TODO: metrics
+				throw;
+			}
+			catch (NoUserForUpstreamIdException ex) {
+				logger.LogInformation(ex, "OpenSessionFromUpstream POST request for app {appName} could not complete because there was no user for the upstream user id {uuid}. " +
+					"The client needs to perform registration first.", appName, ex.UpstreamId);
+				// TODO: metrics
+				return NotFound("No user account for the upstream user id in the given auth token found.");
+			}
+			catch (UpstreamTokenRejectedException ex) {
+				logger.LogError(ex, "OpenSessionFromUpstream POST request for app {appName} failed because the provided upstream authorization token was rejected by the upstream backend.", appName);
+				// TODO: metrics
+				return Unauthorized("The operation failed because the provided upstream authorization token was rejected by the upstream backend.");
+			}
+			catch (UpstreamTokenCheckFailedException ex) {
+				logger.LogError(ex, "OpenSessionFromUpstream POST request for app {appName} failed because the check of the upstream token failed.", appName);
+				// TODO: metrics
+				return StatusCode(StatusCodes.Status503ServiceUnavailable, "Couldn't check provided auth token with upstream backend.");
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "OpenSessionFromUpstream POST request for app {appName} failed due to an unexpected exception.", appName);
+				metrics.HandleUnexpectedError(appName, ex);
 				throw;
 			}
 		}

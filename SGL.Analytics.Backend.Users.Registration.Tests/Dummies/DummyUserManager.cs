@@ -63,7 +63,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 				throw new ApplicationDoesNotExistException(userRegistrationData.AppName);
 			}
 
-			string hashedSecret = SecretHashing.CreateHashedSecret(userRegistrationData.Secret);
+			string? hashedSecret = userRegistrationData.Secret != null ? SecretHashing.CreateHashedSecret(userRegistrationData.Secret) : null;
 			UserRegistration userReg = userRegistrationData.Username != null ?
 				UserRegistration.Create(app!, userRegistrationData.Username, hashedSecret) :
 				UserRegistration.Create(app!, hashedSecret);
@@ -127,6 +127,10 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests.Dummies {
 				.Skip(offset)
 				.Take(RekeyingQueryLimit)
 				.ToList().ToDictionary(u => u.Id, u => u.PropertyEncryptionInfo));
+		}
+
+		public Task<DelegatedLoginResponseDTO> OpenSessionFromUpstreamAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default) {
+			throw new NotImplementedException();
 		}
 	}
 }

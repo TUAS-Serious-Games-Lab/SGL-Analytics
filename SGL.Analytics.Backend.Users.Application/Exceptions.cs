@@ -19,4 +19,19 @@ namespace SGL.Analytics.Backend.Users.Application {
 	public class ChallengeCompletionFailedException : Exception {
 		public ChallengeCompletionFailedException(string message, Exception? innerException = null) : base(message, innerException) { }
 	}
+	public class NoUserForUpstreamIdException : Exception {
+		public Guid UpstreamId { get; }
+		public NoUserForUpstreamIdException(Guid upstreamId, string message, Exception? innerException = null) : base(message, innerException) {
+			UpstreamId = upstreamId;
+		}
+	}
+	public class UpstreamTokenRejectedException : Exception {
+		public UpstreamTokenRejectedException(string message, Exception? innerException = null) : base(message, innerException) { }
+	}
+	public class UpstreamTokenCheckFailedException : Exception {
+		public UpstreamTokenCheckFailedException(string message, Exception? innerException = null) : base(message, innerException) { }
+	}
+	public class NoUpstreamBackendConfiguredException : Exception {
+		public NoUpstreamBackendConfiguredException(string message, Exception? innerException = null) : base(message, innerException) { }
+	}
 }

@@ -15,6 +15,15 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		public LoginFailedException() : base("Login failed due to invalid credentials.") { }
 	}
+	/// <summary>
+	/// Indicates that a delegated login failed because the upstream user id is not registered.
+	/// </summary>
+	public class NoDelegatedUserException : Exception {
+		/// <summary>
+		/// Instantiates the exception with the given parameters.
+		/// </summary>
+		public NoDelegatedUserException() : base("No account registered for delegated authentication.") { }
+	}
 
 	/// <summary>
 	/// Indicates a general error during a login request.
@@ -106,6 +115,8 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="loginDTO">A data transfer object, bundling the application and user credentials to use for the login request.</param>
 		/// <returns>A task representing the login operation, providing the response from the server, containing an authorization token (if successful), as its result upon completion.</returns>
-		Task<AuthorizationToken> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default);
+		Task<LoginResponseDTO> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default);
+
+		Task<DelegatedLoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default);
 	}
 }
