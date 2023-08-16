@@ -20,7 +20,7 @@ namespace SGL.Analytics.EndToEndTest {
 		public TestUpstreamClient(HttpClient httpClient) : base(httpClient, null, "/api/analytics/test/upstream/v1/") { }
 
 		public async Task<LoginResponseDTO> StartSession(string secret, CancellationToken ct = default) {
-			using var response = await SendRequest(HttpMethod.Post, "start-session", new StringContent(secret), _ => { },
+			using var response = await SendRequest(HttpMethod.Post, "start-session", JsonContent.Create(secret, jsonMT, jsonOptions), _ => { },
 				jsonMT, ct, authenticated: false);
 			var responseDto = (await response.Content.ReadFromJsonAsync<LoginResponseDTO>(jsonOptions, ct)) ?? throw new JsonException("Got null from response.");
 			Authorization = new AuthorizationData(responseDto.Token, (responseDto.TokenExpiry ?? DateTime.MaxValue) - AuthorizationExpiryClockTolerance);
