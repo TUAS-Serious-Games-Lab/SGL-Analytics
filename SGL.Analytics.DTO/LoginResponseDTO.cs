@@ -34,7 +34,8 @@ namespace SGL.Analytics.DTO {
 	public class DelegatedLoginResponseDTO : LoginResponseDTO {
 		public Guid UpstreamUserId { get; private set; }
 
-		public DelegatedLoginResponseDTO(AuthorizationToken token, Guid userId, DateTime tokenExpiry, Guid upstreamUserId) : base(token, userId, tokenExpiry) {
+		[JsonConstructor]
+		public DelegatedLoginResponseDTO(AuthorizationToken token, Guid? userId, DateTime? tokenExpiry, Guid upstreamUserId) : base(token, userId, tokenExpiry) {
 			UpstreamUserId = upstreamUserId;
 		}
 	}
