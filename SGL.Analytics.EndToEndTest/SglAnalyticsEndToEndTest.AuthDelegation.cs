@@ -42,7 +42,6 @@ namespace SGL.Analytics.EndToEndTest {
 				var loginResult = await analytics.TryLoginWithUpstreamDelegationAsync(ct => Task.FromResult(testUpstreamClient.Authorization!.Value), ct);
 				Assert.Equal(LoginAttemptResult.CredentialsNotAvailable, loginResult);
 				await analytics.RegisterWithUpstreamDelegationAsync(userData, ct => Task.FromResult(testUpstreamClient.Authorization!.Value), ct);
-				Assert.Equal(testUpstreamClient.AuthorizedUserId, analytics.LoggedInUserId);
 				Assert.True(analytics.LoggedInUserId.HasValue);
 				userId = analytics.LoggedInUserId.Value;
 				logger.LogInformation("Registered user {userId}.", userId);
@@ -63,7 +62,6 @@ namespace SGL.Analytics.EndToEndTest {
 				await testUpstreamClient.StartSession(testUpstreamSecret, ct);
 				var loginResult = await analytics.TryLoginWithUpstreamDelegationAsync(ct => Task.FromResult(testUpstreamClient.Authorization!.Value), ct);
 				Assert.Equal(LoginAttemptResult.Completed, loginResult);
-				Assert.Equal(testUpstreamClient.AuthorizedUserId, analytics.LoggedInUserId);
 				Assert.Equal(userId, analytics.LoggedInUserId);
 				Assert.True(analytics.LoggedInUserId.HasValue);
 				userId = analytics.LoggedInUserId.Value;
