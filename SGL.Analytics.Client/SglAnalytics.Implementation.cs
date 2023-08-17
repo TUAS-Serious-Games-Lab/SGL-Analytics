@@ -32,7 +32,7 @@ namespace SGL.Analytics.Client {
 		private RandomGenerator randomGenerator = new RandomGenerator();
 		private IRootDataStore rootDataStore;
 		private ILogStorage anonymousLogStorage;
-		private ILogStorage userLogStorage;
+		private ILogStorage userLogStorage = null!;
 		private ILogStorage currentLogStorage = null!;
 		private ILogCollectorClient logCollectorClient;
 		private IUserRegistrationClient userRegistrationClient;
