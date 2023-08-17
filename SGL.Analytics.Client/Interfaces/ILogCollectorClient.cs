@@ -56,20 +56,19 @@ namespace SGL.Analytics.Client {
 		/// <summary>
 		/// Asynchronously uploads the given analytics log file to the backend using the given application credentials and the given authorization token for the user.
 		/// </summary>
-		/// <param name="appName">The technical name of the application used to identify it in the backend.</param>
-		/// <param name="appAPIToken">The API token for the application to authenticate it with the backend.</param>
-		/// <param name="authToken">The authorization token for the user, obtained by <see cref="IUserRegistrationClient.LoginUserAsync(LoginRequestDTO)"/>.</param>
 		/// <param name="metadata">The metadata for the log file to upload.</param>
 		/// <param name="content">The raw content of the log file to upload, encoded as described by <see cref="LogMetadataDTO.LogContentEncoding"/> in <paramref name="metadata"/>.</param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A task representing the upload operation.</returns>
 		/// <exception cref="LoginRequiredException">
-		/// Thrown when <paramref name="authToken"/> has expired or doesn't contain a recognized token.
-		/// If this happens, a new token needs to be obtained using <see cref="IUserRegistrationClient.LoginUserAsync(LoginRequestDTO)"/> before reattempting the upload.
+		/// Thrown when <see cref="IApiClient.Authorization"/> has expired or doesn't contain a recognized token.
+		/// If this happens, a new token needs to be obtained using <see cref="IUserRegistrationClient.LoginUserAsync(LoginRequestDTO, CancellationToken)"/> before reattempting the upload.
 		/// </exception>
 		/// <exception cref="UnauthorizedException">
 		/// Thrown when the server denies access for the upload request with the given credentials.
-		/// This can be a problem with any of the credential parameters <paramref name="appName"/>, <paramref name="appAPIToken"/>, or <paramref name="authToken"/>.
-		/// Which of them causes the problem is not reported to the client for security reasons. Thus investigation may require inquiry with the backend operator.
+		/// This can be a problem with any of the current credentials of the client object.
+		/// Which of the credentials causes the problem is not reported to the client for security reasons. 
+		/// Thus investigation may require inquiry with the backend operator.
 		/// </exception>
 		/// <exception cref="FileTooLargeException">
 		/// Thrown when the server rejected the upload request because the given file is too large for the size limit of the server and thus can't be uploaded.

@@ -14,9 +14,8 @@ namespace SGL.Analytics.Client {
 		/// Asynchronously obtains the certificates for the authorized recipients from the backend and adds them to <paramref name="targetCertificateStore"/>.
 		/// Note that addition methods of <see cref="CertificateStore"/> filter out certificates that don't pass validation.
 		/// </summary>
-		/// <param name="appName">The technical name of the application used to identify it in the backend.</param>
-		/// <param name="appAPIToken">The API token for the application to authenticate it with the backend.</param>
 		/// <param name="targetCertificateStore">The certificate store to which the downloaded certificate shall be added.</param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A task representing the operation.</returns>
 		Task LoadRecipientCertificatesAsync(CertificateStore targetCertificateStore, CancellationToken ct = default);
 	}

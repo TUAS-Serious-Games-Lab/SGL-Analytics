@@ -30,6 +30,8 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="httpClient">The <see cref="HttpClient"/> to use for requests to the backend.
 		/// The <see cref="HttpClient.BaseAddress"/> of the client needs to be set to the base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
+		/// <param name="appName">The technical name of the application used to identify it in the backend.</param>
+		/// <param name="appApiToken">The API token for the application to authenticate it with the backend.</param>
 		public LogCollectorRestClient(HttpClient httpClient, string appName, string appApiToken) :
 				base(httpClient, new AuthorizationData(new AuthorizationToken(""), DateTime.MinValue), "/api/analytics/log/v2/") {
 			this.appName = appName;
@@ -60,6 +62,26 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		/// <summary>
+		/// Maps received non-success HTTP response codes to exception types.
+		/// </summary>
+		/// <param name="request">The request that resulted in a non-success response code.</param>
+		/// <param name="response">The response with the non-success response code.</param>
+		/// <exception cref="LoginRequiredException">
+		/// The response was <see cref="HttpStatusCode.Unauthorized"/> and contains a <c>WwwAuthenticate</c> header.
+		/// The server tells us to login first.
+		/// </exception>
+		/// <exception cref="UnauthorizedException">
+		/// The response was <see cref="HttpStatusCode.Unauthorized"/> and without a <c>WwwAuthenticate</c> header.
+		/// The server denies us access.
+		/// </exception>
+		/// <exception cref="FileTooLargeException">
+		/// The response was <see cref="HttpStatusCode.RequestEntityTooLarge"/>.
+		/// The file we attempted to upload is larger than the server allows.
+		/// </exception>
+		/// <exception cref="HttpApiResponseException">
+		/// Some other response code was returned that has no domain-specific meaning because it wasn't expected.
+		/// </exception>
 		protected override void MapExceptionForError(HttpRequestMessage request, HttpResponseMessage response) {
 			if (response.StatusCode == HttpStatusCode.Unauthorized && response.Headers.WwwAuthenticate.Count > 0) {
 				throw new LoginRequiredException();

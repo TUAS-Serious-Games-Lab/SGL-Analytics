@@ -36,6 +36,8 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="httpClient">The <see cref="HttpClient"/> to use for requests to the backend.
 		/// The <see cref="HttpClient.BaseAddress"/> of the client needs to be set to the base URI of the backend server, e.g. <c>https://sgl-analytics.example.com/</c>.</param>
+		/// <param name="appName">The technical name of the application used to identify it in the backend.</param>
+		/// <param name="appApiToken">The API token for the application to authenticate it with the backend.</param>
 		public UserRegistrationRestClient(HttpClient httpClient, string appName, string appApiToken) : base(httpClient, null, "/api/analytics/user/v1/") {
 			this.appName = appName;
 			this.appApiToken = appApiToken;
