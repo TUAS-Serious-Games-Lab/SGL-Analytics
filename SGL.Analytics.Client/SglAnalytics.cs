@@ -379,12 +379,14 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		public IList<(Guid Id, DateTime Start, DateTime End)> CheckForAnonymousLogsAsync(CancellationToken ct = default) {
+		public Task<IList<(Guid Id, DateTime Start, DateTime End)>> CheckForAnonymousLogsAsync(CancellationToken ct = default) {
 			List<ILogStorage.ILogFile> existingLogs;
 			lock (lockObject) {
 				existingLogs = anonymousLogStorage.EnumerateFinishedLogs().ToList();
 			}
-			return existingLogs.Select(log => (log.ID, log.CreationTime, log.EndTime)).ToList();
+			var result = existingLogs.Select(log => (log.ID, log.CreationTime, log.EndTime)).ToList();
+			// For consistency, make all session-state methods async, also to allow future expansions that might need async.
+			return Task.FromResult<IList<(Guid Id, DateTime Start, DateTime End)>>(result);
 		}
 		public async Task InheritAnonymousLogsAsync(IEnumerable<Guid> logIds, CancellationToken ct = default) {
 			if (!SessionAuthorizationValid) {

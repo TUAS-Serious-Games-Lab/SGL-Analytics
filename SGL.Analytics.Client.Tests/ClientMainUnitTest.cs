@@ -707,7 +707,7 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Empty(collectorClient.UploadedLogFileIds);
 			string password = SecretGenerator.Instance.GenerateSecret(10);
 			await analytics.RegisterUserWithPasswordAsync(user, password, rememberCredentials: true);
-			var anonLogs = analytics.CheckForAnonymousLogsAsync();
+			var anonLogs = await analytics.CheckForAnonymousLogsAsync();
 			Assert.All(logIds, logId => Assert.Contains(anonLogs, log => log.Id == logId));
 			await analytics.InheritAnonymousLogsAsync(anonLogs.Select(log => log.Id));
 			await analytics.FinishAsync();
