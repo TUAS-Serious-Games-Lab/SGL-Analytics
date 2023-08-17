@@ -348,7 +348,7 @@ namespace SGL.Analytics.Client {
 			startUploadingExistingLogs();
 			return LoginAttemptResult.Completed;
 		}
-		public async Task UseOfflineModeAsync(CancellationToken ct = default) {
+		public Task UseOfflineModeAsync(CancellationToken ct = default) {
 			var credentials = readStoredCredentials();
 			if (credentials.UserId.HasValue || credentials.Username != null) {
 				createUserLogStore(credentials.UserId, credentials.Username);
@@ -362,13 +362,15 @@ namespace SGL.Analytics.Client {
 			lock (lockObject) {
 				disableLogUploading = true;
 			}
+			return Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
-		public async Task UseOfflineModeForDelegatedUserAsync(Guid upstreamUserId, CancellationToken ct = default) {
+		public Task UseOfflineModeForDelegatedUserAsync(Guid upstreamUserId, CancellationToken ct = default) {
 			createUserLogStore(upstreamUserId, null);
 			disableLogWriting = false;
 			lock (lockObject) {
 				disableLogUploading = true;
 			}
+			return Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
 		public async Task DeactivateAsync(CancellationToken ct = default) {
 			await FinishAsync();
@@ -377,6 +379,7 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = true;
 				currentLogStorage = null!;
 			}
+			await Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
 
 		public Task<IList<(Guid Id, DateTime Start, DateTime End)>> CheckForAnonymousLogsAsync(CancellationToken ct = default) {
@@ -388,7 +391,7 @@ namespace SGL.Analytics.Client {
 			// For consistency, make all session-state methods async, also to allow future expansions that might need async.
 			return Task.FromResult<IList<(Guid Id, DateTime Start, DateTime End)>>(result);
 		}
-		public async Task InheritAnonymousLogsAsync(IEnumerable<Guid> logIds, CancellationToken ct = default) {
+		public Task InheritAnonymousLogsAsync(IEnumerable<Guid> logIds, CancellationToken ct = default) {
 			if (!SessionAuthorizationValid) {
 				throw new InvalidOperationException("Can't inherit anonymous logs for upload to user account without valid user session.");
 			}
@@ -401,11 +404,12 @@ namespace SGL.Analytics.Client {
 				existingLogs = anonymousLogStorage.EnumerateFinishedLogs().ToList();
 			}
 			var selectedLogs = existingLogs.Where(log => logIdSet.Contains(log.ID)).ToList();
-			if (selectedLogs.Count == 0) return;
+			if (selectedLogs.Count == 0) return Task.CompletedTask;
 			foreach (var logFile in selectedLogs) {
 				uploadQueue.Enqueue(logFile);
 			}
 			startFileUploadingIfNotRunning();
+			return Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
 
 		/// <summary>
