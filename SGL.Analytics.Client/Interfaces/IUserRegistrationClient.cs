@@ -81,7 +81,7 @@ namespace SGL.Analytics.Client {
 	/// </summary>
 	public interface IUserRegistrationClient : IApiClient, IRecipientCertificatesClient {
 		/// <summary>
-		/// After a successful call to <see cref="LoginAsync(LoginRequest, CancellationToken)"/> or <see cref="RegisterAsync(UserRegistrationData, PublicKey, byte[], string?, CancellationToken)"/>,
+		/// After a successful call to <see cref="LoginUserAsync(LoginRequestDTO, CancellationToken)"/> or <see cref="OpenSessionFromUpstream(AuthorizationData, CancellationToken)"/>,
 		/// contains the Authorization token data obtained from the Users service. It can be used for the clients of other services to authorize requests.
 		/// Only unauthenticated APIs can be called while this is null, or while it contains an expired token.
 		/// </summary>
@@ -89,7 +89,7 @@ namespace SGL.Analytics.Client {
 		AuthorizationData? IApiClient.Authorization { get => Authorization; set => throw new NotSupportedException(); }
 
 		/// <summary>
-		/// After a successful call to <see cref="LoginAsync(LoginRequest, CancellationToken)"/> or <see cref="RegisterAsync(UserRegistrationData, PublicKey, byte[], string?, CancellationToken)"/>,
+		/// After a successful call to <see cref="LoginUserAsync(LoginRequestDTO, CancellationToken)"/> or <see cref="OpenSessionFromUpstream(AuthorizationData, CancellationToken)"/>,
 		/// contains the id of the authenticated in user.
 		/// </summary>
 		Guid? AuthorizedUserId { get; }
@@ -103,7 +103,7 @@ namespace SGL.Analytics.Client {
 
 
 		/// <summary>
-		/// Asynchronously registers a new user with the given user data and the given application API token.
+		/// Asynchronously registers a new user with the given user data.
 		/// </summary>
 		/// <param name="userDTO">The data transfer object containing the user data.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
