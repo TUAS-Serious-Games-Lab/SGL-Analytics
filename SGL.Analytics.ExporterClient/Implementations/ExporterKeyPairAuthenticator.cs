@@ -14,6 +14,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.ExporterClient {
+	/// <summary>
+	/// Implements exporter authentication using a challenge-based protocol with the user's key-pair.
+	/// </summary>
 	public class ExporterKeyPairAuthenticator : IExporterAuthenticator {
 		private readonly HttpClient httpClient;
 		private readonly KeyPair keyPair;
@@ -22,13 +25,22 @@ namespace SGL.Analytics.ExporterClient {
 		private readonly MediaTypeHeaderValue? jsonContentType = new MediaTypeHeaderValue("application/json");
 		private readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonOptions.RestOptions);
 
+		/// <summary>
+		/// Creates an authenticator object with the given data / dependencies.
+		/// </summary>
+		/// <param name="httpClient">The http client object to use for backend communication.</param>
+		/// <param name="keyPair">The key-pair to use for authentication.</param>
+		/// <param name="logger">A logger object for logging diagnostic information to it.</param>
+		/// <param name="randomGenerator">A cryptographic random generator to use for the signature when the algorithm requires one.</param>
 		public ExporterKeyPairAuthenticator(HttpClient httpClient, KeyPair keyPair, ILogger<ExporterKeyPairAuthenticator> logger, RandomGenerator randomGenerator) {
 			this.httpClient = httpClient;
 			this.keyPair = keyPair;
 			this.logger = logger;
 			this.randomGenerator = randomGenerator;
 		}
-
+		/// <summary>
+		/// Asynchronously performs the steps of the challenge authentication with the backend and returns the obtained session token on success.
+		/// </summary>
 		public async Task<AuthorizationData> AuthenticateAsync(string appName, CancellationToken ct = default) {
 			var openRequest = new HttpRequestMessage(HttpMethod.Post, "api/analytics/user/v1/exporter-key-auth/open-challenge");
 			var requestDto = new ExporterKeyAuthRequestDTO(appName, keyPair.Public.CalculateId());

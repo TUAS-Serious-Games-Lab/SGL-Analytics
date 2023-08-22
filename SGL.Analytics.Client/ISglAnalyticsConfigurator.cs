@@ -85,9 +85,13 @@ namespace SGL.Analytics.Client {
 		/// The authorization token data for the user session.
 		/// </summary>
 		public AuthorizationData? Authorization { get; }
-
+		/// <summary>
+		/// The id of the authenticated user, if applicable.
+		/// </summary>
 		public Guid? UserId { get; }
-
+		/// <summary>
+		/// The username of the authenticated user, if applicable.
+		/// </summary>
 		public string? Username { get; }
 
 		internal SglAnalyticsConfiguratorAuthenticatedFactoryArguments(string appName, string appApiToken, HttpClient httpClient, string neutralDataDirectory, ILoggerFactory loggerFactory, RandomGenerator random,

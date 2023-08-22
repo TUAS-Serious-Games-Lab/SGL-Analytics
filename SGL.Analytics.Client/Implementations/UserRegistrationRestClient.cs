@@ -132,6 +132,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		/// <inheritdoc/>
 		public async Task<DelegatedLoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default) {
 			try {
 				using var response = await SendRequest(HttpMethod.Post, "open-session-from-upstream",

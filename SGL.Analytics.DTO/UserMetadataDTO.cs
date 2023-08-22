@@ -31,6 +31,9 @@ namespace SGL.Analytics.DTO {
 		public byte[]? EncryptedProperties { get; private set; }
 		public EncryptionInfo? PropertyEncryptionInfo { get; private set; }
 
+		/// <summary>
+		/// Constructs a <see cref="UserMetadataDTO"/> with the given data.
+		/// </summary>
 		public UserMetadataDTO(Guid userId, string username, Dictionary<string, object?> studySpecificProperties,
 				byte[]? encryptedProperties, EncryptionInfo? propertyEncryptionInfo) {
 			UserId = userId;

@@ -17,9 +17,14 @@ namespace SGL.Analytics.DTO {
 		/// </summary>
 		[StringLength(64, MinimumLength = 8)]
 		public string AppApiToken { get; private set; }
-
+		/// <summary>
+		/// The authorization header to pass to the upstream backend for session validation.
+		/// </summary>
 		public string UpstreamAuthorizationHeader { get; private set; }
 
+		/// <summary>
+		/// Constructs a <see cref="UpstreamSessionRequestDTO"/> with the given data.
+		/// </summary>
 		public UpstreamSessionRequestDTO([PlainName][StringLength(128, MinimumLength = 1)] string appName,
 			[StringLength(64, MinimumLength = 8)] string appApiToken, string upstreamAuthorizationHeader) {
 			AppName = appName;

@@ -7,6 +7,9 @@ namespace SGL.Analytics.DTO {
 	/// Specifies the data transferred from the server to the client after a successful login.
 	/// </summary>
 	public class LoginResponseDTO {
+		/// <summary>
+		/// The authentication token for the session, returned by the server.
+		/// </summary>
 		public AuthorizationToken Token { get; private set; }
 
 		/// <summary>
@@ -19,10 +22,14 @@ namespace SGL.Analytics.DTO {
 		/// </summary>
 		public DateTime? TokenExpiry { get; private set; }
 
+		[Obsolete("Use overload with userId and tokenExpiry instead.")]
 		public LoginResponseDTO(AuthorizationToken token) {
 			Token = token;
 		}
 
+		/// <summary>
+		/// Constructs a <see cref="LoginResponseDTO"/> with the given data.
+		/// </summary>
 		[JsonConstructor]
 		public LoginResponseDTO(AuthorizationToken token, Guid? userId, DateTime? tokenExpiry) {
 			Token = token;
@@ -31,9 +38,19 @@ namespace SGL.Analytics.DTO {
 		}
 	}
 
+	/// <summary>
+	/// An extended version of <see cref="LoginResponseDTO"/> for delegated authentication, 
+	/// that additionally provides the id of the user in the upstream backend.
+	/// </summary>
 	public class DelegatedLoginResponseDTO : LoginResponseDTO {
+		/// <summary>
+		/// The user id of the authenticated user in the upstream backend.
+		/// </summary>
 		public Guid UpstreamUserId { get; private set; }
 
+		/// <summary>
+		/// Constructs a <see cref="DelegatedLoginResponseDTO"/> with the given data.
+		/// </summary>
 		[JsonConstructor]
 		public DelegatedLoginResponseDTO(AuthorizationToken token, Guid? userId, DateTime? tokenExpiry, Guid upstreamUserId) : base(token, userId, tokenExpiry) {
 			UpstreamUserId = upstreamUserId;

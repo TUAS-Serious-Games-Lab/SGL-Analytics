@@ -104,6 +104,22 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			Complete = complete;
 		}
 
+		/// <summary>
+		/// Created a log metadata object with the given data and associated objects.
+		/// </summary>
+		/// <param name="id">The log id.</param>
+		/// <param name="app">The application to which the log belongs.</param>
+		/// <param name="userId">The user id of the user that generated and uploaded the log.</param>
+		/// <param name="localLogId">The id the log was assigned locally on the client.</param>
+		/// <param name="creationTime">The time when the log file was created, i.e. the time when the log begins.</param>
+		/// <param name="endTime">The time when the log file was finished, i.e. the time when the log ends.</param>
+		/// <param name="uploadTime">The time when the log was uploaded to the backend.</param>
+		/// <param name="filenameSuffix">The suffix for the log file name.</param>
+		/// <param name="encoding">The internal encoding of the log file body, inside the encryption layer.</param>
+		/// <param name="size">The size of the log body in bytes.</param>
+		/// <param name="encryptionInfo">The encryption metadata for the log.</param>
+		/// <param name="complete">Whether the log file has completed its upload.</param>
+		/// <returns>The created log metadata object.</returns>
 		public static LogMetadata Create(Guid id, Application app, Guid userId, Guid localLogId, DateTime creationTime, DateTime endTime, DateTime uploadTime, string filenameSuffix,
 				LogContentEncoding encoding, long? size, EncryptionInfo encryptionInfo, bool complete = false) {
 			var metadata = new LogMetadata(id, app.Id, userId, localLogId, creationTime, endTime, uploadTime, filenameSuffix, encoding, size, encryptionInfo.IVs.Single(),
@@ -114,6 +130,9 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			return metadata;
 		}
 
+		/// <summary>
+		/// The metadata describing how the log body is encrypted, along with the required key material.
+		/// </summary>
 		public EncryptionInfo EncryptionInfo {
 			get {
 				if (RecipientKeys == null) {

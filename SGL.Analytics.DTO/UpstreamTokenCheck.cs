@@ -14,6 +14,9 @@ namespace SGL.Analytics.DTO {
 		[StringLength(128, MinimumLength = 1)]
 		public string RequestingAppName { get; set; }
 
+		/// <summary>
+		/// Constructs a <see cref="UpstreamTokenCheckRequest"/> with the given data.
+		/// </summary>
 		public UpstreamTokenCheckRequest(string requestingAppName) {
 			RequestingAppName = requestingAppName;
 		}
@@ -30,6 +33,9 @@ namespace SGL.Analytics.DTO {
 		/// </summary>
 		public DateTime TokenExpiry { get; set; }
 
+		/// <summary>
+		/// Constructs a <see cref="UpstreamTokenCheckResponse"/> with the given data.
+		/// </summary>
 		public UpstreamTokenCheckResponse(Guid userId, DateTime tokenExpiry) {
 			UserId = userId;
 			TokenExpiry = tokenExpiry;

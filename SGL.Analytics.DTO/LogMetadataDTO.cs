@@ -64,6 +64,11 @@ namespace SGL.Analytics.DTO {
 			[PlainName][StringLength(16)] string nameSuffix, LogContentEncoding logContentEncoding, EncryptionInfo encryptionInfo) =>
 			(LogFileId, CreationTime, EndTime, NameSuffix, LogContentEncoding, EncryptionInfo) = (logFileId, creationTime, endTime, nameSuffix, logContentEncoding, encryptionInfo);
 
+		/// <summary>
+		/// Creates a new DTO with the given data and an <see cref="EncryptionInfo"/> that represents an unencrypted log.
+		/// This is only present for backwards compatibility and testing purposes.
+		/// Use <see cref="LogMetadataDTO.LogMetadataDTO(Guid, DateTime, DateTime, string, LogContentEncoding, EncryptionInfo)"/> instead.
+		/// </summary>
 		[Obsolete("Use overload with encryption infos.")]
 		public LogMetadataDTO(Guid logFileId, DateTime creationTime, DateTime endTime, [PlainName][StringLength(16)] string nameSuffix, LogContentEncoding logContentEncoding) : this(logFileId, creationTime, endTime, nameSuffix, logContentEncoding, EncryptionInfo.CreateUnencrypted()) { }
 

@@ -118,6 +118,16 @@ namespace SGL.Analytics.Client {
 		/// <returns>A task representing the login operation, providing the response from the server, containing an authorization token (if successful), as its result upon completion.</returns>
 		Task<LoginResponseDTO> LoginUserAsync(LoginRequestDTO loginDTO, CancellationToken ct = default);
 
+		/// <summary>
+		/// Asynchronously opens a user session using delegated authentication with the provided upstream authorization token.
+		/// The token is passed to the analytics backend, which verifies it with the upstream backend configured for the application.
+		/// Upon success, if the user is registered with the upstream user id, an analytics session token for that user is returned.
+		/// </summary>
+		/// <param name="upstreamAuthToken">The authorization data for the upstream backend.</param>
+		/// <param name="ct">>A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A task representing the authentication operation, providing the response from the server, containing an authorization token (if successful), as its result upon completion.</returns>
+		/// <exception cref="LoginFailedException">The token was rejected by the upstream backend.</exception>
+		/// <exception cref="NoDelegatedUserException">No user with the obtained upstream id was registered in the analytics backend.</exception>
 		Task<DelegatedLoginResponseDTO> OpenSessionFromUpstream(AuthorizationData upstreamAuthToken, CancellationToken ct = default);
 	}
 }

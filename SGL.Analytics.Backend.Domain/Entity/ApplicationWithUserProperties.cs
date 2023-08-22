@@ -9,7 +9,10 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 	/// and certificates for authorized data exporters, as needed by the users backend.
 	/// </summary>
 	public class ApplicationWithUserProperties : Application {
-
+		/// <summary>
+		/// If the application uses delegated authentication using authorization tokens from an upstream system,
+		/// stores the URL, pointing to the upstream backend, which is called with the upstream token for validation.
+		/// </summary>
 		public Uri? BasicFederationUpstreamAuthUrl { get; set; } = null;
 		/// <summary>
 		/// A collection containing the per-user property definitions for this application.
@@ -73,7 +76,12 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			UserProperties.Add(prop);
 			return prop;
 		}
-
+		/// <summary>
+		/// Adds an authorized exporter entry that grants an exporter authentication key pair access for exporting data.
+		/// </summary>
+		/// <param name="label">A descriptive label as a human-readable identifier for the key.</param>
+		/// <param name="certificatePem">The certificate for the key pair, encoded in PEM format.</param>
+		/// <returns>The created certificate entry object.</returns>
 		public ExporterKeyAuthCertificate AddAuthorizedExporter(string label, string certificatePem) {
 			var exporter = ExporterKeyAuthCertificate.Create(this, label, certificatePem);
 			AuthorizedExporters.Add(exporter);
