@@ -286,8 +286,9 @@ namespace SGL.Analytics.Client {
 		public async Task<LoginAttemptResult> TryLoginWithPasswordAsync(string loginName, string password, bool rememberCredentials = false, CancellationToken ct = default) {
 			var loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, loginName, password);
 			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
+			LoginResponseDTO responseDto;
 			try {
-				await reloginDelegate(ct);
+				responseDto = await reloginDelegate(ct);
 			}
 			catch (LoginFailedException ex) {
 				logger.LogError(ex, "Login with stored credentials failed.");
@@ -297,7 +298,7 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "An error prevented logging in with stored credentials.");
 				return LoginAttemptResult.NetworkProblem;
 			}
-			createUserLogStore(null, loginName);
+			createUserLogStore(responseDto.UserId, loginName);
 			disableLogWriting = false;
 			lock (lockObject) {
 				// hold on to re-login delegate for token refreshing, capturing needed credentials
