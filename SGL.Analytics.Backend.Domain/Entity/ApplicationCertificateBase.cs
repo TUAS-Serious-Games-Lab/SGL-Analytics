@@ -9,7 +9,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 	/// Acts as a base class for certificates stored in association with an application.
 	/// </summary>
 	public abstract class ApplicationCertificateBase {
-		private string certificatePem;
+		private string certificatePem = "";
 		private Certificate? certificate = null;
 		/// <summary>
 		/// The id of the App to which this entry belongs.
