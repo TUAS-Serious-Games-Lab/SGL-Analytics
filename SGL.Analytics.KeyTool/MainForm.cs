@@ -11,7 +11,7 @@ namespace SGL.Analytics.KeyTool {
 		private const string configFile = "KeyTool-Settings.json";
 		private const int defaultValidityYears = 3;
 		private int rsaKeyStrength;
-		private List<DistinguishedNameEntryEdit> dnEntryEdits;
+		private List<DistinguishedNameEntryEdit> dnEntryEdits = null!;
 		private string? keyGenPassphrase = null;
 		private List<CertificateSigningRequest> loadedCsrs = new List<CertificateSigningRequest>();
 

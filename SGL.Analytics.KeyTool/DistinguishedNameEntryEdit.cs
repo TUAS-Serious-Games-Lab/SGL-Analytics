@@ -11,8 +11,8 @@ using System.Windows.Forms;
 
 namespace SGL.Analytics.KeyTool {
 	public partial class DistinguishedNameEntryEdit : UserControl {
-		private EventHandler onValueChanged;
-		private EventHandler onTypeChanged;
+		private EventHandler? onValueChanged;
+		private EventHandler? onTypeChanged;
 
 		public DistinguishedNameEntryEdit() {
 			InitializeComponent();

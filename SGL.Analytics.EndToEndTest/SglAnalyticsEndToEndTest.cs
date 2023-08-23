@@ -117,8 +117,8 @@ namespace SGL.Analytics.EndToEndTest {
 
 		public class UserData : BaseUserData {
 			public int Foo { get; set; }
-			public string Bar { get; set; }
-			public object Obj { get; set; }
+			public string Bar { get; set; } = null!;
+			public object Obj { get; set; } = null!;
 		}
 
 		[ConditionallyTestedFact(typeof(SglAnalyticsEndToEndTest), nameof(ShouldRun), "No test backend available.")]

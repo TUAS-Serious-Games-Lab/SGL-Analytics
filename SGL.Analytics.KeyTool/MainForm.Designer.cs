@@ -1076,7 +1076,6 @@
 		private Label label1;
 		private Label lblRsaKeyStrength;
 		private ComboBox cmbNamedCurve;
-		private Label label3;
 		private SaveFileDialog saveIntermediateKeyFileDialog;
 		private Button btnBrowseSaveIntermediateKeyFile;
 		private Label lblIntermediateKeySavePath;
