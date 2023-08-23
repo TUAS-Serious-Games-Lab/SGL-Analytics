@@ -64,6 +64,10 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			return await Task.WhenAll(PushLogsApplication(application, ct), PushUsersApplication(application, ct));
 		}
 
+		/// <summary>
+		/// Update recipient list in <paramref name="oldApplication"/> to fit that from <paramref name="newApplication"/>.
+		/// </summary>
+		/// <returns>True if anything was changed, false otherwise.</returns>
 		public bool PushRecipients(string apiName, Domain.Entity.Application newApplication, Domain.Entity.Application oldApplication) {
 			var appName = oldApplication.Name;
 			var missingRecipients = oldApplication.DataRecipients.Where(r1 => !newApplication.DataRecipients.Any(r2 => r1.PublicKeyId == r2.PublicKeyId)).ToList();
@@ -103,6 +107,10 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			return changed;
 		}
 
+		/// <summary>
+		/// Update exporter certificate list in <paramref name="oldApplication"/> to fit that from <paramref name="newApplication"/>.
+		/// </summary>
+		/// <returns>True if anything was changed, false otherwise.</returns>
 		public bool PushExporterCerts(string apiName, ApplicationWithUserProperties newApplication, ApplicationWithUserProperties oldApplication) {
 			var appName = oldApplication.Name;
 			var missingExporters = oldApplication.AuthorizedExporters.Where(r1 => !newApplication.AuthorizedExporters.Any(r2 => r1.PublicKeyId == r2.PublicKeyId)).ToList();

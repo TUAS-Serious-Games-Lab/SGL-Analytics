@@ -46,11 +46,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			this.metrics = metrics;
 		}
 
-		// POST: /api/analytics/user
-		// To protect from overposting attacks, enable the specific properties you want to bind to, for
-		// more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
 		/// <summary>
-		/// Handles POST requests to <c>api/analytics/user</c> for user registrations.
+		/// Handles POST requests to <c>api/analytics/user/v1</c> for user registrations.
 		/// The controller responds with a <see cref="UserRegistrationResultDTO"/> in JSON form, containing the assigned user id, and a <see cref="StatusCodes.Status201Created"/> upon sucess.
 		/// The client needs to use this id wenn logging in using <see cref="Login(LoginRequestDTO, CancellationToken)"/>.
 		/// If the <see cref="UserRegistrationDTO.StudySpecificProperties"/> contains invalid properties, the controller responds with a <see cref="StatusCodes.Status400BadRequest"/>.
@@ -156,7 +153,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		/// <summary>
-		/// Handles POST requests to <c>api/analytics/user/login</c> for user logins to start a session.
+		/// Handles POST requests to <c>api/analytics/user/v1/login</c> for user logins to start a session.
 		/// Upon success, the controller responds with a JSON-encoded <see cref="LoginResponseDTO"/>, containing a session token that can be used to
 		/// authenticate requests to SGL Analytics services as the logged-in user, and a <see cref="StatusCodes.Status200OK"/>.
 		/// If the login fails because any of the credentials are incorrect or the credentials don't match, the controller responds with a <see cref="StatusCodes.Status401Unauthorized"/>.
@@ -267,7 +264,20 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				throw;
 			}
 		}
-
+		/// <summary>
+		/// Handles POST requests to <c>api/analytics/user/v1/open-session-from-upstream</c> for starting a session using authentication delegation to an upstream backend.
+		/// Upon success, the controller responds with a JSON-encoded <see cref="DelegatedLoginResponseDTO"/>,
+		/// containing a session token that can be used to authenticate requests to SGL Analytics services as the logged-in user,
+		/// and a <see cref="StatusCodes.Status200OK"/>.
+		/// If the upstream backend rejects the supplied authorization token, a <see cref="StatusCodes.Status401Unauthorized"/> is returned.
+		/// If the upstream user id is not registered yet, a <see cref="StatusCodes.Status404NotFound"/> is returned.
+		/// If the token validation fails due to an error with the upstream backend, a <see cref="StatusCodes.Status503ServiceUnavailable"/> is returned.
+		/// Other errors are represented by responding with a <see cref="StatusCodes.Status500InternalServerError"/>.
+		/// </summary>
+		/// <param name="requestDto">
+		/// A data transfer object, containing the credentials to use for the login attempt.
+		/// </param>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
 		[ProducesResponseType(typeof(LoginResponseDTO), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
@@ -335,6 +345,22 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 		}
 
+		/// <summary>
+		/// Handles GET requests to <c>api/analytics/user/v1/recipient-certificates</c> for obtaining the list of authorized recipient certificates.
+		/// Upon success, the controller responds with a PEM-encoded list of X509 certificates,
+		/// one for each authorized recipient key pair, all signed by the app's signer certificate,
+		/// and a <see cref="StatusCodes.Status200OK"/>.
+		/// If the upstream backend rejects the supplied authorization token, a <see cref="StatusCodes.Status401Unauthorized"/> is returned.
+		/// If the upstream user id is not registered yet, a <see cref="StatusCodes.Status404NotFound"/> is returned.
+		/// If the token validation fails due to an error with the upstream backend, a <see cref="StatusCodes.Status503ServiceUnavailable"/> is returned.
+		/// Other errors are represented by responding with a <see cref="StatusCodes.Status500InternalServerError"/>.
+		/// </summary>
+		/// <param name="appName">The unique name of the app for which to obtain the list, passed as a query parameter.</param>
+		/// <param name="appApiToken">
+		/// The API token authentication token for the app identified by <paramref name="appName"/>,
+		/// passed as an <c>App-API-Token</c> header.
+		/// </param>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
 		[HttpGet("recipient-certificates")]
 		[Produces("application/x-pem-file")]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
