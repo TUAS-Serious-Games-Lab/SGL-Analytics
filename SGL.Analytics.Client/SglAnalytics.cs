@@ -509,6 +509,7 @@ namespace SGL.Analytics.Client {
 		/// Instead, waiting for <see cref="FinishAsync"/> finishes the current log, eneuques it and then waits for all enqueued uploads to finish (or fail).
 		/// </remarks>
 		public void StartRetryUploads() {
+			if (disableLogUploading) return;
 			startUploadingExistingLogs();
 		}
 
