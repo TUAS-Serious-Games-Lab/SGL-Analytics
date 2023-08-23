@@ -682,7 +682,7 @@ namespace SGL.Analytics.Client.Tests {
 				config.UseLogCollectorClient(_ => logCollectorClient, dispose: false);
 				config.UseLoggerFactory(_ => loggerFactory, dispose: false);
 			});
-			await analytics.UseOfflineModeAsync();
+			await analytics.UseOfflineModeAsync(allowAnonymous: true);
 			List<Guid> logIds = new();
 			logIds.Add(analytics.StartNewLog());
 			logIds.Add(analytics.StartNewLog());
