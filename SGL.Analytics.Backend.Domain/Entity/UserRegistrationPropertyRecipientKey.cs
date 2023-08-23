@@ -3,6 +3,9 @@ using SGL.Utilities.Crypto.Keys;
 using System;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
+	/// <summary>
+	/// Models a per-recipient key material entry associated with a user registration.
+	/// </summary>
 	public class UserRegistrationPropertyRecipientKey {
 		/// <summary>
 		/// The id of the user registration to which this key belongs.

@@ -47,6 +47,12 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			return app;
 		}
 
+		/// <summary>
+		/// Adds a certificate for a recipient key pair to the list of authorized recipients for this application.
+		/// </summary>
+		/// <param name="label">A descriptive label as a human-readable identifier for the key.</param>
+		/// <param name="certificatePem">The certificate for the key pair, encoded in PEM format.</param>
+		/// <returns>The created certificate entry object.</returns>
 		public Recipient AddRecipient(string label, string certificatePem) {
 			var recipient = Recipient.Create(this, label, certificatePem);
 			DataRecipients.Add(recipient);

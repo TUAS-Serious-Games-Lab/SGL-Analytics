@@ -61,7 +61,9 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// Stores the data key for the encryption of <see cref="EncryptedProperties"/>, encrypted for each authorized recipient as a separate copy.
 		/// </summary>
 		public ICollection<UserRegistrationPropertyRecipientKey> PropertyRecipientKeys { get; set; } = null!;
-
+		/// <summary>
+		/// If this user uses delegated authentication with an upstream system, stores the user id of this user in that upstream system, otherwise null.
+		/// </summary>
 		public Guid? BasicFederationUpstreamUserId { get; set; } = null;
 
 		/// <summary>
@@ -125,15 +127,35 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 
 		/// <summary>
 		/// Creates an user registration object with the given id for the given application and with the given data values.
+		/// The created user has no encrypted app-specific properties.
 		/// </summary>
 		/// <param name="id">The id of the user.</param>
 		/// <param name="app">The application for which the user is registered.</param>
 		/// <param name="username">The username of the user.</param>
 		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
+		/// <param name="basicFederationUpstreamUserId">
+		/// If this user uses delegated authentication with an upstream system,
+		/// the user id of this user in that upstream system, otherwise null.
+		/// </param>
 		/// <returns>The created object.</returns>
 		public static UserRegistration Create(Guid id, ApplicationWithUserProperties app, string username, string? hashedSecret,
 			Guid? basicFederationUpstreamUserId = null) =>
 			Create(id, app, username, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted(), basicFederationUpstreamUserId);
+
+		/// <summary>
+		/// Creates an user registration object with the given id for the given application and with the given data values.
+		/// </summary>
+		/// <param name="id">The id of the user.</param>
+		/// <param name="app">The application for which the user is registered.</param>
+		/// <param name="username">The username of the user.</param>
+		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
+		/// <param name="encryptedProperties">The encrypted app-specific properties for this user.</param>
+		/// <param name="propertyEncryptionInfo">The metadata describing how <paramref name="encryptedProperties"/> is encrypted and the associated key material.</param>
+		/// <param name="basicFederationUpstreamUserId">
+		/// If this user uses delegated authentication with an upstream system,
+		/// the user id of this user in that upstream system, otherwise null.
+		/// </param>
+		/// <returns>The created object.</returns>
 		public static UserRegistration Create(Guid id, ApplicationWithUserProperties app, string username, string? hashedSecret,
 				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo, Guid? basicFederationUpstreamUserId = null) {
 			var userReg = new UserRegistration(id, app.Id, username, hashedSecret, encryptedProperties,
@@ -150,13 +172,31 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 
 		/// <summary>
 		/// Creates an user registration object with a generated id for the given application and with the given data values.
+		/// The created user has no encrypted app-specific properties.
 		/// </summary>
 		/// <param name="app">The application for which the user is registered.</param>
 		/// <param name="username">The username of the user.</param>
 		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
+		/// <param name="basicFederationUpstreamUserId">
+		/// If this user uses delegated authentication with an upstream system,
+		/// the user id of this user in that upstream system, otherwise null.
+		/// </param>
 		/// <returns>The created object.</returns>
 		public static UserRegistration Create(ApplicationWithUserProperties app, string username, string? hashedSecret, Guid? basicFederationUpstreamUserId = null) =>
 			Create(app, username, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted(), basicFederationUpstreamUserId);
+		/// <summary>
+		/// Creates an user registration object with a generated id for the given application and with the given data values.
+		/// </summary>
+		/// <param name="app">The application for which the user is registered.</param>
+		/// <param name="username">The username of the user.</param>
+		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
+		/// <param name="encryptedProperties">The encrypted app-specific properties for this user.</param>
+		/// <param name="propertyEncryptionInfo">The metadata describing how <paramref name="encryptedProperties"/> is encrypted and the associated key material.</param>
+		/// <param name="basicFederationUpstreamUserId">
+		/// If this user uses delegated authentication with an upstream system,
+		/// the user id of this user in that upstream system, otherwise null.
+		/// </param>
+		/// <returns>The created object.</returns>
 		public static UserRegistration Create(ApplicationWithUserProperties app, string username, string? hashedSecret,
 				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo, Guid? basicFederationUpstreamUserId = null) {
 			return Create(Guid.NewGuid(), app, username, hashedSecret, encryptedProperties, propertyEncryptionInfo, basicFederationUpstreamUserId);
@@ -164,13 +204,30 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 
 		/// <summary>
 		/// Creates an user registration object with a generated id for the given application and with the given data values, using the id as the username.
+		/// The created user has no encrypted app-specific properties.
 		/// </summary>
 		/// <param name="app">The application for which the user is registered.</param>
 		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
+		/// <param name="basicFederationUpstreamUserId">
+		/// If this user uses delegated authentication with an upstream system,
+		/// the user id of this user in that upstream system, otherwise null.
+		/// </param>
 		/// <returns>The created object.</returns>
 		public static UserRegistration Create(ApplicationWithUserProperties app, string? hashedSecret, Guid? basicFederationUpstreamUserId = null) =>
 			Create(app, hashedSecret, new byte[0], EncryptionInfo.CreateUnencrypted(), basicFederationUpstreamUserId);
 
+		/// <summary>
+		/// Creates an user registration object with a generated id for the given application and with the given data values, using the id as the username.
+		/// </summary>
+		/// <param name="app">The application for which the user is registered.</param>
+		/// <param name="hashedSecret">The hashed and salted login secret of the user.</param>
+		/// <param name="encryptedProperties">The encrypted app-specific properties for this user.</param>
+		/// <param name="propertyEncryptionInfo">The metadata describing how <paramref name="encryptedProperties"/> is encrypted and the associated key material.</param>
+		/// <param name="basicFederationUpstreamUserId">
+		/// If this user uses delegated authentication with an upstream system,
+		/// the user id of this user in that upstream system, otherwise null.
+		/// </param>
+		/// <returns>The created object.</returns>
 		public static UserRegistration Create(ApplicationWithUserProperties app, string? hashedSecret,
 				byte[] encryptedProperties, EncryptionInfo propertyEncryptionInfo, Guid? basicFederationUpstreamUserId = null) {
 			var id = Guid.NewGuid();

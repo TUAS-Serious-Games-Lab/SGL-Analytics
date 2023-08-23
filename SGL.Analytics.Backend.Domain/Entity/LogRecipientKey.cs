@@ -3,6 +3,9 @@ using SGL.Utilities.Crypto.Keys;
 using System;
 
 namespace SGL.Analytics.Backend.Domain.Entity {
+	/// <summary>
+	/// Models an authorized recipient key entry for encrypted log files.
+	/// </summary>
 	public class LogRecipientKey {
 		/// <summary>
 		/// The id of the log to which this key belongs.
