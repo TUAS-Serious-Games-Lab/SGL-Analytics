@@ -350,15 +350,22 @@ namespace SGL.Analytics.Client {
 			startUploadingExistingLogs();
 			return LoginAttemptResult.Completed;
 		}
-		public Task UseOfflineModeAsync(CancellationToken ct = default) {
+		public Task UseOfflineModeAsync(bool allowAnonymous = false, CancellationToken ct = default) {
 			var credentials = readStoredCredentials();
 			if (credentials.UserId.HasValue || credentials.Username != null) {
 				createUserLogStore(credentials.UserId, credentials.Username);
 			}
-			else {
+			else if (allowAnonymous) {
 				lock (lockObject) {
 					currentLogStorage = anonymousLogStorage;
 				}
+			}
+			else {
+				disableLogWriting = true;
+				lock (lockObject) {
+					disableLogUploading = true;
+				}
+				throw new InvalidOperationException("No stored credentials were present and falling back to anonymous operation was not allowed.");
 			}
 			disableLogWriting = false;
 			lock (lockObject) {
