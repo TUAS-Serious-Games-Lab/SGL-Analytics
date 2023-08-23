@@ -6,6 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.DTO {
+	/// <summary>
+	/// Specifies the request data sent to an upstream backend when validating an upstream authorization token for delegated authentication.
+	/// </summary>
 	public class UpstreamTokenCheckRequest {
 		/// <summary>
 		/// The app name of the app requesting the token check.
@@ -21,7 +24,9 @@ namespace SGL.Analytics.DTO {
 			RequestingAppName = requestingAppName;
 		}
 	}
-
+	/// <summary>
+	/// Specifies the response expected from an upstream backend upon successful validation of an upstream authorization token for delegated authentication.
+	/// </summary>
 	public class UpstreamTokenCheckResponse {
 		/// <summary>
 		/// The id of the user for which the token was issued.

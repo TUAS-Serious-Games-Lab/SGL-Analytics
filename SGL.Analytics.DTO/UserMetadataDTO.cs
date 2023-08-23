@@ -8,6 +8,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 
 namespace SGL.Analytics.DTO {
+	/// <summary>
+	/// Specifies the data provided about a user registration to an exporter client.
+	/// </summary>
 	public class UserMetadataDTO {
 		/// <summary>
 		/// The unique id identifying the user.
@@ -21,14 +24,19 @@ namespace SGL.Analytics.DTO {
 		[StringLength(64, MinimumLength = 1)]
 		public string Username { get; private set; }
 		/// <summary>
-		/// A dictionary containing application-/study-specific properties that should be stored with the user registration.
-		/// Although the DTO can store quite arbitrary data, as the entry values can again be dictionaries or lists, the properties are validated by the backend against the defined properties for the application (as indicated by <see cref="AppName"/>).
-		/// Only those registrations are accepted where all submitted properties are defined in the backend with a matching type for the value and all required properties in the backend are present in the submitted DTO.
+		/// A dictionary containing application-/study-specific properties that are stored with the user registration.
+		/// Although the DTO can store quite arbitrary data, as the entry values can again be dictionaries or lists, the properties are validated by the backend against the defined properties for the application.
 		/// </summary>
 		[JsonConverter(typeof(ObjectDictionaryJsonConverter))]
 		public Dictionary<string, object?> StudySpecificProperties { get; private set; }
-
+		/// <summary>
+		/// Contains the encrypted application-/study-specific user registration properties as encrypted, gzipped JSON.
+		/// The used encryption mode and required key material is described by <see cref="PropertyEncryptionInfo"/>.
+		/// </summary>
 		public byte[]? EncryptedProperties { get; private set; }
+		/// <summary>
+		/// Decribes how <see cref="EncryptedProperties"/> is encrypted and contains the required key material, e.g. encrypted data keys.
+		/// </summary>
 		public EncryptionInfo? PropertyEncryptionInfo { get; private set; }
 
 		/// <summary>

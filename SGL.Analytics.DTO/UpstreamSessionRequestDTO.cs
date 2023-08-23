@@ -5,6 +5,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace SGL.Analytics.DTO {
+	/// <summary>
+	/// Specifies the data that is sent from a client to the analytics backend to request a delegated authentication
+	/// using an authorization token for a trusted upstream system.
+	/// </summary>
 	public class UpstreamSessionRequestDTO {
 		/// <summary>
 		/// The unique technical name of the client application requesting the upstream session.

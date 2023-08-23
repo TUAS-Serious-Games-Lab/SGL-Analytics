@@ -123,18 +123,6 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		/// <summary>
-		/// Registers the user with the given data in the backend database, obtains a user id and stores it locally on the client using the configured rootDataStore for future use.
-		/// </summary>
-		/// <param name="userData">The user data for the registration, that is to be sent to the server.</param>
-		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
-		/// <returns>A Task representing the registration operation. Wait for it's completion before relying on logs being uploaded. Logs recorded on a client that hasn't completed registration are stored only locally until the registration is complete and the user id required for the upload is obtained.</returns>
-		/// <remarks>
-		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
-		/// </remarks>
-		/// <exception cref="UsernameAlreadyTakenException">If <paramref name="userData"/> had the optional <see cref="BaseUserData.Username"/> property set and the given username is already taken for this application. If this happens, the user needs to pick a different name.</exception>
-		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
-		/// <exception cref="HttpRequestException">Indicates either a network problem (if <see cref="HttpRequestException.StatusCode"/> is <see langword="null"/>) or a server-side error (if <see cref="HttpRequestException.StatusCode"/> has a value).</exception>
 		private async Task<Guid> RegisterImplAsync(BaseUserData userData, string? secret, bool storeCredentials, AuthorizationData? upstreamAuthToken = null, CancellationToken ct = default) {
 			try {
 				if (HasStoredCredentials()) {
@@ -181,6 +169,31 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously registers the user with the given data and the given password for login in the backend database and initiates an initial session.
+		/// </summary>
+		/// <param name="userData">The user data for the registration, that is to be sent to the server.</param>
+		/// <param name="password">The password to use for authenticating the user for future logins.</param>
+		/// <param name="rememberCredentials">
+		/// If true, the username and password are stored in the local root data store
+		/// to allow login using <see cref="TryLoginWithStoredCredentialsAsync(CancellationToken)"/>.
+		/// Otherweise, only <see cref="TryLoginWithPasswordAsync(string, string, bool, CancellationToken)"/> can be used.
+		/// </param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the registration operation. Wait for it's completion before relying on logs being uploaded.
+		/// Logs recorded on a client that hasn't completed registration are stored only locally until the registration is complete and the user id required for the upload is obtained.</returns>
+		/// <remarks>
+		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
+		/// </remarks>
+		/// <exception cref="UsernameAlreadyTakenException">
+		/// The username provided in <see cref="BaseUserData.Username"/> of <paramref name="userData"/> was already taken for this application.
+		/// If this happens, the user needs to pick a different name.
+		/// </exception>
+		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
+		/// <exception cref="ArgumentNullException">If no username was supplied in <paramref name="userData"/>.</exception>
+		/// <exception cref="ValidationException">The user registration data failed local validation.</exception>
+		/// <exception cref="HttpApiRequestFailedException">Indicates a network problem.</exception>
+		/// <exception cref="HttpApiResponseException">Indicates a server-side error, see <see cref="HttpApiResponseException.StatusCode"/> for error code.</exception>
 		public async Task RegisterUserWithPasswordAsync(BaseUserData userData, string password, bool rememberCredentials = false, CancellationToken ct = default) {
 			if (userData.Username == null) {
 				throw new ArgumentNullException($"{nameof(userData)}.{nameof(BaseUserData.Username)}");
@@ -209,6 +222,22 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously registers the user with the given data in the backend database and initiates an initial session.
+		/// For authentication, a device token is generated and stored locally in the root data store.
+		/// Use <see cref="TryLoginWithStoredCredentialsAsync(CancellationToken)"/> for future authentication.
+		/// </summary>
+		/// <param name="userData">The user data for the registration, that is to be sent to the server.</param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the registration operation. Wait for it's completion before relying on logs being uploaded.
+		/// Logs recorded on a client that hasn't completed registration are stored only locally until the registration is complete and the user id required for the upload is obtained.</returns>
+		/// <remarks>
+		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
+		/// </remarks>
+		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
+		/// <exception cref="ValidationException">The user registration data failed local validation.</exception>
+		/// <exception cref="HttpApiRequestFailedException">Indicates a network problem.</exception>
+		/// <exception cref="HttpApiResponseException">Indicates a server-side error, see <see cref="HttpApiResponseException.StatusCode"/> for error code.</exception>
 		public async Task RegisterUserWithDeviceSecretAsync(BaseUserData userData, CancellationToken ct = default) {
 			// Generate random secret
 			var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
@@ -225,6 +254,35 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = false;
 			}
 		}
+		/// <summary>
+		/// Asynchronously registers the user with the given data in the backend database and initiates an initial session.
+		/// The user account is created without its own password or device token.
+		/// Instead, an authorization token for a trusted upstream backend (configured in the analytics backend for the application) is used
+		/// to delegate authentication to the trusted upstream backend.
+		/// The token is otained from <paramref name="getUpstreamAuthToken"/> and passed to the upstream backend.
+		/// After after validation by the upstream backend, the analytics backend creates an account associated with the upstream user id.
+		/// Future authentication is done by supplying a then current upstream authorization token to
+		/// <see cref="TryLoginWithUpstreamDelegationAsync(Func{CancellationToken, Task{AuthorizationData}}, CancellationToken)"/>.
+		/// As the account has no own credentials, it can't login using
+		/// <see cref="TryLoginWithPasswordAsync(string, string, bool, CancellationToken)"/> or
+		/// <see cref="TryLoginWithStoredCredentialsAsync(CancellationToken)"/>.
+		/// </summary>
+		/// <param name="userData">The user data for the registration, that is to be sent to the server.</param>
+		/// <param name="getUpstreamAuthToken">
+		/// A delegate used for obtaining the current authorization token for the trusted upstream system.
+		/// This is initially invoked once for registration and once for establishing the initial session.
+		/// Afterwards, it is invoked when the session is refreshed because it has expired or is close to expiring.
+		/// </param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the registration operation. Wait for it's completion before relying on logs being uploaded.
+		/// Logs recorded on a client that hasn't completed registration are stored only locally until the registration is complete and the user id required for the upload is obtained.</returns>
+		/// <remarks>
+		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
+		/// </remarks>
+		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
+		/// <exception cref="ValidationException">The user registration data failed local validation.</exception>
+		/// <exception cref="HttpApiRequestFailedException">Indicates a network problem.</exception>
+		/// <exception cref="HttpApiResponseException">Indicates a server-side error, see <see cref="HttpApiResponseException.StatusCode"/> for error code.</exception>
 		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, Func<CancellationToken, Task<AuthorizationData>> getUpstreamAuthToken, CancellationToken ct = default) {
 			var userId = await RegisterImplAsync(userData, null, storeCredentials: false, await getUpstreamAuthToken(ct), ct: ct);
 			Func<CancellationToken, Task<DelegatedLoginResponseDTO>> reloginDelegate = async ct2 => {
@@ -249,6 +307,15 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously attempts to authenticate the user with credentials stored in the local root data store.
+		/// For this to work, valid credentials username + password or user id + device token must be present in the data store.
+		/// This should be the case after <see cref="RegisterUserWithDeviceSecretAsync(BaseUserData, CancellationToken)"/> or after
+		/// <see cref="RegisterUserWithPasswordAsync(BaseUserData, string, bool, CancellationToken)"/> or <see cref="TryLoginWithPasswordAsync(string, string, bool, CancellationToken)"/>
+		/// with <c>rememberCredentials</c> set to <see langword="true"/>.
+		/// </summary>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the registration operation, providing the result status of the login attempt as its value.</returns>
 		public async Task<LoginAttemptResult> TryLoginWithStoredCredentialsAsync(CancellationToken ct = default) {
 			var credentials = readStoredCredentials();
 			LoginRequestDTO loginDto;
@@ -283,6 +350,17 @@ namespace SGL.Analytics.Client {
 			startUploadingExistingLogs();
 			return LoginAttemptResult.Completed;
 		}
+		/// <summary>
+		/// Asynchronously attempts to authenticate the user with the supplied username and password.
+		/// </summary>
+		/// <param name="loginName">The username as supplied in the user data during registration.</param>
+		/// <param name="password">The password as supplied during registration.</param>
+		/// <param name="rememberCredentials">
+		/// If true, the username and password are stored in the local root data store
+		/// to allow login using <see cref="TryLoginWithStoredCredentialsAsync(CancellationToken)"/> in the future.
+		/// </param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the registration operation, providing the result status of the login attempt as its value.</returns>
 		public async Task<LoginAttemptResult> TryLoginWithPasswordAsync(string loginName, string password, bool rememberCredentials = false, CancellationToken ct = default) {
 			var loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, loginName, password);
 			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
@@ -311,6 +389,17 @@ namespace SGL.Analytics.Client {
 			startUploadingExistingLogs();
 			return LoginAttemptResult.Completed;
 		}
+		/// <summary>
+		/// Asynchronously attempts to authenticate the user using delegated authentication with the trusted upstream backend
+		/// for the application and using the upstream authorization token provided by <paramref name="getUpstreamAuthToken"/>.
+		/// </summary>
+		/// <param name="getUpstreamAuthToken">
+		/// A delegate used for obtaining the current authorization token for the trusted upstream system.
+		/// This is initially invoked once for establishing the session.
+		/// Afterwards, it is invoked when the session is refreshed because it has expired or is close to expiring.
+		/// </param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the registration operation, providing the result status of the login attempt as its value.</returns>
 		public async Task<LoginAttemptResult> TryLoginWithUpstreamDelegationAsync(Func<CancellationToken, Task<AuthorizationData>> getUpstreamAuthToken, CancellationToken ct = default) {
 			Func<CancellationToken, Task<DelegatedLoginResponseDTO>> reloginDelegate = async ct2 => {
 				try {
@@ -350,6 +439,25 @@ namespace SGL.Analytics.Client {
 			startUploadingExistingLogs();
 			return LoginAttemptResult.Completed;
 		}
+		/// <summary>
+		/// Puts the client in offline mode.
+		/// If there are stored credentials, the recorded logs will be stored locally and associated with the user identified by the credentials.
+		/// Otherwise, if <paramref name="allowAnonymous"/> is true, the recoded logs are stored as anonymous logs and can be adopted later using
+		/// <see cref="CheckForAnonymousLogsAsync(CancellationToken)"/> and <see cref="InheritAnonymousLogsAsync(IEnumerable{Guid}, CancellationToken)"/>.
+		/// </summary>
+		/// <param name="allowAnonymous">
+		/// Allow falling back to anonymous log recording when no credentials are present.
+		/// As anonymous logs result in the problem of later having to manually adopt them, this defaults to false,
+		/// which makes the method fail if no credentials are present.
+		/// </param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the registration operation.</returns>
+		/// <exception cref="InvalidOperationException">When no stored credentials were present to indicate the user and <paramref name="allowAnonymous"/> was false.</exception>
+		/// <remarks>
+		/// Currently, this operation isn't actually asynchronous as no operations need to be awaited.
+		/// The asynchronous interface for other session management methods is however kept for consistency and
+		/// to allow future changes that might need asynchronous operations.
+		/// </remarks>
 		public Task UseOfflineModeAsync(bool allowAnonymous = false, CancellationToken ct = default) {
 			var credentials = readStoredCredentials();
 			if (credentials.UserId.HasValue || credentials.Username != null) {
@@ -373,6 +481,25 @@ namespace SGL.Analytics.Client {
 			}
 			return Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
+		/// <summary>
+		/// Puts the client in offline mode.
+		/// A known upstream user id is supplied in <paramref name="upstreamUserId"/> to associate the recorded log files with that user.
+		/// This can be used when the client of the upstream system doe also support an offline mode and
+		/// therefore knows the id of the intended user.
+		/// As the analytics system can't verify such an id while offline, the caller is trusted here to only supply valid and correct user ids.
+		/// </summary>
+		/// <param name="upstreamUserId">
+		/// The user id of the current user in the trusted upstream system.
+		/// The calling client application needs to make sure this is actually the id of the user,
+		/// e.g. by obtaining it from the offline mode of the client of the upstream system.
+		/// </param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the registration operation.</returns>
+		/// <remarks>
+		/// Currently, this operation isn't actually asynchronous as no operations need to be awaited.
+		/// The asynchronous interface for other session management methods is however kept for consistency and
+		/// to allow future changes that might need asynchronous operations.
+		/// </remarks>
 		public Task UseOfflineModeForDelegatedUserAsync(Guid upstreamUserId, CancellationToken ct = default) {
 			createUserLogStore(upstreamUserId, null);
 			disableLogWriting = false;
@@ -381,6 +508,19 @@ namespace SGL.Analytics.Client {
 			}
 			return Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
+		/// <summary>
+		/// Deactivates this client object.
+		/// This makes <see cref="StartNewLog"/>, <see cref="StartRetryUploads"/> and all recording methods No-Ops.
+		/// This can be used to implement a temporary opt-out.
+		/// Remembering the opt-out needs to be done externally.
+		/// </summary>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the registration operation.</returns>
+		/// <remarks>
+		/// Currently, this operation isn't actually asynchronous as no operations need to be awaited.
+		/// The asynchronous interface for other session management methods is however kept for consistency and
+		/// to allow future changes that might need asynchronous operations.
+		/// </remarks>
 		public async Task DeactivateAsync(CancellationToken ct = default) {
 			await FinishAsync();
 			disableLogWriting = true;
@@ -390,7 +530,21 @@ namespace SGL.Analytics.Client {
 			}
 			await Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
-
+		/// <summary>
+		/// Checks for and lists locally stored anonymous logs that were recorded in offline mode without a valid user identification
+		/// (after using <see cref="UseOfflineModeAsync(bool, CancellationToken)"/> with <c>allowAnonymous</c> being false).
+		/// When back online, these logs can be adopted by the current user using <see cref="InheritAnonymousLogsAsync(IEnumerable{Guid}, CancellationToken)"/>.
+		/// If done, this should likely involve asking the user which of these play sessions are thiers.
+		/// While this is an unfortunate requirement, but as we didn't know the user when these were recorded, they need to be manually claimed later.
+		/// This can be checked after login or on a special settings sub page.
+		/// </summary>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the registration operation, providing the obtained list upon success.</returns>
+		/// <remarks>
+		/// Currently, this operation isn't actually asynchronous as no operations need to be awaited.
+		/// The asynchronous interface for other account management methods is however kept for consistency and
+		/// to allow future changes that might need asynchronous operations.
+		/// </remarks>
 		public Task<IList<(Guid Id, DateTime Start, DateTime End)>> CheckForAnonymousLogsAsync(CancellationToken ct = default) {
 			List<ILogStorage.ILogFile> existingLogs;
 			lock (lockObject) {
@@ -400,6 +554,17 @@ namespace SGL.Analytics.Client {
 			// For consistency, make all session-state methods async, also to allow future expansions that might need async.
 			return Task.FromResult<IList<(Guid Id, DateTime Start, DateTime End)>>(result);
 		}
+		/// <summary>
+		/// Adopts logs from a list provided by <see cref="CheckForAnonymousLogsAsync"/> to the currently authenticated user account.
+		/// </summary>
+		/// <param name="logIds">The log ids to adopt.</param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the registration operation.</returns>
+		/// <remarks>
+		/// Currently, this operation isn't actually asynchronous as no operations need to be awaited.
+		/// The asynchronous interface for other account management methods is however kept for consistency and
+		/// to allow future changes that might need asynchronous operations.
+		/// </remarks>
 		public Task InheritAnonymousLogsAsync(IEnumerable<Guid> logIds, CancellationToken ct = default) {
 			if (!SessionAuthorizationValid) {
 				throw new InvalidOperationException("Can't inherit anonymous logs for upload to user account without valid user session.");

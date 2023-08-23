@@ -170,12 +170,19 @@ namespace SGL.Analytics.Client {
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsConfigurator UseRootDataStore(Func<SglAnalyticsConfiguratorFactoryArguments, IRootDataStore> rootDataStoreFactory, bool dispose = true);
 		/// <summary>
-		/// Sets the factory used to obtain the <see cref="ILogStorage"/> implementation.
+		/// Sets the factory used to obtain the <see cref="ILogStorage"/> implementation to use when no user is authenticated,
+		/// i.e. after calling <see cref="SglAnalytics.UseOfflineModeAsync"/> without stored credentials.
 		/// </summary>
 		/// <param name="logStorageFactory">The factory function to use.</param>
 		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsConfigurator UseAnonymousLogStorage(Func<SglAnalyticsConfiguratorFactoryArguments, ILogStorage> logStorageFactory, bool dispose = true);
+		/// <summary>
+		/// Sets the factory used to obtain the <see cref="ILogStorage"/> implementation when a user is authenticated on the client.
+		/// </summary>
+		/// <param name="logStorageFactory">The factory function to use.</param>
+		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalytics"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
+		/// <returns>A reference to this <see cref="ISglAnalyticsConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsConfigurator UseUserLogStorage(Func<SglAnalyticsConfiguratorAuthenticatedFactoryArguments, ILogStorage> logStorageFactory, bool dispose = true);
 		/// <summary>
 		/// Sets the factory for the validator object that checks the certificates of data recipients to determine the authorized recipients for end-to-end encrypted data.

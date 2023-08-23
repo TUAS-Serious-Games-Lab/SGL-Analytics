@@ -48,7 +48,10 @@ namespace SGL.Analytics.DTO {
 		/// This specifies the inner encoding inside the encryption.
 		/// </summary>
 		public LogContentEncoding LogContentEncoding { get; private set; }
-
+		/// <summary>
+		/// Contains information about how the log body is encrypted and the required key material,
+		/// e.g. encrypted data keys for all intended recipients.
+		/// </summary>
 		public EncryptionInfo EncryptionInfo { get; private set; }
 
 		/// <summary>
@@ -59,6 +62,7 @@ namespace SGL.Analytics.DTO {
 		/// <param name="endTime">The time when recording of the log file was ended.</param>
 		/// <param name="nameSuffix">The file name suffix for the log file as specified by the client application.</param>
 		/// <param name="logContentEncoding">The encoding of the log file content as specified by the client application.</param>
+		/// <param name="encryptionInfo">Information about how the log body is encrypted and the required key material.</param>
 		[JsonConstructor]
 		public LogMetadataDTO(Guid logFileId, DateTime creationTime, DateTime endTime,
 			[PlainName][StringLength(16)] string nameSuffix, LogContentEncoding logContentEncoding, EncryptionInfo encryptionInfo) =>
@@ -80,6 +84,7 @@ namespace SGL.Analytics.DTO {
 		/// <param name="endTime">The time when recording of the log file was ended.</param>
 		/// <param name="nameSuffix">The file name suffix for the log file as specified by the client application.</param>
 		/// <param name="logContentEncoding">The encoding of the log file content as specified by the client application.</param>
+		/// <param name="encryptionInfo">Information about how the log body is encrypted and the required key material.</param>
 		public void Deconstruct(out Guid logFileId, out DateTime creationTime, out DateTime endTime,
 			out string nameSuffix, out LogContentEncoding logContentEncoding, out EncryptionInfo encryptionInfo) {
 			logFileId = LogFileId;

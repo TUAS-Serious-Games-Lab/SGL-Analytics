@@ -31,6 +31,10 @@ namespace SGL.Analytics.DTO {
 		/// </summary>
 		[StringLength(128, MinimumLength = 8)]
 		public string? Secret { get; private set; }
+		/// <summary>
+		/// If set, indicates that the user registration shall use delegated authentication instead of direct credentials.
+		/// It then contains an <c>Authorization</c> header value to pass to the upstream backend for authentication.
+		/// </summary>
 		public string? UpstreamAuthorizationHeader { get; private set; }
 		/// <summary>
 		/// A dictionary containing application-/study-specific properties that should be stored with the user registration.
@@ -39,10 +43,31 @@ namespace SGL.Analytics.DTO {
 		/// </summary>
 		[JsonConverter(typeof(ObjectDictionaryJsonConverter))]
 		public Dictionary<string, object?> StudySpecificProperties { get; private set; }
-
+		/// <summary>
+		/// Contains the encrypted application-/study-specific user registration properties as encrypted, gzipped JSON.
+		/// The used encryption mode and required key material is described by <see cref="PropertyEncryptionInfo"/>.
+		/// </summary>
 		public byte[]? EncryptedProperties { get; private set; }
+		/// <summary>
+		/// Decribes how <see cref="EncryptedProperties"/> is encrypted and contains the required key material, e.g. encrypted data keys.
+		/// </summary>
 		public EncryptionInfo? PropertyEncryptionInfo { get; private set; }
 
+		/// <summary>
+		/// Creates a new DTO with the given data and without encrypted properties and without upstream delegation.
+		/// </summary>
+		/// <param name="appName">The unique technical name of the client application performing the registration.</param>
+		/// <param name="username"> A username that can optionally be used by the client application.</param>
+		/// <param name="secret">A secret string for the user, used to authenticate them later, when logging-in.</param>
+		/// <param name="studySpecificProperties">A dictionary containing application-/study-specific properties that should be stored with the user registration.</param>
+		/// <remarks>
+		/// Kept for backwards compatibility, use the full overload for full functionality.
+		/// </remarks>
+		public UserRegistrationDTO([PlainName][StringLength(128, MinimumLength = 1)] string appName,
+			[PlainName(allowBrackets: true)][StringLength(64, MinimumLength = 1)] string? username,
+			[StringLength(128, MinimumLength = 8)] string? secret,
+			Dictionary<string, object?> studySpecificProperties) :
+			this(appName, username, secret, null, studySpecificProperties, null, null) { }
 
 		/// <summary>
 		/// Creates a new DTO with the given data.
@@ -50,13 +75,13 @@ namespace SGL.Analytics.DTO {
 		/// <param name="appName">The unique technical name of the client application performing the registration.</param>
 		/// <param name="username"> A username that can optionally be used by the client application.</param>
 		/// <param name="secret">A secret string for the user, used to authenticate them later, when logging-in.</param>
+		/// <param name="upstreamAuthorizationHeader">
+		/// If set, indicates that the user registration shall use delegated authentication instead of direct credentials.
+		/// It then contains an <c>Authorization</c> header value to pass to the upstream backend for authentication.
+		/// </param>
 		/// <param name="studySpecificProperties">A dictionary containing application-/study-specific properties that should be stored with the user registration.</param>
-		public UserRegistrationDTO([PlainName][StringLength(128, MinimumLength = 1)] string appName,
-			[PlainName(allowBrackets: true)][StringLength(64, MinimumLength = 1)] string? username,
-			[StringLength(128, MinimumLength = 8)] string? secret,
-			Dictionary<string, object?> studySpecificProperties) :
-			this(appName, username, secret, null, studySpecificProperties, null, null) { }
-
+		/// <param name="encryptedProperties">The encrypted app-specific properties for the user registration.</param>
+		/// <param name="propertyEncryptionInfo">Information about how <paramref name="encryptedProperties"/> is encrypted and associated key material.</param>
 		[JsonConstructor]
 		public UserRegistrationDTO([PlainName][StringLength(128, MinimumLength = 1)] string appName,
 			[PlainName(allowBrackets: true)][StringLength(64, MinimumLength = 1)] string? username,
@@ -71,7 +96,13 @@ namespace SGL.Analytics.DTO {
 		/// <param name="appName">The unique technical name of the client application performing the registration.</param>
 		/// <param name="username"> A username that can optionally be used by the client application.</param>
 		/// <param name="secret">A secret string for the user, used to authenticate them later, when logging-in.</param>
+		/// <param name="upstreamAuthorizationToken">
+		/// If set, indicates that the user registration shall use delegated authentication instead of direct credentials.
+		/// It then contains an <c>Authorization</c> header value to pass to the upstream backend for authentication.
+		/// </param>
 		/// <param name="studySpecificProperties">A dictionary containing application-/study-specific properties that should be stored with the user registration.</param>
+		/// <param name="encryptedProperties">The encrypted app-specific properties for the user registration.</param>
+		/// <param name="propertyEncryptionInfo">Information about how <paramref name="encryptedProperties"/> is encrypted and associated key material.</param>
 		public void Deconstruct(out string appName, out string? username, out string? secret, out string? upstreamAuthorizationToken,
 			out Dictionary<string, object?> studySpecificProperties, out byte[]? encryptedProperties, out EncryptionInfo? propertyEncryptionInfo) {
 			appName = AppName;
