@@ -670,7 +670,7 @@ namespace SGL.Analytics.Client.Tests {
 		}
 
 		[Fact]
-		public async Task AnonymouslyCollectedLogsCanBeINheritedUponSuccessfulRegistration() {
+		public async Task AnonymouslyCollectedLogsCanBeInheritedUponSuccessfulRegistration() {
 			await analytics.FinishAsync(); // In this test, we will not use the analytics object provided from the test class constructor, so clean it up before we replace it shortly.
 			ds.UserID = null;
 			analytics = new SglAnalytics("SglAnalyticsUnitTests", "FakeApiKey", httpClient, config => {
