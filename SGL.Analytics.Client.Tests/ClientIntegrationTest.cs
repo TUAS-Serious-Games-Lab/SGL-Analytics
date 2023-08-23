@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Ocsp;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
@@ -141,7 +142,12 @@ namespace SGL.Analytics.Client.Tests {
 					.WithHeader("Content-Type", new ExactMatcher("application/json"))
 					.WithBody(b => b?.DetectedBodyType == WireMock.Types.BodyType.Json))
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
-					.WithBodyAsJson(new LoginResponseDTO(new AuthorizationToken("OK"))));
+					.WithBodyAsJson(req => {
+						var body = req.BodyData?.BodyAsJson as JObject;
+						var uidToken = body?["UserId"];
+						var uid = uidToken != null ? (Guid?)Guid.Parse(uidToken.ToString()) : null;
+						return new LoginResponseDTO(new AuthorizationToken("OK"), uid, DateTime.UtcNow.AddHours(1));
+					}));
 			serverFixture.Server.Given(Request.Create().WithPath("/api/analytics/user/v1/recipient-certificates").UsingGet()
 					.WithParam("appName", appName)
 					.WithHeader("App-API-Token", new ExactMatcher(appAPIToken)))

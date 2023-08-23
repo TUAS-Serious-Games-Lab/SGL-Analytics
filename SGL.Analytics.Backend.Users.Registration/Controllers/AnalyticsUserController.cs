@@ -32,13 +32,13 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		private readonly IUserManager userManager;
 		private readonly IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo;
 		private readonly ILogger<AnalyticsUserController> logger;
-		private readonly ILoginService loginService;
+		private readonly ILoginAuthenticationService loginService;
 		private readonly IMetricsManager metrics;
 
 		/// <summary>
 		/// Instantiates the controller, injecting the required dependency objects.
 		/// </summary>
-		public AnalyticsUserController(IUserManager userManager, ILoginService loginService, IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, ILogger<AnalyticsUserController> logger, IMetricsManager metrics) {
+		public AnalyticsUserController(IUserManager userManager, ILoginAuthenticationService loginService, IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, ILogger<AnalyticsUserController> logger, IMetricsManager metrics) {
 			this.userManager = userManager;
 			this.loginService = loginService;
 			this.appRepo = appRepo;
@@ -258,7 +258,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				}
 				else {
 					metrics.HandleSuccessfulLogin(loginRequest.AppName);
-					return new LoginResponseDTO(new AuthorizationToken(token));
+					var authData = token.Value;
+					return new LoginResponseDTO(authData.Token, userid, authData.Expiry);
 				}
 			}
 			catch (OperationCanceledException) {

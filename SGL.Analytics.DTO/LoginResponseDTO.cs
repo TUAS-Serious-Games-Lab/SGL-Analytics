@@ -22,11 +22,6 @@ namespace SGL.Analytics.DTO {
 		/// </summary>
 		public DateTime? TokenExpiry { get; private set; }
 
-		[Obsolete("Use overload with userId and tokenExpiry instead.")]
-		public LoginResponseDTO(AuthorizationToken token) {
-			Token = token;
-		}
-
 		/// <summary>
 		/// Constructs a <see cref="LoginResponseDTO"/> with the given data.
 		/// </summary>
