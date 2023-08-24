@@ -188,7 +188,11 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				logger.LogError("Attempt to list logs from non-existent application {appName} for recipient {keyId} by exporter {dn}.", appName, recipientKeyId, exporterDN);
 				throw new ApplicationDoesNotExistException(appName);
 			}
-			var queryOptions = new LogMetadataQueryOptions { ForUpdating = false, FetchRecipientKey = recipientKeyId };
+			var queryOptions = new LogMetadataQueryOptions {
+				ForUpdating = false,
+				FetchRecipientKey = recipientKeyId,
+				Ordering = LogMetadataQuerySortCriteria.UserIdThenCreateTime
+			};
 			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, notForKeyId: null, queryOptions: queryOptions, ct: ct);
 			return logs.Select(log => new LogFile(log, logFileRepo)).ToList();
 		}

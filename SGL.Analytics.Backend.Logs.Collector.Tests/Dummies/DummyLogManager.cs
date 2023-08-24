@@ -69,6 +69,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 				throw new ApplicationDoesNotExistException(appName);
 			}
 			var logsQuery = Ingests.Where(ig => ig.LogMetadata.App.Name == appName)
+				.OrderBy(ig => ig.LogMetadata.UserId).ThenBy(ig => ig.LogMetadata.CreationTime)
 				.Select(ig => new LogFile(ig.LogMetadata,
 					new SingleLogFileRepository(ig.LogMetadata.App.Name, ig.LogMetadata.UserId, ig.LogMetadata.Id, ig.LogMetadata.FilenameSuffix, ig.LogContent)));
 			return logsQuery.ToList();
