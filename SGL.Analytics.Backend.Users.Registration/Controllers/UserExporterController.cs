@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Logging;
@@ -50,6 +51,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			return new UserMetadataDTO(user.Id, user.Username, user.AppSpecificProperties, user.EncryptedProperties, user.PropertyEncryptionInfo);
 		}
 
+		[ProducesResponseType(typeof(IEnumerable<Guid>), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet()]
 		public async Task<ActionResult<IEnumerable<Guid>>> GetUserIdList(CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetUserIdList));
@@ -76,6 +79,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 		}
 
+		[ProducesResponseType(typeof(IEnumerable<UserMetadataDTO>), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("all")]
 		public async Task<ActionResult<IEnumerable<UserMetadataDTO>>> GetMetadataForAllUsers([FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetMetadataForAllUsers));
@@ -103,6 +108,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 		}
 
+		[ProducesResponseType(typeof(UserMetadataDTO), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("{id:Guid}")]
 		public async Task<ActionResult<UserMetadataDTO>> GetUserMetadataById(Guid id, [FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetUserMetadataById));

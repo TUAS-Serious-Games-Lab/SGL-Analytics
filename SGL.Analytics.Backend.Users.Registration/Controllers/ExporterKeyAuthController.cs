@@ -28,6 +28,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			this.metrics = metrics;
 		}
 
+		[ProducesResponseType(typeof(ExporterKeyAuthChallengeDTO), StatusCodes.Status201Created)]
 		[HttpPost("open-challenge")]
 		public async Task<ActionResult<ExporterKeyAuthChallengeDTO>> OpenChallenge(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
 			try {
@@ -45,6 +46,10 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 		}
 
+		[ProducesResponseType(typeof(ExporterKeyAuthResponseDTO), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status410Gone)]
 		[HttpPost("complete-challenge")]
 		public async Task<ActionResult<ExporterKeyAuthResponseDTO>> CompleteChallenge(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct = default) {
 			try {

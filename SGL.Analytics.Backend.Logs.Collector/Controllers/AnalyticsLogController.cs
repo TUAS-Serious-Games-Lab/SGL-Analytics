@@ -47,6 +47,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 
 		[HttpGet("recipient-certificates")]
 		[Produces("application/x-pem-file")]
+		[ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 		public async Task<ActionResult<IEnumerable<string>>> GetRecipientCertificates([FromQuery] string appName, [FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string? appApiToken, CancellationToken ct = default) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, new ApplicationQueryOptions { FetchRecipients = true }, ct: ct);
@@ -95,8 +96,9 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		[DisableFormValueModelBinding]
 		[Consumes("multipart/form-data")]
 		[ProducesResponseType(StatusCodes.Status201Created)]
-		[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-		[ProducesResponseType(StatusCodes.Status413RequestEntityTooLarge)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status413RequestEntityTooLarge)]
 		[Authorize]
 		[UseConfigurableUploadLimit]
 		public async Task<ActionResult> IngestLog([FromHeader(Name = "App-API-Token")][StringLength(64, MinimumLength = 8)] string appApiToken, CancellationToken ct = default) {

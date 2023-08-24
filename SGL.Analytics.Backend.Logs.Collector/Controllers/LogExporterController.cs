@@ -52,6 +52,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 		}
 
+		[ProducesResponseType(typeof(IEnumerable<Guid>), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet]
 		public async Task<ActionResult<IEnumerable<Guid>>> GetLogIdList(CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var keyId, out var exporterDN, nameof(GetLogIdList));
@@ -78,6 +80,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 		}
 
+		[ProducesResponseType(typeof(IEnumerable<DownstreamLogMetadataDTO>), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("all")]
 		public async Task<ActionResult<IEnumerable<DownstreamLogMetadataDTO>>> GetMetadataForAllLogs([FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetMetadataForAllLogs));
@@ -105,6 +109,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 		}
 
+		[ProducesResponseType(typeof(DownstreamLogMetadataDTO), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("{id:Guid}/metadata")]
 		public async Task<ActionResult<DownstreamLogMetadataDTO>> GetLogMetadataById(Guid id, [FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetLogMetadataById));
@@ -138,6 +144,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 		}
 
+		[ProducesResponseType(typeof(byte[]), StatusCodes.Status200OK, "application/octet-stream")]
+		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("{id:Guid}/content")]
 		public async Task<ActionResult> GetLogContentById(Guid id, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetLogContentById));

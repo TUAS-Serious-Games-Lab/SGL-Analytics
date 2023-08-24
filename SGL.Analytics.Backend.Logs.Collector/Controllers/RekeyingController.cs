@@ -46,6 +46,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 		}
 
+		[ProducesResponseType(typeof(Dictionary<Guid, EncryptionInfo>), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("{keyId}")]
 		public async Task<ActionResult<Dictionary<Guid, EncryptionInfo>>> GetKeysForRekeying([FromRoute(Name = "keyId")] KeyId recipientKeyId,
 				[FromQuery(Name = "targetKeyId")] KeyId targetKeyId, [FromQuery(Name = "offset")] int offset = 0, CancellationToken ct = default) {
@@ -73,6 +75,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			}
 		}
 
+		[ProducesResponseType(StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpPut("{keyId}")]
 		public async Task<ActionResult> PutRekeyedKeys([FromRoute(Name = "keyId")] KeyId newRecipientKeyId, [FromBody] Dictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(PutRekeyedKeys));
