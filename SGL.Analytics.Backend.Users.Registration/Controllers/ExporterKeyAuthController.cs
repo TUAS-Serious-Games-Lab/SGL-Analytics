@@ -15,6 +15,21 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
+	/// <summary>
+	/// Implements the API routes for the key-pair-based challenge authentication for exporter clients.
+	/// These routes are prefixed under <c>api/analytics/user/v1/exporter-key-auth</c>.
+	/// The protocol consists of these steps:
+	/// <list type="number">
+	/// <item><description>The client calls <c>api/analytics/user/v1/exporter-key-auth/open-challenge</c> with their key id and the app to authenticate for.</description></item>
+	/// <item><description>The backend responds to this call with a challenge containing a unique id, a nonce value and the algorithm to use.</description></item>
+	/// <item><description>
+	/// The client signs a byte sequence formed from the challenge nonce and a few parameters using their private key.
+	/// See <see cref="ExporterKeyAuthSignatureDTO.ConstructContentToSign(ExporterKeyAuthRequestDTO, ExporterKeyAuthChallengeDTO)"/> for details.
+	/// </description></item>
+	/// <item><description>The client calls <c>api/analytics/user/v1/exporter-key-auth/complete-challenge</c> with the challenge id and the signature.</description></item>
+	/// <item><description>The backend validates the signature against the known public key and if successful responds by issuing a session token.</description></item>
+	/// </list>
+	/// </summary>
 	[Route("api/analytics/user/v1/exporter-key-auth")]
 	[ApiController]
 	public class ExporterKeyAuthController : ControllerBase {
@@ -22,12 +37,23 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		private readonly IKeyAuthManager keyAuthManager;
 		private readonly IMetricsManager metrics;
 
+		/// <summary>
+		/// Instantiates the controller, injecting the required dependency objects.
+		/// </summary>
 		public ExporterKeyAuthController(ILogger<ExporterKeyAuthController> logger, IKeyAuthManager keyAuthManager, IMetricsManager metrics) {
 			this.logger = logger;
 			this.keyAuthManager = keyAuthManager;
 			this.metrics = metrics;
 		}
 
+		/// <summary>
+		/// Handles the <c>api/analytics/user/v1/exporter-key-auth/open-challenge</c> route,
+		/// which is called by the client to open a challenge.
+		/// A challenge with a random nonce byte sequence is generated, remembered by the server, and served to the client.
+		/// </summary>
+		/// <param name="requestDto">The request data for opening the challenge.</param>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>A <see cref="ExporterKeyAuthChallengeDTO"/> containing the challenge data or an error state.</returns>
 		[ProducesResponseType(typeof(ExporterKeyAuthChallengeDTO), StatusCodes.Status201Created)]
 		[HttpPost("open-challenge")]
 		public async Task<ActionResult<ExporterKeyAuthChallengeDTO>> OpenChallenge(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
@@ -45,7 +71,14 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				throw;
 			}
 		}
-
+		/// <summary>
+		/// Handles the <c>api/analytics/user/v1/exporter-key-auth/complete-challenge</c> route,
+		/// which is called by the client to complete a previously posed challenge.
+		/// If the supplied signature is valid, a session token is issued to the client.
+		/// </summary>
+		/// <param name="signatureDto">Contains the id of the challenge to complete and the signature for which the client was challenged.</param>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>A <see cref="ExporterKeyAuthResponseDTO"/> containing the session token or an error state.</returns>
 		[ProducesResponseType(typeof(ExporterKeyAuthResponseDTO), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]

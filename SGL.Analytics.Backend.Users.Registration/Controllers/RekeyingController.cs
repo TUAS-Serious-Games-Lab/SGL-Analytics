@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SGL.Analytics.Backend.Domain.Exceptions;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
+using SGL.Analytics.Backend.Users.Application.Services;
 using SGL.Analytics.DTO;
 using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Crypto.EndToEnd;
@@ -15,6 +16,17 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
+	/// <summary>
+	/// Implements the API routes for rekeying data keys for user registrations to grant access to a new authorized recipient.
+	/// The client iteratively requests key material for rekeying, decrypts the data keys using the user's recipient key pair,
+	/// reencrypts them using the new authorized recipient's public key and then uploads the new data keys to be added to the database.
+	/// In the next request, for key material, the user registrations for which data keys were successfully added are excluded and
+	/// a new set of key material is provided.
+	/// Registrations that could not be successfully rekeyed are skipped using the pagination offset.
+	/// This iteration continues until a request for further key material returns an empty response.
+	/// These routes are prefixed under <c>api/analytics/user/v1/rekey</c>.
+	/// All routes here require an authorization that satisfies the <c>ExporterUser</c> policy.
+	/// </summary>
 	[Route("api/analytics/user/v1/rekey")]
 	[ApiController]
 	[Authorize(Policy = "ExporterUser")]
@@ -23,6 +35,9 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		private readonly ILogger<RekeyingController> logger;
 		private readonly IMetricsManager metrics;
 
+		/// <summary>
+		/// Instantiates the controller, injecting the required dependency objects.
+		/// </summary>
 		public RekeyingController(IUserManager userManager, ILogger<RekeyingController> logger, IMetricsManager metrics) {
 			this.userManager = userManager;
 			this.logger = logger;
@@ -46,6 +61,27 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 		}
 
+		/// <summary>
+		/// Implements <c>GET api/analytics/user/v1/rekey/{recipientKeyId}</c>, which retrieves a dictionary for a chunk of user registrations
+		/// that maps the user id to the <see cref="EncryptionInfo"/> for the user's encrypted property.
+		/// The returned data contains the encrypted data keys for the recipient key with the key id indicated by <paramref name="recipientKeyId"/>.
+		/// As the requested data is intended for the client to rekey it for a different recipient key-pair,
+		/// the data is filtered to only contain registrations for which there is not already a data key present for the target recipient indicated by <paramref name="targetKeyId"/>.
+		/// Additionally, pagination is supported using <paramref name="offset"/> and the item count configured in <see cref="UserManagerOptions.RekeyingPagination"/>.
+		/// </summary>
+		/// <param name="recipientKeyId">The key id for the recipient that has access and intends to grant access, i.e. the recipient key of the user making the request.</param>
+		/// <param name="targetKeyId">
+		/// The key id for the recipient that the client wants to grant access to.
+		/// Registrations for which this key already has access will be filtered out.
+		/// Passed as query parameter <c>targetKeyId</c>.
+		/// </param>
+		/// <param name="offset">
+		/// The number of registrations (after filtering) to skip for pagination.
+		/// The ordering is done by user ids.
+		/// Passed as query parameter <c>offset</c>.
+		/// </param>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>A <see cref="Dictionary{Guid, EncryptionInfo}"/> containing the encryption metadata for rekeying, or an error state.</returns>
 		[ProducesResponseType(typeof(Dictionary<Guid, EncryptionInfo>), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("{keyId}")]
@@ -75,6 +111,20 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 		}
 
+		/// <summary>
+		/// Implements <c>PUT api/analytics/user/v1/rekey/{newRecipientKeyId}</c>,
+		/// which stores data keys for the key-pair indicated by <paramref name="newRecipientKeyId"/>
+		/// into the database after they were rekeyed / reencrypted by the client in order to grant access to that key-pair.
+		/// </summary>
+		/// <param name="newRecipientKeyId">
+		/// The key id of the new recipient key-pair for which rekeyed data keys are provided.
+		/// </param>
+		/// <param name="dataKeys">
+		///	The rekeyed data keys provided in the request body as a JSON dictionary that
+		///	maps the user registration ids to the new <see cref="DataKeyInfo"/> that shall be added.
+		/// </param>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>An <see cref="ActionResult"/> indicating success or an error state.</returns>
 		[ProducesResponseType(StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpPut("{keyId}")]

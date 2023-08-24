@@ -23,8 +23,8 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 	/// <summary>
-	/// The controller class serving the <c>api/analytics/user/v1</c>, <c>api/analytics/user/v1/login</c>, and <c>api/analytics/user/v1/recipient-certificates</c>
-	/// routes that manage user registrations for SGL Analytics and perform logins for user sessions.
+	/// The controller class serving the <c>api/analytics/user/v1</c>, <c>api/analytics/user/v1/login</c>, <c>api/analytics/user/v1/open-session-from-upstream</c>, and <c>api/analytics/user/v1/recipient-certificates</c>
+	/// routes that manage user registrations for SGL Analytics, perform logins for user sessions and provide recipient certificates for end-to-end encryption.
 	/// </summary>
 	[Route("api/analytics/user/v1")]
 	[ApiController]
@@ -58,6 +58,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		/// <param name="appApiToken">The API token of the client application, provided by the HTTP header <c>App-API-Token</c>.</param>
 		/// <param name="userRegistration">The data transfer object describing the user registration data, provided through the request body in JSON form.</param>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>A <see cref="UserRegistrationResultDTO"/> containing the assigned user id, or an error state.</returns>
 		[ProducesResponseType(typeof(UserRegistrationResultDTO), StatusCodes.Status201Created)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
@@ -165,6 +166,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		/// The controller supports the following login request types: <see cref="IdBasedLoginRequestDTO"/>, <see cref="UsernameBasedLoginRequestDTO"/>
 		/// </param>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>A <see cref="LoginResponseDTO"/> containing the session token and the id of the user, or an error state.</returns>
 		[ProducesResponseType(typeof(LoginResponseDTO), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[HttpPost("login")]
@@ -278,6 +280,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		/// A data transfer object, containing the credentials to use for the login attempt.
 		/// </param>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>A <see cref="DelegatedLoginResponseDTO"/> containing the session token and the analytics and upstream ids of the user, or an error state.</returns>
 		[ProducesResponseType(typeof(LoginResponseDTO), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
@@ -350,10 +353,6 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		/// Upon success, the controller responds with a PEM-encoded list of X509 certificates,
 		/// one for each authorized recipient key pair, all signed by the app's signer certificate,
 		/// and a <see cref="StatusCodes.Status200OK"/>.
-		/// If the upstream backend rejects the supplied authorization token, a <see cref="StatusCodes.Status401Unauthorized"/> is returned.
-		/// If the upstream user id is not registered yet, a <see cref="StatusCodes.Status404NotFound"/> is returned.
-		/// If the token validation fails due to an error with the upstream backend, a <see cref="StatusCodes.Status503ServiceUnavailable"/> is returned.
-		/// Other errors are represented by responding with a <see cref="StatusCodes.Status500InternalServerError"/>.
 		/// </summary>
 		/// <param name="appName">The unique name of the app for which to obtain the list, passed as a query parameter.</param>
 		/// <param name="appApiToken">
@@ -361,6 +360,10 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		/// passed as an <c>App-API-Token</c> header.
 		/// </param>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>
+		/// A PEM-encoded list of certificates for the authorized recipient key-pairs,
+		/// signed by the applications signed key, or an error state.
+		/// </returns>
 		[HttpGet("recipient-certificates")]
 		[Produces("application/x-pem-file")]
 		[ProducesResponseType(StatusCodes.Status401Unauthorized)]

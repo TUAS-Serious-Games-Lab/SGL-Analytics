@@ -24,7 +24,8 @@ using System.Threading.Tasks;
 namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 
 	/// <summary>
-	/// The controller class serving the <c>api/analytics/log</c> route that accepts uploads of analytics log files for SGL Analytics.
+	/// The controller class serving the <c>api/analytics/log</c> route that accepts uploads of analytics log files for SGL Analytics
+	/// and the <c>api/analytics/log/v2/recipient-certificates</c> for fetching the authorized recipient certificates for end-to-end encryption of the log files.
 	/// </summary>
 	[Route("api/analytics/log/v2")]
 	[ApiController]
@@ -45,6 +46,22 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			this.metrics = metrics;
 		}
 
+		/// <summary>
+		/// Handles GET requests to <c>api/analytics/log/v2/recipient-certificates</c> for obtaining the list of authorized recipient certificates.
+		/// Upon success, the controller responds with a PEM-encoded list of X509 certificates,
+		/// one for each authorized recipient key pair, all signed by the app's signer certificate,
+		/// and a <see cref="StatusCodes.Status200OK"/>.
+		/// </summary>
+		/// <param name="appName">The unique name of the app for which to obtain the list, passed as a query parameter.</param>
+		/// <param name="appApiToken">
+		/// The API token authentication token for the app identified by <paramref name="appName"/>,
+		/// passed as an <c>App-API-Token</c> header.
+		/// </param>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>
+		/// A PEM-encoded list of certificates for the authorized recipient key-pairs,
+		/// signed by the applications signed key, or an error state.
+		/// </returns>
 		[HttpGet("recipient-certificates")]
 		[Produces("application/x-pem-file")]
 		[ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]

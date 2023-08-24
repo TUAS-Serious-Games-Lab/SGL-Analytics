@@ -16,6 +16,11 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Registration.Controllers {
+	/// <summary>
+	/// Implements the API routes for exporting user registration data.
+	/// These routes are prefixed under <c>api/analytics/user/v1</c>.
+	/// All routes here require an authorization that satisfies the <c>ExporterUser</c> policy.
+	/// </summary>
 	[Route("api/analytics/user/v1")]
 	[ApiController]
 	[Authorize(Policy = "ExporterUser")]
@@ -24,6 +29,9 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		private readonly ILogger<UserExporterController> logger;
 		private readonly IMetricsManager metrics;
 
+		/// <summary>
+		/// Instantiates the controller, injecting the required dependency objects.
+		/// </summary>
 		public UserExporterController(IUserManager userManager, ILogger<UserExporterController> logger, IMetricsManager metrics) {
 			this.userManager = userManager;
 			this.logger = logger;
@@ -51,6 +59,11 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			return new UserMetadataDTO(user.Id, user.Username, user.AppSpecificProperties, user.EncryptedProperties, user.PropertyEncryptionInfo);
 		}
 
+		/// <summary>
+		/// Implements <c>GET api/analytics/user/v1</c>, which provides the list of the ids of all user registrations of the application indicated by the authorization token.
+		/// </summary>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>A JSON list of GUIDs for the user registrations, or an error state.</returns>
 		[ProducesResponseType(typeof(IEnumerable<Guid>), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet()]
@@ -79,6 +92,13 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 		}
 
+		/// <summary>
+		/// Implements <c>GET api/analytics/user/v1/all</c>, which provides the user metadata for all user registrations of the application indicated by the authorization token.
+		/// The returned data contains the encrypted data keys for the recipient key with the key id indicated by <paramref name="recipientKeyId"/>.
+		/// </summary>
+		/// <param name="recipientKeyId">The id of the recipient key pair for which to retrieve the data keys.</param>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>A sequence of <see cref="UserMetadataDTO"/>s for the user registrations, or an error state.</returns>
 		[ProducesResponseType(typeof(IEnumerable<UserMetadataDTO>), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("all")]
@@ -108,6 +128,14 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 		}
 
+		/// <summary>
+		/// Implements <c>GET api/analytics/user/v1/{id:Guid}</c>, which retrieves the metadata for a specific user registration.
+		/// The returned data contains the encrypted data key for the recipient key with the key id indicated by <paramref name="recipientKeyId"/>.
+		/// </summary>
+		/// <param name="id">The id of the user to retrieve.</param>
+		/// <param name="recipientKeyId">The id of the recipient key pair for which to retrieve the data key.</param>
+		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
+		/// <returns>A <see cref="UserMetadataDTO"/> for the user registration, or an error state.</returns>
 		[ProducesResponseType(typeof(UserMetadataDTO), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("{id:Guid}")]
