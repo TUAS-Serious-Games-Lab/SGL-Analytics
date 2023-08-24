@@ -78,7 +78,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			if (credResult != null) return credResult;
 			try {
 				await userManager.AddRekeyedKeysAsync(appName, newRecipientKeyId, dataKeys, exporterDN, ct);
-				return Ok(dataKeys);
+				return Ok();
 			}
 			catch (OperationCanceledException) {
 				throw;
