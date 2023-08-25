@@ -1,165 +1,1290 @@
 {
-  "swagger": "2.0",
+  "openapi": "3.0.1",
   "info": {
-    "title": "SGL.Analytics.Backend.Users.Registration",
-    "version": "1.0"
+    "title": "SGL Analytics Users Service API",
+    "version": "v1"
   },
   "paths": {
-    "/api/analytics/user": {
+    "/api/analytics/user/v1": {
       "post": {
         "tags": [
           "AnalyticsUser"
         ],
-        "operationId": "RegisterUser",
-        "consumes": [
-          "application/json",
-          "text/json",
-          "application/*+json"
-        ],
-        "produces": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
         "parameters": [
           {
-            "in": "header",
             "name": "App-API-Token",
-            "type": "string"
-          },
-          {
-            "in": "body",
-            "name": "body",
-            "type": "UserRegistrationDTO"
+            "in": "header",
+            "schema": {
+              "maxLength": 64,
+              "minLength": 8,
+              "type": "string"
+            }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationDTO"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": "Success",
-            "type": "UserRegistrationResultDTO"
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRegistrationResultDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRegistrationResultDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRegistrationResultDTO"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthorized",
-            "type": "string"
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "409": {
             "description": "Conflict",
-            "type": "string"
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "400": {
             "description": "Bad Request",
-            "type": "string"
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "UserExporter"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/analytics/user/login": {
+    "/api/analytics/user/v1/login": {
       "post": {
         "tags": [
           "AnalyticsUser"
         ],
-        "operationId": "Login",
-        "consumes": [
-          "application/json",
-          "text/json",
-          "application/*+json"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/user/v1/open-session-from-upstream": {
+      "post": {
+        "tags": [
+          "AnalyticsUser"
         ],
-        "produces": [
-          "text/plain",
-          "application/json",
-          "text/json"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpstreamSessionRequestDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpstreamSessionRequestDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpstreamSessionRequestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Server Error",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/user/v1/recipient-certificates": {
+      "get": {
+        "tags": [
+          "AnalyticsUser"
         ],
         "parameters": [
           {
-            "in": "body",
-            "name": "body",
-            "type": "LoginRequestDTO"
+            "name": "appName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "App-API-Token",
+            "in": "header",
+            "schema": {
+              "maxLength": 64,
+              "minLength": 8,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/user/v1/exporter-key-auth/open-challenge": {
+      "post": {
+        "tags": [
+          "ExporterKeyAuth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExporterKeyAuthRequestDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExporterKeyAuthRequestDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExporterKeyAuthRequestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExporterKeyAuthChallengeDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExporterKeyAuthChallengeDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExporterKeyAuthChallengeDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/user/v1/exporter-key-auth/complete-challenge": {
+      "post": {
+        "tags": [
+          "ExporterKeyAuth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExporterKeyAuthSignatureDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExporterKeyAuthSignatureDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExporterKeyAuthSignatureDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExporterKeyAuthResponseDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExporterKeyAuthResponseDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExporterKeyAuthResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Client Error",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/user/v1/rekey/{keyId}": {
+      "get": {
+        "tags": [
+          "Rekeying"
+        ],
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "keyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "Success",
-            "type": "LoginResponseDTO"
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/EncryptionInfo"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/EncryptionInfo"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/EncryptionInfo"
+                  }
+                }
+              }
+            }
           },
-          "401": {
-            "description": "Unauthorized",
-            "type": "string"
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Rekeying"
+        ],
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          {
+            "name": "keyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/DataKeyInfo"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/DataKeyInfo"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/DataKeyInfo"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/user/v1/all": {
+      "get": {
+        "tags": [
+          "UserExporter"
+        ],
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserMetadataDTO"
+                  }
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserMetadataDTO"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserMetadataDTO"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserMetadataDTO"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/user/v1/{id}": {
+      "get": {
+        "tags": [
+          "UserExporter"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMetadataDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMetadataDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMetadataDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
     }
   },
-  "definitions": {
-    "AuthorizationToken": {
-      "type": "object",
-      "properties": {
-        "scheme": {
-          "$ref": "#/definitions/AuthorizationTokenScheme"
+  "components": {
+    "schemas": {
+      "AuthorizationToken": {
+        "type": "object",
+        "properties": {
+          "scheme": {
+            "$ref": "#/components/schemas/AuthorizationTokenScheme"
+          },
+          "value": {
+            "type": "string",
+            "nullable": true
+          }
         },
-        "value": {
-          "type": "string",
-          "readOnly": true
-        }
-      }
-    },
-    "AuthorizationTokenScheme": {
-      "format": "int32",
-      "enum": [
-        0
-      ],
-      "type": "integer"
-    },
-    "LoginRequestDTO": {
-      "type": "object",
-      "properties": {
-        "appName": {
-          "type": "string"
+        "additionalProperties": false
+      },
+      "AuthorizationTokenScheme": {
+        "enum": [
+          0
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "DataEncryptionMode": {
+        "enum": [
+          "AES_256_CCM",
+          "Unencrypted"
+        ],
+        "type": "string"
+      },
+      "DataKeyInfo": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/KeyEncryptionMode"
+          },
+          "encryptedKey": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "messagePublicKey": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          }
         },
-        "appApiToken": {
-          "type": "string"
+        "additionalProperties": false
+      },
+      "EncryptionInfo": {
+        "type": "object",
+        "properties": {
+          "dataMode": {
+            "$ref": "#/components/schemas/DataEncryptionMode"
+          },
+          "iVs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "byte"
+            },
+            "nullable": true
+          },
+          "dataKeys": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DataKeyInfo"
+            },
+            "nullable": true
+          },
+          "messagePublicKey": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          }
         },
-        "userId": {
-          "format": "uuid",
-          "type": "string"
+        "additionalProperties": false
+      },
+      "ExporterKeyAuthChallengeDTO": {
+        "type": "object",
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "challengeBytes": {
+            "maxLength": 65536,
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "digestAlgorithmToUse": {
+            "$ref": "#/components/schemas/SignatureDigest"
+          }
         },
-        "userSecret": {
-          "type": "string"
-        }
-      }
-    },
-    "LoginResponseDTO": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "$ref": "#/definitions/AuthorizationToken"
-        }
-      }
-    },
-    "UserRegistrationDTO": {
-      "type": "object",
-      "properties": {
-        "appName": {
-          "type": "string"
+        "additionalProperties": false
+      },
+      "ExporterKeyAuthRequestDTO": {
+        "type": "object",
+        "properties": {
+          "appName": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "keyId": {
+            "$ref": "#/components/schemas/KeyId"
+          }
         },
-        "username": {
-          "type": "string"
+        "additionalProperties": false
+      },
+      "ExporterKeyAuthResponseDTO": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "$ref": "#/components/schemas/AuthorizationToken"
+          },
+          "tokenExpiry": {
+            "type": "string",
+            "format": "date-time"
+          }
         },
-        "secret": {
-          "type": "string"
+        "additionalProperties": false
+      },
+      "ExporterKeyAuthSignatureDTO": {
+        "type": "object",
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "signature": {
+            "maxLength": 65536,
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          }
         },
-        "studySpecificProperties": {
-          "type": "object",
-          "additionalProperties": {}
-        }
-      }
-    },
-    "UserRegistrationResultDTO": {
-      "type": "object",
-      "properties": {
-        "userId": {
-          "format": "uuid",
-          "type": "string"
-        }
+        "additionalProperties": false
+      },
+      "KeyEncryptionMode": {
+        "enum": [
+          "RSA_PKCS1",
+          "ECDH_KDF2_SHA256_AES_256_CCM"
+        ],
+        "type": "string"
+      },
+      "KeyId": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginRequestDTO": {
+        "type": "object",
+        "properties": {
+          "appName": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "appApiToken": {
+            "maxLength": 64,
+            "minLength": 8,
+            "type": "string",
+            "nullable": true
+          },
+          "userSecret": {
+            "maxLength": 128,
+            "minLength": 8,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginResponseDTO": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "$ref": "#/components/schemas/AuthorizationToken"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "tokenExpiry": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "SignatureDigest": {
+        "enum": [
+          2,
+          3,
+          5
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "UpstreamSessionRequestDTO": {
+        "type": "object",
+        "properties": {
+          "appName": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "appApiToken": {
+            "maxLength": 64,
+            "minLength": 8,
+            "type": "string",
+            "nullable": true
+          },
+          "upstreamAuthorizationHeader": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserMetadataDTO": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "studySpecificProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "nullable": true
+          },
+          "encryptedProperties": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "propertyEncryptionInfo": {
+            "$ref": "#/components/schemas/EncryptionInfo"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserRegistrationDTO": {
+        "type": "object",
+        "properties": {
+          "appName": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "secret": {
+            "maxLength": 128,
+            "minLength": 8,
+            "type": "string",
+            "nullable": true
+          },
+          "upstreamAuthorizationHeader": {
+            "type": "string",
+            "nullable": true
+          },
+          "studySpecificProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "nullable": true
+          },
+          "encryptedProperties": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "propertyEncryptionInfo": {
+            "$ref": "#/components/schemas/EncryptionInfo"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserRegistrationResultDTO": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
       }
     }
   }

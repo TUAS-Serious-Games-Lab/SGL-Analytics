@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using Prometheus;
 using SGL.Analytics.Backend.Users.Application;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
@@ -58,6 +59,11 @@ namespace SGL.Analytics.Backend.Users.Registration {
 			services.AddModelStateValidationErrorLogging((err, ctx) =>
 				ctx.HttpContext.RequestServices.GetService<IMetricsManager>()?
 				.HandleModelStateValidationError(err.ErrorMessage));
+
+			services.AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo {
+				Title = "SGL Analytics Users Service API",
+				Version = "v1"
+			}));
 
 			services.AddHealthChecks()
 				.AddDbContextCheck<UsersContext>("db_health_check")

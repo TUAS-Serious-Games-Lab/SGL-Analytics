@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using Prometheus;
 using SGL.Analytics.Backend.Logs.Application.Interfaces;
 using SGL.Analytics.Backend.Logs.Application.Services;
@@ -56,6 +57,11 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 			services.AddModelStateValidationErrorLogging((err, ctx) =>
 				ctx.HttpContext.RequestServices.GetService<IMetricsManager>()?
 				.HandleModelStateValidationError(err.ErrorMessage));
+
+			services.AddSwaggerGen(c => c.SwaggerDoc("v2", new OpenApiInfo {
+				Title = "SGL Analytics Log Service API",
+				Version = "v2"
+			}));
 
 			services.AddHealthChecks()
 				.AddCheck<LogFileRepositoryHealthCheck>("log_file_repository_health_check")
