@@ -10,7 +10,7 @@
         "tags": [
           "AnalyticsLog"
         ],
-        "summary": "Handles GET requests to `api/analytics/log/v2/recipient-certificates` for obtaining the list of authorized recipient certificates.\r\nUpon success, the controller responds with a PEM-encoded list of X509 certificates,\r\none for each authorized recipient key pair, all signed by the app's signer certificate,\r\nand a Microsoft.AspNetCore.Http.StatusCodes.Status200OK.",
+        "summary": "Obtainins the list of authorized recipient certificates.\r\nUpon success, the controller responds with a PEM-encoded list of X509 certificates,\r\none for each authorized recipient key pair, all signed by the app's signer certificate,\r\nand a Microsoft.AspNetCore.Http.StatusCodes.Status200OK.",
         "operationId": "GetRecipientCertificates",
         "produces": [
           "application/x-pem-file"
@@ -55,7 +55,7 @@
         "tags": [
           "AnalyticsLog"
         ],
-        "summary": "Handles POST requests to `api/analytics/log/v2` for analytics log files with the log contents and associated metadata.\r\nRequest body shall consist of two multipart/form-data sections:\r\n- The first section shall have a `Content-Type` of `application/json` an a `Content-Disposition` with name `metadata` and shall contain the metadata for the uploaded log file as a JSON-serialized SGL.Analytics.DTO.LogMetadataDTO object.\r\n- The second section shall have a `Content-Type` of `application/octet-stream` an a `Content-Disposition` with name `content` and shall contain the raw log file contents, compressed and / or encrypted depending on SGL.Analytics.DTO.LogMetadataDTO.LogContentEncoding.\r\n            \r\nThis route requires authorization using a JWT bearer token issued by the controller for `api/analytics/user/login` in the user registration service.\r\nIf no such token is present, the authorization layer will reject the request and respond with a Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized, containing a `WWW-Authenticate` header as an authorization challenge.\r\nUpon successful upload, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status201Created.\r\nIf there is an error with either the JWT bearer token or with appApiToken, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized.\r\nIf the log file is larger than the limit configured in `AnalyticsLog:UploadSizeLimit`, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status413RequestEntityTooLarge.\r\nErrors with the request body data result in  Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest.\r\nOther errors are represented by the controller responding with a Microsoft.AspNetCore.Http.StatusCodes.Status500InternalServerError.",
+        "summary": "Handles uploads of analytics log files with the log contents and associated metadata.\r\nThe request body shall consist of two multipart/form-data sections:\r\n- The first section shall have a `Content-Type` of `application/json` an a `Content-Disposition` with name `metadata` and shall contain the metadata for the uploaded log file as a JSON-serialized SGL.Analytics.DTO.LogMetadataDTO object.\r\n- The second section shall have a `Content-Type` of `application/octet-stream` an a `Content-Disposition` with name `content` and shall contain the raw log file contents, compressed and / or encrypted depending on SGL.Analytics.DTO.LogMetadataDTO.LogContentEncoding.\r\n            \r\nThis route requires authorization using a JWT bearer token issued by the controller for `api/analytics/user/login` in the user registration service.\r\nIf no such token is present, the authorization layer will reject the request and respond with a Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized, containing a `WWW-Authenticate` header as an authorization challenge.\r\nUpon successful upload, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status201Created.\r\nIf there is an error with either the JWT bearer token or with appApiToken, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized.\r\nIf the log file is larger than the limit configured in `AnalyticsLog:UploadSizeLimit`, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status413RequestEntityTooLarge.\r\nErrors with the request body data result in  Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest.\r\nOther errors are represented by the controller responding with a Microsoft.AspNetCore.Http.StatusCodes.Status500InternalServerError.",
         "operationId": "IngestLog",
         "produces": [
           "application/x-pem-file",
@@ -101,7 +101,7 @@
         "tags": [
           "LogExporter"
         ],
-        "summary": "Implements `GET api/analytics/log/v2`, which provides the list of the ids of all analytics logs of the application indicated by the authorization token.",
+        "summary": "Provides the list of the ids of all analytics logs of the application indicated by the authorization token.",
         "operationId": "GetLogIdList",
         "produces": [
           "text/plain",
@@ -109,7 +109,7 @@
           "text/json",
           "application/x-pem-file"
         ],
-	    "parameters": [],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
@@ -135,7 +135,7 @@
         "tags": [
           "LogExporter"
         ],
-        "summary": "Implements `GET api/analytics/log/v2/all`, which provides the log metadata for all analytics logs of the application indicated by the authorization token.\r\nThe returned data contains the encrypted data keys for the recipient key with the key id indicated by recipientKeyId.",
+        "summary": "Provides the log metadata for all analytics logs of the application indicated by the authorization token.\r\nThe returned data contains the encrypted data keys for the recipient key with the key id indicated by recipientKeyId.",
         "operationId": "GetMetadataForAllLogs",
         "produces": [
           "application/x-pem-file",
@@ -147,6 +147,7 @@
           {
             "in": "query",
             "name": "Id",
+            "description": "Returns a copy of the raw id bytes.",
             "type": "string",
             "format": "byte"
           }
@@ -175,7 +176,7 @@
         "tags": [
           "LogExporter"
         ],
-        "summary": "Implements `GET api/analytics/log/v2/{id:Guid}/metadata`, which retrieves the metadata for a specific analytics log.\r\nThe returned data contains the encrypted data key for the recipient key with the key id indicated by recipientKeyId.",
+        "summary": "Retrieves the metadata for a specific analytics log.\r\nThe returned data contains the encrypted data key for the recipient key with the key id indicated by recipientKeyId.",
         "operationId": "GetLogMetadataById",
         "produces": [
           "text/plain",
@@ -195,6 +196,7 @@
           {
             "in": "query",
             "name": "Id",
+            "description": "Returns a copy of the raw id bytes.",
             "type": "string",
             "format": "byte"
           }
@@ -220,7 +222,7 @@
         "tags": [
           "LogExporter"
         ],
-        "summary": "Implements `GET api/analytics/log/v2/{id:Guid}/content`, which retrieves the content for a specific analytics log.\r\nThe response body is the raw byte stream which is encrypted as described by the SGL.Analytics.DTO.LogMetadataDTO.EncryptionInfo of the metadata,\r\nwhich also contains the encrypted key material needed for decryption.",
+        "summary": "Retrieves the content for a specific analytics log.\r\nThe response body is the raw byte stream which is encrypted as described by the SGL.Analytics.DTO.LogMetadataDTO.EncryptionInfo of the metadata,\r\nwhich also contains the encrypted key material needed for decryption.",
         "operationId": "GetLogContentById",
         "produces": [
           "application/x-pem-file",
@@ -256,7 +258,7 @@
         "tags": [
           "Rekeying"
         ],
-        "summary": "Implements `GET api/analytics/log/v2/rekey/{recipientKeyId}`, which retrieves a dictionary for a chunk of game analytics logs\r\nthat maps the user id to the SGL.Utilities.Crypto.EndToEnd.EncryptionInfo for the encrypted log content.\r\nThe returned data contains the encrypted data keys for the recipient key with the key id indicated by recipientKeyId.\r\nAs the requested data is intended for the client to rekey it for a different recipient key-pair,\r\nthe data is filtered to only contain logs for which there is not already a data key present for the target recipient indicated by targetKeyId.\r\nAdditionally, pagination is supported using offset and the item count configured in SGL.Analytics.Backend.Logs.Application.Services.LogManagerOptions.RekeyingPagination.",
+        "summary": "Retrieves a dictionary for a chunk of game analytics logs\r\nthat maps the user id to the SGL.Utilities.Crypto.EndToEnd.EncryptionInfo for the encrypted log content.\r\nThe returned data contains the encrypted data keys for the recipient key with the key id indicated by recipientKeyId.\r\nAs the requested data is intended for the client to rekey it for a different recipient key-pair,\r\nthe data is filtered to only contain logs for which there is not already a data key present for the target recipient indicated by targetKeyId.\r\nAdditionally, pagination is supported using offset and the item count configured in SGL.Analytics.Backend.Logs.Application.Services.LogManagerOptions.RekeyingPagination.",
         "operationId": "GetKeysForRekeying",
         "produces": [
           "text/plain",
@@ -268,6 +270,7 @@
           {
             "in": "path",
             "name": "Id",
+            "description": "Returns a copy of the raw id bytes.",
             "required": true,
             "type": "string",
             "format": "byte"
@@ -275,6 +278,7 @@
           {
             "in": "query",
             "name": "Id",
+            "description": "Returns a copy of the raw id bytes.",
             "type": "string",
             "format": "byte"
           },
@@ -315,7 +319,7 @@
         "tags": [
           "Rekeying"
         ],
-        "summary": "Implements `PUT api/analytics/log/v2/rekey/{newRecipientKeyId}`,\r\nwhich stores data keys for the key-pair indicated by newRecipientKeyId\r\ninto the database after they were rekeyed / reencrypted by the client in order to grant access to that key-pair.",
+        "summary": "Stores data keys for the key-pair indicated by newRecipientKeyId\r\ninto the database after they were rekeyed / reencrypted by the client in order to grant access to that key-pair.",
         "operationId": "PutRekeyedKeys",
         "consumes": [
           "application/json",
@@ -332,6 +336,7 @@
           {
             "in": "path",
             "name": "Id",
+            "description": "Returns a copy of the raw id bytes.",
             "required": true,
             "type": "string",
             "format": "byte"
@@ -370,6 +375,7 @@
   },
   "definitions": {
     "DataEncryptionMode": {
+      "description": "Describes the encryption mode used for encrypting the actual contents of a data object, e.g. a message or file.",
       "enum": [
         "AES_256_CCM",
         "Unencrypted"
@@ -377,6 +383,7 @@
       "type": "string"
     },
     "DataKeyInfo": {
+      "description": "Encapsulates the recipient-specific encryption metadata for a data object.\r\nThus, an object of this class for each authorized recipient is contained in an SGL.Utilities.Crypto.EndToEnd.EncryptionInfo object.",
       "type": "object",
       "properties": {
         "mode": {
@@ -384,10 +391,12 @@
         },
         "encryptedKey": {
           "format": "byte",
+          "description": "The randomly generated data key used for the content ecryption, encrypting for the recipients key using the mode indicated by SGL.Utilities.Crypto.EndToEnd.DataKeyInfo.Mode.",
           "type": "string"
         },
         "messagePublicKey": {
           "format": "byte",
+          "description": "When SGL.Utilities.Crypto.EndToEnd.KeyEncryptionMode.ECDH_KDF2_SHA256_AES_256_CCM is used with a recipient-specific message key pair,\r\nthis property holds an encoded version of the public key.\r\nRecipient-specific message key pairs are used when either a shared key is not allowed by the sender's policy,\r\nor when a recipient needs a key that deviates from the shared key. The latter happens when not all recipients use the same named Elliptic Curve\r\nor when the recipient uses excplicit Elliptic Curve parameteres instead of a named curve.",
           "type": "string"
         }
       }
@@ -441,12 +450,14 @@
       }
     },
     "EncryptionInfo": {
+      "description": "Encapsulates the encryption-related metadata abount a data object.",
       "type": "object",
       "properties": {
         "dataMode": {
           "$ref": "#/definitions/DataEncryptionMode"
         },
         "iVs": {
+          "description": "Represents the initialization vectors (IV) used for the encryption of the data, one for each stream in the data object.",
           "type": "array",
           "items": {
             "format": "byte",
@@ -454,6 +465,7 @@
           }
         },
         "dataKeys": {
+          "description": "Contains the encrypted data keys for the recipients, indexed by the key id of the recipients.",
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/DataKeyInfo"
@@ -461,11 +473,13 @@
         },
         "messagePublicKey": {
           "format": "byte",
+          "description": "When SGL.Utilities.Crypto.EndToEnd.KeyEncryptionMode.ECDH_KDF2_SHA256_AES_256_CCM is used with a shared message key pair, this property holds an encoded version of the shared public key.",
           "type": "string"
         }
       }
     },
     "KeyEncryptionMode": {
+      "description": "Describes the encryption mode used for encrypting the data keys for the desired recipients.",
       "enum": [
         "RSA_PKCS1",
         "ECDH_KDF2_SHA256_AES_256_CCM"
@@ -502,6 +516,9 @@
       },
       "additionalProperties": { }
     }
+  },
+  "securityDefinitions": {
+    "Bearer": { }
   },
   "tags": [
     {
