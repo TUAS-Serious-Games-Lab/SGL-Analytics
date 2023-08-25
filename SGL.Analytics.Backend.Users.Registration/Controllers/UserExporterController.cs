@@ -60,7 +60,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		/// <summary>
-		/// Implements <c>GET api/analytics/user/v1</c>, which provides the list of the ids of all user registrations of the application indicated by the authorization token.
+		/// Provides the list of the ids of all user registrations of the application indicated by the authorization token.
 		/// </summary>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
 		/// <returns>A JSON list of GUIDs for the user registrations, or an error state.</returns>
@@ -93,7 +93,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		/// <summary>
-		/// Implements <c>GET api/analytics/user/v1/all</c>, which provides the user metadata for all user registrations of the application indicated by the authorization token.
+		/// Provides the user metadata for all user registrations of the application indicated by the authorization token.
 		/// The returned data contains the encrypted data keys for the recipient key with the key id indicated by <paramref name="recipientKeyId"/>.
 		/// </summary>
 		/// <param name="recipientKeyId">The id of the recipient key pair for which to retrieve the data keys.</param>
@@ -129,7 +129,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		/// <summary>
-		/// Implements <c>GET api/analytics/user/v1/{id:Guid}</c>, which retrieves the metadata for a specific user registration.
+		/// Retrieves the metadata for a specific user registration.
 		/// The returned data contains the encrypted data key for the recipient key with the key id indicated by <paramref name="recipientKeyId"/>.
 		/// </summary>
 		/// <param name="id">The id of the user to retrieve.</param>

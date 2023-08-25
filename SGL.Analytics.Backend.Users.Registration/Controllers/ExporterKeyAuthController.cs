@@ -47,8 +47,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		/// <summary>
-		/// Handles the <c>api/analytics/user/v1/exporter-key-auth/open-challenge</c> route,
-		/// which is called by the client to open a challenge.
+		/// Called by the client to open a challenge.
 		/// A challenge with a random nonce byte sequence is generated, remembered by the server, and served to the client.
 		/// </summary>
 		/// <param name="requestDto">The request data for opening the challenge.</param>
@@ -72,8 +71,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 		}
 		/// <summary>
-		/// Handles the <c>api/analytics/user/v1/exporter-key-auth/complete-challenge</c> route,
-		/// which is called by the client to complete a previously posed challenge.
+		/// Called by the client to complete a previously posed challenge.
 		/// If the supplied signature is valid, a session token is issued to the client.
 		/// </summary>
 		/// <param name="signatureDto">Contains the id of the challenge to complete and the signature for which the client was challenged.</param>

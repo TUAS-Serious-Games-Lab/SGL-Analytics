@@ -62,8 +62,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		/// <summary>
-		/// Implements <c>GET api/analytics/user/v1/rekey/{recipientKeyId}</c>, which retrieves a dictionary for a chunk of user registrations
-		/// that maps the user id to the <see cref="EncryptionInfo"/> for the user's encrypted property.
+		/// Retrieves a dictionary for a chunk of user registrations that maps the user id to the <see cref="EncryptionInfo"/> for the user's encrypted property.
 		/// The returned data contains the encrypted data keys for the recipient key with the key id indicated by <paramref name="recipientKeyId"/>.
 		/// As the requested data is intended for the client to rekey it for a different recipient key-pair,
 		/// the data is filtered to only contain registrations for which there is not already a data key present for the target recipient indicated by <paramref name="targetKeyId"/>.
@@ -112,8 +111,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		/// <summary>
-		/// Implements <c>PUT api/analytics/user/v1/rekey/{newRecipientKeyId}</c>,
-		/// which stores data keys for the key-pair indicated by <paramref name="newRecipientKeyId"/>
+		/// Stores data keys for the key-pair indicated by <paramref name="newRecipientKeyId"/>
 		/// into the database after they were rekeyed / reencrypted by the client in order to grant access to that key-pair.
 		/// </summary>
 		/// <param name="newRecipientKeyId">

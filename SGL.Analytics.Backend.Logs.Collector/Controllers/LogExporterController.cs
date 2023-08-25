@@ -61,7 +61,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		/// <summary>
-		/// Implements <c>GET api/analytics/log/v2</c>, which provides the list of the ids of all analytics logs of the application indicated by the authorization token.
+		/// Provides the list of the ids of all analytics logs of the application indicated by the authorization token.
 		/// </summary>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
 		/// <returns>A JSON list of GUIDs for the analytics logs, or an error state.</returns>
@@ -94,7 +94,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		/// <summary>
-		/// Implements <c>GET api/analytics/log/v2/all</c>, which provides the log metadata for all analytics logs of the application indicated by the authorization token.
+		/// Provides the log metadata for all analytics logs of the application indicated by the authorization token.
 		/// The returned data contains the encrypted data keys for the recipient key with the key id indicated by <paramref name="recipientKeyId"/>.
 		/// </summary>
 		/// <param name="recipientKeyId">The id of the recipient key pair for which to retrieve the data keys.</param>
@@ -130,7 +130,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		/// <summary>
-		/// Implements <c>GET api/analytics/log/v2/{id:Guid}/metadata</c>, which retrieves the metadata for a specific analytics log.
+		/// Retrieves the metadata for a specific analytics log.
 		/// The returned data contains the encrypted data key for the recipient key with the key id indicated by <paramref name="recipientKeyId"/>.
 		/// </summary>
 		/// <param name="id">The id of the log of which to retrieve the metadata.</param>
@@ -173,7 +173,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		/// <summary>
-		/// Implements <c>GET api/analytics/log/v2/{id:Guid}/content</c>, which retrieves the content for a specific analytics log.
+		/// Retrieves the content for a specific analytics log.
 		/// The response body is the raw byte stream which is encrypted as described by the <see cref="LogMetadataDTO.EncryptionInfo"/> of the metadata,
 		/// which also contains the encrypted key material needed for decryption.
 		/// </summary>

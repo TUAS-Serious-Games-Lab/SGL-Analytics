@@ -62,7 +62,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		/// <summary>
-		/// Implements <c>GET api/analytics/log/v2/rekey/{recipientKeyId}</c>, which retrieves a dictionary for a chunk of game analytics logs
+		/// Retrieves a dictionary for a chunk of game analytics logs
 		/// that maps the user id to the <see cref="EncryptionInfo"/> for the encrypted log content.
 		/// The returned data contains the encrypted data keys for the recipient key with the key id indicated by <paramref name="recipientKeyId"/>.
 		/// As the requested data is intended for the client to rekey it for a different recipient key-pair,
@@ -112,8 +112,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		/// <summary>
-		/// Implements <c>PUT api/analytics/log/v2/rekey/{newRecipientKeyId}</c>,
-		/// which stores data keys for the key-pair indicated by <paramref name="newRecipientKeyId"/>
+		/// Stores data keys for the key-pair indicated by <paramref name="newRecipientKeyId"/>
 		/// into the database after they were rekeyed / reencrypted by the client in order to grant access to that key-pair.
 		/// </summary>
 		/// <param name="newRecipientKeyId">

@@ -47,7 +47,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		}
 
 		/// <summary>
-		/// Handles GET requests to <c>api/analytics/log/v2/recipient-certificates</c> for obtaining the list of authorized recipient certificates.
+		/// Obtainins the list of authorized recipient certificates.
 		/// Upon success, the controller responds with a PEM-encoded list of X509 certificates,
 		/// one for each authorized recipient key pair, all signed by the app's signer certificate,
 		/// and a <see cref="StatusCodes.Status200OK"/>.
@@ -92,10 +92,9 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 			return Ok(app.DataRecipients.Select(r => r.CertificatePem));
 		}
 
-		// POST: api/analytics/log/v2
 		/// <summary>
-		/// Handles POST requests to <c>api/analytics/log/v2</c> for analytics log files with the log contents and associated metadata.
-		/// Request body shall consist of two multipart/form-data sections:
+		/// Handles uploads of analytics log files with the log contents and associated metadata.
+		/// The request body shall consist of two multipart/form-data sections:
 		/// - The first section shall have a <c>Content-Type</c> of <c>application/json</c> an a <c>Content-Disposition</c> with name <c>metadata</c> and shall contain the metadata for the uploaded log file as a JSON-serialized <see cref="LogMetadataDTO"/> object.
 		/// - The second section shall have a <c>Content-Type</c> of <c>application/octet-stream</c> an a <c>Content-Disposition</c> with name <c>content</c> and shall contain the raw log file contents, compressed and / or encrypted depending on <see cref="LogMetadataDTO.LogContentEncoding"/>.
 		///

@@ -47,7 +47,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		/// <summary>
-		/// Handles POST requests to <c>api/analytics/user/v1</c> for user registrations.
+		/// Handles registrations of new users.
 		/// The controller responds with a <see cref="UserRegistrationResultDTO"/> in JSON form, containing the assigned user id, and a <see cref="StatusCodes.Status201Created"/> upon sucess.
 		/// The client needs to use this id wenn logging in using <see cref="Login(LoginRequestDTO, CancellationToken)"/>.
 		/// If the <see cref="UserRegistrationDTO.StudySpecificProperties"/> contains invalid properties, the controller responds with a <see cref="StatusCodes.Status400BadRequest"/>.
@@ -154,7 +154,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		/// <summary>
-		/// Handles POST requests to <c>api/analytics/user/v1/login</c> for user logins to start a session.
+		/// Handles user logins to start a session.
 		/// Upon success, the controller responds with a JSON-encoded <see cref="LoginResponseDTO"/>, containing a session token that can be used to
 		/// authenticate requests to SGL Analytics services as the logged-in user, and a <see cref="StatusCodes.Status200OK"/>.
 		/// If the login fails because any of the credentials are incorrect or the credentials don't match, the controller responds with a <see cref="StatusCodes.Status401Unauthorized"/>.
@@ -267,7 +267,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 			}
 		}
 		/// <summary>
-		/// Handles POST requests to <c>api/analytics/user/v1/open-session-from-upstream</c> for starting a session using authentication delegation to an upstream backend.
+		/// Handles starting a session using authentication delegation to an upstream backend.
 		/// Upon success, the controller responds with a JSON-encoded <see cref="DelegatedLoginResponseDTO"/>,
 		/// containing a session token that can be used to authenticate requests to SGL Analytics services as the logged-in user,
 		/// and a <see cref="StatusCodes.Status200OK"/>.
@@ -349,7 +349,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		}
 
 		/// <summary>
-		/// Handles GET requests to <c>api/analytics/user/v1/recipient-certificates</c> for obtaining the list of authorized recipient certificates.
+		/// Provides the list of authorized recipient certificates.
 		/// Upon success, the controller responds with a PEM-encoded list of X509 certificates,
 		/// one for each authorized recipient key pair, all signed by the app's signer certificate,
 		/// and a <see cref="StatusCodes.Status200OK"/>.
