@@ -8,6 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.ExporterClient {
+	/// <summary>
+	/// Encapsulates the metadata about an exportable log file.
+	/// </summary>
 	public class LogFileMetadata {
 		/// <summary>
 		/// The id of the uploaded log file on the client device.

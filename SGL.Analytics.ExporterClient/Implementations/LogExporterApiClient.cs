@@ -13,23 +13,36 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.ExporterClient {
+	/// <summary>
+	/// An implementation of <see cref="ILogExporterApiClient"/> that interacts with the backend using REST API calls.
+	/// </summary>
 	public class LogExporterApiClient : HttpApiClientBase, ILogExporterApiClient {
 		private static readonly MediaTypeWithQualityHeaderValue octetStreamMT = MediaTypeWithQualityHeaderValue.Parse("application/octet-stream");
 		private static readonly MediaTypeWithQualityHeaderValue jsonMT = MediaTypeWithQualityHeaderValue.Parse("application/json");
 		private static readonly MediaTypeWithQualityHeaderValue pemMT = MediaTypeWithQualityHeaderValue.Parse("application/x-pem-file");
 		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonOptions.RestOptions);
 
+		/// <summary>
+		/// Instantiates the client object with the given underlying HTTP client and session authorization token.
+		/// </summary>
+		/// <param name="httpClient">
+		/// The client using which to make the API requests.
+		/// Its <see cref="HttpClient.BaseAddress"/> indicates the backend host.
+		/// </param>
+		/// <param name="authorization">The session authorization token for the backend.</param>
 		public LogExporterApiClient(HttpClient httpClient, AuthorizationData authorization) : base(httpClient, authorization, "/api/analytics/log/v2") { }
 
+		/// <inheritdoc/>
 		public async Task<Stream> GetLogContentByIdAsync(Guid id, CancellationToken ct = default) {
 			var response = await SendRequest(HttpMethod.Get, $"{id}/content", null, req => { }, accept: octetStreamMT, ct).ConfigureAwait(false);
 			return await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
 		}
-
+		/// <inheritdoc/>
 		public async Task<IEnumerable<Guid>> GetLogIdListAsync(CancellationToken ct = default) {
 			using var response = await SendRequest(HttpMethod.Get, "", null, req => { }, accept: jsonMT, ct).ConfigureAwait(false);
 			return (await response.Content.ReadFromJsonAsync<List<Guid>>(jsonOptions, ct).ConfigureAwait(false)) ?? Enumerable.Empty<Guid>();
 		}
+		/// <inheritdoc/>
 		public async Task<IEnumerable<DownstreamLogMetadataDTO>> GetMetadataForAllLogsAsync(KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var queryParameters = Enumerable.Empty<KeyValuePair<string, string>>();
 			if (recipientKeyId != null) {
@@ -38,7 +51,7 @@ namespace SGL.Analytics.ExporterClient {
 			using var response = await SendRequest(HttpMethod.Get, "all", queryParameters, null, req => { }, accept: jsonMT, ct: ct).ConfigureAwait(false);
 			return (await response.Content.ReadFromJsonAsync<List<DownstreamLogMetadataDTO>>(jsonOptions, ct).ConfigureAwait(false)) ?? Enumerable.Empty<DownstreamLogMetadataDTO>();
 		}
-
+		/// <inheritdoc/>
 		public async Task<DownstreamLogMetadataDTO> GetLogMetadataByIdAsync(Guid id, KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var queryParameters = Enumerable.Empty<KeyValuePair<string, string>>();
 			if (recipientKeyId != null) {
@@ -47,7 +60,7 @@ namespace SGL.Analytics.ExporterClient {
 			using var response = await SendRequest(HttpMethod.Get, $"{id}/metadata", queryParameters, null, req => { }, accept: jsonMT, ct).ConfigureAwait(false);
 			return (await response.Content.ReadFromJsonAsync<DownstreamLogMetadataDTO>(jsonOptions, ct).ConfigureAwait(false)) ?? throw new JsonException("Got null from response.");
 		}
-
+		/// <inheritdoc/>
 		public async Task<IReadOnlyDictionary<Guid, EncryptionInfo>> GetKeysForRekeying(KeyId keyId, KeyId targetKeyId, int offset, CancellationToken ct = default) {
 			using var response = await SendRequest(HttpMethod.Get, $"rekey/{keyId}", new Dictionary<string, string> {
 				["targetKeyId"] = targetKeyId.ToString() ?? throw new ArgumentNullException(nameof(targetKeyId) + "." + nameof(KeyId.ToString)),
@@ -55,12 +68,12 @@ namespace SGL.Analytics.ExporterClient {
 			}, null, req => { }, accept: jsonMT, ct);
 			return (await response.Content.ReadFromJsonAsync<Dictionary<Guid, EncryptionInfo>>(jsonOptions, ct).ConfigureAwait(false)) ?? throw new JsonException("Got null from response.");
 		}
-
+		/// <inheritdoc/>
 		public async Task PutRekeyedKeys(KeyId keyId, IReadOnlyDictionary<Guid, DataKeyInfo> dataKeys, CancellationToken ct = default) {
 			using var requestContent = JsonContent.Create(dataKeys, jsonMT, jsonOptions);
 			using var response = await SendRequest(HttpMethod.Put, $"rekey/{keyId}", requestContent, req => { }, accept: jsonMT, ct);
 		}
-
+		/// <inheritdoc/>
 		public async Task GetRecipientCertificates(string appName, CertificateStore certificateStore, CancellationToken ct = default) {
 			var queryParameters = new List<KeyValuePair<string, string>> { new("appName", appName) };
 			using var response = await SendRequest(HttpMethod.Get, "recipient-certificates", queryParameters, null, req => { }, accept: pemMT, ct);
