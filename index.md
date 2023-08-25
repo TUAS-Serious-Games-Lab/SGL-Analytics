@@ -4,7 +4,7 @@ This project provides functionality to record and collect analytics raw data for
 It consists of two main parts:
 - A client library that is used by games to record gameplay data in the form of events and snapshots.
 	After recording these data locally, they are uploaded to the backend through a background process.
-	For more information on using the client library, see the [API Documentation](https://serious-games-lab.pages.gitlab.rlp.net/sgl-analytics/api/SGL.Analytics.Client.SGLAnalytics.html).
+	For more information on using the client library, see the [API Documentation](https://serious-games-lab.pages.gitlab.rlp.net/sgl-analytics/api/SGL.Analytics.Client.SglAnalytics.html).
 	A simple example application using SGL Analytics is provided in the [SGL.Analytics.Client.Example directory](https://gitlab.rlp.net/serious-games-lab/sgl-analytics/-/tree/main/SGL.Analytics.Client.Example)
 - A backend consisting of the following main services:
 	- User Registration: Manages user credentials and application-specific user data
