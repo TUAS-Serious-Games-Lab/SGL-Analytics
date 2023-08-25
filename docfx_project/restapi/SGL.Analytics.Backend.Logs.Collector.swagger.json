@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.1",
+  "swagger": "2.0",
   "info": {
     "title": "SGL Analytics Log Service API",
     "version": "v2"
@@ -10,46 +10,41 @@
         "tags": [
           "AnalyticsLog"
         ],
+        "summary": "Handles GET requests to `api/analytics/log/v2/recipient-certificates` for obtaining the list of authorized recipient certificates.\r\nUpon success, the controller responds with a PEM-encoded list of X509 certificates,\r\none for each authorized recipient key pair, all signed by the app's signer certificate,\r\nand a Microsoft.AspNetCore.Http.StatusCodes.Status200OK.",
+        "operationId": "GetRecipientCertificates",
+        "produces": [
+          "application/x-pem-file"
+        ],
         "parameters": [
           {
-            "name": "appName",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "name": "appName",
+            "description": "The unique name of the app for which to obtain the list, passed as a query parameter.",
+            "type": "string"
           },
           {
-            "name": "App-API-Token",
             "in": "header",
-            "schema": {
-              "maxLength": 64,
-              "minLength": 8,
-              "type": "string"
-            }
+            "name": "App-API-Token",
+            "description": "The API token authentication token for the app identified by appName,\r\npassed as an `App-API-Token` header.",
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 8
           }
         ],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
               }
             }
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
+            "schema": {
+              "$ref": "#/definitions/ProblemDetails"
             }
           }
         }
@@ -60,15 +55,22 @@
         "tags": [
           "AnalyticsLog"
         ],
+        "summary": "Handles POST requests to `api/analytics/log/v2` for analytics log files with the log contents and associated metadata.\r\nRequest body shall consist of two multipart/form-data sections:\r\n- The first section shall have a `Content-Type` of `application/json` an a `Content-Disposition` with name `metadata` and shall contain the metadata for the uploaded log file as a JSON-serialized SGL.Analytics.DTO.LogMetadataDTO object.\r\n- The second section shall have a `Content-Type` of `application/octet-stream` an a `Content-Disposition` with name `content` and shall contain the raw log file contents, compressed and / or encrypted depending on SGL.Analytics.DTO.LogMetadataDTO.LogContentEncoding.\r\n            \r\nThis route requires authorization using a JWT bearer token issued by the controller for `api/analytics/user/login` in the user registration service.\r\nIf no such token is present, the authorization layer will reject the request and respond with a Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized, containing a `WWW-Authenticate` header as an authorization challenge.\r\nUpon successful upload, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status201Created.\r\nIf there is an error with either the JWT bearer token or with appApiToken, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized.\r\nIf the log file is larger than the limit configured in `AnalyticsLog:UploadSizeLimit`, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status413RequestEntityTooLarge.\r\nErrors with the request body data result in  Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest.\r\nOther errors are represented by the controller responding with a Microsoft.AspNetCore.Http.StatusCodes.Status500InternalServerError.",
+        "operationId": "IngestLog",
+        "produces": [
+          "application/x-pem-file",
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "parameters": [
           {
-            "name": "App-API-Token",
             "in": "header",
-            "schema": {
-              "maxLength": 64,
-              "minLength": 8,
-              "type": "string"
-            }
+            "name": "App-API-Token",
+            "description": "The API token of the client application, provided by the HTTP header `App-API-Token`.",
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 8
           }
         ],
         "responses": {
@@ -77,77 +79,20 @@
           },
           "400": {
             "description": "Bad Request",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           },
           "413": {
             "description": "Client Error",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -156,62 +101,30 @@
         "tags": [
           "LogExporter"
         ],
+        "summary": "Implements `GET api/analytics/log/v2`, which provides the list of the ids of all analytics logs of the application indicated by the authorization token.",
+        "operationId": "GetLogIdList",
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/x-pem-file"
+        ],
+	    "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
+            "schema": {
+              "type": "array",
+              "items": {
+                "format": "uuid",
+                "type": "string"
               }
             }
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -222,77 +135,36 @@
         "tags": [
           "LogExporter"
         ],
+        "summary": "Implements `GET api/analytics/log/v2/all`, which provides the log metadata for all analytics logs of the application indicated by the authorization token.\r\nThe returned data contains the encrypted data keys for the recipient key with the key id indicated by recipientKeyId.",
+        "operationId": "GetMetadataForAllLogs",
+        "produces": [
+          "application/x-pem-file",
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "parameters": [
           {
-            "name": "Id",
             "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "byte"
-            }
+            "name": "Id",
+            "type": "string",
+            "format": "byte"
           }
         ],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DownstreamLogMetadataDTO"
-                  }
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DownstreamLogMetadataDTO"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DownstreamLogMetadataDTO"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DownstreamLogMetadataDTO"
-                  }
-                }
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DownstreamLogMetadataDTO"
               }
             }
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -303,69 +175,41 @@
         "tags": [
           "LogExporter"
         ],
+        "summary": "Implements `GET api/analytics/log/v2/{id:Guid}/metadata`, which retrieves the metadata for a specific analytics log.\r\nThe returned data contains the encrypted data key for the recipient key with the key id indicated by recipientKeyId.",
+        "operationId": "GetLogMetadataById",
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/x-pem-file"
+        ],
         "parameters": [
           {
-            "name": "id",
             "in": "path",
+            "name": "id",
+            "description": "The id of the log of which to retrieve the metadata.",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "type": "string",
+            "format": "uuid"
           },
           {
-            "name": "Id",
             "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "byte"
-            }
+            "name": "Id",
+            "type": "string",
+            "format": "byte"
           }
         ],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/DownstreamLogMetadataDTO"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DownstreamLogMetadataDTO"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DownstreamLogMetadataDTO"
-                }
-              }
+            "schema": {
+              "$ref": "#/definitions/DownstreamLogMetadataDTO"
             }
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -376,15 +220,22 @@
         "tags": [
           "LogExporter"
         ],
+        "summary": "Implements `GET api/analytics/log/v2/{id:Guid}/content`, which retrieves the content for a specific analytics log.\r\nThe response body is the raw byte stream which is encrypted as described by the SGL.Analytics.DTO.LogMetadataDTO.EncryptionInfo of the metadata,\r\nwhich also contains the encrypted key material needed for decryption.",
+        "operationId": "GetLogContentById",
+        "produces": [
+          "application/x-pem-file",
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "parameters": [
           {
-            "name": "id",
             "in": "path",
+            "name": "id",
+            "description": "The id of the log of which to retrieve the content.",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "type": "string",
+            "format": "uuid"
           }
         ],
         "responses": {
@@ -393,27 +244,8 @@
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -424,95 +256,57 @@
         "tags": [
           "Rekeying"
         ],
+        "summary": "Implements `GET api/analytics/log/v2/rekey/{recipientKeyId}`, which retrieves a dictionary for a chunk of game analytics logs\r\nthat maps the user id to the SGL.Utilities.Crypto.EndToEnd.EncryptionInfo for the encrypted log content.\r\nThe returned data contains the encrypted data keys for the recipient key with the key id indicated by recipientKeyId.\r\nAs the requested data is intended for the client to rekey it for a different recipient key-pair,\r\nthe data is filtered to only contain logs for which there is not already a data key present for the target recipient indicated by targetKeyId.\r\nAdditionally, pagination is supported using offset and the item count configured in SGL.Analytics.Backend.Logs.Application.Services.LogManagerOptions.RekeyingPagination.",
+        "operationId": "GetKeysForRekeying",
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/x-pem-file"
+        ],
         "parameters": [
           {
-            "name": "Id",
             "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "byte"
-            }
-          },
-          {
             "name": "Id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "byte"
-            }
+            "required": true,
+            "type": "string",
+            "format": "byte"
           },
           {
+            "in": "query",
+            "name": "Id",
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "in": "query",
             "name": "offset",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
+            "description": "The number of logs (after filtering) to skip for pagination.\r\nThe ordering is done by owning user id and then creation time.\r\nPassed as query parameter `offset`.",
+            "type": "integer",
+            "format": "int32",
+            "default": 0
           },
           {
-            "name": "keyId",
             "in": "path",
+            "name": "keyId",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "type": "string"
           }
         ],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "$ref": "#/components/schemas/EncryptionInfo"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "$ref": "#/components/schemas/EncryptionInfo"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "$ref": "#/components/schemas/EncryptionInfo"
-                  }
-                }
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/EncryptionInfo"
               }
             }
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -521,227 +315,206 @@
         "tags": [
           "Rekeying"
         ],
+        "summary": "Implements `PUT api/analytics/log/v2/rekey/{newRecipientKeyId}`,\r\nwhich stores data keys for the key-pair indicated by newRecipientKeyId\r\ninto the database after they were rekeyed / reencrypted by the client in order to grant access to that key-pair.",
+        "operationId": "PutRekeyedKeys",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "application/x-pem-file",
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "parameters": [
           {
-            "name": "Id",
             "in": "path",
+            "name": "Id",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "byte"
-            }
+            "type": "string",
+            "format": "byte"
           },
           {
-            "name": "keyId",
             "in": "path",
+            "name": "keyId",
             "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "The rekeyed data keys provided in the request body as a JSON dictionary that\r\nmaps the log ids to the new SGL.Utilities.Crypto.EndToEnd.DataKeyInfo that shall be added.",
             "schema": {
-              "type": "string"
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/DataKeyInfo"
+              }
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/DataKeyInfo"
-                }
-              }
-            },
-            "text/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/DataKeyInfo"
-                }
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/DataKeyInfo"
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Success"
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
       }
     }
   },
-  "components": {
-    "schemas": {
-      "DataEncryptionMode": {
-        "enum": [
-          "AES_256_CCM",
-          "Unencrypted"
-        ],
-        "type": "string"
-      },
-      "DataKeyInfo": {
-        "type": "object",
-        "properties": {
-          "mode": {
-            "$ref": "#/components/schemas/KeyEncryptionMode"
-          },
-          "encryptedKey": {
-            "type": "string",
-            "format": "byte",
-            "nullable": true
-          },
-          "messagePublicKey": {
-            "type": "string",
-            "format": "byte",
-            "nullable": true
-          }
+  "definitions": {
+    "DataEncryptionMode": {
+      "enum": [
+        "AES_256_CCM",
+        "Unencrypted"
+      ],
+      "type": "string"
+    },
+    "DataKeyInfo": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/definitions/KeyEncryptionMode"
         },
-        "additionalProperties": false
-      },
-      "DownstreamLogMetadataDTO": {
-        "type": "object",
-        "properties": {
-          "logFileId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "creationTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "endTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "nameSuffix": {
-            "maxLength": 16,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "logContentEncoding": {
-            "$ref": "#/components/schemas/LogContentEncoding"
-          },
-          "encryptionInfo": {
-            "$ref": "#/components/schemas/EncryptionInfo"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "uploadTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          }
+        "encryptedKey": {
+          "format": "byte",
+          "type": "string"
         },
-        "additionalProperties": false
-      },
-      "EncryptionInfo": {
-        "type": "object",
-        "properties": {
-          "dataMode": {
-            "$ref": "#/components/schemas/DataEncryptionMode"
-          },
-          "iVs": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "byte"
-            },
-            "nullable": true
-          },
-          "dataKeys": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/DataKeyInfo"
-            },
-            "nullable": true
-          },
-          "messagePublicKey": {
-            "type": "string",
-            "format": "byte",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "KeyEncryptionMode": {
-        "enum": [
-          "RSA_PKCS1",
-          "ECDH_KDF2_SHA256_AES_256_CCM"
-        ],
-        "type": "string"
-      },
-      "LogContentEncoding": {
-        "enum": [
-          "GZipCompressed",
-          "Plain"
-        ],
-        "type": "string"
-      },
-      "ProblemDetails": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "nullable": true
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "detail": {
-            "type": "string",
-            "nullable": true
-          },
-          "instance": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": { }
+        "messagePublicKey": {
+          "format": "byte",
+          "type": "string"
+        }
       }
+    },
+    "DownstreamLogMetadataDTO": {
+      "description": "Specifies the log metadata that is passed from the backend to an exporter client when the client browses through log metadata for export.",
+      "type": "object",
+      "properties": {
+        "logFileId": {
+          "format": "uuid",
+          "description": "The id of the uploaded log file on the client device.",
+          "type": "string"
+        },
+        "creationTime": {
+          "format": "date-time",
+          "description": "The time when recording of the log file was started.",
+          "type": "string"
+        },
+        "endTime": {
+          "format": "date-time",
+          "description": "The time when recording of the log file was ended.",
+          "type": "string"
+        },
+        "nameSuffix": {
+          "description": "The file name suffix for the log file as specified by the client application.",
+          "maxLength": 16,
+          "minLength": 0,
+          "type": "string"
+        },
+        "logContentEncoding": {
+          "$ref": "#/definitions/LogContentEncoding"
+        },
+        "encryptionInfo": {
+          "$ref": "#/definitions/EncryptionInfo"
+        },
+        "userId": {
+          "format": "uuid",
+          "description": "The id of the user who uploaded the log file.",
+          "type": "string"
+        },
+        "uploadTime": {
+          "format": "date-time",
+          "description": "The time when the log file was uploaded.",
+          "type": "string"
+        },
+        "size": {
+          "format": "int64",
+          "description": "The size of the log file in bytes.",
+          "type": "integer"
+        }
+      }
+    },
+    "EncryptionInfo": {
+      "type": "object",
+      "properties": {
+        "dataMode": {
+          "$ref": "#/definitions/DataEncryptionMode"
+        },
+        "iVs": {
+          "type": "array",
+          "items": {
+            "format": "byte",
+            "type": "string"
+          }
+        },
+        "dataKeys": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/DataKeyInfo"
+          }
+        },
+        "messagePublicKey": {
+          "format": "byte",
+          "type": "string"
+        }
+      }
+    },
+    "KeyEncryptionMode": {
+      "enum": [
+        "RSA_PKCS1",
+        "ECDH_KDF2_SHA256_AES_256_CCM"
+      ],
+      "type": "string"
+    },
+    "LogContentEncoding": {
+      "description": "Represents the different supported content encodings that can be used for an analytics log file.",
+      "enum": [
+        "GZipCompressed",
+        "Plain"
+      ],
+      "type": "string"
+    },
+    "ProblemDetails": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "status": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "instance": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": { }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "AnalyticsLog",
+      "description": "The controller class serving the `api/analytics/log` route that accepts uploads of analytics log files for SGL Analytics\r\nand the `api/analytics/log/v2/recipient-certificates` for fetching the authorized recipient certificates for end-to-end encryption of the log files."
+    },
+    {
+      "name": "LogExporter",
+      "description": "Implements the API routes for exporting game analytics logs.\r\nThese routes are prefixed under `api/analytics/log/v2`.\r\nAll routes here require an authorization that satisfies the `ExporterUser` policy."
+    },
+    {
+      "name": "Rekeying",
+      "description": "Implements the API routes for rekeying data keys for game analytics logs to grant access to a new authorized recipient.\r\nThe client iteratively requests key material for rekeying, decrypts the data keys using the user's recipient key pair,\r\nreencrypts them using the new authorized recipient's public key and then uploads the new data keys to be added to the database.\r\nIn the next request, for key material, the game analytics logs for which data keys were successfully added are excluded and\r\na new set of key material is provided.\r\nLogs that could not be successfully rekeyed are skipped using the pagination offset.\r\nThis iteration continues until a request for further key material returns an empty response.\r\nThese routes are prefixed under `api/analytics/log/v2/rekey`.\r\nAll routes here require an authorization that satisfies the `ExporterUser` policy."
+    }
+  ]
 }

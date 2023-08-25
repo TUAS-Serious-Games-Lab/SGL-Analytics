@@ -79,8 +79,7 @@
     "fileMetadataFiles": [],
     "template": [
       "default",
-      "statictoc",
-      "templates/darkfx"
+      "statictoc"
     ],
     "postProcessors": [],
     "markdownEngineName": "markdig",

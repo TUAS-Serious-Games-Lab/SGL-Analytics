@@ -1,0 +1,2 @@
+swagger tofile --serializeasv2 --output .\docfx_project\restapi\SGL.Analytics.Backend.Logs.Collector.swagger.json SGL.Analytics.Backend.Logs.Collector\bin\Debug\net6.0\SGL.Analytics.Backend.Logs.Collector.dll v2
+swagger tofile --serializeasv2 --output .\docfx_project\restapi\SGL.Analytics.Backend.Users.Registration.swagger.json SGL.Analytics.Backend.Users.Registration\bin\Debug\net6.0\SGL.Analytics.Backend.Users.Registration.dll v1

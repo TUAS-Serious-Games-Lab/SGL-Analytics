@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.1",
+  "swagger": "2.0",
   "info": {
     "title": "SGL Analytics Users Service API",
     "version": "v1"
@@ -10,130 +10,60 @@
         "tags": [
           "AnalyticsUser"
         ],
+        "summary": "Handles POST requests to `api/analytics/user/v1` for user registrations.\r\nThe controller responds with a SGL.Analytics.DTO.UserRegistrationResultDTO in JSON form, containing the assigned user id, and a Microsoft.AspNetCore.Http.StatusCodes.Status201Created upon sucess.\r\nThe client needs to use this id wenn logging in using M:SGL.Analytics.Backend.Users.Registration.Controllers.AnalyticsUserController.Login(SGL.Analytics.DTO.LoginRequestDTO,System.Threading.CancellationToken).\r\nIf the SGL.Analytics.DTO.UserRegistrationDTO.StudySpecificProperties contains invalid properties, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest.\r\nIf the SGL.Analytics.DTO.UserRegistrationDTO.Username is already in use, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status409Conflict.\r\nIf the SGL.Analytics.DTO.UserRegistrationDTO.AppName or appApiToken don't match or are otherwise invalid, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized.\r\nOther errors are represented by responding with a Microsoft.AspNetCore.Http.StatusCodes.Status500InternalServerError.",
+        "operationId": "RegisterUser",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/x-pem-file"
+        ],
         "parameters": [
           {
-            "name": "App-API-Token",
             "in": "header",
+            "name": "App-API-Token",
+            "description": "The API token of the client application, provided by the HTTP header `App-API-Token`.",
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 8
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "The data transfer object describing the user registration data, provided through the request body in JSON form.",
             "schema": {
-              "maxLength": 64,
-              "minLength": 8,
-              "type": "string"
+              "$ref": "#/definitions/UserRegistrationDTO"
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserRegistrationDTO"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserRegistrationDTO"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserRegistrationDTO"
-              }
-            }
-          }
-        },
         "responses": {
           "201": {
             "description": "Created",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserRegistrationResultDTO"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserRegistrationResultDTO"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserRegistrationResultDTO"
-                }
-              }
+            "schema": {
+              "$ref": "#/definitions/UserRegistrationResultDTO"
             }
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           },
           "409": {
             "description": "Conflict",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           },
           "400": {
             "description": "Bad Request",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -142,62 +72,30 @@
         "tags": [
           "UserExporter"
         ],
+        "summary": "Implements `GET api/analytics/user/v1`, which provides the list of the ids of all user registrations of the application indicated by the authorization token.",
+        "operationId": "GetUserIdList",
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/x-pem-file"
+        ],
+	    "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
+            "schema": {
+              "type": "array",
+              "items": {
+                "format": "uuid",
+                "type": "string"
               }
             }
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -208,69 +106,40 @@
         "tags": [
           "AnalyticsUser"
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequestDTO"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequestDTO"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequestDTO"
-              }
+        "summary": "Handles POST requests to `api/analytics/user/v1/login` for user logins to start a session.\r\nUpon success, the controller responds with a JSON-encoded SGL.Analytics.DTO.LoginResponseDTO, containing a session token that can be used to\r\nauthenticate requests to SGL Analytics services as the logged-in user, and a Microsoft.AspNetCore.Http.StatusCodes.Status200OK.\r\nIf the login fails because any of the credentials are incorrect or the credentials don't match, the controller responds with a Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized.\r\nA further distinction which part of the credentials was incorrect is not made for security reasons.\r\nOther errors are represented by responding with a Microsoft.AspNetCore.Http.StatusCodes.Status500InternalServerError.",
+        "operationId": "Login",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/x-pem-file"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "A data transfer object, containing the credentials to use for the login attempt.\r\nThe controller supports the following login request types: SGL.Analytics.DTO.IdBasedLoginRequestDTO, SGL.Analytics.DTO.UsernameBasedLoginRequestDTO",
+            "schema": {
+              "$ref": "#/definitions/LoginRequestDTO"
             }
           }
-        },
+        ],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponseDTO"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponseDTO"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponseDTO"
-                }
-              }
+            "schema": {
+              "$ref": "#/definitions/LoginResponseDTO"
             }
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -281,119 +150,52 @@
         "tags": [
           "AnalyticsUser"
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpstreamSessionRequestDTO"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpstreamSessionRequestDTO"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpstreamSessionRequestDTO"
-              }
+        "summary": "Handles POST requests to `api/analytics/user/v1/open-session-from-upstream` for starting a session using authentication delegation to an upstream backend.\r\nUpon success, the controller responds with a JSON-encoded SGL.Analytics.DTO.DelegatedLoginResponseDTO,\r\ncontaining a session token that can be used to authenticate requests to SGL Analytics services as the logged-in user,\r\nand a Microsoft.AspNetCore.Http.StatusCodes.Status200OK.\r\nIf the upstream backend rejects the supplied authorization token, a Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized is returned.\r\nIf the upstream user id is not registered yet, a Microsoft.AspNetCore.Http.StatusCodes.Status404NotFound is returned.\r\nIf the token validation fails due to an error with the upstream backend, a Microsoft.AspNetCore.Http.StatusCodes.Status503ServiceUnavailable is returned.\r\nOther errors are represented by responding with a Microsoft.AspNetCore.Http.StatusCodes.Status500InternalServerError.",
+        "operationId": "OpenSessionFromUpstream",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/x-pem-file"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "A data transfer object, containing the credentials to use for the login attempt.",
+            "schema": {
+              "$ref": "#/definitions/UpstreamSessionRequestDTO"
             }
           }
-        },
+        ],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponseDTO"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponseDTO"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponseDTO"
-                }
-              }
+            "schema": {
+              "$ref": "#/definitions/LoginResponseDTO"
             }
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           },
           "503": {
             "description": "Server Error",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -404,33 +206,32 @@
         "tags": [
           "AnalyticsUser"
         ],
+        "summary": "Handles GET requests to `api/analytics/user/v1/recipient-certificates` for obtaining the list of authorized recipient certificates.\r\nUpon success, the controller responds with a PEM-encoded list of X509 certificates,\r\none for each authorized recipient key pair, all signed by the app's signer certificate,\r\nand a Microsoft.AspNetCore.Http.StatusCodes.Status200OK.",
+        "operationId": "GetRecipientCertificates",
+        "produces": [
+          "application/x-pem-file"
+        ],
         "parameters": [
           {
-            "name": "appName",
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "name": "appName",
+            "description": "The unique name of the app for which to obtain the list, passed as a query parameter.",
+            "type": "string"
           },
           {
-            "name": "App-API-Token",
             "in": "header",
-            "schema": {
-              "maxLength": 64,
-              "minLength": 8,
-              "type": "string"
-            }
+            "name": "App-API-Token",
+            "description": "The API token authentication token for the app identified by appName,\r\npassed as an `App-API-Token` header.",
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 8
           }
         ],
         "responses": {
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
+            "schema": {
+              "$ref": "#/definitions/ProblemDetails"
             }
           }
         }
@@ -441,44 +242,33 @@
         "tags": [
           "ExporterKeyAuth"
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ExporterKeyAuthRequestDTO"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ExporterKeyAuthRequestDTO"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/ExporterKeyAuthRequestDTO"
-              }
+        "summary": "Handles the `api/analytics/user/v1/exporter-key-auth/open-challenge` route,\r\nwhich is called by the client to open a challenge.\r\nA challenge with a random nonce byte sequence is generated, remembered by the server, and served to the client.",
+        "operationId": "OpenChallenge",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "The request data for opening the challenge.",
+            "schema": {
+              "$ref": "#/definitions/ExporterKeyAuthRequestDTO"
             }
           }
-        },
+        ],
         "responses": {
           "201": {
             "description": "Created",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExporterKeyAuthChallengeDTO"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExporterKeyAuthChallengeDTO"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExporterKeyAuthChallengeDTO"
-                }
-              }
+            "schema": {
+              "$ref": "#/definitions/ExporterKeyAuthChallengeDTO"
             }
           }
         }
@@ -489,119 +279,52 @@
         "tags": [
           "ExporterKeyAuth"
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ExporterKeyAuthSignatureDTO"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ExporterKeyAuthSignatureDTO"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/ExporterKeyAuthSignatureDTO"
-              }
+        "summary": "Handles the `api/analytics/user/v1/exporter-key-auth/complete-challenge` route,\r\nwhich is called by the client to complete a previously posed challenge.\r\nIf the supplied signature is valid, a session token is issued to the client.",
+        "operationId": "CompleteChallenge",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/x-pem-file"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Contains the id of the challenge to complete and the signature for which the client was challenged.",
+            "schema": {
+              "$ref": "#/definitions/ExporterKeyAuthSignatureDTO"
             }
           }
-        },
+        ],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExporterKeyAuthResponseDTO"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExporterKeyAuthResponseDTO"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExporterKeyAuthResponseDTO"
-                }
-              }
+            "schema": {
+              "$ref": "#/definitions/ExporterKeyAuthResponseDTO"
             }
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           },
           "410": {
             "description": "Client Error",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -612,95 +335,57 @@
         "tags": [
           "Rekeying"
         ],
+        "summary": "Implements `GET api/analytics/user/v1/rekey/{recipientKeyId}`, which retrieves a dictionary for a chunk of user registrations\r\nthat maps the user id to the SGL.Utilities.Crypto.EndToEnd.EncryptionInfo for the user's encrypted property.\r\nThe returned data contains the encrypted data keys for the recipient key with the key id indicated by recipientKeyId.\r\nAs the requested data is intended for the client to rekey it for a different recipient key-pair,\r\nthe data is filtered to only contain registrations for which there is not already a data key present for the target recipient indicated by targetKeyId.\r\nAdditionally, pagination is supported using offset and the item count configured in SGL.Analytics.Backend.Users.Application.Services.UserManagerOptions.RekeyingPagination.",
+        "operationId": "GetKeysForRekeying",
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/x-pem-file"
+        ],
         "parameters": [
           {
-            "name": "Id",
             "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "byte"
-            }
-          },
-          {
             "name": "Id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "byte"
-            }
+            "required": true,
+            "type": "string",
+            "format": "byte"
           },
           {
+            "in": "query",
+            "name": "Id",
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "in": "query",
             "name": "offset",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
+            "description": "The number of registrations (after filtering) to skip for pagination.\r\nThe ordering is done by user ids.\r\nPassed as query parameter `offset`.",
+            "type": "integer",
+            "format": "int32",
+            "default": 0
           },
           {
-            "name": "keyId",
             "in": "path",
+            "name": "keyId",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "type": "string"
           }
         ],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "$ref": "#/components/schemas/EncryptionInfo"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "$ref": "#/components/schemas/EncryptionInfo"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "$ref": "#/components/schemas/EncryptionInfo"
-                  }
-                }
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/EncryptionInfo"
               }
             }
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -709,80 +394,53 @@
         "tags": [
           "Rekeying"
         ],
+        "summary": "Implements `PUT api/analytics/user/v1/rekey/{newRecipientKeyId}`,\r\nwhich stores data keys for the key-pair indicated by newRecipientKeyId\r\ninto the database after they were rekeyed / reencrypted by the client in order to grant access to that key-pair.",
+        "operationId": "PutRekeyedKeys",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "application/x-pem-file",
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "parameters": [
           {
-            "name": "Id",
             "in": "path",
+            "name": "Id",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "byte"
-            }
+            "type": "string",
+            "format": "byte"
           },
           {
-            "name": "keyId",
             "in": "path",
+            "name": "keyId",
             "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "The rekeyed data keys provided in the request body as a JSON dictionary that\r\nmaps the user registration ids to the new SGL.Utilities.Crypto.EndToEnd.DataKeyInfo that shall be added.",
             "schema": {
-              "type": "string"
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/DataKeyInfo"
+              }
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/DataKeyInfo"
-                }
-              }
-            },
-            "text/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/DataKeyInfo"
-                }
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/DataKeyInfo"
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Success"
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -793,77 +451,36 @@
         "tags": [
           "UserExporter"
         ],
+        "summary": "Implements `GET api/analytics/user/v1/all`, which provides the user metadata for all user registrations of the application indicated by the authorization token.\r\nThe returned data contains the encrypted data keys for the recipient key with the key id indicated by recipientKeyId.",
+        "operationId": "GetMetadataForAllUsers",
+        "produces": [
+          "application/x-pem-file",
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
         "parameters": [
           {
-            "name": "Id",
             "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "byte"
-            }
+            "name": "Id",
+            "type": "string",
+            "format": "byte"
           }
         ],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserMetadataDTO"
-                  }
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserMetadataDTO"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserMetadataDTO"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserMetadataDTO"
-                  }
-                }
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/UserMetadataDTO"
               }
             }
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -874,418 +491,383 @@
         "tags": [
           "UserExporter"
         ],
+        "summary": "Implements `GET api/analytics/user/v1/{id:Guid}`, which retrieves the metadata for a specific user registration.\r\nThe returned data contains the encrypted data key for the recipient key with the key id indicated by recipientKeyId.",
+        "operationId": "GetUserMetadataById",
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json",
+          "application/x-pem-file"
+        ],
         "parameters": [
           {
-            "name": "id",
             "in": "path",
+            "name": "id",
+            "description": "The id of the user to retrieve.",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "type": "string",
+            "format": "uuid"
           },
           {
-            "name": "Id",
             "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "byte"
-            }
+            "name": "Id",
+            "type": "string",
+            "format": "byte"
           }
         ],
         "responses": {
           "200": {
             "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserMetadataDTO"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserMetadataDTO"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserMetadataDTO"
-                }
-              }
+            "schema": {
+              "$ref": "#/definitions/UserMetadataDTO"
             }
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/x-pem-file": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
+            "schema": {
+              "type": "string"
             }
           }
         }
       }
     }
   },
-  "components": {
-    "schemas": {
-      "AuthorizationToken": {
-        "type": "object",
-        "properties": {
-          "scheme": {
-            "$ref": "#/components/schemas/AuthorizationTokenScheme"
-          },
-          "value": {
-            "type": "string",
-            "nullable": true
-          }
+  "definitions": {
+    "AuthorizationToken": {
+      "type": "object",
+      "properties": {
+        "scheme": {
+          "$ref": "#/definitions/AuthorizationTokenScheme"
         },
-        "additionalProperties": false
-      },
-      "AuthorizationTokenScheme": {
-        "enum": [
-          0
-        ],
-        "type": "integer",
-        "format": "int32"
-      },
-      "DataEncryptionMode": {
-        "enum": [
-          "AES_256_CCM",
-          "Unencrypted"
-        ],
-        "type": "string"
-      },
-      "DataKeyInfo": {
-        "type": "object",
-        "properties": {
-          "mode": {
-            "$ref": "#/components/schemas/KeyEncryptionMode"
-          },
-          "encryptedKey": {
-            "type": "string",
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "AuthorizationTokenScheme": {
+      "format": "int32",
+      "enum": [
+        0
+      ],
+      "type": "integer"
+    },
+    "DataEncryptionMode": {
+      "enum": [
+        "AES_256_CCM",
+        "Unencrypted"
+      ],
+      "type": "string"
+    },
+    "DataKeyInfo": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/definitions/KeyEncryptionMode"
+        },
+        "encryptedKey": {
+          "format": "byte",
+          "type": "string"
+        },
+        "messagePublicKey": {
+          "format": "byte",
+          "type": "string"
+        }
+      }
+    },
+    "EncryptionInfo": {
+      "type": "object",
+      "properties": {
+        "dataMode": {
+          "$ref": "#/definitions/DataEncryptionMode"
+        },
+        "iVs": {
+          "type": "array",
+          "items": {
             "format": "byte",
-            "nullable": true
-          },
-          "messagePublicKey": {
-            "type": "string",
-            "format": "byte",
-            "nullable": true
+            "type": "string"
           }
         },
-        "additionalProperties": false
-      },
-      "EncryptionInfo": {
-        "type": "object",
-        "properties": {
-          "dataMode": {
-            "$ref": "#/components/schemas/DataEncryptionMode"
-          },
-          "iVs": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "byte"
-            },
-            "nullable": true
-          },
-          "dataKeys": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/DataKeyInfo"
-            },
-            "nullable": true
-          },
-          "messagePublicKey": {
-            "type": "string",
-            "format": "byte",
-            "nullable": true
+        "dataKeys": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/DataKeyInfo"
           }
         },
-        "additionalProperties": false
-      },
-      "ExporterKeyAuthChallengeDTO": {
-        "type": "object",
-        "properties": {
-          "challengeId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "challengeBytes": {
-            "maxLength": 65536,
-            "type": "string",
-            "format": "byte",
-            "nullable": true
-          },
-          "digestAlgorithmToUse": {
-            "$ref": "#/components/schemas/SignatureDigest"
-          }
+        "messagePublicKey": {
+          "format": "byte",
+          "type": "string"
+        }
+      }
+    },
+    "ExporterKeyAuthChallengeDTO": {
+      "description": "The response data sent from server to client in the second step of the key-pair-based challenge authentication for exporter clients.\r\nThis poses the challenge to the client.",
+      "type": "object",
+      "properties": {
+        "challengeId": {
+          "format": "uuid",
+          "description": "The unique id for the challenge that the server issues by this message.\r\nMust be provided when submiting a solution for the challenge.",
+          "type": "string"
         },
-        "additionalProperties": false
-      },
-      "ExporterKeyAuthRequestDTO": {
-        "type": "object",
-        "properties": {
-          "appName": {
-            "maxLength": 128,
-            "minLength": 1,
-            "type": "string",
-            "nullable": true
-          },
-          "keyId": {
-            "$ref": "#/components/schemas/KeyId"
-          }
+        "challengeBytes": {
+          "format": "byte",
+          "description": "A byte sequence that the server generated randomly as a nonce for the challenge.",
+          "maxLength": 65536,
+          "type": "string"
         },
-        "additionalProperties": false
-      },
-      "ExporterKeyAuthResponseDTO": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "$ref": "#/components/schemas/AuthorizationToken"
-          },
-          "tokenExpiry": {
-            "type": "string",
-            "format": "date-time"
-          }
+        "digestAlgorithmToUse": {
+          "$ref": "#/definitions/SignatureDigest"
+        }
+      }
+    },
+    "ExporterKeyAuthRequestDTO": {
+      "description": "The request data sent from client to server in the first step of the key-pair-based challenge authentication for exporter clients.",
+      "type": "object",
+      "properties": {
+        "appName": {
+          "description": "The unique name of the app for which a challenge authentication is initiated.",
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
         },
-        "additionalProperties": false
-      },
-      "ExporterKeyAuthSignatureDTO": {
-        "type": "object",
-        "properties": {
-          "challengeId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "signature": {
-            "maxLength": 65536,
-            "type": "string",
-            "format": "byte",
-            "nullable": true
-          }
+        "keyId": {
+          "description": "The key id of the user's authentication key-pair.",
+          "type": "string"
+        }
+      }
+    },
+    "ExporterKeyAuthResponseDTO": {
+      "description": "The response data sent from server to client in the fourth and final step of the key-pair-based challenge authentication for exporter clients.\r\nThis provides the client with the session token for further requests.",
+      "type": "object",
+      "properties": {
+        "token": {
+          "$ref": "#/definitions/AuthorizationToken"
         },
-        "additionalProperties": false
-      },
-      "KeyEncryptionMode": {
-        "enum": [
-          "RSA_PKCS1",
-          "ECDH_KDF2_SHA256_AES_256_CCM"
-        ],
-        "type": "string"
-      },
-      "KeyId": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "byte",
-            "nullable": true
-          }
+        "tokenExpiry": {
+          "format": "date-time",
+          "description": "The timestamp at which SGL.Analytics.DTO.ExporterKeyAuthResponseDTO.Token expires.",
+          "type": "string"
+        }
+      }
+    },
+    "ExporterKeyAuthSignatureDTO": {
+      "description": "The reply data sent from client to server in the third step of the key-pair-based challenge authentication for exporter clients.\r\nWith this, the client submits the completed challenge.",
+      "type": "object",
+      "properties": {
+        "challengeId": {
+          "format": "uuid",
+          "description": "The id of the challenge (issued by the server) for which this provides a solution to prove the client's authenticity.",
+          "type": "string"
         },
-        "additionalProperties": false
-      },
-      "LoginRequestDTO": {
-        "type": "object",
-        "properties": {
-          "appName": {
-            "maxLength": 128,
-            "minLength": 1,
-            "type": "string",
-            "nullable": true
-          },
-          "appApiToken": {
-            "maxLength": 64,
-            "minLength": 8,
-            "type": "string",
-            "nullable": true
-          },
-          "userSecret": {
-            "maxLength": 128,
-            "minLength": 8,
-            "type": "string",
-            "nullable": true
-          }
+        "signature": {
+          "format": "byte",
+          "description": "Signature over the sequence\r\n<list type=\"number\"><item><description>\r\nthe bytes of SGL.Analytics.DTO.ExporterKeyAuthChallengeDTO.ChallengeId,\r\nformatted as `00000000-0000-0000-0000-000000000000` (format string \"D\") in UTF-8\r\n</description></item><item><description>the bytes of SGL.Analytics.DTO.ExporterKeyAuthRequestDTO.KeyId</description></item><item><description>the bytes in SGL.Analytics.DTO.ExporterKeyAuthChallengeDTO.ChallengeBytes</description></item><item><description>the bytes of SGL.Analytics.DTO.ExporterKeyAuthRequestDTO.AppName in UTF-8</description></item></list>\r\nusing SGL.Analytics.DTO.ExporterKeyAuthChallengeDTO.DigestAlgorithmToUse,\r\nwith the appropriate signature algotihm for the key identified by SGL.Analytics.DTO.ExporterKeyAuthRequestDTO.KeyId.",
+          "maxLength": 65536,
+          "type": "string"
+        }
+      }
+    },
+    "KeyEncryptionMode": {
+      "enum": [
+        "RSA_PKCS1",
+        "ECDH_KDF2_SHA256_AES_256_CCM"
+      ],
+      "type": "string"
+    },
+    "LoginRequestDTO": {
+      "description": "Specifies the data transferred from the client to the server when the client attempts to login a user.",
+      "type": "object",
+      "properties": {
+        "appName": {
+          "description": "The unique technical name of the client application performing the login.",
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
         },
-        "additionalProperties": false
-      },
-      "LoginResponseDTO": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "$ref": "#/components/schemas/AuthorizationToken"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "tokenExpiry": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
+        "appApiToken": {
+          "description": "The application authentication token of the client application performing the login.",
+          "maxLength": 64,
+          "minLength": 8,
+          "type": "string"
         },
-        "additionalProperties": false
-      },
-      "ProblemDetails": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "nullable": true
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "detail": {
-            "type": "string",
-            "nullable": true
-          },
-          "instance": {
-            "type": "string",
-            "nullable": true
-          }
+        "userSecret": {
+          "description": "The secret string to authenticate the user.\r\nThis can be an auto-generated random string or a user-specified password, depending on the application.",
+          "maxLength": 128,
+          "minLength": 8,
+          "type": "string"
+        }
+      }
+    },
+    "LoginResponseDTO": {
+      "description": "Specifies the data transferred from the server to the client after a successful login.",
+      "type": "object",
+      "properties": {
+        "token": {
+          "$ref": "#/definitions/AuthorizationToken"
         },
-        "additionalProperties": { }
-      },
-      "SignatureDigest": {
-        "enum": [
-          2,
-          3,
-          5
-        ],
-        "type": "integer",
-        "format": "int32"
-      },
-      "UpstreamSessionRequestDTO": {
-        "type": "object",
-        "properties": {
-          "appName": {
-            "maxLength": 128,
-            "minLength": 1,
-            "type": "string",
-            "nullable": true
-          },
-          "appApiToken": {
-            "maxLength": 64,
-            "minLength": 8,
-            "type": "string",
-            "nullable": true
-          },
-          "upstreamAuthorizationHeader": {
-            "type": "string",
-            "nullable": true
-          }
+        "userId": {
+          "format": "uuid",
+          "description": "The id of the user that has logged in. This is also present as a claim in SGL.Analytics.DTO.LoginResponseDTO.Token.",
+          "type": "string"
         },
-        "additionalProperties": false
-      },
-      "UserMetadataDTO": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "username": {
-            "maxLength": 64,
-            "minLength": 1,
-            "type": "string",
-            "nullable": true
-          },
-          "studySpecificProperties": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            },
-            "nullable": true
-          },
-          "encryptedProperties": {
-            "type": "string",
-            "format": "byte",
-            "nullable": true
-          },
-          "propertyEncryptionInfo": {
-            "$ref": "#/components/schemas/EncryptionInfo"
-          }
+        "tokenExpiry": {
+          "format": "date-time",
+          "description": "The date and time when SGL.Analytics.DTO.LoginResponseDTO.Token expires.",
+          "type": "string"
+        }
+      }
+    },
+    "ProblemDetails": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
         },
-        "additionalProperties": false
-      },
-      "UserRegistrationDTO": {
-        "type": "object",
-        "properties": {
-          "appName": {
-            "maxLength": 128,
-            "minLength": 1,
-            "type": "string",
-            "nullable": true
-          },
-          "username": {
-            "maxLength": 64,
-            "minLength": 1,
-            "type": "string",
-            "nullable": true
-          },
-          "secret": {
-            "maxLength": 128,
-            "minLength": 8,
-            "type": "string",
-            "nullable": true
-          },
-          "upstreamAuthorizationHeader": {
-            "type": "string",
-            "nullable": true
-          },
-          "studySpecificProperties": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            },
-            "nullable": true
-          },
-          "encryptedProperties": {
-            "type": "string",
-            "format": "byte",
-            "nullable": true
-          },
-          "propertyEncryptionInfo": {
-            "$ref": "#/components/schemas/EncryptionInfo"
-          }
+        "title": {
+          "type": "string"
         },
-        "additionalProperties": false
-      },
-      "UserRegistrationResultDTO": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          }
+        "status": {
+          "format": "int32",
+          "type": "integer"
         },
-        "additionalProperties": false
+        "detail": {
+          "type": "string"
+        },
+        "instance": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": { }
+    },
+    "SignatureDigest": {
+      "format": "int32",
+      "enum": [
+        2,
+        3,
+        5
+      ],
+      "type": "integer"
+    },
+    "UpstreamSessionRequestDTO": {
+      "description": "Specifies the data that is sent from a client to the analytics backend to request a delegated authentication\r\nusing an authorization token for a trusted upstream system.",
+      "type": "object",
+      "properties": {
+        "appName": {
+          "description": "The unique technical name of the client application requesting the upstream session.",
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        "appApiToken": {
+          "description": "The application authentication token of the client application requesting the upstream session.",
+          "maxLength": 64,
+          "minLength": 8,
+          "type": "string"
+        },
+        "upstreamAuthorizationHeader": {
+          "description": "The authorization header to pass to the upstream backend for session validation.",
+          "type": "string"
+        }
+      }
+    },
+    "UserMetadataDTO": {
+      "description": "Specifies the data provided about a user registration to an exporter client.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "format": "uuid",
+          "description": "The unique id identifying the user.",
+          "type": "string"
+        },
+        "username": {
+          "description": "The Username for the user, can be the string form of the id if none was given during the registration.",
+          "maxLength": 64,
+          "minLength": 1,
+          "type": "string"
+        },
+        "studySpecificProperties": {
+          "description": "A dictionary containing application-/study-specific properties that are stored with the user registration.\r\nAlthough the DTO can store quite arbitrary data, as the entry values can again be dictionaries or lists, the properties are validated by the backend against the defined properties for the application.",
+          "type": "object",
+          "additionalProperties": { }
+        },
+        "encryptedProperties": {
+          "format": "byte",
+          "description": "Contains the encrypted application-/study-specific user registration properties as encrypted, gzipped JSON.\r\nThe used encryption mode and required key material is described by SGL.Analytics.DTO.UserMetadataDTO.PropertyEncryptionInfo.",
+          "type": "string"
+        },
+        "propertyEncryptionInfo": {
+          "$ref": "#/definitions/EncryptionInfo"
+        }
+      }
+    },
+    "UserRegistrationDTO": {
+      "description": "Specifies the data transferred from the client to the server when a client attempts to register a user.",
+      "type": "object",
+      "properties": {
+        "appName": {
+          "description": "The unique technical name of the client application performing the registration.",
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        "username": {
+          "description": "A username that can optionally be used by the client application.\r\nIf it is left out, the application should perform logins using the user id obtained from the SGL.Analytics.DTO.UserRegistrationResultDTO returned from the registration API call.\r\nIf it is specified, both options, user id as well as username can be used later.",
+          "maxLength": 64,
+          "minLength": 1,
+          "type": "string"
+        },
+        "secret": {
+          "description": "A secret string for the user, used to authenticate them later, when logging-in.\r\nThis can be an auto-generated random string or a user-specified password, depending on the application.\r\nIf it is null, a federated user account shall be registered, where authentication is done by handing a token to a configured upstream backend for verification.",
+          "maxLength": 128,
+          "minLength": 8,
+          "type": "string"
+        },
+        "upstreamAuthorizationHeader": {
+          "description": "If set, indicates that the user registration shall use delegated authentication instead of direct credentials.\r\nIt then contains an `Authorization` header value to pass to the upstream backend for authentication.",
+          "type": "string"
+        },
+        "studySpecificProperties": {
+          "description": "A dictionary containing application-/study-specific properties that should be stored with the user registration.\r\nAlthough the DTO can store quite arbitrary data, as the entry values can again be dictionaries or lists, the properties are validated by the backend against the defined properties for the application (as indicated by SGL.Analytics.DTO.UserRegistrationDTO.AppName).\r\nOnly those registrations are accepted where all submitted properties are defined in the backend with a matching type for the value and all required properties in the backend are present in the submitted DTO.",
+          "type": "object",
+          "additionalProperties": { }
+        },
+        "encryptedProperties": {
+          "format": "byte",
+          "description": "Contains the encrypted application-/study-specific user registration properties as encrypted, gzipped JSON.\r\nThe used encryption mode and required key material is described by SGL.Analytics.DTO.UserRegistrationDTO.PropertyEncryptionInfo.",
+          "type": "string"
+        },
+        "propertyEncryptionInfo": {
+          "$ref": "#/definitions/EncryptionInfo"
+        }
+      }
+    },
+    "UserRegistrationResultDTO": {
+      "description": "Specifies the data transferred from the server to the client after a successful user registration.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "format": "uuid",
+          "description": "The id that the backend assigned to the newly registered user.",
+          "type": "string"
+        }
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "AnalyticsUser",
+      "description": "The controller class serving the `api/analytics/user/v1`, `api/analytics/user/v1/login`, `api/analytics/user/v1/open-session-from-upstream`, and `api/analytics/user/v1/recipient-certificates`\r\nroutes that manage user registrations for SGL Analytics, perform logins for user sessions and provide recipient certificates for end-to-end encryption."
+    },
+    {
+      "name": "ExporterKeyAuth",
+      "description": "Implements the API routes for the key-pair-based challenge authentication for exporter clients.\r\nThese routes are prefixed under `api/analytics/user/v1/exporter-key-auth`.\r\nThe protocol consists of these steps:\r\n<list type=\"number\"><item><description>The client calls `api/analytics/user/v1/exporter-key-auth/open-challenge` with their key id and the app to authenticate for.</description></item><item><description>The backend responds to this call with a challenge containing a unique id, a nonce value and the algorithm to use.</description></item><item><description>\r\nThe client signs a byte sequence formed from the challenge nonce and a few parameters using their private key.\r\nSee M:SGL.Analytics.DTO.ExporterKeyAuthSignatureDTO.ConstructContentToSign(SGL.Analytics.DTO.ExporterKeyAuthRequestDTO,SGL.Analytics.DTO.ExporterKeyAuthChallengeDTO) for details.\r\n</description></item><item><description>The client calls `api/analytics/user/v1/exporter-key-auth/complete-challenge` with the challenge id and the signature.</description></item><item><description>The backend validates the signature against the known public key and if successful responds by issuing a session token.</description></item></list>"
+    },
+    {
+      "name": "Rekeying",
+      "description": "Implements the API routes for rekeying data keys for user registrations to grant access to a new authorized recipient.\r\nThe client iteratively requests key material for rekeying, decrypts the data keys using the user's recipient key pair,\r\nreencrypts them using the new authorized recipient's public key and then uploads the new data keys to be added to the database.\r\nIn the next request, for key material, the user registrations for which data keys were successfully added are excluded and\r\na new set of key material is provided.\r\nRegistrations that could not be successfully rekeyed are skipped using the pagination offset.\r\nThis iteration continues until a request for further key material returns an empty response.\r\nThese routes are prefixed under `api/analytics/user/v1/rekey`.\r\nAll routes here require an authorization that satisfies the `ExporterUser` policy."
+    },
+    {
+      "name": "UserExporter",
+      "description": "Implements the API routes for exporting user registration data.\r\nThese routes are prefixed under `api/analytics/user/v1`.\r\nAll routes here require an authorization that satisfies the `ExporterUser` policy."
+    }
+  ]
 }

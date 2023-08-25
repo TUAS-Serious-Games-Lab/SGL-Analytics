@@ -140,7 +140,7 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		[ProducesResponseType(typeof(DownstreamLogMetadataDTO), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("{id:Guid}/metadata")]
-		public async Task<ActionResult<DownstreamLogMetadataDTO>> GetLogMetadataById(Guid id, [FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
+		public async Task<ActionResult<DownstreamLogMetadataDTO>> GetLogMetadataById([FromRoute] Guid id, [FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetLogMetadataById));
 			if (credResult != null) return credResult;
 			try {
@@ -180,10 +180,10 @@ namespace SGL.Analytics.Backend.Logs.Collector.Controllers {
 		/// <param name="id">The id of the log of which to retrieve the content.</param>
 		/// <param name="ct">A cancellation token that is triggered when the client cancels the request.</param>
 		/// <returns>A <see cref="UserMetadataDTO"/> for the user registration, or an error state.</returns>
-		[ProducesResponseType(typeof(byte[]), StatusCodes.Status200OK, "application/octet-stream")]
+		[ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK, "application/octet-stream")]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("{id:Guid}/content")]
-		public async Task<ActionResult> GetLogContentById(Guid id, CancellationToken ct = default) {
+		public async Task<ActionResult> GetLogContentById([FromRoute] Guid id, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetLogContentById));
 			if (credResult != null) return credResult;
 			try {

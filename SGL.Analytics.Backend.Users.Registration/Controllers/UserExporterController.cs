@@ -139,7 +139,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 		[ProducesResponseType(typeof(UserMetadataDTO), StatusCodes.Status200OK)]
 		[ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
 		[HttpGet("{id:Guid}")]
-		public async Task<ActionResult<UserMetadataDTO>> GetUserMetadataById(Guid id, [FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
+		public async Task<ActionResult<UserMetadataDTO>> GetUserMetadataById([FromRoute] Guid id, [FromQuery(Name = "recipient")] KeyId? recipientKeyId = null, CancellationToken ct = default) {
 			var credResult = GetCredentials(out var appName, out var exporterKeyId, out var exporterDN, nameof(GetUserMetadataById));
 			if (credResult != null) return credResult;
 			try {

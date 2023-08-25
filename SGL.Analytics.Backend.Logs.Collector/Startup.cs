@@ -14,7 +14,10 @@ using SGL.Utilities.Backend;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Crypto.AspNetCore;
 using SGL.Utilities.Logging.FileLogging;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
+using System.IO;
+using System.Reflection;
 
 namespace SGL.Analytics.Backend.Logs.Collector {
 	/// <summary>
@@ -58,10 +61,20 @@ namespace SGL.Analytics.Backend.Logs.Collector {
 				ctx.HttpContext.RequestServices.GetService<IMetricsManager>()?
 				.HandleModelStateValidationError(err.ErrorMessage));
 
-			services.AddSwaggerGen(c => c.SwaggerDoc("v2", new OpenApiInfo {
-				Title = "SGL Analytics Log Service API",
-				Version = "v2"
-			}));
+			services.AddSwaggerGen(c => {
+				c.SwaggerDoc("v2", new OpenApiInfo {
+					Title = "SGL Analytics Log Service API",
+					Version = "v2"
+				});
+				// Use method name as operationId
+				c.CustomOperationIds(apiDesc => {
+					return apiDesc.TryGetMethodInfo(out MethodInfo methodInfo) ? methodInfo.Name : null;
+				});
+				foreach (var xmlFile in Directory.EnumerateFiles(AppContext.BaseDirectory, "SGL.*.xml")) {
+					c.IncludeXmlComments(xmlFile, includeControllerXmlComments: true);
+				}
+				c.InferSecuritySchemes();
+			});
 
 			services.AddHealthChecks()
 				.AddCheck<LogFileRepositoryHealthCheck>("log_file_repository_health_check")

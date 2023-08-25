@@ -14,8 +14,12 @@ using SGL.Utilities.Backend;
 using SGL.Utilities.Backend.AspNetCore;
 using SGL.Utilities.Backend.Security;
 using SGL.Utilities.Crypto.AspNetCore;
+using SGL.Utilities.Crypto.Keys;
 using SGL.Utilities.Logging.FileLogging;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
+using System.IO;
+using System.Reflection;
 
 namespace SGL.Analytics.Backend.Users.Registration {
 	/// <summary>
@@ -60,10 +64,21 @@ namespace SGL.Analytics.Backend.Users.Registration {
 				ctx.HttpContext.RequestServices.GetService<IMetricsManager>()?
 				.HandleModelStateValidationError(err.ErrorMessage));
 
-			services.AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo {
-				Title = "SGL Analytics Users Service API",
-				Version = "v1"
-			}));
+			services.AddSwaggerGen(c => {
+				c.SwaggerDoc("v1", new OpenApiInfo {
+					Title = "SGL Analytics Users Service API",
+					Version = "v1"
+				});
+				// Use method name as operationId
+				c.CustomOperationIds(apiDesc => {
+					return apiDesc.TryGetMethodInfo(out MethodInfo methodInfo) ? methodInfo.Name : null;
+				});
+				c.MapType<KeyId>(() => new OpenApiSchema { Type = "string", Format = null });
+				foreach (var xmlFile in Directory.EnumerateFiles(AppContext.BaseDirectory, "SGL.*.xml")) {
+					c.IncludeXmlComments(xmlFile, includeControllerXmlComments: true);
+				}
+				c.InferSecuritySchemes();
+			});
 
 			services.AddHealthChecks()
 				.AddDbContextCheck<UsersContext>("db_health_check")
