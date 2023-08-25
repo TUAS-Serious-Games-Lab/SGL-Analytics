@@ -41,5 +41,13 @@
 		<ProjectReference Include="..\SGL.Analytics.Backend.Users.Infrastructure\SGL.Analytics.Backend.Users.Infrastructure.csproj" />
 	</ItemGroup>
 
+	<!-- https://github.com/dotnet/sdk/issues/9498#issuecomment-635982317 -->
+	<Target Name="CopyReferenceFiles" BeforeTargets="Build">
+		<ItemGroup>
+			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" />
+		</ItemGroup>
 
+		<Message Text="Copying reference files for $(ProjectName) to $(OutputPath)" Importance="High" />
+		<Copy SourceFiles="@(ReferenceFiles)" DestinationFolder="$(OutputPath)" Condition="Exists('%(RootDir)%(Directory)%(Filename)%(Extension)')" />
+	</Target>
 </Project>
