@@ -293,7 +293,7 @@ namespace SGL.Analytics.ExporterClient {
 			var cert = certStore.GetCertificateByKeyId(keyIdToGrantAccessTo);
 			if (cert == null) {
 				logger.LogError("Target key {targetKey} for rekeying operation not found in fetched certificate store.", keyIdToGrantAccessTo);
-				throw new Exception("KeyId not found!");
+				throw new ArgumentException("KeyId not found!", nameof(keyIdToGrantAccessTo));
 			}
 			IReadOnlyDictionary<Guid, EncryptionInfo> origKeyDict;
 			int paginationOffset = 0;
@@ -361,7 +361,7 @@ namespace SGL.Analytics.ExporterClient {
 			var cert = certStore.GetCertificateByKeyId(keyIdToGrantAccessTo);
 			if (cert == null) {
 				logger.LogError("Target key {targetKey} for rekeying operation not found in fetched certificate store.", keyIdToGrantAccessTo);
-				throw new Exception("KeyId not found!");
+				throw new ArgumentException("KeyId not found!", nameof(keyIdToGrantAccessTo));
 			}
 			IReadOnlyDictionary<Guid, EncryptionInfo> origKeyDict;
 			int paginationOffset = 0;
