@@ -16,9 +16,17 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Logs.Application.Services {
-
+	/// <summary>
+	/// Represents the configuration options for <see cref="LogManager"/>.
+	/// </summary>
 	public class LogManagerOptions {
+		/// <summary>
+		/// Specifies the configuration section <c>LogManager</c> under which these options are placed.
+		/// </summary>
 		public const string LogManager = "LogManager";
+		/// <summary>
+		/// The maximum number of items to return in a chunk for rekeying operations.
+		/// </summary>
 		public int RekeyingPagination { get; set; } = 100;
 	}
 
@@ -182,6 +190,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 			}
 		}
 
+		/// <inheritdoc/>
 		public async Task<IEnumerable<LogFile>> ListLogsAsync(string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct = default) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
 			if (app is null) {
@@ -197,6 +206,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 			return logs.Select(log => new LogFile(log, logFileRepo)).ToList();
 		}
 
+		/// <inheritdoc/>
 		public async Task<LogFile> GetLogByIdAsync(Guid logId, string appName, KeyId? recipientKeyId, string exporterDN, CancellationToken ct = default) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
 			if (app is null) {
@@ -217,6 +227,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 			return new LogFile(log, logFileRepo);
 		}
 
+		/// <inheritdoc/>
 		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct = default) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
 			if (app is null) {
@@ -268,6 +279,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 			logger.LogInformation("... rekeying upload finished.");
 		}
 
+		/// <inheritdoc/>
 		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, int offset, CancellationToken ct = default) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
 			if (app is null) {

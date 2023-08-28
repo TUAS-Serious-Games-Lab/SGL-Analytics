@@ -68,6 +68,9 @@ namespace SGL.Analytics.Backend.Logs.Application.Model {
 		/// </summary>
 		public LogContentEncoding Encoding => metadata.Encoding;
 
+		/// <summary>
+		/// The size of the log file content.
+		/// </summary>
 		public long? Size => metadata.Size;
 
 		/// <summary>
@@ -76,6 +79,9 @@ namespace SGL.Analytics.Backend.Logs.Application.Model {
 		/// </summary>
 		public bool Complete => metadata.Complete;
 
+		/// <summary>
+		/// The encryption-related metadata for the log file.
+		/// </summary>
 		public EncryptionInfo EncryptionInfo => metadata.EncryptionInfo;
 
 		/// <summary>
