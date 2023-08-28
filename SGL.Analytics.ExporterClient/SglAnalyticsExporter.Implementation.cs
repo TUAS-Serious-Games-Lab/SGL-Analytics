@@ -141,10 +141,20 @@ namespace SGL.Analytics.ExporterClient {
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
 			var requestConcurrency = configurator.RequestConcurrencyGetter();
 			var logs = metaDTOs.MapBufferedAsync(requestConcurrency, (Func<DownstreamLogMetadataDTO, Task<(LogFileMetadata Metadata, Stream? Content)>>)(async mdto => {
-				var encryptedContent = await logClient.GetLogContentByIdAsync(mdto.LogFileId, ct).ConfigureAwait(false);
-				var metadata = ToMetadata(mdto);
-				var content = DecryptLogFile(encryptedContent, recipientKeyId, mdto, keyDecryptor, ct);
-				return (metadata, content);
+				try {
+					var encryptedContent = await logClient.GetLogContentByIdAsync(mdto.LogFileId, ct).ConfigureAwait(false);
+					var content = DecryptLogFile(encryptedContent, recipientKeyId, mdto, keyDecryptor, ct);
+					var metadata = ToMetadata(mdto);
+					return (metadata, content);
+				}
+				catch (OperationCanceledException) {
+					throw;
+				}
+				catch (Exception ex) {
+					logger.LogError(ex, "Downloading and decrypting log file {logId} failed.", mdto.LogFileId);
+					var metadata = ToMetadata(mdto);
+					return (metadata, null);
+				}
 			}), ct);
 			await foreach (var log in logs.ConfigureAwait(false).WithCancellation(ct)) {
 				yield return log;
