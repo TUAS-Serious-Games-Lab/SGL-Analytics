@@ -38,11 +38,11 @@ namespace SGL.Analytics.Client {
 	/// <summary>
 	/// Acts as the central facade class for the functionality of SGL Analytics and coordinates its operation.
 	/// It provides a simple to use mechanism to record analytics log files (containing different streams of events and object state snapshots).
-	/// The writing of this files to disk is done asynchronously in the background to not slow down the application and
+	/// The writing of these files to disk is done asynchronously in the background to not slow down the application and
 	/// the completed files are uploaded to a collector backend that catalogs them by application and user.
 	/// The upload process also happens automatically in the background and retries failed uploads on startup or when <see cref="StartRetryUploads"/> is called.
 	///
-	/// The public methods allow registering the user, beginning a new analytics log file, recording events and snapshots into the current analytics log file,
+	/// The public methods allow registering or authenticating the user, beginning a new analytics log file, recording events and snapshots into the current analytics log file,
 	/// and finishing the analytics log operations by finishing the current file, waiting for it to be written and ensuring all pending uploads are complete.
 	/// </summary>
 	public partial class SglAnalytics : IAsyncDisposable {
