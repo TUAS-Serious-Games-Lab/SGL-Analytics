@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -28,6 +29,10 @@ namespace SGL.Analytics.ExporterClient {
 		private Dictionary<string, PerAppState> perAppStates = new Dictionary<string, PerAppState>();
 		private ILogger<SglAnalyticsExporter> logger;
 
+		/// <summary>
+		/// Asynchronously cleans up the ressources used by the client object.
+		/// </summary>
+		/// <returns>A Task representing the asynchronous operation.</returns>
 		public async ValueTask DisposeAsync() {
 			await ClearPerAppStatesAsync();
 			if (configurator.Authenticator.Dispose && authenticator != null) await disposeIfDisposable(authenticator);

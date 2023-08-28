@@ -10,6 +10,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.ExporterClient {
+	/// <summary>
+	/// Encapsulates the arguments made available to factory function objects in <see cref="ISglAnalyticsExporterConfigurator"/>
+	///	when the function object is targeted to be used before a user is logged in.
+	/// </summary>
 	public class SglAnalyticsExporterConfiguratorFactoryArguments {
 		/// <summary>
 		/// The <see cref="HttpClient"/> object for the client that component implementations should use for making requests to the backend.
@@ -45,6 +49,10 @@ namespace SGL.Analytics.ExporterClient {
 		}
 	}
 
+	/// <summary>
+	/// Encapsulates the arguments made available to factory function objects in <see cref="ISglAnalyticsExporterConfigurator"/>
+	/// when the function object is targeted to be used after a user is logged in.
+	/// </summary>
 	public class SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments : SglAnalyticsExporterConfiguratorFactoryArguments {
 		/// <summary>
 		/// The technical name of the application for which analytics logs are exported. This is used for identifying the application in the backend.
@@ -55,9 +63,21 @@ namespace SGL.Analytics.ExporterClient {
 		/// </summary>
 		public AuthorizationData Authorization { get; }
 
+		/// <summary>
+		/// The key id for the authentication key-pair of the authenticated user.
+		/// </summary>
 		public KeyId AuthenticationKeyId { get; }
+		/// <summary>
+		/// The certificate for the authentication key-pair of the authenticated user.
+		/// </summary>
 		public Certificate AuthenticationCertificate { get; }
+		/// <summary>
+		/// The key id for the decryption key-pair of the authenticated user.
+		/// </summary>
 		public KeyId DecryptionKeyId { get; }
+		/// <summary>
+		/// The certificate for the decryption key-pair of the authenticated user.
+		/// </summary>
 		public Certificate DecryptionCertificate { get; }
 
 		internal SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments(HttpClient httpClient, ILoggerFactory loggerFactory, RandomGenerator random, ConfiguratorCustomArgumentFactoryContainer<SglAnalyticsExporterConfiguratorFactoryArguments, SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments> customArgumentFactories, string appName, AuthorizationData authorization, KeyId authenticationKeyId, Certificate authenticationCertificate, KeyId decryptionKeyId, Certificate decryptionCertificate) : base(httpClient, loggerFactory, random, customArgumentFactories) {
@@ -71,6 +91,9 @@ namespace SGL.Analytics.ExporterClient {
 
 	}
 
+	/// <summary>
+	/// The builder-style configuration interface for <see cref="SglAnalyticsExporter"/>.
+	/// </summary>
 	public interface ISglAnalyticsExporterConfigurator {
 		/// <summary>
 		/// Sets the function used to obtain the maximum number of concurrent in-flight requests for an operation.
@@ -85,11 +108,27 @@ namespace SGL.Analytics.ExporterClient {
 		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalyticsExporter"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
 		/// <returns>A reference to this <see cref="ISglAnalyticsExporterConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsExporterConfigurator UseLoggerFactory(Func<SglAnalyticsExporterConfiguratorFactoryArguments, ILoggerFactory> loggerFactoryFactory, bool dispose = true);
-
+		/// <summary>
+		/// Sets the factory for the <see cref="IExporterAuthenticator"/> object to use for authenticating users.
+		/// </summary>
+		/// <param name="authenticatorFactory">The factory function to use.</param>
+		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalyticsExporter"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
+		/// <returns>A reference to this <see cref="ISglAnalyticsExporterConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsExporterConfigurator UseAuthenticator(Func<SglAnalyticsExporterConfiguratorFactoryArguments, KeyPair, IExporterAuthenticator> authenticatorFactory, bool dispose = true);
+		/// <summary>
+		/// Sets the factory for the <see cref="IUserExporterApiClient"/> object to use for communicating with the users backend service.
+		/// </summary>
+		/// <param name="userExporterFactory">The factory function to use.</param>
+		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalyticsExporter"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
+		/// <returns>A reference to this <see cref="ISglAnalyticsExporterConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsExporterConfigurator UseUserApiClient(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, IUserExporterApiClient> userExporterFactory, bool dispose = true);
+		/// <summary>
+		/// Sets the factory for the <see cref="ILogExporterApiClient"/> object to use communicating with the users backend service.
+		/// </summary>
+		/// <param name="logExporterFactory">The factory function to use.</param>
+		/// <param name="dispose">Whether the object shall be disposed when the <see cref="SglAnalyticsExporter"/> object is disposed. (Only applies if the object returned from the factory implements <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>.)</param>
+		/// <returns>A reference to this <see cref="ISglAnalyticsExporterConfigurator"/> object for chaining.</returns>
 		ISglAnalyticsExporterConfigurator UseLogApiClient(Func<SglAnalyticsExporterConfiguratorAuthenticatedFactoryArguments, ILogExporterApiClient> logExporterFactory, bool dispose = true);
-
 		/// <summary>
 		/// Installs a factory for custom arguments of type <typeparamref name="T"/> that will be made available to other factories through <see cref="SglAnalyticsExporterConfiguratorFactoryArguments.GetCustomArgument{T}"/>.
 		/// </summary>
