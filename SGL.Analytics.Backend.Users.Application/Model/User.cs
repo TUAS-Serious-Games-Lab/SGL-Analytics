@@ -55,8 +55,7 @@ namespace SGL.Analytics.Backend.Users.Application.Model {
 		/// <summary>
 		/// The application-specific properties for this user mapped as a (potentially complex) dictionary.
 		/// </summary>
-		public Dictionary<string, object?> AppSpecificProperties { get; private set; }
-
+		public Dictionary<string, object?> AppSpecificProperties { get; private set; } = null!;
 		/// <summary>
 		/// Stores end-to-end encrypted bytes containing sensitive application-specific properties about the user.
 		///	As the encryption is end-to-end this property in itself is opaque, but the usual use-case is for the client to store an encrypted JSON document here.

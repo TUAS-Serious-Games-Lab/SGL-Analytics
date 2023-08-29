@@ -211,7 +211,8 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Tests {
 			await using (var context = createContext()) {
 				app = await context.Applications.SingleOrDefaultAsync(a => a.Id == app.Id);
 				var repo = new DbLogMetadataRepository(context);
-				var logMd = LogMetadata.Create(id, app, Guid.NewGuid(), id, DateTime.Now, DateTime.Now, DateTime.Now, ".log.gz", DTO.LogContentEncoding.GZipCompressed, 42, encryptionInfo2);
+				var logMd = LogMetadata.Create(id, app ?? throw new NullReferenceException(), Guid.NewGuid(), id,
+					DateTime.Now, DateTime.Now, DateTime.Now, ".log.gz", DTO.LogContentEncoding.GZipCompressed, 42, encryptionInfo2);
 				logMd.App = app;
 				await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.AddLogMetadataAsync(logMd));
 			}
