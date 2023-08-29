@@ -7,7 +7,6 @@ using SGL.Utilities;
 using SGL.Utilities.Crypto.Certificates;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -84,9 +83,16 @@ namespace SGL.Analytics.Client {
 				if (!(expiry.HasValue && userId.HasValue)) {
 					// New backend should provide decoded expiry and userId. If it doesn't decode it ourself and complete response DTO:
 					try {
-						var token = (new JwtSecurityTokenHandler()).ReadJwtToken(result.Token.Value);
-						expiry ??= token.ValidTo.ToUniversalTime() - AuthorizationExpiryClockTolerance;
-						userId ??= Guid.TryParse(token.Claims.FirstOrDefault(c => c.Type == "userid")?.Value, out var uId) ? uId : Guid.Empty;
+						// quick and dirty Base64Url decode after: https://stackoverflow.com/a/26354677
+						var base64Payload = result.Token.Value.Split('.')[1].Replace('_', '/').Replace('-', '+');
+						switch (base64Payload.Length % 4) {
+							case 2: base64Payload += "=="; break;
+							case 3: base64Payload += "="; break;
+						}
+						var json = Convert.FromBase64String(base64Payload);
+						var payload = JsonSerializer.Deserialize<Dictionary<string, string>>(json.AsSpan(), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+						expiry ??= (payload?.TryGetValue("exp", out var timestamp) ?? false) ? DateTime.TryParse(timestamp, out var expTime) ? expTime : DateTime.MaxValue : DateTime.MaxValue;
+						userId ??= (payload?.TryGetValue("userid", out var uidStr) ?? false) ? Guid.TryParse(uidStr, out var uId) ? uId : Guid.Empty : Guid.Empty;
 					}
 					catch {
 						expiry ??= DateTime.UtcNow.AddMinutes(5);
