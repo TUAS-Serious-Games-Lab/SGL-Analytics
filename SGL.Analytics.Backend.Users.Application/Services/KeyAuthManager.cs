@@ -64,15 +64,17 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		private readonly ILogger<KeyAuthManager> logger;
 		private readonly IKeyAuthChallengeStateHolder stateHolder;
 		private readonly KeyAuthOptions options;
+		private readonly IMetricsManager metricsManager;
 
 		/// <summary>
 		/// Constructs the service object, injecting the required dependencies.
 		/// </summary>
-		public KeyAuthManager(IServiceProvider serviceProvider, ILogger<KeyAuthManager> logger, IKeyAuthChallengeStateHolder stateHolder, IOptions<KeyAuthOptions> options) {
+		public KeyAuthManager(IServiceProvider serviceProvider, ILogger<KeyAuthManager> logger, IKeyAuthChallengeStateHolder stateHolder, IOptions<KeyAuthOptions> options, IMetricsManager metricsManager) {
 			this.serviceProvider = serviceProvider;
 			this.logger = logger;
 			this.stateHolder = stateHolder;
 			this.options = options.Value;
+			this.metricsManager = metricsManager;
 		}
 
 		/// <inheritdoc/>
@@ -81,10 +83,12 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			var challengeDto = new ExporterKeyAuthChallengeDTO(Guid.NewGuid(), randomGenerator.GetBytes(options.ChallengeSize), options.ChallengeDigest);
 			await stateHolder.OpenChallengeAsync(new Values.ChallengeState(requestDto, challengeDto, DateTime.UtcNow + options.ChallengeTimeout), ct);
 			logger.LogInformation("Opened challenge {id} for app {appName} and key id {keyId}.", challengeDto.ChallengeId, requestDto.AppName, requestDto.KeyId);
+			metricsManager.HandleChallengeOpened(requestDto.AppName);
 			return challengeDto;
 		}
 		/// <inheritdoc/>
 		public async Task<ExporterKeyAuthResponseDTO> CompleteChallengeAsync(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct = default) {
+			using var timer = metricsManager.MeasureChallengeCompletionDuration();
 			var appRepo = serviceProvider.GetRequiredService<IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions>>();
 			var state = await stateHolder.GetChallengeAsync(signatureDto.ChallengeId, ct);
 			if (state == null) {
@@ -152,6 +156,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			// As the challenge was sucessfully solved, close it.
 			await stateHolder.CloseChallengeAsync(state);
 			logger.LogInformation("Issuing JWT session token for exporter certificate {DN} (key id = {keyId}) and app {appName}.", keyCert.SubjectDN, certKeyId, state.RequestData.AppName);
+			metricsManager.HandleSucessfulKeyAuth(app.Name, keyCert.PublicKey.Type, (DateTime.UtcNow - (state.Timeout - options.ChallengeTimeout)).TotalSeconds);
 			return response;
 		}
 

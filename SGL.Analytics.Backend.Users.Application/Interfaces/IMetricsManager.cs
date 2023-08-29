@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SGL.Utilities.Crypto.Keys;
+using System;
 using System.Collections.Generic;
 
 namespace SGL.Analytics.Backend.Users.Application.Interfaces {
@@ -125,11 +126,31 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// Called when an error is caused while attempting to complete a challenge authentication, because the signature was invalid for the challenge.
 		/// </summary>
 		void HandleChallengeCompletionError();
+		/// <summary>
+		/// Called when a challenge for key authentication is opened by request from a client.
+		/// </summary>
+		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
+		void HandleChallengeOpened(string appName);
+		/// <summary>
+		/// Called when a client submits a completed key-pair authentication challenge for validation to measure how long the completion operation takes.
+		/// </summary>
+		/// <returns>A timer object that measures the time passed time when it is disposed.</returns>
+		IDisposable MeasureChallengeCompletionDuration();
+		/// <summary>
+		/// Called when a key-pair-based authentication was successfully completed.
+		/// </summary>
+		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
+		/// <param name="keyType">The type of the key-pair used.</param>
+		/// <param name="fullDuration">The duration in seconds between when the challenge was opened and when it was successfully completed.</param>
+		void HandleSucessfulKeyAuth(string appName, KeyType keyType, double fullDuration);
 	}
 	/// <summary>
 	/// Provides a null implementation of <see cref="IMetricsManager"/> where the methods do nothing and thus no metrics are actually collected.
 	/// </summary>
 	public class NullMetricsManager : IMetricsManager {
+		private class NullTimer : IDisposable {
+			public void Dispose() { }
+		}
 		/// <inheritdoc/>
 		public void HandleIncorrectSecurityTokenClaimsError() { }
 		/// <inheritdoc/>
@@ -176,5 +197,11 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		public void HandleCertificateError() { }
 		/// <inheritdoc/>
 		public void HandleChallengeCompletionError() { }
+		/// <inheritdoc/>
+		public void HandleChallengeOpened(string appName) { }
+		/// <inheritdoc/>
+		public IDisposable MeasureChallengeCompletionDuration() => new NullTimer();
+		/// <inheritdoc/>
+		public void HandleSucessfulKeyAuth(string name, KeyType type, double fullDuration) { }
 	}
 }

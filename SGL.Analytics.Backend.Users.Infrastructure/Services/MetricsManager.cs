@@ -1,5 +1,6 @@
 ﻿using Prometheus;
 using SGL.Analytics.Backend.Users.Application.Interfaces;
+using SGL.Utilities.Crypto.Keys;
 using SGL.Utilities.PrometheusNet;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		private static readonly Gauge lastSuccessfulLoginTime = Metrics.CreateGauge("sgla_last_successful_login_time_seconds", "Unix timestamp of the last successful login for the labeled app (in UTC).", "app");
 		private static readonly Gauge lastRegistrationTime = Metrics.CreateGauge("sgla_last_registration_time_seconds", "Unix timestamp of the last user registration for the labeled app (in UTC).", "app");
 		private static readonly Counter errorCounter = Metrics.CreateCounter("sgla_errors_total", "Number of service-level errors encountered by SGL Analytics, labeled by error type and app.", "type", "app");
+		private static readonly Counter keyAuthChallengesOpened = Metrics.CreateCounter("sgla_keyauth_challenges_opened_total", "Number of opened challenges for key-pair-based authentication.", "app");
+		private static readonly Counter keyAuthChallengesCompleted = Metrics.CreateCounter("sgla_keyauth_challenges_completed_total", "Number of successfully completed challenges for key-pair-based authentication.", "app", "key_type");
+		private static readonly Histogram keyAuthChallengesCompletionDurations = Metrics.CreateHistogram("sgla_keyauth_challenge_completion_durations_seconds", "The duration of validations of challenges for key-pair-based authentication.",
+			new HistogramConfiguration { Buckets = Histogram.PowersOfTenDividedBuckets(-6, 2, 4) });
+		private static readonly Histogram keyAuthChallengesFullDurations = Metrics.CreateHistogram("sgla_keyauth_challenge_full_durations_seconds", "The times between opening and sucessfully closing a challenge for key-pair-based authentication.",
+			new HistogramConfiguration { Buckets = Histogram.PowersOfTenDividedBuckets(-6, 4, 4), LabelNames = new[] { "app", "key_type" } });
 		private const string ERROR_INVALID_CHALLENGE = "Invalid challenge";
 		private const string ERROR_NO_CERTIFICATE_FOR_KEYID = "No certificate for KeyID";
 		private const string ERROR_CERTIFICATE_ERROR = "Certificate error";
@@ -168,6 +175,22 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		/// <inheritdoc/>
 		public void HandleChallengeCompletionError() {
 			errorCounter.WithLabels(ERROR_CHALLENGE_COMPLETION_FAILED, "").Inc();
+		}
+
+		/// <inheritdoc/>
+		public void HandleChallengeOpened(string appName) {
+			keyAuthChallengesOpened.WithLabels(appName).Inc();
+		}
+
+		/// <inheritdoc/>
+		public IDisposable MeasureChallengeCompletionDuration() {
+			return keyAuthChallengesCompletionDurations.NewTimer();
+		}
+
+		/// <inheritdoc/>
+		public void HandleSucessfulKeyAuth(string appName, KeyType keyType, double fullDuration) {
+			keyAuthChallengesCompleted.WithLabels(appName, $"{keyType:G}").Inc();
+			keyAuthChallengesFullDurations.WithLabels(appName, $"{keyType:G}").Observe(fullDuration);
 		}
 	}
 }
