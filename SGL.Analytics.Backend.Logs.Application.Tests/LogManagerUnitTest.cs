@@ -8,6 +8,7 @@ using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Backend.Applications;
 using SGL.Utilities.Backend.TestUtilities.Applications;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.IO;
@@ -51,7 +52,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			Guid logFileId = Guid.NewGuid();
 			Guid userId = Guid.NewGuid();
 			string suffix = ".log";
-			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
+			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix,
+				LogContentEncoding.Plain, EncryptionInfo.CreateUnencrypted());
 			var key = new LogPath() { AppName = appName, UserId = userId, LogId = logFileId, Suffix = suffix };
 			await using (var origContent = generateRandomMemoryStream()) {
 				await manager.IngestLogAsync(userId, appName, appApiToken, dto, origContent);
@@ -74,8 +76,10 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			Guid user1Id = Guid.NewGuid();
 			Guid user2Id = Guid.NewGuid();
 			string suffix = ".log";
-			LogMetadataDTO dto1 = new(logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95), suffix, LogContentEncoding.Plain);
-			LogMetadataDTO dto2 = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
+			LogMetadataDTO dto1 = new(logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95), suffix,
+				LogContentEncoding.Plain, EncryptionInfo.CreateUnencrypted());
+			LogMetadataDTO dto2 = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix,
+				LogContentEncoding.Plain, EncryptionInfo.CreateUnencrypted());
 			await using (var content = generateRandomMemoryStream()) {
 				await manager.IngestLogAsync(user1Id, appName, appApiToken, dto1, content);
 			}
@@ -99,7 +103,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			Guid logFileId = Guid.NewGuid();
 			Guid userId = Guid.NewGuid();
 			string suffix = ".log";
-			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
+			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix,
+				LogContentEncoding.Plain, EncryptionInfo.CreateUnencrypted());
 			await using (var origContent = generateRandomMemoryStream()) {
 				var streamWrapper = new TriggeredBlockingStream(origContent);
 				var task = manager.IngestLogAsync(userId, appName, appApiToken, dto, streamWrapper);
@@ -126,7 +131,8 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			Guid logFileId = Guid.NewGuid();
 			Guid userId = Guid.NewGuid();
 			string suffix = ".log";
-			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
+			LogMetadataDTO dto = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix,
+				LogContentEncoding.Plain, EncryptionInfo.CreateUnencrypted());
 			await using (var origContent = generateRandomMemoryStream()) {
 				await Assert.ThrowsAsync<ApplicationDoesNotExistException>(async () => await manager.IngestLogAsync(userId, "DoesNotExist", "FakeAPIToken", dto, origContent));
 			}
@@ -136,13 +142,15 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests {
 			Guid logFileId = Guid.NewGuid();
 			Guid user1Id = Guid.NewGuid();
 			string suffix = ".log";
-			LogMetadataDTO dto1 = new(logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95), suffix, LogContentEncoding.Plain);
+			LogMetadataDTO dto1 = new(logFileId, DateTime.Now.AddMinutes(-120), DateTime.Now.AddMinutes(-95), suffix,
+				LogContentEncoding.Plain, EncryptionInfo.CreateUnencrypted());
 			await using (var content = generateRandomMemoryStream()) {
 				await manager.IngestLogAsync(user1Id, appName, appApiToken, dto1, content);
 			}
 
 			Guid user2Id = Guid.NewGuid();
-			LogMetadataDTO dto2 = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix, LogContentEncoding.Plain);
+			LogMetadataDTO dto2 = new(logFileId, DateTime.Now.AddMinutes(-30), DateTime.Now.AddMinutes(-2), suffix,
+				LogContentEncoding.Plain, EncryptionInfo.CreateUnencrypted());
 			await using (var origContent = generateRandomMemoryStream()) {
 				var streamWrapper = new TriggeredBlockingStream(origContent);
 				var task = manager.IngestLogAsync(user2Id, appName, appApiToken, dto2, streamWrapper);

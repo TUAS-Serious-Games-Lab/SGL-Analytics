@@ -58,17 +58,17 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		public Guid User1Id;
 		public Guid Log1Id;
-		public byte[] Log1Content;
+		public byte[] Log1Content = Array.Empty<byte>();
 		public Guid Log2Id;
-		public byte[] Log2Content;
+		public byte[] Log2Content = Array.Empty<byte>();
 		public Guid Log3Id;
-		public byte[] Log3Content;
+		public byte[] Log3Content = Array.Empty<byte>();
 
 		public Guid User2Id;
 		public Guid Log4Id;
-		public byte[] Log4Content;
+		public byte[] Log4Content = Array.Empty<byte>();
 		public Guid Log5Id;
-		public byte[] Log5Content;
+		public byte[] Log5Content = Array.Empty<byte>();
 
 		public Guid OtherAppLogId;
 
