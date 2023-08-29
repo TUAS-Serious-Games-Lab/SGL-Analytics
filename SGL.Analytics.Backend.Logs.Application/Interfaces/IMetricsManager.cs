@@ -99,6 +99,10 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// </summary>
 		/// <param name="perAppSizes">A dictionary mapping the application names to corresponding average size.</param>
 		void UpdateAvgLogSize(IDictionary<string, double> perAppSizes);
+		/// <summary>
+		/// Called when an error is caused by a requested log not being found.
+		/// </summary>
+		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
 		void HandleLogNotFoundError(string appName);
 	}
 

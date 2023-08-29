@@ -138,6 +138,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			return await query.AsNoTracking().ToDictionaryAsync(e => e.AppName, e => e.UsersCount, ct);
 		}
 
+		/// <inheritdoc/>
 		public async Task<IEnumerable<UserRegistration>> ListUsersAsync(string appName, KeyId? notForKeyId = null, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var query = context.UserRegistrations.Where(u => u.App.Name == appName);
 			if (notForKeyId != null) {
@@ -147,12 +148,14 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			return await query.ToListAsync(ct);
 		}
 
+		/// <inheritdoc/>
 		public async Task<IList<UserRegistration>> UpdateUsersAsync(IList<UserRegistration> userRegs, CancellationToken ct = default) {
 			Debug.Assert(userRegs.All(userReg => context.Entry(userReg).State is EntityState.Modified or EntityState.Unchanged));
 			await context.SaveChangesAsync(ct);
 			return userRegs;
 		}
 
+		/// <inheritdoc/>
 		public async Task<IEnumerable<UserRegistration>> GetUsersByIdsAsync(IReadOnlyCollection<Guid> ids, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var idsSet = ids.ToHashSet();
 			var query = context.UserRegistrations
@@ -161,6 +164,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 			return await query.ToListAsync(ct);
 		}
 
+		/// <inheritdoc/>
 		public async Task<UserRegistration?> GetUserByBasicFederationUpstreamUserIdAsync(Guid upstreamUserId, string appName, UserQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var query = context.UserRegistrations.Where(u => u.App.Name == appName && u.BasicFederationUpstreamUserId == upstreamUserId);
 			query = ApplyQueryOptions(query, queryOptions);

@@ -24,22 +24,50 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Services {
-
+	/// <summary>
+	/// Represents the configuration options for <see cref="KeyAuthManager"/>.
+	/// </summary>
 	public class KeyAuthOptions {
+		/// <summary>
+		/// Specifies the configuration section <c>ExporterKeyAuth</c> under which the options are placed.
+		/// </summary>
 		public const string ExporterKeyAuth = "ExporterKeyAuth";
+		/// <summary>
+		/// The path of a PEM file containing the signer certificates for the applications' authentication certificates.
+		/// </summary>
 		public string? SignerCertificateFile { get; set; } = null;
+		/// <summary>
+		/// The size in bytes of the random challenge nonce to generate when issuing challenges to clients.
+		/// </summary>
 		public int ChallengeSize { get; set; } = 16 * 1024;
+		/// <summary>
+		/// The digest algorithm to use for the signature challenges.
+		/// </summary>
 		public SignatureDigest ChallengeDigest { get; set; } = SignatureDigest.Sha256;
+		/// <summary>
+		/// The timeout after which an issued challenge expires if it isn't completed yet.
+		/// </summary>
 		public TimeSpan ChallengeTimeout { get; set; } = TimeSpan.FromMinutes(5);
+		/// <summary>
+		/// The validity duration of the session authorization tokens issued upon successful challenge completion.
+		/// </summary>
 		public TimeSpan TokenValidity { get; set; } = TimeSpan.FromDays(1);
 	}
 
+	/// <summary>
+	/// Implements <see cref="IKeyAuthManager"/> using public key signatures based on the registered key-pair type
+	/// and with the digest algorithm configured in <see cref="KeyAuthOptions.ChallengeDigest"/>.
+	/// Open challenge state is stored in an <see cref="IKeyAuthChallengeStateHolder"/> and upon success JWT session authorization tokens are issued.
+	/// </summary>
 	public class KeyAuthManager : IKeyAuthManager {
 		private readonly IServiceProvider serviceProvider;
 		private readonly ILogger<KeyAuthManager> logger;
 		private readonly IKeyAuthChallengeStateHolder stateHolder;
 		private readonly KeyAuthOptions options;
 
+		/// <summary>
+		/// Constructs the service object, injecting the required dependencies.
+		/// </summary>
 		public KeyAuthManager(IServiceProvider serviceProvider, ILogger<KeyAuthManager> logger, IKeyAuthChallengeStateHolder stateHolder, IOptions<KeyAuthOptions> options) {
 			this.serviceProvider = serviceProvider;
 			this.logger = logger;
@@ -47,6 +75,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			this.options = options.Value;
 		}
 
+		/// <inheritdoc/>
 		public async Task<ExporterKeyAuthChallengeDTO> OpenChallengeAsync(ExporterKeyAuthRequestDTO requestDto, CancellationToken ct = default) {
 			var randomGenerator = new RandomGenerator();
 			var challengeDto = new ExporterKeyAuthChallengeDTO(Guid.NewGuid(), randomGenerator.GetBytes(options.ChallengeSize), options.ChallengeDigest);
@@ -54,6 +83,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			logger.LogInformation("Opened challenge {id} for app {appName} and key id {keyId}.", challengeDto.ChallengeId, requestDto.AppName, requestDto.KeyId);
 			return challengeDto;
 		}
+		/// <inheritdoc/>
 		public async Task<ExporterKeyAuthResponseDTO> CompleteChallengeAsync(ExporterKeyAuthSignatureDTO signatureDto, CancellationToken ct = default) {
 			var appRepo = serviceProvider.GetRequiredService<IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions>>();
 			var state = await stateHolder.GetChallengeAsync(signatureDto.ChallengeId, ct);

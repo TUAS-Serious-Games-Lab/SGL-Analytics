@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 	/// <summary>
-	/// Specifies the interface for a singleton service that stores the volatile state for key-based challenge authentication operations.
+	/// Specifies the interface for a service that stores the volatile state for key-based challenge authentication operations.
 	/// </summary>
 	public interface IKeyAuthChallengeStateHolder {
 		/// <summary>

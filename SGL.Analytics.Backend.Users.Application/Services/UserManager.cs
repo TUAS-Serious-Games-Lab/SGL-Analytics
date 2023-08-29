@@ -18,8 +18,17 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Services {
+	/// <summary>
+	/// Represents the configuration options for <see cref="UserManager"/>.
+	/// </summary>
 	public class UserManagerOptions {
+		/// <summary>
+		/// Specifies the configuration section <c>UserManager</c> under which the options are placed.
+		/// </summary>
 		public const string UserManager = "UserManager";
+		/// <summary>
+		/// The number of key entries in a chunk returned for rekeying.
+		/// </summary>
 		public int RekeyingPagination { get; set; } = 100;
 	}
 
@@ -43,6 +52,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		/// <param name="logger">A logger to log status, warning and error messages to.</param>
 		/// <param name="options">Configuration options for the UserManager service.</param>
 		/// <param name="upstreamTokenClient">The API client to use for checking upstream auth delegation tokens with the upstream backend.</param>
+		/// <param name="explicitTokenService">The service object used for issuing session authorization tokens from <see cref="OpenSessionFromUpstreamAsync"/>.</param>
 		public UserManager(IApplicationRepository<ApplicationWithUserProperties, ApplicationQueryOptions> appRepo, IUserRepository userRepo, ILogger<UserManager> logger, IOptions<UserManagerOptions> options, Lazy<IUpstreamTokenClient> upstreamTokenClient, IExplicitTokenService explicitTokenService) {
 			this.appRepo = appRepo;
 			this.userRepo = userRepo;
@@ -52,6 +62,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			this.explicitTokenService = explicitTokenService;
 		}
 
+		/// <inheritdoc/>
 		public async Task AddRekeyedKeysAsync(string appName, KeyId newRecipientKeyId, Dictionary<Guid, DataKeyInfo> dataKeys, string exporterDN, CancellationToken ct) {
 			var app = await appRepo.GetApplicationByNameAsync(appName, ct: ct);
 			if (app is null) {
@@ -102,6 +113,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			logger.LogInformation("... rekeying upload finished.");
 		}
 
+		/// <inheritdoc/>
 		public async Task<Dictionary<Guid, EncryptionInfo>> GetKeysForRekeying(string appName, KeyId recipientKeyId, KeyId targetKeyId, string exporterDN, int offset, CancellationToken ct = default) {
 			var queryOptions = new UserQueryOptions {
 				ForUpdating = false,
@@ -171,6 +183,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			return upstreamResponse;
 		}
 
+		/// <inheritdoc/>
 		public async Task<DelegatedLoginResponseDTO> OpenSessionFromUpstreamAsync(ApplicationWithUserProperties app, string authHeader, CancellationToken ct = default) {
 			var upstreamResponse = await CheckUpstreamAuthTokenAsync(app, authHeader, ct);
 			var user = await userRepo.GetUserByBasicFederationUpstreamUserIdAsync(upstreamResponse.UserId, app.Name, ct: ct);

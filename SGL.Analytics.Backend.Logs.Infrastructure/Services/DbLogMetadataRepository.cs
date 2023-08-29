@@ -128,12 +128,14 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 			return logMetadata;
 		}
 
+		/// <inheritdoc/>
 		public async Task<IList<LogMetadata>> UpdateLogMetadataAsync(IList<LogMetadata> logMetadata, CancellationToken ct = default) {
 			Debug.Assert(logMetadata.All(logMd => context.Entry(logMd).State is EntityState.Modified or EntityState.Unchanged));
 			await context.SaveChangesAsync(ct);
 			return logMetadata;
 		}
 
+		/// <inheritdoc/>
 		public async Task<IEnumerable<LogMetadata>> GetLogMetadataByIdsAsync(IReadOnlyCollection<Guid> logIds, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var logIdsSet = logIds.ToHashSet();
 			var query = context.LogMetadata

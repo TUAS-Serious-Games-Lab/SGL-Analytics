@@ -4,7 +4,11 @@ using System;
 #nullable disable
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations {
+	/// <summary>
+	/// Updates the mapping handling of timestamp values and timezones for EF Core 6 Npgsql.
+	/// </summary>
 	public partial class EFCoreModellingUpdate : Migration {
+		/// <inheritdoc/>
 		protected override void Up(MigrationBuilder migrationBuilder) {
 			migrationBuilder.AlterColumn<DateTime>(
 				name: "UploadTime",
@@ -31,6 +35,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations {
 				oldType: "timestamp without time zone");
 		}
 
+		/// <inheritdoc/>
 		protected override void Down(MigrationBuilder migrationBuilder) {
 			migrationBuilder.AlterColumn<DateTime>(
 				name: "UploadTime",

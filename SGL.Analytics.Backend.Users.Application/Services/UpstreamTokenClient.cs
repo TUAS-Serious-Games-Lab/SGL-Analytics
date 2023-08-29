@@ -13,12 +13,18 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Backend.Users.Application.Services {
+	/// <summary>
+	/// Implements <see cref="IUpstreamTokenClient"/> using <see cref="HttpApiClientBase"/> ontop of <see cref="HttpClient"/>.
+	/// </summary>
 	public class UpstreamTokenClient : HttpApiClientBase, IUpstreamTokenClient {
 		private readonly MediaTypeWithQualityHeaderValue jsonMT = new MediaTypeWithQualityHeaderValue("application/json");
 		private JsonSerializerOptions jsonOptions = new JsonSerializerOptions(JsonOptions.RestOptions);
-
+		/// <summary>
+		/// Constructs the service object with the given <see cref="HttpClient"/>.
+		/// </summary>
 		public UpstreamTokenClient(HttpClient httpClient) : base(httpClient, null, "") { }
 
+		/// <inheritdoc/>
 		public async Task<UpstreamTokenCheckResponse> CheckUpstreamAuthTokenAsync(string appName, string appApiToken, string upstreamBackendUrl, string authHeader, CancellationToken ct = default) {
 			var response = await SendRequest(HttpMethod.Post, upstreamBackendUrl, JsonContent.Create(new UpstreamTokenCheckRequest(appName), jsonMT, jsonOptions),
 				req => {

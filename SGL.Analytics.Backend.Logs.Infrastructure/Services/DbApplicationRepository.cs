@@ -20,6 +20,9 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		/// <param name="context">The <see cref="DbContext"/> implementation for the database.</param>
 		public DbApplicationRepository(LogsContext context) : base(context) { }
 
+		/// <summary>
+		/// Includes the data recipients foreign key collection to <paramref name="query"/> if instructed to do so by <paramref name="options"/>.
+		/// </summary>
 		protected override IQueryable<Domain.Entity.Application> OnPrepareQuery(IQueryable<Domain.Entity.Application> query, ApplicationQueryOptions? options) {
 			if (options?.FetchRecipients ?? false) {
 				query = query.Include(a => a.DataRecipients);

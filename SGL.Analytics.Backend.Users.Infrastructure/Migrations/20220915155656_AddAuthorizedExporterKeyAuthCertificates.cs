@@ -4,7 +4,11 @@ using System;
 #nullable disable
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations {
+	/// <summary>
+	/// Adds the table that stores the certificates for key-pair based exporter authentication for the registered applications.
+	/// </summary>
 	public partial class AddAuthorizedExporterKeyAuthCertificates : Migration {
+		/// <inheritdoc/>
 		protected override void Up(MigrationBuilder migrationBuilder) {
 			migrationBuilder.CreateTable(
 				name: "ExporterKeyAuthCertificates",
@@ -25,6 +29,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations {
 				});
 		}
 
+		/// <inheritdoc/>
 		protected override void Down(MigrationBuilder migrationBuilder) {
 			migrationBuilder.DropTable(
 				name: "ExporterKeyAuthCertificates");

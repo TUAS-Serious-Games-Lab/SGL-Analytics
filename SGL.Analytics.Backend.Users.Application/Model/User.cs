@@ -57,7 +57,15 @@ namespace SGL.Analytics.Backend.Users.Application.Model {
 		/// </summary>
 		public Dictionary<string, object?> AppSpecificProperties { get; private set; }
 
+		/// <summary>
+		/// Stores end-to-end encrypted bytes containing sensitive application-specific properties about the user.
+		///	As the encryption is end-to-end this property in itself is opaque, but the usual use-case is for the client to store an encrypted JSON document here.
+		///	The metadata needed for decryption is stored in <see cref="PropertyEncryptionInfo"/>.
+		/// </summary>
 		public byte[] EncryptedProperties { get; set; } = null!;
+		/// <summary>
+		/// The encryption-related metadata for <see cref="EncryptedProperties"/>.
+		/// </summary>
 		public EncryptionInfo PropertyEncryptionInfo { get; set; } = null!;
 
 		UserRegistration IUserRegistrationWrapper.Underlying { get => userReg; set => userReg = value; }

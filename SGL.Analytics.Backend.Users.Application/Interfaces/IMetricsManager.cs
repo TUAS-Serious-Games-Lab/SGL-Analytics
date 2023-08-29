@@ -100,7 +100,14 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// </summary>
 		/// <param name="perAppCounts">A dictionary mapping the application names to corresponding numbers of users.</param>
 		void UpdateRegisteredUsers(IDictionary<string, int> perAppCounts);
+		/// <summary>
+		/// Called when an error is caused by invalid or incorrect claims in an authorization token.
+		/// </summary>
 		void HandleIncorrectSecurityTokenClaimsError();
+		/// <summary>
+		/// Called when an error is caused by a requested user registration not being found.
+		/// </summary>
+		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
 		void HandleUserNotFoundError(string appName);
 	}
 	/// <summary>
