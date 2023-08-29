@@ -127,3 +127,21 @@ deploy-shg-test:
     strategy: depend
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy-upm:
+  stage: deploy
+  inherit:
+    variables: false
+  variables:
+    SGL_ANALYTICS_VERSION: $SGL_ANALYTICS_VERSION
+    SGL_ANALYTICS_REF: $CI_COMMIT_REF_NAME
+  needs:
+  - nuget-package
+  trigger:
+    project: serious-games-lab/sgl-analytics-unity
+    branch: main
+    strategy: depend
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
+    - if: $FORCE_NUGET_BUILD

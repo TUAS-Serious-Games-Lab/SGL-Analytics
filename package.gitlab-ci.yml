@@ -13,6 +13,7 @@ nuget-package:
     - VERSION="$(./get_version_from_git.sh)${CI_COMMIT_BRANCH:+-${CI_COMMIT_BRANCH:0:12}}"
     - VERSION="$(./increment_prerelease_version.sh $VERSION)"
     - 'echo Building package version ${VERSION} ...'
+    - 'echo "SGL_ANALYTICS_VERSION=${VERSION}" > nuget.env'
     - 'dotnet pack --no-restore -c Release -p:Version="${VERSION}" SGL.Analytics.Client'
     - 'dotnet nuget update source SGL --username gitlab-ci-token --password $CI_JOB_TOKEN --store-password-in-clear-text'
     - 'ls */bin/Release/*.*.nupkg'
@@ -21,6 +22,9 @@ nuget-package:
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
     - if: $FORCE_NUGET_BUILD
+  artifacts:
+    reports:
+      dotenv: nuget.env
 
 package-key-tool:
   stage: package
