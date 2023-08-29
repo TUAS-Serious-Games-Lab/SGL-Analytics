@@ -32,7 +32,9 @@ namespace SGL.Analytics.Backend.Users.Application {
 		/// <summary>
 		/// Constructs a new exception object with the given data.
 		/// </summary>
-		public NoCertificateForKeyIdException(KeyId keyId, string message, Exception? innerException = null) : base(message, innerException) { }
+		public NoCertificateForKeyIdException(KeyId keyId, string message, Exception? innerException = null) : base(message, innerException) {
+			KeyId = keyId;
+		}
 	}
 	/// <summary>
 	/// An exception thrown when an challenge completion failed because the signature was invalid.
