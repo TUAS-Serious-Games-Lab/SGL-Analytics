@@ -4,7 +4,11 @@ using System;
 #nullable disable
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations {
+	/// <summary>
+	/// Adds the encryption mode column and makes the IV column required, setting an empty byte sequence for unencrypted legacy records.
+	/// </summary>
 	public partial class AddLogEncryptionModeProperty : Migration {
+		/// <inheritdoc/>
 		protected override void Up(MigrationBuilder migrationBuilder) {
 			migrationBuilder.Sql(@"UPDATE ""LogMetadata"" SET ""InitializationVector"" = E'\\x' WHERE ""InitializationVector"" IS NULL;");
 
@@ -26,6 +30,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations {
 				defaultValue: 0);
 		}
 
+		/// <inheritdoc/>
 		protected override void Down(MigrationBuilder migrationBuilder) {
 			migrationBuilder.DropColumn(
 				name: "EncryptionMode",

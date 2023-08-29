@@ -71,44 +71,92 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			// Not implemented
 		}
 
+		/// <summary>
+		/// Represents the command line options for the <c>apply-migrations</c> verb.
+		/// </summary>
 		[Verb("apply-migrations", HelpText = "Applies the database migrations to the target database. This is usually intended for local development use as the production environment has automation for this.", Hidden = true)]
 		public class ApplyMigrationsOptions : BaseOptions { }
 
+		/// <summary>
+		/// Represents the command line options for the <c>list-recipients</c> verb.
+		/// </summary>
 		[Verb("list-recipients", HelpText = "Lists the currently registered recipients for a registered application.")]
 		public class ListRecipientsOptions : BaseOptions {
+			/// <summary>
+			/// The unique name of the application on which to operate.
+			/// </summary>
 			[Value(0, MetaName = "APP_NAME", HelpText = "The application of which to list the recipients.", Required = true)]
 			public string AppName { get; set; }
 		}
 
+		/// <summary>
+		/// Represents the command line options for the <c>remove-recipient</c> verb.
+		/// </summary>
 		[Verb("remove-recipient", HelpText = "Remove a given data recipient key from a registered application.")]
 		public class RemoveRecipientOptions : BaseOptions {
+			/// <summary>
+			/// The unique name of the application on which to operate.
+			/// </summary>
 			[Value(0, MetaName = "APP_NAME", HelpText = "The application from which to remove the recipient from.", Required = true)]
 			public string AppName { get; set; }
+			/// <summary>
+			/// The key id of the recipient key-pair to remove.
+			/// </summary>
 			[Value(1, MetaName = "KEYID", HelpText = "The keyid of the recipient to remove.", Required = true)]
 			public string KeyId { get; set; }
 		}
 
+		/// <summary>
+		/// Represents the command line options for the <c>relabel-recipient</c> verb.
+		/// </summary>
 		[Verb("relabel-recipient", HelpText = "Assign a new label to the given data recipient key in a registered application.")]
 		public class RelabelRecipientOptions : BaseOptions {
+			/// <summary>
+			/// The unique name of the application on which to operate.
+			/// </summary>
 			[Value(0, MetaName = "APP_NAME", HelpText = "The application in which to relabel the recipient.", Required = true)]
 			public string AppName { get; set; }
+			/// <summary>
+			/// The key id of the recipient key-pair of which to change the label.
+			/// </summary>
 			[Value(1, MetaName = "KEYID", HelpText = "The keyid of the recipient to change the label of.", Required = true)]
 			public string KeyId { get; set; }
+			/// <summary>
+			/// The new label to assign.
+			/// </summary>
 			[Value(2, MetaName = "NEW_LABEL", HelpText = "The new label text.", Required = true)]
 			public string Label { get; set; }
 		}
+		/// <summary>
+		/// Represents the command line options for the <c>list-exporters</c> verb.
+		/// </summary>
 		[Verb("list-exporters", HelpText = "Lists the currently registered exporters for a registered application.")]
 		public class ListExportersOptions : BaseOptions {
+			/// <summary>
+			/// The unique name of the application on which to operate.
+			/// </summary>
 			[Value(0, MetaName = "APP_NAME", HelpText = "The application of which to list the exporters.", Required = true)]
 			public string AppName { get; set; }
 		}
 
+		/// <summary>
+		/// Represents the command line options for the <c>relabel-exporters</c> verb.
+		/// </summary>
 		[Verb("relabel-exporter", HelpText = "Assign a new label to the given data exporter key in a registered application.")]
 		public class RelabelExporterOptions : BaseOptions {
+			/// <summary>
+			/// The unique name of the application on which to operate.
+			/// </summary>
 			[Value(0, MetaName = "APP_NAME", HelpText = "The application in which to relabel the exporter.", Required = true)]
 			public string AppName { get; set; }
+			/// <summary>
+			/// The key id of the exporter key-pair of which to change the label.
+			/// </summary>
 			[Value(1, MetaName = "KEYID", HelpText = "The keyid of the exporter to change the label of.", Required = true)]
 			public string KeyId { get; set; }
+			/// <summary>
+			/// The new label to assign.
+			/// </summary>
 			[Value(2, MetaName = "NEW_LABEL", HelpText = "The new label text.", Required = true)]
 			public string Label { get; set; }
 		}

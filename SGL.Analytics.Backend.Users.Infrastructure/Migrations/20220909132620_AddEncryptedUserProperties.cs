@@ -4,7 +4,11 @@ using System;
 #nullable disable
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations {
+	/// <summary>
+	/// Added the columns and table to support end-to-end encrypted app-specific user properties.
+	/// </summary>
 	public partial class AddEncryptedUserProperties : Migration {
+		/// <inheritdoc/>
 		protected override void Up(MigrationBuilder migrationBuilder) {
 			migrationBuilder.AddColumn<byte[]>(
 				name: "EncryptedProperties",
@@ -53,6 +57,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations {
 				});
 		}
 
+		/// <inheritdoc/>
 		protected override void Down(MigrationBuilder migrationBuilder) {
 			migrationBuilder.DropTable(
 				name: "UserPropertyRecipientKeys");

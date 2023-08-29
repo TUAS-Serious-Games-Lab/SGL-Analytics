@@ -19,6 +19,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		/// <param name="context">The <see cref="DbContext"/> implementation for the database.</param>
 		public DbApplicationRepository(UsersContext context) : base(context) { }
 
+		/// <summary>
+		/// Includes populating the foreign key collection to <paramref name="query"/> where instructed to do so by <paramref name="options"/>.
+		/// If more than one of them is added, make the query a split query.
+		/// </summary>
 		protected override IQueryable<ApplicationWithUserProperties> OnPrepareQuery(IQueryable<ApplicationWithUserProperties> query, ApplicationQueryOptions? options) {
 			int includeCounter = 0;
 			if (options?.FetchUserProperties ?? true) {

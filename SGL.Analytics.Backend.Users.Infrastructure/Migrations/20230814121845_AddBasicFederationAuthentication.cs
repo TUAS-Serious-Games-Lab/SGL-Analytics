@@ -4,7 +4,11 @@ using System;
 #nullable disable
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations {
+	/// <summary>
+	/// Adds the columns needed to support delegated user authentication using a trusted upstream backend.
+	/// </summary>
 	public partial class AddBasicFederationAuthentication : Migration {
+		/// <inheritdoc/>
 		protected override void Up(MigrationBuilder migrationBuilder) {
 			migrationBuilder.AlterColumn<string>(
 				name: "HashedSecret",
@@ -36,6 +40,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations {
 				unique: true);
 		}
 
+		/// <inheritdoc/>
 		protected override void Down(MigrationBuilder migrationBuilder) {
 			migrationBuilder.DropIndex(
 				name: "IX_UserRegistrations_AppId_BasicFederationUpstreamUserId",

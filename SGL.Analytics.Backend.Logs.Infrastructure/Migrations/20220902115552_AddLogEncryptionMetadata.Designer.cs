@@ -13,6 +13,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations {
 	[DbContext(typeof(LogsContext))]
 	[Migration("20220902115552_AddLogEncryptionMetadata")]
 	partial class AddLogEncryptionMetadata {
+		/// <inheritdoc/>
 		protected override void BuildTargetModel(ModelBuilder modelBuilder) {
 #pragma warning disable 612, 618
 			modelBuilder

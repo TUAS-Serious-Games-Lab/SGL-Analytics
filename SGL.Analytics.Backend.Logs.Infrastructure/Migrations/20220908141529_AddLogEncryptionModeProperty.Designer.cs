@@ -15,7 +15,8 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations
     [Migration("20220908141529_AddLogEncryptionModeProperty")]
     partial class AddLogEncryptionModeProperty
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+		/// <inheritdoc/>
+		protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

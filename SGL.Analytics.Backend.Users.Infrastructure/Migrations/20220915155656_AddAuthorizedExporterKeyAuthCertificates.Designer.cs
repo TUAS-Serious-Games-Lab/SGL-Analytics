@@ -15,7 +15,8 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Migrations
     [Migration("20220915155656_AddAuthorizedExporterKeyAuthCertificates")]
     partial class AddAuthorizedExporterKeyAuthCertificates
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+		/// <inheritdoc/>
+		protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

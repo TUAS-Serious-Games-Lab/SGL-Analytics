@@ -4,7 +4,11 @@ using System;
 #nullable disable
 
 namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations {
+	/// <summary>
+	/// Adds the columns and table to store the keys and IVs for end-to-end encryption.
+	/// </summary>
 	public partial class AddLogEncryptionMetadata : Migration {
+		/// <inheritdoc/>
 		protected override void Up(MigrationBuilder migrationBuilder) {
 			migrationBuilder.AddColumn<byte[]>(
 				name: "InitializationVector",
@@ -38,6 +42,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Migrations {
 				});
 		}
 
+		/// <inheritdoc/>
 		protected override void Down(MigrationBuilder migrationBuilder) {
 			migrationBuilder.DropTable(
 				name: "LogRecipientKey");
