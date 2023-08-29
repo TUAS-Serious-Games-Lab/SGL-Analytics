@@ -109,7 +109,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Services {
 		}
 
 		/// <inheritdoc/>
-		public async Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, KeyId? notForKeyId = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
+		public async Task<IEnumerable<LogMetadata>> ListLogMetadataForAppAsync(Guid appId, bool? completenessFilter = null, KeyId? notForKeyId = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var query = context.LogMetadata.Where(lmd => lmd.AppId == appId);
 			if (completenessFilter != null) {
 				query = query.Where(lmd => lmd.Complete == completenessFilter);

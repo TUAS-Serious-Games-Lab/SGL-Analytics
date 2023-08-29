@@ -117,7 +117,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Interfaces {
 		/// <param name="queryOptions">An object that encapsulates options for querying methods, e.g. whether related entities should be fetched.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the operation.</param>
 		/// <returns>A task object representing the operation, providing the fetched objects as its result.</returns>
-		Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, KeyId? notForKeyId = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default);
+		Task<IEnumerable<LogMetadata>> ListLogMetadataForAppAsync(Guid appId, bool? completenessFilter = null, KeyId? notForKeyId = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default);
 		/// <summary>
 		/// Asynchronously obtains the per-application counts of the log files in the database.
 		/// </summary>

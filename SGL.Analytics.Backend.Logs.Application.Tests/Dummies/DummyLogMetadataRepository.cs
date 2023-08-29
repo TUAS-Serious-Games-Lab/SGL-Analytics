@@ -63,7 +63,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Tests.Dummies {
 			return query.ToDictionary(e => e.AppName, e => e.LogSizeAvg ?? 0);
 		}
 
-		public Task<IEnumerable<LogMetadata>> ListLogMetadataForApp(Guid appId, bool? completenessFilter = null, KeyId? notForKeyId = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
+		public Task<IEnumerable<LogMetadata>> ListLogMetadataForAppAsync(Guid appId, bool? completenessFilter = null, KeyId? notForKeyId = null, LogMetadataQueryOptions? queryOptions = null, CancellationToken ct = default) {
 			var query = logs.Values.Where(lmd => lmd.AppId == appId);
 			if (completenessFilter != null) {
 				query = query.Where(log => log.Complete == completenessFilter);

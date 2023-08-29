@@ -202,7 +202,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				FetchRecipientKey = recipientKeyId,
 				Ordering = LogMetadataQuerySortCriteria.UserIdThenCreateTime
 			};
-			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, notForKeyId: null, queryOptions: queryOptions, ct: ct);
+			var logs = await logMetaRepo.ListLogMetadataForAppAsync(app.Id, completenessFilter: true, notForKeyId: null, queryOptions: queryOptions, ct: ct);
 			return logs.Select(log => new LogFile(log, logFileRepo)).ToList();
 		}
 
@@ -293,7 +293,7 @@ namespace SGL.Analytics.Backend.Logs.Application.Services {
 				Limit = options.RekeyingPagination,
 				Offset = offset
 			};
-			var logs = await logMetaRepo.ListLogMetadataForApp(app.Id, completenessFilter: true, notForKeyId: targetKeyId, queryOptions: queryOptions, ct: ct);
+			var logs = await logMetaRepo.ListLogMetadataForAppAsync(app.Id, completenessFilter: true, notForKeyId: targetKeyId, queryOptions: queryOptions, ct: ct);
 			return logs.ToDictionary(log => log.Id, log => log.EncryptionInfo);
 		}
 	}
