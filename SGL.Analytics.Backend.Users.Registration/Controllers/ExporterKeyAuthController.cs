@@ -61,7 +61,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				return StatusCode(StatusCodes.Status201Created, challenge);
 			}
 			catch (OperationCanceledException) {
-				logger.LogDebug("OpenChallenge POST request for app {appName} and key id {keyId} was cancelled while registering the user.", requestDto.AppName, requestDto.KeyId);
+				logger.LogDebug("OpenChallenge POST request for app {appName} and key id {keyId} was cancelled.", requestDto.AppName, requestDto.KeyId);
 				throw;
 			}
 			catch (Exception ex) {
@@ -108,7 +108,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				return StatusCode(StatusCodes.Status401Unauthorized, "Challenge failed.");
 			}
 			catch (OperationCanceledException) {
-				logger.LogDebug("CompleteChallenge POST request for challenge {id} was cancelled while registering the user.", signatureDto.ChallengeId);
+				logger.LogDebug("CompleteChallenge POST request for challenge {id} was cancelled while.", signatureDto.ChallengeId);
 				throw;
 			}
 			catch (Exception ex) {
