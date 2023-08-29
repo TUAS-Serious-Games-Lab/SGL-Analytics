@@ -24,10 +24,15 @@ namespace SGL.Analytics.Client.Tests {
 		public AuthorizationData? Authorization { get; set; }
 
 		public event AsyncEventHandler<AuthorizationExpiredEventArgs>? AuthorizationExpired;
+		private bool isAuthExpired = false;
 
-		public Task LoadRecipientCertificatesAsync(CertificateStore targetCertificateStore, CancellationToken ct = default) {
+		public void ExpireAuthorization() {
+			isAuthExpired = true;
+		}
+
+		public async Task LoadRecipientCertificatesAsync(CertificateStore targetCertificateStore, CancellationToken ct = default) {
+			await authExpirationCheck(ct);
 			targetCertificateStore.AddCertificatesWithValidation(RecipientCertificates, nameof(FakeLogCollectorClient));
-			return Task.CompletedTask;
 		}
 
 		public Task SetAuthorizationLockedAsync(AuthorizationData? value, CancellationToken ct = default) {
@@ -36,10 +41,17 @@ namespace SGL.Analytics.Client.Tests {
 		}
 
 		public async Task UploadLogFileAsync(LogMetadataDTO metadata, Stream content, CancellationToken ct = default) {
-			await Task.CompletedTask;
+			await authExpirationCheck(ct);
 			var resp = new HttpResponseMessage(StatusCode);
 			resp.EnsureSuccessStatusCode();
 			UploadedLogFileIds.Add(metadata.LogFileId);
+		}
+
+		private async Task authExpirationCheck(CancellationToken ct) {
+			if (isAuthExpired) {
+				await (AuthorizationExpired?.Invoke(this, new AuthorizationExpiredEventArgs { }, ct) ?? Task.CompletedTask);
+				isAuthExpired = false;
+			}
 		}
 	}
 }

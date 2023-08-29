@@ -19,7 +19,10 @@ namespace SGL.Analytics.Client.Tests {
 		public AuthorizationData? Authorization => new AuthorizationData(new AuthorizationToken("OK"), DateTime.MaxValue);
 		public Guid? AuthorizedUserId => Guid.NewGuid();
 
+#pragma warning disable CS0067 // The event 'FakeUserRegistrationClient.AuthorizationExpired' is never used
+		// Required by IApiClient but no authenticated methods trigger it.
 		public event AsyncEventHandler<AuthorizationExpiredEventArgs>? AuthorizationExpired;
+#pragma warning restore CS0067 // The event 'FakeUserRegistrationClient.AuthorizationExpired' is never used
 		public event AsyncEventHandler<UserAuthenticatedEventArgs>? UserAuthenticated;
 
 		public Task LoadRecipientCertificatesAsync(CertificateStore targetCertificateStore, CancellationToken ct = default) {
