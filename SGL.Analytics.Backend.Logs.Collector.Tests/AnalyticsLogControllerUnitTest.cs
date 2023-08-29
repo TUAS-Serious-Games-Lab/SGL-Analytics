@@ -8,6 +8,7 @@ using SGL.Analytics.Backend.Logs.Collector.Controllers;
 using SGL.Analytics.DTO;
 using SGL.Utilities;
 using SGL.Utilities.Backend.Applications;
+using SGL.Utilities.Crypto.EndToEnd;
 using SGL.Utilities.TestUtilities.XUnit;
 using System;
 using System.IO;
@@ -63,7 +64,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 
 		[Fact]
 		public async Task IngestLogWithInvalidAppNameFailsWithUnauthorized() {
-			var dto = new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2), ".log", LogContentEncoding.Plain);
+			var dto = new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2), ".log",
+				LogContentEncoding.Plain, EncryptionInfo.CreateUnencrypted());
 			controller.ControllerContext = await createControllerContext("DoesNotExist", Guid.NewGuid(), dto);
 			var res = await controller.IngestLog(apiToken);
 			Assert.IsType<UnauthorizedResult>(res);
@@ -71,7 +73,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 		}
 		[Fact]
 		public async Task IngestLogWithInvalidApiTokensFailsWithUnauthorized() {
-			var dto = new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2), ".log", LogContentEncoding.Plain);
+			var dto = new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2), ".log",
+				LogContentEncoding.Plain, EncryptionInfo.CreateUnencrypted());
 			controller.ControllerContext = await createControllerContext(nameof(AnalyticsLogControllerUnitTest), Guid.NewGuid(), dto);
 			var res = await controller.IngestLog(StringGenerator.GenerateRandomWord(32));
 			Assert.IsType<UnauthorizedResult>(res);
@@ -94,7 +97,8 @@ namespace SGL.Analytics.Backend.Logs.Collector.Tests {
 			using (var content = generateRandomGZippedTestData()) {
 				var appName = nameof(AnalyticsLogControllerUnitTest);
 				var userId = Guid.NewGuid();
-				var logDto = new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2), ".log", LogContentEncoding.Plain);
+				var logDto = new LogMetadataDTO(Guid.NewGuid(), DateTime.Now.AddMinutes(-20), DateTime.Now.AddMinutes(-2), ".log",
+					LogContentEncoding.Plain, EncryptionInfo.CreateUnencrypted());
 				controller.ControllerContext = await createControllerContext(appName, userId, logDto, content);
 				var res = await controller.IngestLog(apiToken);
 				Assert.Equal(StatusCodes.Status201Created, Assert.IsType<StatusCodeResult>(res).StatusCode);

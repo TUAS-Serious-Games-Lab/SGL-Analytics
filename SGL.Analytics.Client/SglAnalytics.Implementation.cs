@@ -43,7 +43,7 @@ namespace SGL.Analytics.Client {
 		private Task? logWriter = null;
 		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
 
-		private Func<CancellationToken, Task<LoginResponseDTO>> refreshLoginDelegate = async ct => throw new InvalidOperationException();
+		private Func<CancellationToken, Task<LoginResponseDTO>> refreshLoginDelegate = ct => Task.FromException<LoginResponseDTO>(new InvalidOperationException());
 		private SynchronizationContext mainSyncContext;
 		private CancellationTokenSource cts = new CancellationTokenSource();
 		private string dataDirectory;

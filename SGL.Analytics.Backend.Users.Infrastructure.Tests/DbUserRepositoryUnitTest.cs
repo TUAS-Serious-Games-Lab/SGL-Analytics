@@ -190,11 +190,13 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			}
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				Assert.NotNull(app);
 				var repo = new DbUserRepository(context);
 				await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser", SecretHashing.CreateHashedSecret("Passw0rd")));
 			}
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				Assert.NotNull(app);
 				var repo = new DbUserRepository(context);
 				Assert.Equal("Username", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser", SecretHashing.CreateHashedSecret("Passw0rd"))))).ConflictingPropertyName);
 			}
@@ -210,11 +212,13 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			var id = Guid.NewGuid();
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				Assert.NotNull(app);
 				var repo = new DbUserRepository(context);
 				await repo.RegisterUserAsync(UserRegistration.Create(id, app, "TestUser_1", SecretHashing.CreateHashedSecret("Passw0rd")));
 			}
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				Assert.NotNull(app);
 				var repo = new DbUserRepository(context);
 				Assert.Equal("Id", (await Assert.ThrowsAsync<EntityUniquenessConflictException>(async () => await repo.RegisterUserAsync(UserRegistration.Create(id, app, "TestUser_2", SecretHashing.CreateHashedSecret("Passw0rd"))))).ConflictingPropertyName);
 			}
@@ -230,6 +234,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			Guid userId;
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				Assert.NotNull(app);
 				var repo = new DbUserRepository(context);
 				await repo.RegisterUserAsync(UserRegistration.Create(app, "TestUser_1", SecretHashing.CreateHashedSecret("Passw0rd")));
 				var userReg = UserRegistration.Create(app, "TestUser_2", SecretHashing.CreateHashedSecret("Passw0rd"));
@@ -238,6 +243,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			}
 			await using (var context = createContext()) {
 				app = await context.Applications.Include(a => a.UserProperties).SingleOrDefaultAsync(a => a.Id == app.Id);
+				Assert.NotNull(app);
 				var repo = new DbUserRepository(context);
 				var userReg = await repo.GetUserByIdAsync(userId, new UserQueryOptions { FetchProperties = true, ForUpdating = true });
 				Assert.NotNull(userReg);

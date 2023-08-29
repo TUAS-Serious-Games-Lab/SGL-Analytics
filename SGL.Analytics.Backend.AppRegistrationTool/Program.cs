@@ -86,7 +86,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			/// The unique name of the application on which to operate.
 			/// </summary>
 			[Value(0, MetaName = "APP_NAME", HelpText = "The application of which to list the recipients.", Required = true)]
-			public string AppName { get; set; }
+			public string AppName { get; set; } = null!; // Required field, filled by CommandLine.
 		}
 
 		/// <summary>
@@ -98,12 +98,12 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			/// The unique name of the application on which to operate.
 			/// </summary>
 			[Value(0, MetaName = "APP_NAME", HelpText = "The application from which to remove the recipient from.", Required = true)]
-			public string AppName { get; set; }
+			public string AppName { get; set; } = null!; // Required field, filled by CommandLine.
 			/// <summary>
 			/// The key id of the recipient key-pair to remove.
 			/// </summary>
 			[Value(1, MetaName = "KEYID", HelpText = "The keyid of the recipient to remove.", Required = true)]
-			public string KeyId { get; set; }
+			public string KeyId { get; set; } = null!; // Required field, filled by CommandLine.
 		}
 
 		/// <summary>
@@ -115,17 +115,17 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			/// The unique name of the application on which to operate.
 			/// </summary>
 			[Value(0, MetaName = "APP_NAME", HelpText = "The application in which to relabel the recipient.", Required = true)]
-			public string AppName { get; set; }
+			public string AppName { get; set; } = null!; // Required field, filled by CommandLine.
 			/// <summary>
 			/// The key id of the recipient key-pair of which to change the label.
 			/// </summary>
 			[Value(1, MetaName = "KEYID", HelpText = "The keyid of the recipient to change the label of.", Required = true)]
-			public string KeyId { get; set; }
+			public string KeyId { get; set; } = null!; // Required field, filled by CommandLine.
 			/// <summary>
 			/// The new label to assign.
 			/// </summary>
 			[Value(2, MetaName = "NEW_LABEL", HelpText = "The new label text.", Required = true)]
-			public string Label { get; set; }
+			public string Label { get; set; } = null!; // Required field, filled by CommandLine.
 		}
 		/// <summary>
 		/// Represents the command line options for the <c>list-exporters</c> verb.
@@ -136,7 +136,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			/// The unique name of the application on which to operate.
 			/// </summary>
 			[Value(0, MetaName = "APP_NAME", HelpText = "The application of which to list the exporters.", Required = true)]
-			public string AppName { get; set; }
+			public string AppName { get; set; } = null!; // Required field, filled by CommandLine.
 		}
 
 		/// <summary>
@@ -148,17 +148,17 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			/// The unique name of the application on which to operate.
 			/// </summary>
 			[Value(0, MetaName = "APP_NAME", HelpText = "The application in which to relabel the exporter.", Required = true)]
-			public string AppName { get; set; }
+			public string AppName { get; set; } = null!; // Required field, filled by CommandLine.
 			/// <summary>
 			/// The key id of the exporter key-pair of which to change the label.
 			/// </summary>
 			[Value(1, MetaName = "KEYID", HelpText = "The keyid of the exporter to change the label of.", Required = true)]
-			public string KeyId { get; set; }
+			public string KeyId { get; set; } = null!; // Required field, filled by CommandLine.
 			/// <summary>
 			/// The new label to assign.
 			/// </summary>
 			[Value(2, MetaName = "NEW_LABEL", HelpText = "The new label text.", Required = true)]
-			public string Label { get; set; }
+			public string Label { get; set; } = null!; // Required field, filled by CommandLine.
 		}
 
 		async static Task<int> Main(string[] args) => await ((Func<ParserResult<object>, Task<int>>)(res => res.MapResult(

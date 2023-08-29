@@ -1,15 +1,15 @@
 using SGL.Analytics.Backend.Domain.Entity;
-using SGL.Utilities.Backend.TestUtilities;
 using SGL.Analytics.Backend.Users.Infrastructure.Data;
 using SGL.Analytics.Backend.Users.Infrastructure.Services;
 using SGL.Utilities;
+using SGL.Utilities.Backend;
+using SGL.Utilities.Backend.TestUtilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using SGL.Utilities.Backend;
 
 namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 	public class DbApplicationRepositoryUnitTest : IDisposable {
@@ -66,32 +66,32 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Tests {
 			Assert.Equal(appOrig.Name, appRead?.Name);
 			Assert.Equal(appOrig.ApiToken, appRead?.ApiToken);
 
-			var intProp = Assert.Single(appRead?.UserProperties, pd => pd.Name == "TestInt");
+			var intProp = Assert.Single(appRead!.UserProperties, pd => pd.Name == "TestInt");
 			Assert.Equal(appRead?.Id, intProp.AppId);
 			Assert.Equal(UserPropertyType.Integer, intProp.Type);
 			Assert.True(intProp.Required);
 
-			var fpProp = Assert.Single(appRead?.UserProperties, pd => pd.Name == "TestFP");
+			var fpProp = Assert.Single(appRead!.UserProperties, pd => pd.Name == "TestFP");
 			Assert.Equal(appRead?.Id, fpProp.AppId);
 			Assert.Equal(UserPropertyType.FloatingPoint, fpProp.Type);
 			Assert.False(fpProp.Required);
 
-			var strProp = Assert.Single(appRead?.UserProperties, pd => pd.Name == "TestString");
+			var strProp = Assert.Single(appRead!.UserProperties, pd => pd.Name == "TestString");
 			Assert.Equal(appRead?.Id, strProp.AppId);
 			Assert.Equal(UserPropertyType.String, strProp.Type);
 			Assert.True(strProp.Required);
 
-			var dtProp = Assert.Single(appRead?.UserProperties, pd => pd.Name == "TestDateTime");
+			var dtProp = Assert.Single(appRead!.UserProperties, pd => pd.Name == "TestDateTime");
 			Assert.Equal(appRead?.Id, dtProp.AppId);
 			Assert.Equal(UserPropertyType.DateTime, dtProp.Type);
 			Assert.False(dtProp.Required);
 
-			var guidProp = Assert.Single(appRead?.UserProperties, pd => pd.Name == "TestGuid");
+			var guidProp = Assert.Single(appRead!.UserProperties, pd => pd.Name == "TestGuid");
 			Assert.Equal(appRead?.Id, guidProp.AppId);
 			Assert.Equal(UserPropertyType.Guid, guidProp.Type);
 			Assert.True(guidProp.Required);
 
-			var jsonProp = Assert.Single(appRead?.UserProperties, pd => pd.Name == "TestJson");
+			var jsonProp = Assert.Single(appRead!.UserProperties, pd => pd.Name == "TestJson");
 			Assert.Equal(appRead?.Id, jsonProp.AppId);
 			Assert.Equal(UserPropertyType.Json, jsonProp.Type);
 			Assert.False(jsonProp.Required);
