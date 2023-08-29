@@ -14,6 +14,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		private static readonly Gauge lastSuccessfulLoginTime = Metrics.CreateGauge("sgla_last_successful_login_time_seconds", "Unix timestamp of the last successful login for the labeled app (in UTC).", "app");
 		private static readonly Gauge lastRegistrationTime = Metrics.CreateGauge("sgla_last_registration_time_seconds", "Unix timestamp of the last user registration for the labeled app (in UTC).", "app");
 		private static readonly Counter errorCounter = Metrics.CreateCounter("sgla_errors_total", "Number of service-level errors encountered by SGL Analytics, labeled by error type and app.", "type", "app");
+		private const string ERROR_INVALID_CHALLENGE = "Invalid challenge";
+		private const string ERROR_NO_CERTIFICATE_FOR_KEYID = "No certificate for KeyID";
+		private const string ERROR_CERTIFICATE_ERROR = "Certificate error";
+		private const string ERROR_CHALLENGE_COMPLETION_FAILED = "Challenge completion failed";
 		private const string ERROR_NONEXISTENT_USERNAME = "Nonexistent username";
 		private const string ERROR_NONEXISTENT_USERID = "Nonexistent userid";
 		private const string ERROR_INCORRECT_USER_SECRET = "Incorrect user secret";
@@ -34,6 +38,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		/// </summary>
 		public MetricsManager() {
 			errorCounter.WithLabels(ERROR_MODEL_STATE_VALIDATION_FAILED, "");
+			errorCounter.WithLabels(ERROR_INVALID_CHALLENGE, "");
+			errorCounter.WithLabels(ERROR_NO_CERTIFICATE_FOR_KEYID, "");
+			errorCounter.WithLabels(ERROR_CERTIFICATE_ERROR, "");
+			errorCounter.WithLabels(ERROR_CHALLENGE_COMPLETION_FAILED, "");
 		}
 
 		/// <inheritdoc/>
@@ -140,6 +148,26 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 		/// <inheritdoc/>
 		public void HandleCryptoMetadataError(string appName) {
 			errorCounter.WithLabels(ERROR_INVALID_CRYPTO_METADATA, appName).Inc();
+		}
+
+		/// <inheritdoc/>
+		public void HandleInvalidChallengeError() {
+			errorCounter.WithLabels(ERROR_INVALID_CHALLENGE, "").Inc();
+		}
+
+		/// <inheritdoc/>
+		public void HandleNoCertificateForKeyIdError() {
+			errorCounter.WithLabels(ERROR_NO_CERTIFICATE_FOR_KEYID, "").Inc();
+		}
+
+		/// <inheritdoc/>
+		public void HandleCertificateError() {
+			errorCounter.WithLabels(ERROR_CERTIFICATE_ERROR, "").Inc();
+		}
+
+		/// <inheritdoc/>
+		public void HandleChallengeCompletionError() {
+			errorCounter.WithLabels(ERROR_CHALLENGE_COMPLETION_FAILED, "").Inc();
 		}
 	}
 }

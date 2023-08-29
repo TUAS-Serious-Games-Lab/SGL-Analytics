@@ -88,7 +88,7 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				return StatusCode(StatusCodes.Status200OK, response);
 			}
 			catch (InvalidChallengeException ex) {
-				// TODO: metrics
+				metrics.HandleInvalidChallengeError();
 				return StatusCode(StatusCodes.Status410Gone, ex.Message);
 			}
 			catch (ApplicationDoesNotExistException ex) {
@@ -96,15 +96,15 @@ namespace SGL.Analytics.Backend.Users.Registration.Controllers {
 				return NotFound(ex.Message);
 			}
 			catch (NoCertificateForKeyIdException ex) {
-				// TODO: metrics
+				metrics.HandleNoCertificateForKeyIdError();
 				return NotFound(ex.Message);
 			}
-			catch (CertificateException ex) {
-				// TODO: metrics
+			catch (CertificateException) {
+				metrics.HandleCertificateError();
 				return StatusCode(StatusCodes.Status500InternalServerError, "There was a problem with the configured exporter certificate.");
 			}
-			catch (ChallengeCompletionFailedException ex) {
-				// TODO: metrics
+			catch (ChallengeCompletionFailedException) {
+				metrics.HandleChallengeCompletionError();
 				return StatusCode(StatusCodes.Status401Unauthorized, "Challenge failed.");
 			}
 			catch (OperationCanceledException) {

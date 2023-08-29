@@ -109,6 +109,22 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// </summary>
 		/// <param name="appName">The unique name of the app with which the metric is associated.</param>
 		void HandleUserNotFoundError(string appName);
+		/// <summary>
+		/// Called when an error is caused by an attempt to complete a challenge which is not found among the open challenges.
+		/// </summary>
+		void HandleInvalidChallengeError();
+		/// <summary>
+		/// Called when an error is caused by attempting a challenge authentication using a key id that the backend doesn't know.
+		/// </summary>
+		void HandleNoCertificateForKeyIdError();
+		/// <summary>
+		/// Called when an error is caused by a problem with the content or signature of a registered certificate.
+		/// </summary>
+		void HandleCertificateError();
+		/// <summary>
+		/// Called when an error is caused while attempting to complete a challenge authentication, because the signature was invalid for the challenge.
+		/// </summary>
+		void HandleChallengeCompletionError();
 	}
 	/// <summary>
 	/// Provides a null implementation of <see cref="IMetricsManager"/> where the methods do nothing and thus no metrics are actually collected.
@@ -152,5 +168,13 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		public void HandleUserPropertyValidationError(string appName) { }
 		/// <inheritdoc/>
 		public void UpdateRegisteredUsers(IDictionary<string, int> perAppCounts) { }
+		/// <inheritdoc/>
+		public void HandleInvalidChallengeError() { }
+		/// <inheritdoc/>
+		public void HandleNoCertificateForKeyIdError() { }
+		/// <inheritdoc/>
+		public void HandleCertificateError() { }
+		/// <inheritdoc/>
+		public void HandleChallengeCompletionError() { }
 	}
 }
