@@ -11,7 +11,7 @@
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.4" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
-		<PackageReference Include="SGL.Utilities" Version="0.11.12" />
+		<PackageReference Include="SGL.Utilities" Version="0.11.13" />
 	</ItemGroup>
 
 	<ItemGroup>
