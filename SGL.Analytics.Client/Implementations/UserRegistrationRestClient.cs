@@ -83,16 +83,9 @@ namespace SGL.Analytics.Client {
 				if (!(expiry.HasValue && userId.HasValue)) {
 					// New backend should provide decoded expiry and userId. If it doesn't decode it ourself and complete response DTO:
 					try {
-						// quick and dirty Base64Url decode after: https://stackoverflow.com/a/26354677
-						var base64Payload = result.Token.Value.Split('.')[1].Replace('_', '/').Replace('-', '+');
-						switch (base64Payload.Length % 4) {
-							case 2: base64Payload += "=="; break;
-							case 3: base64Payload += "="; break;
-						}
-						var json = Convert.FromBase64String(base64Payload);
-						var payload = JsonSerializer.Deserialize<Dictionary<string, string>>(json.AsSpan(), new JsonSerializerOptions(JsonSerializerDefaults.Web));
-						expiry ??= (payload?.TryGetValue("exp", out var timestamp) ?? false) ? DateTime.TryParse(timestamp, out var expTime) ? expTime : DateTime.MaxValue : DateTime.MaxValue;
-						userId ??= (payload?.TryGetValue("userid", out var uidStr) ?? false) ? Guid.TryParse(uidStr, out var uId) ? uId : Guid.Empty : Guid.Empty;
+						var jwtPayload = MinimalJwtReader.ReadJwtPayload(result.Token.Value);
+						userId ??= jwtPayload.TryGetValue("userid", out var uidObj) ? uidObj switch { Guid uid => uid, _ => Guid.Empty } : Guid.Empty;
+						expiry ??= jwtPayload.TryGetValue(MinimalJwtReader.ExpirationTimeKey, out var expVal) ? MinimalJwtReader.ReadDateTimeValue(expVal) : DateTime.UtcNow.AddMinutes(5);
 					}
 					catch {
 						expiry ??= DateTime.UtcNow.AddMinutes(5);
