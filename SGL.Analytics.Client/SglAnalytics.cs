@@ -616,6 +616,32 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <summary>
+		/// Ends the current analytics log file if there is one.
+		/// Call this when a session is finished, e.g. a game playthrough a more short-term game session is over or the user aborted it.
+		/// After this, there is no current log file and <see cref="StartNewLog"/> must be called before further Record-operations, otherwise those will fail.
+		/// </summary>
+		/// <returns>The id of the ended log, or null if there was no current log.</returns>
+		/// <remarks>
+		/// The actual ending of the log (flushing to disk, writing the end marker, and closing the file) and the subsequent upload of the file happen asynchronously in the background.
+		/// To wait for those processes to finish, <see cref="FinishAsync"/> can be used to close all current log state,
+		/// wait for all background processes to finish, and rebuild the internal state.
+		/// </remarks>
+		public Guid? EndLog() {
+			if (disableLogWriting) return Guid.Empty;
+			LogQueue? oldLogQueue;
+			lock (lockObject) {
+				oldLogQueue = currentLogQueue;
+				currentLogQueue = null;
+			}
+			oldLogQueue?.entryQueue?.Finish();
+			if (oldLogQueue != null) {
+				logger.LogInformation("Finished data log file {oldId}.", oldLogQueue.logFile.ID);
+			}
+			startLogWritingIfNotRunning();
+			return oldLogQueue?.logFile?.ID;
+		}
+
+		/// <summary>
 		/// This method needs to be called before the exiting the application, waiting for the returned Task object, to ensure all log entries are written to disk and to attempt to upload the pending log files.
 		/// </summary>
 		/// <returns>A Task object that represents the asynchronous finishing operations.</returns>
