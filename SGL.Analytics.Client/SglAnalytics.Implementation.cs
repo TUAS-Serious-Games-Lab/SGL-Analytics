@@ -189,7 +189,12 @@ namespace SGL.Analytics.Client {
 						else {
 							first = false;
 						}
-						await JsonSerializer.SerializeAsync(stream, logEntry, logJsonOptions);
+						try {
+							await JsonSerializer.SerializeAsync(stream, logEntry, logJsonOptions);
+						}
+						catch (Exception ex) {
+							logger.LogError(ex, "Couldn't write log entry to stream due to exception while serializing.");
+						}
 						await stream.FlushAsync();
 					}
 					await stream.WriteAsync(arrClose.AsMemory());
