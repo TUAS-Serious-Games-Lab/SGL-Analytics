@@ -6,50 +6,50 @@ networks:
 
 volumes:
   db-data:
-   driver_opts:
-         type: none
-         device: /var/sgl/analytics/database
-         o: bind
+    driver_opts:
+      type: none
+      device: /var/sgl/analytics/database
+      o: bind
   game-logs:
-   driver_opts:
-         type: none
-         device: /var/sgl/analytics/gamelogs
-         o: bind
+    driver_opts:
+      type: none
+      device: /var/sgl/analytics/gamelogs
+      o: bind
   log-collector-log-files:
-   driver_opts:
-         type: none
-         device: /var/log/SGL.Analytics.LogCollector
-         o: bind
+    driver_opts:
+      type: none
+      device: /var/log/SGL.Analytics.LogCollector
+      o: bind
   user-registration-log-files:
-   driver_opts:
-         type: none
-         device: /var/log/SGL.Analytics.UserRegistration
-         o: bind
+    driver_opts:
+      type: none
+      device: /var/log/SGL.Analytics.UserRegistration
+      o: bind
   test-upstream-backend-log-files:
-   driver_opts:
-         type: none
-         device: /var/log/SGL.Analytics.Test.Upstream
-         o: bind
+    driver_opts:
+      type: none
+      device: /var/log/SGL.Analytics.Test.Upstream
+      o: bind
   app-definitions:
-   driver_opts:
-         type: none
-         device: /var/sgl/analytics/app-definitions
-         o: bind
+    driver_opts:
+      type: none
+      device: /var/sgl/analytics/app-definitions
+      o: bind
   log-collector-conf:
-   driver_opts:
-         type: none
-         device: /var/sgl/analytics/conf/LogCollector
-         o: bind
+    driver_opts:
+      type: none
+      device: /var/sgl/analytics/conf/LogCollector
+      o: bind
   user-registration-conf:
-   driver_opts:
-         type: none
-         device: /var/sgl/analytics/conf/UserRegistration
-         o: bind
+    driver_opts:
+      type: none
+      device: /var/sgl/analytics/conf/UserRegistration
+      o: bind
   test-upstream-backend-conf:
-   driver_opts:
-         type: none
-         device: /var/sgl/analytics/conf/TestUpstreamBackend
-         o: bind
+    driver_opts:
+      type: none
+      device: /var/sgl/analytics/conf/TestUpstreamBackend
+      o: bind
 
 services:
   app-registrations:
