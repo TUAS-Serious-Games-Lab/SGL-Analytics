@@ -154,7 +154,7 @@ namespace SGL.Analytics.Client.Tests {
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
 					.WithBody(recipientCertsPem));
 
-			analytics.StartNewLog();
+			var logId1Start = analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test A" });
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test B" });
 			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test C" });
@@ -162,6 +162,9 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test D" });
 			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap B");
 			analytics.RecordSnapshotUnshared("Channel 3", 2, "Snap C");
+			var logId1End = analytics.EndLog();
+			Assert.Equal(logId1Start, logId1End);
+			Assert.Throws<InvalidOperationException>(() => analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test E" }));
 
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test E" });
