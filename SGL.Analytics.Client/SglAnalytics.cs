@@ -637,6 +637,9 @@ namespace SGL.Analytics.Client {
 			if (oldLogQueue != null) {
 				logger.LogInformation("Finished data log file {oldId}.", oldLogQueue.logFile.ID);
 			}
+			else {
+				logger.LogDebug(nameof(EndLog) + " was called while there was no active log file.");
+			}
 			startLogWritingIfNotRunning();
 			return oldLogQueue?.logFile?.ID;
 		}
