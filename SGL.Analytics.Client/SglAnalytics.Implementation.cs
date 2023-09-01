@@ -200,6 +200,13 @@ namespace SGL.Analytics.Client {
 					await stream.WriteAsync(arrClose.AsMemory());
 					await stream.FlushAsync();
 				}
+				catch (Exception ex) {
+					logger.LogError(ex, "Unrecoverable error while writing entries to log file {id}.", logQueue.logFile.ID);
+					try {
+						await stream.FlushAsync();
+					}
+					catch { }
+				}
 				finally { // Need to do this instead of a using block to allow ILogStorage implementations to remove the file behind stream from their 'open for writing'-list in a thread-safe way.
 					lock (lockObject) {
 						stream.Dispose();
