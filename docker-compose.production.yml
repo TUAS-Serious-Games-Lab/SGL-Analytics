@@ -40,6 +40,11 @@ volumes:
       type: none
       device: /var/sgl/analytics/conf/UserRegistration
       o: bind
+  https-certs:
+    driver_opts:
+      type: none
+      device: /var/sgl/analytics/ssl-certs
+      o: bind
 
 services:
   app-registrations:
@@ -59,6 +64,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - Logging__Console__LogLevel__SGL.Utilities.Backend.Security.JwtLoginService=Warning
   api-gateway:
+    volumes:
+      - "https-certs:/etc/ssl/my:ro"
     restart: unless-stopped
   db:
     restart: unless-stopped
