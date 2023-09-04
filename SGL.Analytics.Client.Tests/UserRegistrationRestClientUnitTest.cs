@@ -50,7 +50,7 @@ namespace SGL.Analytics.Client.Tests {
 
 			Assert.Single(serverFixture.Server.LogEntries);
 			var logEntry = serverFixture.Server.LogEntries.Single();
-			using (MemoryStream bodyStream = new MemoryStream(logEntry.RequestMessage.BodyAsBytes)) {
+			using (MemoryStream bodyStream = new MemoryStream(logEntry.RequestMessage.BodyAsBytes ?? throw new ArgumentNullException())) {
 				var requestBodyObj = await JsonSerializer.DeserializeAsync<UserRegistrationDTO>(bodyStream, JsonOptions.RestOptions);
 				Assert.NotNull(requestBodyObj);
 				Assert.Equal(registration.AppName, requestBodyObj?.AppName);

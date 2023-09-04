@@ -60,7 +60,8 @@ namespace SGL.Analytics.Client.Tests {
 			var logEntry = serverFixture.Server.LogEntries.Single();
 			var headers = logEntry.RequestMessage.Headers;
 			Assert.Equal(appAPIToken, headers?["App-API-Token"]?.Single());
-			var contentParts = MultipartBodySplitter.SplitMultipartBody(logEntry.RequestMessage.BodyAsBytes, MultipartBodySplitter.GetBoundaryFromContentType(logEntry.RequestMessage?.Headers?["Content-Type"].First())).ToList();
+			var contentParts = MultipartBodySplitter.SplitMultipartBody(logEntry.RequestMessage.BodyAsBytes ?? throw new ArgumentNullException(),
+				MultipartBodySplitter.GetBoundaryFromContentType(logEntry.RequestMessage?.Headers?["Content-Type"].First())).ToList();
 			Assert.Equal("application/json", contentParts[0].SectionHeaders["Content-Type"]);
 			Assert.Equal("form-data; name=metadata", contentParts[0].SectionHeaders["Content-Disposition"]);
 			using var metadataStream = new MemoryStream(contentParts[0].Content, writable: false);

@@ -238,7 +238,7 @@ namespace SGL.Analytics.Client.Tests {
 				.Where(le => (int)(le.ResponseMessage.StatusCode ?? 500) < 300 && le.RequestMessage.Path == "/api/analytics/user/v1/")
 				.Select(le => le.RequestMessage);
 			Assert.Single(successfulRegRequests);
-			await using (var stream = new MemoryStream(successfulRegRequests.Single().BodyAsBytes)) {
+			await using (var stream = new MemoryStream(successfulRegRequests.Single().BodyAsBytes ?? throw new ArgumentNullException())) {
 				output.WriteLine("");
 				output.WriteLine("Registration:");
 				output.WriteStreamContents(stream);
@@ -370,7 +370,8 @@ namespace SGL.Analytics.Client.Tests {
 		}
 
 		private static (MemoryStream, MemoryStream) CheckRequest(IRequestMessage request) {
-			var contentParts = MultipartBodySplitter.SplitMultipartBody(request.BodyAsBytes, MultipartBodySplitter.GetBoundaryFromContentType(request.Headers?["Content-Type"].First())).ToList();
+			var contentParts = MultipartBodySplitter.SplitMultipartBody(request.BodyAsBytes ?? throw new ArgumentNullException(),
+				MultipartBodySplitter.GetBoundaryFromContentType(request.Headers?["Content-Type"].First())).ToList();
 			Assert.Equal("application/json", contentParts[0].SectionHeaders["Content-Type"]);
 			Assert.Equal("form-data; name=metadata", contentParts[0].SectionHeaders["Content-Disposition"]);
 			var metadataStream = new MemoryStream(contentParts[0].Content, writable: false);
