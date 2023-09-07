@@ -52,14 +52,13 @@ namespace SGL.Analytics.Client {
 
 		/// <inheritdoc/>
 		public async Task UploadLogFileAsync(LogMetadataDTO metadata, Stream content, CancellationToken ct = default) {
-			using (var multipartContent = new MultipartFormDataContent()) {
-				var contentObj = new StreamContent(content);
-				contentObj.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-				var metadataObj = JsonContent.Create(metadata, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
-				multipartContent.Add(metadataObj, "metadata");
-				multipartContent.Add(contentObj, "content");
-				using var response = await SendRequest(HttpMethod.Post, "", multipartContent, addApiTokenHeader, null, ct);
-			}
+			var multipartContent = new MultipartFormDataContent(); // disposed with request message in SendRequest
+			var contentObj = new StreamContent(content);
+			contentObj.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+			var metadataObj = JsonContent.Create(metadata, MediaTypeHeaderValue.Parse("application/json"), jsonOptions);
+			multipartContent.Add(metadataObj, "metadata");
+			multipartContent.Add(contentObj, "content");
+			using var response = await SendRequest(HttpMethod.Post, "", multipartContent, addApiTokenHeader, null, ct);
 		}
 
 		/// <summary>
