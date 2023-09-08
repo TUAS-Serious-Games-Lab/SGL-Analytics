@@ -7,7 +7,6 @@ using System.Text.Json;
 namespace SGL.Analytics.KeyTool {
 	public partial class MainForm : Form {
 		private KeyToolSettings settings;
-		private const string defaultCurveName = "secp521r1";
 		private const string configFile = "KeyTool-Settings.json";
 		private int rsaKeyStrength;
 		private List<DistinguishedNameEntryEdit> dnEntryEdits = null!;
@@ -16,13 +15,13 @@ namespace SGL.Analytics.KeyTool {
 
 		public MainForm() {
 			InitializeComponent();
+			settings = LoadSettings();
 			cmbNamedCurve.Items.Clear();
 			cmbNamedCurve.Items.AddRange(KeyPair.GetSupportedNamedEllipticCurves().OrderByDescending(curve => curve.KeyLength).Select(curve => curve.Name).ToArray());
-			var defaultCurveIndex = cmbNamedCurve.Items.IndexOf(defaultCurveName);
+			var defaultCurveIndex = cmbNamedCurve.Items.IndexOf(settings.DefaultCurveName);
 			if (defaultCurveIndex >= 0) {
 				cmbNamedCurve.SelectedIndex = defaultCurveIndex;
 			}
-			settings = LoadSettings();
 			FillDistinguishedNameEntries(settings.InitialDistinguishedName);
 			spinRsaKeyStrengthExp_ValueChanged(spinRsaKeyStrengthExp, EventArgs.Empty);
 			dtpValidTo.Value = DateTime.UtcNow.AddYears(settings.DefaultValidityYears);
