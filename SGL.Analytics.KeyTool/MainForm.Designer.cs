@@ -1034,6 +1034,7 @@
 			AutoScaleMode = AutoScaleMode.Font;
 			ClientSize = new Size(534, 581);
 			Controls.Add(tabsMain);
+			Icon = (Icon)resources.GetObject("$this.Icon");
 			MinimumSize = new Size(450, 500);
 			Name = "MainForm";
 			Text = "SGL-Analytics Key Tool";
