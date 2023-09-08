@@ -2,6 +2,7 @@ using Org.BouncyCastle.Crypto;
 using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.Crypto.Keys;
+using System.Numerics;
 using System.Text.Json;
 
 namespace SGL.Analytics.KeyTool {
@@ -21,6 +22,17 @@ namespace SGL.Analytics.KeyTool {
 			var defaultCurveIndex = cmbNamedCurve.Items.IndexOf(settings.DefaultCurveName);
 			if (defaultCurveIndex >= 0) {
 				cmbNamedCurve.SelectedIndex = defaultCurveIndex;
+			}
+
+			int rsaKeyStrengthExpFromConf = BitOperations.Log2(BitOperations.RoundUpToPowerOf2(settings.DefaultRsaKeyStrength > 0 ? (uint)settings.DefaultRsaKeyStrength : 4096));
+			if (rsaKeyStrengthExpFromConf >= spinRsaKeyStrengthExp.Minimum && rsaKeyStrengthExpFromConf <= spinRsaKeyStrengthExp.Maximum) {
+				spinRsaKeyStrengthExp.Value = rsaKeyStrengthExpFromConf;
+			}
+			else if (rsaKeyStrengthExpFromConf < spinRsaKeyStrengthExp.Minimum) {
+				MessageBox.Show("The RSA key strength in the config is below minimum.", "Error while loading config!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+			else if (rsaKeyStrengthExpFromConf > spinRsaKeyStrengthExp.Maximum) {
+				MessageBox.Show("The RSA key strength in the config is above maximum.", "Error while loading config!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 			FillDistinguishedNameEntries(settings.InitialDistinguishedName);
 			spinRsaKeyStrengthExp_ValueChanged(spinRsaKeyStrengthExp, EventArgs.Empty);
