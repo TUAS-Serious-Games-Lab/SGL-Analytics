@@ -9,7 +9,6 @@ namespace SGL.Analytics.KeyTool {
 		private KeyToolSettings settings;
 		private const string defaultCurveName = "secp521r1";
 		private const string configFile = "KeyTool-Settings.json";
-		private const int defaultValidityYears = 3;
 		private int rsaKeyStrength;
 		private List<DistinguishedNameEntryEdit> dnEntryEdits = null!;
 		private string? keyGenPassphrase = null;
@@ -26,7 +25,7 @@ namespace SGL.Analytics.KeyTool {
 			settings = LoadSettings();
 			FillDistinguishedNameEntries(settings.InitialDistinguishedName);
 			spinRsaKeyStrengthExp_ValueChanged(spinRsaKeyStrengthExp, EventArgs.Empty);
-			dtpValidTo.Value = DateTime.UtcNow.AddYears(defaultValidityYears);
+			dtpValidTo.Value = DateTime.UtcNow.AddYears(settings.DefaultValidityYears);
 		}
 
 		private KeyToolSettings LoadSettings() {
@@ -254,7 +253,7 @@ namespace SGL.Analytics.KeyTool {
 						entry.valid ? (object)entry.csr : "INVALID SIGNATURE: " + entry.csr.ToString() ?? "").ToArray());
 					lstInputCsrs.SelectedIndex = 0;
 					lblCsrInputFile.Text = openCsrInputFileDialog.FileName;
-					dtpValidTo.Value = DateTime.UtcNow.AddYears(defaultValidityYears);
+					dtpValidTo.Value = DateTime.UtcNow.AddYears(settings.DefaultValidityYears);
 				}
 				catch (Exception ex) {
 					MessageBox.Show("Error while loading CSR file:\n" + ex.Message, "Error loading CSR", MessageBoxButtons.OK, MessageBoxIcon.Error);

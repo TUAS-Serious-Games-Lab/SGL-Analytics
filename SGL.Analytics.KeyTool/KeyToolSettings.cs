@@ -13,6 +13,7 @@ namespace SGL.Analytics.KeyTool {
 		public KeyType DefaultKeyType { get; set; } = KeyType.EllipticCurves;
 		public string DefaultCurveName { get; set; } = "secp521r1";
 		public int DefaultRsaKeyStrength { get; set; } = 4096;
+		public int DefaultValidityYears { get; set; } = 3;
 		public List<DistinguishedNameComponent> InitialDistinguishedName { get; set; } = new List<DistinguishedNameComponent> {
 			new DistinguishedNameComponent{ Type = "C"},
 			new DistinguishedNameComponent{ Type = "O"},
