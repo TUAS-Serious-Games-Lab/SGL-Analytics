@@ -279,6 +279,10 @@ namespace SGL.Analytics.Client {
 		/// <remarks>
 		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called, between start and completion of this operation.
 		/// </remarks>
+		/// <exception cref="UsernameAlreadyTakenException">
+		/// The username provided in <see cref="BaseUserData.Username"/> of <paramref name="userData"/> was already taken for this application.
+		/// If this happens, the user needs to pick a different name.
+		/// </exception>
 		/// <exception cref="UserRegistrationResponseException">If the server didn't respond with the expected object in the expected format.</exception>
 		/// <exception cref="ValidationException">The user registration data failed local validation.</exception>
 		/// <exception cref="HttpApiRequestFailedException">Indicates a network problem.</exception>
