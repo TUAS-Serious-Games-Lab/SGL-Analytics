@@ -72,15 +72,23 @@ namespace SGL.Analytics.KeyTool {
 		}
 
 		private void spinRsaKeyStrengthExp_ValueChanged(object sender, EventArgs e) {
-			rsaKeyStrength = 1 << (int)(spinRsaKeyStrengthExp.Value);
-			lblRsaKeyStrength.Text = $"{rsaKeyStrength}";
+			try {
+				rsaKeyStrength = 1 << (int)(spinRsaKeyStrengthExp.Value);
+				lblRsaKeyStrength.Text = $"{rsaKeyStrength}";
+			}
+			catch (Exception ex) {
+				MessageBox.Show($"Unexpected Error: {ex.Message}\nDetails:\n{ex}");
+			}
 		}
 
 		private void flowCsrDnFields_SizeChanged(object sender, EventArgs e) {
-			foreach (var edit in dnEntryEdits) {
-				edit.Left = 5;
-				edit.Width = flowCsrDnFields.ClientSize.Width - 10;
+			try {
+				foreach (var edit in dnEntryEdits) {
+					edit.Left = 5;
+					edit.Width = flowCsrDnFields.ClientSize.Width - 10;
+				}
 			}
+			catch { }
 		}
 
 		private void btnBrowseSaveIntermediateKeyFile_Click(object sender, EventArgs e) {
@@ -232,20 +240,25 @@ namespace SGL.Analytics.KeyTool {
 		}
 
 		private void lstInputCsrs_SelectedIndexChanged(object sender, EventArgs e) {
-			if (lstInputCsrs.SelectedIndex < 0) return;
-			switch (lstInputCsrs.SelectedItem) {
-				case CertificateSigningRequest csr:
-					lblCsrKeyId.Text = csr?.SubjectPublicKey?.CalculateId()?.ToString() ?? "";
-					lblCsrDn.Text = csr?.SubjectDN.ToString() ?? "";
-					lblCsrKeyUsages.Text = csr?.RequestedKeyUsages.GetValueOrDefault(KeyUsages.NoneDefined).ToString("G");
-					lblCsrBasicConstraints.Text = csr?.RequestedCABasicConstraints?.ToString() ?? "";
-					break;
-				default:
-					lblCsrKeyId.Text = "[Invalid CSR]";
-					lblCsrDn.Text = "[Invalid CSR]";
-					lblCsrKeyUsages.Text = "[Invalid CSR]";
-					lblCsrBasicConstraints.Text = "[Invalid CSR]";
-					break;
+			try {
+				if (lstInputCsrs.SelectedIndex < 0) return;
+				switch (lstInputCsrs.SelectedItem) {
+					case CertificateSigningRequest csr:
+						lblCsrKeyId.Text = csr?.SubjectPublicKey?.CalculateId()?.ToString() ?? "";
+						lblCsrDn.Text = csr?.SubjectDN.ToString() ?? "";
+						lblCsrKeyUsages.Text = csr?.RequestedKeyUsages.GetValueOrDefault(KeyUsages.NoneDefined).ToString("G");
+						lblCsrBasicConstraints.Text = csr?.RequestedCABasicConstraints?.ToString() ?? "";
+						break;
+					default:
+						lblCsrKeyId.Text = "[Invalid CSR]";
+						lblCsrDn.Text = "[Invalid CSR]";
+						lblCsrKeyUsages.Text = "[Invalid CSR]";
+						lblCsrBasicConstraints.Text = "[Invalid CSR]";
+						break;
+				}
+			}
+			catch (Exception ex) {
+				MessageBox.Show($"Unexpected Error: {ex.Message}\nDetails:\n{ex}");
 			}
 		}
 
