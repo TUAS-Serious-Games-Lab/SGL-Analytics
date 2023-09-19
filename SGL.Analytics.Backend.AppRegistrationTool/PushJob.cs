@@ -142,13 +142,13 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			string dir = Path.GetDirectoryName(filename) ?? throw new ArgumentException("Filename has no valid directory.");
 			string fileBaseName = Path.GetFileNameWithoutExtension(filename);
 			EnumerationOptions enumOpts = new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive };
-			var siblingPemFile = Directory.EnumerateFiles(dir, fileBaseName + ".pem", enumOpts);
+			var siblingPemFiles = Directory.EnumerateFiles(dir, fileBaseName + ".pem", enumOpts).Concat(Directory.EnumerateFiles(dir, fileBaseName + ".cert", enumOpts));
 			var pemDirName = Path.Combine(dir, fileBaseName);
-			var dirPemFiles = Directory.Exists(pemDirName) ? Directory.EnumerateFiles(pemDirName, "*.pem", enumOpts) : Enumerable.Empty<string>();
-			var siblingPemTask = siblingPemFile.Select(async file => (file: file, certs: await readPemCertFileAsync(file, ct)));
+			var dirPemFiles = Directory.Exists(pemDirName) ? Directory.EnumerateFiles(pemDirName, "*.pem", enumOpts).Concat(Directory.EnumerateFiles(pemDirName, "*.cert", enumOpts)) : Enumerable.Empty<string>();
+			var siblingPemTasks = siblingPemFiles.Select(async file => (file: file, certs: await readPemCertFileAsync(file, ct)));
 			var dirPemTasks = dirPemFiles.Select(async file => (file: file, certs: await readPemCertFileAsync(file, ct)));
 			var dirCertResults = await Task.WhenAll(dirPemTasks);
-			var siblingCertResults = await Task.WhenAll(siblingPemTask);
+			var siblingCertResults = await Task.WhenAll(siblingPemTasks);
 			var siblingCerts = siblingCertResults.SelectMany(item => item.certs.Select(c => (Certificate: c, File: (string?)Path.GetFileNameWithoutExtension(item.file))));
 			var dirCerts = dirCertResults.SelectMany(item => item.certs.Select(c => (Certificate: c, File: (string?)Path.GetFileNameWithoutExtension(item.file))));
 			return dirCerts.Concat(siblingCerts);
