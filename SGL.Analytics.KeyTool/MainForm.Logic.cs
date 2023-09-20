@@ -157,7 +157,16 @@ namespace SGL.Analytics.KeyTool {
 				var pemObjects = pemReader.ReadAllObjects().ToList();
 				keyPairs = pemObjects.OfType<KeyPair>().Concat(pemObjects.OfType<PrivateKey>().Select(pk => pk.DeriveKeyPair())).ToList();
 			}
-			//TODO: Check if all certificates and keys match
+
+			var mismatchedKeyPair = keyPairs.FirstOrDefault(kp => !certs.Any(cert => cert.PublicKey.Equals(kp.Public)));
+			if (mismatchedKeyPair != null) {
+				throw new ArgumentException($"The certificate file contains no certificate for key {mismatchedKeyPair.Public.CalculateId()}.");
+			}
+			var mismatchedCert = certs.FirstOrDefault(cert => !keyPairs.Any(kp => cert.PublicKey.Equals(kp.Public)));
+			if (mismatchedCert != null) {
+				throw new ArgumentException($"The intermediate key file contains no private key for certificate {mismatchedCert.SubjectDN}. Id of missing key: {mismatchedCert.PublicKey.CalculateId()}");
+			}
+
 			using var outputPemBuffer = new MemoryStream();
 			var random = new RandomGenerator();
 			using (var pemBufferWriter = new StreamWriter(outputPemBuffer, leaveOpen: true)) {
