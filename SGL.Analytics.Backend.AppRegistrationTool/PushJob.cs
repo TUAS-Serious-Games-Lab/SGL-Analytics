@@ -136,7 +136,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			return definition;
 		}
 
-		private static string generateCertLabel(Certificate certificate, string? file) => certificate.SubjectDN.ToString() + file != null ? (" # " + file) : "";
+		private static string generateCertLabel(Certificate certificate, string? file) => certificate.SubjectDN.ToString() + (file != null ? (" # " + file) : "");
 
 		private async Task<IEnumerable<(Certificate Certificate, string? File)>> loadCertificates(string filename, ApplicationWithUserProperties? definition, CancellationToken ct) {
 			string dir = Path.GetDirectoryName(filename) ?? throw new ArgumentException("Filename has no valid directory.");
