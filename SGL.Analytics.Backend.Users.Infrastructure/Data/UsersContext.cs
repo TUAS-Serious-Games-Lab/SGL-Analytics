@@ -34,7 +34,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 				r.WithOwner(r => (ApplicationWithUserProperties)r.App);
 				r.HasKey(r => new { r.AppId, r.PublicKeyId });
 				r.Property(r => r.PublicKeyId).IsStoredAsByteArray().HasMaxLength(34);
-				r.Property(r => r.Label).HasMaxLength(128);
+				r.Property(r => r.Label).HasMaxLength(512);
 			});
 
 			var propDef = modelBuilder.Entity<ApplicationUserPropertyDefinition>();
@@ -63,7 +63,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 			var ekac = modelBuilder.Entity<ExporterKeyAuthCertificate>();
 			ekac.HasKey(e => new { e.AppId, e.PublicKeyId });
 			ekac.Property(e => e.PublicKeyId).IsStoredAsByteArray().HasMaxLength(34);
-			ekac.Property(e => e.Label).HasMaxLength(128);
+			ekac.Property(e => e.Label).HasMaxLength(512);
 			ekac.HasOne(e => e.App).WithMany(a => a.AuthorizedExporters);
 		}
 		/// <summary>

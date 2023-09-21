@@ -52,7 +52,7 @@ namespace SGL.Analytics.Backend.Logs.Infrastructure.Data {
 				r.WithOwner(r => r.App);
 				r.HasKey(r => new { r.AppId, r.PublicKeyId });
 				r.Property(r => r.PublicKeyId).IsStoredAsByteArray().HasMaxLength(34);
-				r.Property(r => r.Label).HasMaxLength(128);
+				r.Property(r => r.Label).HasMaxLength(512);
 			});
 		}
 
