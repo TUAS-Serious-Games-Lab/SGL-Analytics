@@ -110,6 +110,11 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <summary>
+		/// Indicates the current mode, the client is operating in.
+		/// </summary>
+		public SglAnalyticsClientMode CurrentClientMode { get; set; } = SglAnalyticsClientMode.Uninitialized;
+
+		/// <summary>
 		/// Checks if the this client has stored credentials, i.e. either a device secret or a stored password.
 		/// If this returns true, <see cref="TryLoginWithStoredCredentialsAsync(CancellationToken)"/> can be used to authenticate using these credentials.
 		/// Otherwise, a user can be logged in with username and password using <see cref="TryLoginWithPasswordAsync(string, string, bool, CancellationToken)"/>,
@@ -211,6 +216,7 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = false;
 				refreshLoginDelegate = reloginDelegate;
 			}
+			CurrentClientMode = SglAnalyticsClientMode.UsernamePasswordOnline;
 		}
 
 		private void createUserLogStore(Guid? userId, string? username) {
@@ -253,6 +259,7 @@ namespace SGL.Analytics.Client {
 				refreshLoginDelegate = reloginDelegate;
 				disableLogUploading = false;
 			}
+			CurrentClientMode = SglAnalyticsClientMode.DeviceTokenOnline;
 		}
 		/// <summary>
 		/// Asynchronously registers the user with the given data in the backend database and initiates an initial session.
@@ -309,6 +316,7 @@ namespace SGL.Analytics.Client {
 				refreshLoginDelegate = async ct => await reloginDelegate(ct);
 				disableLogUploading = false;
 			}
+			CurrentClientMode = SglAnalyticsClientMode.DelegatedOnline;
 		}
 
 		/// <summary>
@@ -352,6 +360,7 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = false;
 			}
 			startUploadingExistingLogs();
+			CurrentClientMode = credentials.Username != null ? SglAnalyticsClientMode.UsernamePasswordOnline : SglAnalyticsClientMode.DeviceTokenOnline;
 			return LoginAttemptResult.Completed;
 		}
 		/// <summary>
@@ -391,6 +400,7 @@ namespace SGL.Analytics.Client {
 				await storeCredentialsAsync(loginName, password, LoggedInUserId);
 			}
 			startUploadingExistingLogs();
+			CurrentClientMode = SglAnalyticsClientMode.UsernamePasswordOnline;
 			return LoginAttemptResult.Completed;
 		}
 		/// <summary>
@@ -441,6 +451,7 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = false;
 			}
 			startUploadingExistingLogs();
+			CurrentClientMode = SglAnalyticsClientMode.DelegatedOnline;
 			return LoginAttemptResult.Completed;
 		}
 		/// <summary>
@@ -466,11 +477,13 @@ namespace SGL.Analytics.Client {
 			var credentials = readStoredCredentials();
 			if (credentials.UserId.HasValue || credentials.Username != null) {
 				createUserLogStore(credentials.UserId, credentials.Username);
+				CurrentClientMode = credentials.Username != null ? SglAnalyticsClientMode.UsernamePasswordOnline : SglAnalyticsClientMode.DeviceTokenOnline;
 			}
 			else if (allowAnonymous) {
 				lock (lockObject) {
 					currentLogStorage = anonymousLogStorage;
 				}
+				CurrentClientMode = SglAnalyticsClientMode.AnonymousOffline;
 			}
 			else {
 				disableLogWriting = true;
@@ -510,6 +523,7 @@ namespace SGL.Analytics.Client {
 			lock (lockObject) {
 				disableLogUploading = true;
 			}
+			CurrentClientMode = SglAnalyticsClientMode.DelegatedOffline;
 			return Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
 		/// <summary>
@@ -552,6 +566,7 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = true;
 				currentLogStorage = null!;
 			}
+			CurrentClientMode = SglAnalyticsClientMode.Deactivated;
 			await Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
 		/// <summary>
