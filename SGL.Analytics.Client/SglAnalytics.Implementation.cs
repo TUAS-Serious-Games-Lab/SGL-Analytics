@@ -72,6 +72,7 @@ namespace SGL.Analytics.Client {
 			cts.Cancel();
 			cts.Dispose();
 			if (configurator.LoggerFactory.Dispose) await disposeIfDisposable(LoggerFactory);
+			CurrentClientMode = SglAnalyticsClientMode.Disposed;
 		}
 
 		private async Task disposeIfDisposable(object obj) {

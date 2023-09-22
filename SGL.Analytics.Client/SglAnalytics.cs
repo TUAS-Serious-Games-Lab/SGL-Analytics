@@ -110,6 +110,11 @@ namespace SGL.Analytics.Client {
 		}
 
 		/// <summary>
+		/// Indicates the current mode, the client is operating in.
+		/// </summary>
+		public SglAnalyticsClientMode CurrentClientMode { get; set; } = SglAnalyticsClientMode.Uninitialized;
+
+		/// <summary>
 		/// Checks if the this client has stored credentials, i.e. either a device secret or a stored password.
 		/// If this returns true, <see cref="TryLoginWithStoredCredentialsAsync(CancellationToken)"/> can be used to authenticate using these credentials.
 		/// Otherwise, a user can be logged in with username and password using <see cref="TryLoginWithPasswordAsync(string, string, bool, CancellationToken)"/>,
@@ -211,6 +216,7 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = false;
 				refreshLoginDelegate = reloginDelegate;
 			}
+			CurrentClientMode = SglAnalyticsClientMode.UsernamePasswordOnline;
 		}
 
 		private void createUserLogStore(Guid? userId, string? username) {
@@ -253,6 +259,7 @@ namespace SGL.Analytics.Client {
 				refreshLoginDelegate = reloginDelegate;
 				disableLogUploading = false;
 			}
+			CurrentClientMode = SglAnalyticsClientMode.DeviceTokenOnline;
 		}
 		/// <summary>
 		/// Asynchronously registers the user with the given data in the backend database and initiates an initial session.
@@ -309,6 +316,7 @@ namespace SGL.Analytics.Client {
 				refreshLoginDelegate = async ct => await reloginDelegate(ct);
 				disableLogUploading = false;
 			}
+			CurrentClientMode = SglAnalyticsClientMode.DelegatedOnline;
 		}
 
 		/// <summary>
@@ -352,6 +360,7 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = false;
 			}
 			startUploadingExistingLogs();
+			CurrentClientMode = credentials.Username != null ? SglAnalyticsClientMode.UsernamePasswordOnline : SglAnalyticsClientMode.DeviceTokenOnline;
 			return LoginAttemptResult.Completed;
 		}
 		/// <summary>
@@ -391,6 +400,7 @@ namespace SGL.Analytics.Client {
 				await storeCredentialsAsync(loginName, password, LoggedInUserId);
 			}
 			startUploadingExistingLogs();
+			CurrentClientMode = SglAnalyticsClientMode.UsernamePasswordOnline;
 			return LoginAttemptResult.Completed;
 		}
 		/// <summary>
@@ -441,6 +451,7 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = false;
 			}
 			startUploadingExistingLogs();
+			CurrentClientMode = SglAnalyticsClientMode.DelegatedOnline;
 			return LoginAttemptResult.Completed;
 		}
 		/// <summary>
@@ -466,11 +477,13 @@ namespace SGL.Analytics.Client {
 			var credentials = readStoredCredentials();
 			if (credentials.UserId.HasValue || credentials.Username != null) {
 				createUserLogStore(credentials.UserId, credentials.Username);
+				CurrentClientMode = credentials.Username != null ? SglAnalyticsClientMode.UsernamePasswordOnline : SglAnalyticsClientMode.DeviceTokenOnline;
 			}
 			else if (allowAnonymous) {
 				lock (lockObject) {
 					currentLogStorage = anonymousLogStorage;
 				}
+				CurrentClientMode = SglAnalyticsClientMode.AnonymousOffline;
 			}
 			else {
 				disableLogWriting = true;
@@ -510,7 +523,28 @@ namespace SGL.Analytics.Client {
 			lock (lockObject) {
 				disableLogUploading = true;
 			}
+			CurrentClientMode = SglAnalyticsClientMode.DelegatedOffline;
 			return Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
+		}
+		/// <summary>
+		/// Deletes stored credentials from the root data store.
+		/// By-default, only stored usernames and passwords are deleted, but removing a device token is refused to avoid
+		/// losing access to the account. To also allow deleting device tokens, <paramref name="allowDeviceTokenDeletion"/>
+		/// needs to be set to true.
+		/// </summary>
+		/// <param name="allowDeviceTokenDeletion">Also allow deleting device token credentials.</param>
+		/// <returns>A task representing the asynchronous operation.</returns>
+		/// <exception cref="InvalidOperationException">The stored credentials are for a device token and <paramref name="allowDeviceTokenDeletion"/> was false.</exception>
+		public async Task DeleteStoredCredentialsAsync(bool allowDeviceTokenDeletion = false) {
+			lock (lockObject) {
+				if (rootDataStore.Username == null && !allowDeviceTokenDeletion) {
+					throw new InvalidOperationException("The stored credentials are a device token and device token deletion was not allowed to not make the account inaccessible.");
+				}
+				rootDataStore.UserID = null;
+				rootDataStore.UserSecret = null;
+				rootDataStore.Username = null;
+			}
+			await rootDataStore.SaveAsync();
 		}
 		/// <summary>
 		/// Deactivates this client object.
@@ -532,6 +566,7 @@ namespace SGL.Analytics.Client {
 				disableLogUploading = true;
 				currentLogStorage = null!;
 			}
+			CurrentClientMode = SglAnalyticsClientMode.Deactivated;
 			await Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
 		/// <summary>
