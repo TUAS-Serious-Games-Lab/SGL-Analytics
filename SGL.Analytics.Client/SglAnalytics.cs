@@ -513,6 +513,26 @@ namespace SGL.Analytics.Client {
 			return Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
 		/// <summary>
+		/// Deletes stored credentials from the root data store.
+		/// By-default, only stored usernames and passwords are deleted, but removing a device token is refused to avoid
+		/// losing access to the account. To also allow deleting device tokens, <paramref name="allowDeviceTokenDeletion"/>
+		/// needs to be set to true.
+		/// </summary>
+		/// <param name="allowDeviceTokenDeletion">Also allow deleting device token credentials.</param>
+		/// <returns>A task representing the asynchronous operation.</returns>
+		/// <exception cref="InvalidOperationException">The stored credentials are for a device token and <paramref name="allowDeviceTokenDeletion"/> was false.</exception>
+		public async Task DeleteStoredCredentialsAsync(bool allowDeviceTokenDeletion = false) {
+			lock (lockObject) {
+				if (rootDataStore.Username == null && !allowDeviceTokenDeletion) {
+					throw new InvalidOperationException("The stored credentials are a device token and device token deletion was not allowed to not make the account inaccessible.");
+				}
+				rootDataStore.UserID = null;
+				rootDataStore.UserSecret = null;
+				rootDataStore.Username = null;
+			}
+			await rootDataStore.SaveAsync();
+		}
+		/// <summary>
 		/// Deactivates this client object.
 		/// This makes <see cref="StartNewLog"/>, <see cref="StartRetryUploads"/> and all recording methods No-Ops.
 		/// This can be used to implement a temporary opt-out.
