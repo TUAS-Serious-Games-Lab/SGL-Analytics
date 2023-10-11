@@ -8,6 +8,7 @@ networks:
     internal: true
   monitoring:
     internal: true
+  outbound:
 
 volumes:
   db-data:
@@ -125,6 +126,7 @@ services:
     - proxy
     - backend
     - monitoring
+    - outbound
     volumes:
     - "user-registration-log-files:/var/log/SGL.Analytics.UserRegistration"
     - "jwt-key-config:/etc/SGL.Analytics/JWT-Key"
