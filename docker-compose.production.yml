@@ -1,9 +1,5 @@
 version: '3.4'
 
-networks:
-  proxy:
-    external: true
-
 volumes:
   db-data:
     driver_opts:
