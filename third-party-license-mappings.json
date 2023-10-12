@@ -59,6 +59,16 @@
           ]
         }
       }
+    },
+    "github.com/commandlineparser/commandline": {
+      "Name": "",
+      "licenses": {
+        "License.md": {
+          "fileUrls": [
+            "https://raw.githubusercontent.com/commandlineparser/commandline/master/License.md"
+          ]
+        }
+      }
     }
   },
   "packages": {
