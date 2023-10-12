@@ -1,0 +1,120 @@
+{
+  "repositories": {
+    "github.com/dotnet/runtime": {
+      "Name": ".NET Runtime",
+      "licenses": {
+        "MIT": {
+          "fileUrls": [
+            "https://raw.githubusercontent.com/dotnet/runtime/main/LICENSE.TXT"
+          ]
+        }
+      }
+    },
+    "github.com/bcgit/bc-csharp": {
+      "Name": "The Bouncy Castle Cryptography Library For .NET",
+      "licenses": {
+        "LICENSE.md": {
+          "fileUrls": [
+            "https://raw.githubusercontent.com/bcgit/bc-csharp/release-2.0.0/LICENSE.md"
+          ]
+        }
+      }
+    },
+    "github.com/dotnet/core-setup": {
+      "Name": ".NET Core Runtime & Host Setup",
+      "licenses": {
+        "LICENSE.TXT": {
+          "fileUrls": [
+            "https://raw.githubusercontent.com/dotnet/core-setup/v3.1.6/LICENSE.TXT"
+          ]
+        }
+      }
+    },
+    "github.com/mono/mono.posix": {
+      "Name": "Mono.Posix",
+      "licenses": {
+        "MIT": {
+          "fileUrls": [
+            "https://raw.githubusercontent.com/mono/mono.posix/main/LICENSE"
+          ]
+        }
+      }
+    },
+    "github.com/dotnet/corefx": {
+      "Name": ".NET Core Libraries (CoreFX)",
+      "licenses": {
+        "MIT": {
+          "fileUrls": [
+            "https://raw.githubusercontent.com/dotnet/runtime/main/LICENSE.TXT"
+          ]
+        }
+      }
+    },
+    "dot.net/": {
+      "Name": ".NET Core Libraries (CoreFX)",
+      "licenses": {
+        "": {
+          "fileUrls": [
+            "https://raw.githubusercontent.com/dotnet/corefx/master/LICENSE.TXT"
+          ]
+        }
+      }
+    }
+  },
+  "packages": {
+    "SGL.Utilities": {
+      "ignore": true
+    },
+    "SGL.Utilities.Crypto.Abstractions": {
+      "ignore": true
+    },
+    "SGL.Utilities.Crypto": {
+      "ignore": true
+    },
+    "SGL.Utilities.EntityFrameworkCore": {
+      "ignore": true
+    },
+    "SGL.Analytics.DTO": {
+      "ignore": true
+    },
+    "SGL.Analytics.SharedClient": {
+      "ignore": true
+    },
+    "SGL.Analytics.Client": {
+      "ignore": true
+    },
+    "SGL.Analytics.ExporterClient": {
+      "ignore": true
+    },
+    "SGL.Analytics.ExporterClient.CLI": {
+      "ignore": true
+    },
+    "Microsoft.NETCore.Platforms": {
+      "licenses": {
+        "": {
+          "fileUrls": [ "https://raw.githubusercontent.com/dotnet/runtime/main/LICENSE.TXT" ]
+        }
+      }
+    },
+    "System.Runtime.CompilerServices.Unsafe": {
+      "licenses": {
+        "MIT": {
+          "fileUrls": [ "https://raw.githubusercontent.com/dotnet/runtime/main/LICENSE.TXT" ]
+        },
+        "": {
+          "fileUrls": [ "https://raw.githubusercontent.com/dotnet/runtime/main/LICENSE.TXT" ]
+        }
+      }
+    },
+    "System.ComponentModel.Annotations": {
+      "licenses": {
+        "MIT": {
+          "fileUrls": [ "https://raw.githubusercontent.com/dotnet/runtime/main/LICENSE.TXT" ]
+        },
+        "": {
+          "fileUrls": [ "https://raw.githubusercontent.com/dotnet/runtime/main/LICENSE.TXT" ]
+        }
+      }
+    }
+  }
+}

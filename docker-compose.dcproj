@@ -7,8 +7,11 @@
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/api/analytics/log</DockerServiceUrl>
     <DockerServiceName>api-gateway</DockerServiceName>
-	<AdditionalComposeFilePaths>docker-compose.build.yml</AdditionalComposeFilePaths>
+    <AdditionalComposeFilePaths>docker-compose.build.yml</AdditionalComposeFilePaths>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="third-party-license-mappings.json" />
+  </ItemGroup>
   <ItemGroup>
     <None Include=".env" />
     <None Include="docker-compose.build.yml">

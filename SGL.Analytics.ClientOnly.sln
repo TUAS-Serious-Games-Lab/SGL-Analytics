@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34031.279
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Client", "SGL.Analytics.Client\SGL.Analytics.Client.csproj", "{1183533A-A403-4E20-9683-312E91BBEAA6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.SharedClient", "SGL.Analytics.SharedClient\SGL.Analytics.SharedClient.csproj", "{13D24813-D0F3-4663-955F-1D1A5C3D886E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.DTO", "SGL.Analytics.DTO\SGL.Analytics.DTO.csproj", "{B26D77B4-CA15-4203-B0AD-4FB5CB93F642}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.ExporterClient", "SGL.Analytics.ExporterClient\SGL.Analytics.ExporterClient.csproj", "{3980EB68-1ECB-43A9-ACD7-04F1A29A887C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.ExporterClient.CLI", "SGL.Analytics.ExporterClient.CLI\SGL.Analytics.ExporterClient.CLI.csproj", "{F4213C24-D69C-40EA-8EEA-0EC93C6CAA1E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1183533A-A403-4E20-9683-312E91BBEAA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1183533A-A403-4E20-9683-312E91BBEAA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1183533A-A403-4E20-9683-312E91BBEAA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1183533A-A403-4E20-9683-312E91BBEAA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13D24813-D0F3-4663-955F-1D1A5C3D886E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13D24813-D0F3-4663-955F-1D1A5C3D886E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13D24813-D0F3-4663-955F-1D1A5C3D886E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13D24813-D0F3-4663-955F-1D1A5C3D886E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B26D77B4-CA15-4203-B0AD-4FB5CB93F642}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B26D77B4-CA15-4203-B0AD-4FB5CB93F642}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B26D77B4-CA15-4203-B0AD-4FB5CB93F642}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B26D77B4-CA15-4203-B0AD-4FB5CB93F642}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3980EB68-1ECB-43A9-ACD7-04F1A29A887C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3980EB68-1ECB-43A9-ACD7-04F1A29A887C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3980EB68-1ECB-43A9-ACD7-04F1A29A887C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3980EB68-1ECB-43A9-ACD7-04F1A29A887C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4213C24-D69C-40EA-8EEA-0EC93C6CAA1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4213C24-D69C-40EA-8EEA-0EC93C6CAA1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4213C24-D69C-40EA-8EEA-0EC93C6CAA1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4213C24-D69C-40EA-8EEA-0EC93C6CAA1E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {87287A36-BDDF-4F6A-A260-3448E40E708B}
+	EndGlobalSection
+EndGlobal
