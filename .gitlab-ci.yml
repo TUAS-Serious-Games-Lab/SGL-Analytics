@@ -121,6 +121,7 @@ deploy-shg-test:
   needs:
   - pkg-docker-main
   - deployment-package
+  - package-end-to-end-test-net6
   trigger:
     project: serious-games-lab/senior-health-games/sgl-analytics-deployment
     branch: main
