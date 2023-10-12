@@ -129,6 +129,23 @@ deploy-shg-test:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
+deploy-shg-prod:
+  stage: deploy
+  inherit:
+    variables: false
+  variables:
+    SGL_ANALYTICS_IMAGE_TAG: "$CI_COMMIT_TAG"
+  needs:
+  - pkg-docker-tags
+  - deployment-package
+  - package-end-to-end-test-net6
+  trigger:
+    project: serious-games-lab/senior-health-games/sgl-analytics-deployment
+    branch: main
+    strategy: depend
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+(\.\d+)*$/'
+
 deploy-upm:
   stage: deploy
   inherit:
