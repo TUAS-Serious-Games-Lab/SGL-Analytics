@@ -130,7 +130,7 @@ namespace SGL.Analytics.Client {
 			public DateTime EndTime => File.GetLastWriteTime(FullFileName);
 
 			public string FullFileName => Path.Combine(storage.directory, creationTime.HasValue ?
-				$"{ID}_{(creationTime.Value.ToUniversalTime() - DateTime.UnixEpoch).TotalSeconds}{storage.FileSuffix}" :
+				$"{ID}_{(long)(creationTime.Value.ToUniversalTime() - DateTime.UnixEpoch).TotalSeconds}{storage.FileSuffix}" :
 				$"{ID}{storage.FileSuffix}");
 
 			public string Suffix => storage.FileSuffix;
