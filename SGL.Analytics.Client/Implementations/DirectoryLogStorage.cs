@@ -62,6 +62,8 @@ namespace SGL.Analytics.Client {
 			Directory.CreateDirectory(directory);
 		}
 
+		private string GetFilePath(Guid id) => Path.Combine(directory, id.ToString() + FileSuffix);
+
 		private class StreamWrapper : Stream {
 			private Stream wrapped;
 			private DirectoryLogStorage? storage;
@@ -83,10 +85,13 @@ namespace SGL.Analytics.Client {
 
 			public override long Position { get => wrapped.Position; set => wrapped.Position = value; }
 
-			public override ValueTask DisposeAsync() {
+			public override async ValueTask DisposeAsync() {
 				storage?.logFilesOpenForWriting?.Remove(logId);
+				await wrapped.DisposeAsync();
+				if (storage != null) {
+					File.SetLastWriteTime(storage.GetFilePath(logId), DateTime.Now);
+				}
 				storage = null;
-				return wrapped.DisposeAsync();
 			}
 
 			public override void Flush() {
@@ -111,8 +116,11 @@ namespace SGL.Analytics.Client {
 
 			protected override void Dispose(bool disposing) {
 				storage?.logFilesOpenForWriting?.Remove(logId);
-				if (disposing) storage = null;
 				wrapped.Dispose();
+				if (storage != null && disposing) {
+					File.SetLastWriteTime(storage.GetFilePath(logId), DateTime.Now);
+				}
+				if (disposing) storage = null;
 			}
 		}
 
@@ -122,7 +130,7 @@ namespace SGL.Analytics.Client {
 			public DateTime CreationTime => File.GetCreationTime(FullFileName);
 			public DateTime EndTime => File.GetLastWriteTime(FullFileName);
 
-			public string FullFileName => Path.Combine(storage.directory, ID.ToString() + storage.FileSuffix);
+			public string FullFileName => storage.GetFilePath(ID);
 
 			public string Suffix => storage.FileSuffix;
 
