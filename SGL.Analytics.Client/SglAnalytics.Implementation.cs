@@ -197,6 +197,7 @@ namespace SGL.Analytics.Client {
 							logger.LogError(ex, "Couldn't write log entry to stream due to exception while serializing.");
 						}
 						await stream.FlushAsync();
+						logger.LogTrace("Wrote entry: {entryType} ; {channel} ; {id}", logEntry.Metadata.EntryType, logEntry.Metadata.Channel, logEntry.Metadata.ObjectID ?? logEntry.Metadata.EventType);
 					}
 					await stream.WriteAsync(arrClose.AsMemory());
 					await stream.FlushAsync();

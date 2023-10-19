@@ -65,12 +65,12 @@ namespace SGL.Analytics.Client {
 		private class StreamWrapper : Stream {
 			private Stream wrapped;
 			private DirectoryLogStorage? storage;
-			private Guid logId;
+			private LogFile logObject;
 
-			public StreamWrapper(Stream wrapped, DirectoryLogStorage storage, Guid logId) {
+			public StreamWrapper(Stream wrapped, DirectoryLogStorage storage, LogFile logObject) {
 				this.wrapped = wrapped;
 				this.storage = storage;
-				this.logId = logId;
+				this.logObject = logObject;
 			}
 
 			public override bool CanRead => wrapped.CanRead;
@@ -83,10 +83,10 @@ namespace SGL.Analytics.Client {
 
 			public override long Position { get => wrapped.Position; set => wrapped.Position = value; }
 
-			public override ValueTask DisposeAsync() {
-				storage?.logFilesOpenForWriting?.Remove(logId);
+			public override async ValueTask DisposeAsync() {
+				storage?.logFilesOpenForWriting?.Remove(logObject.ID);
+				await wrapped.DisposeAsync();
 				storage = null;
-				return wrapped.DisposeAsync();
 			}
 
 			public override void Flush() {
@@ -110,27 +110,31 @@ namespace SGL.Analytics.Client {
 			}
 
 			protected override void Dispose(bool disposing) {
-				storage?.logFilesOpenForWriting?.Remove(logId);
-				if (disposing) storage = null;
+				storage?.logFilesOpenForWriting?.Remove(logObject.ID);
 				wrapped.Dispose();
+				if (disposing) storage = null;
 			}
 		}
 
 		private class LogFile : ILogStorage.ILogFile {
+			private readonly DateTime? creationTime;
 			private DirectoryLogStorage storage;
 			public Guid ID { get; private set; }
-			public DateTime CreationTime => File.GetCreationTime(FullFileName);
+			public DateTime CreationTime => (creationTime ?? File.GetCreationTimeUtc(FullFileName)).ToLocalTime();
 			public DateTime EndTime => File.GetLastWriteTime(FullFileName);
 
-			public string FullFileName => Path.Combine(storage.directory, ID.ToString() + storage.FileSuffix);
+			public string FullFileName => Path.Combine(storage.directory, creationTime.HasValue ?
+				$"{ID}_{(long)(creationTime.Value.ToUniversalTime() - DateTime.UnixEpoch).TotalSeconds}{storage.FileSuffix}" :
+				$"{ID}{storage.FileSuffix}");
 
 			public string Suffix => storage.FileSuffix;
 
 			public LogContentEncoding Encoding => storage.UseCompressedFiles ? LogContentEncoding.GZipCompressed : LogContentEncoding.Plain;
 
-			public LogFile(Guid id, DirectoryLogStorage storage) {
+			public LogFile(Guid id, DateTime? creationTime, DirectoryLogStorage storage) {
 				this.storage = storage;
 				ID = id;
+				this.creationTime = creationTime;
 			}
 
 			public Stream OpenRead() {
@@ -162,25 +166,43 @@ namespace SGL.Analytics.Client {
 		/// <inheritdoc/>
 		public Stream CreateLogFile(out ILogStorage.ILogFile logFileMetadata) {
 			var id = Guid.NewGuid();
-			var logFile = new LogFile(id, this);
-			logFileMetadata = logFile;
+			var logFile = new LogFile(id, DateTime.UtcNow, this);
+			// Before creating file, mark it as open for writing to prevent time window where
+			// the syscall for creation is done but the file is not yet marked:
 			logFilesOpenForWriting.Add(logFile.ID);
-			var fileStream = new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
+			var fileStream = new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous | FileOptions.WriteThrough);
+			logFileMetadata = logFile;
 			if (UseCompressedFiles) {
-				return new StreamWrapper(new GZipStream(fileStream, CompressionLevel.Optimal), this, id);
+				return new StreamWrapper(new GZipStream(fileStream, CompressionLevel.Optimal), this, logFile);
 			}
 			else {
-				return new StreamWrapper(fileStream, this, id);
+				return new StreamWrapper(fileStream, this, logFile);
 			}
 		}
 
-		private string? getFilename(string path) {
+		private (Guid? id, DateTime? creationTime) getFilenameMeta(string path) {
 			path = Path.GetFileName(path);
 			if (path.EndsWith(FileSuffix, StringComparison.OrdinalIgnoreCase)) {
-				return path.Remove(path.Length - FileSuffix.Length);
+				var baseName = path.Remove(path.Length - FileSuffix.Length);
+				var sepPos = baseName.IndexOf("_");
+				DateTime? creationTime = null;
+				if (sepPos > 0) {
+					var idString = baseName.Substring(0, sepPos);
+					var creationTimeString = baseName.Substring(sepPos + 1);
+					if (long.TryParse(creationTimeString, out var creationTimeStamp)) {
+						creationTime = DateTime.UnixEpoch.AddSeconds(creationTimeStamp);
+					}
+					baseName = idString;
+				}
+				if (Guid.TryParse(baseName, out var id)) {
+					return (id, creationTime);
+				}
+				else {
+					return (null, creationTime);
+				}
 			}
 			else {
-				return null;
+				return (null, null);
 			}
 		}
 		/// <summary>
@@ -188,10 +210,11 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <returns>An enumerable to iterate over the logs.</returns>
 		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() => from file in (from filename in Directory.EnumerateFiles(directory, "*" + FileSuffix)
-																				  let idString = getFilename(filename)
-																				  let id = (idString is not null && Guid.TryParse(idString, out var guid)) ? guid : (Guid?)null
+																				  let fileNameMeta = getFilenameMeta(filename)
+																				  let id = fileNameMeta.id
+																				  let creationTime = fileNameMeta.creationTime
 																				  where id.HasValue
-																				  select new LogFile(id.Value, this))
+																				  select new LogFile(id.Value, creationTime, this))
 																	orderby file.CreationTime
 																	select file;
 
