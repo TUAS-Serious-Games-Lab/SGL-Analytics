@@ -166,7 +166,12 @@ namespace SGL.Analytics.Client {
 			// Before creating file, mark it as open for writing to prevent time window where
 			// the syscall for creation is done but the file is not yet marked:
 			logFilesOpenForWriting.Add(logFile.ID);
-			var fileStream = new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
+			// First, create file explicitly to force correct creation timestamp:
+			using (var createStream = new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
+				createStream.Close();
+			}
+			// Then, reopen for actual writing:
+			var fileStream = new FileStream(logFile.FullFileName, FileMode.Open, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
 			logFileMetadata = logFile;
 			if (UseCompressedFiles) {
 				return new StreamWrapper(new GZipStream(fileStream, CompressionLevel.Optimal), this, id);
