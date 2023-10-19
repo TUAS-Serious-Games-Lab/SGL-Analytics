@@ -86,9 +86,6 @@ namespace SGL.Analytics.Client {
 			public override async ValueTask DisposeAsync() {
 				storage?.logFilesOpenForWriting?.Remove(logObject.ID);
 				await wrapped.DisposeAsync();
-				if (storage != null) {
-					File.SetLastWriteTime(logObject.FullFileName, DateTime.Now);
-				}
 				storage = null;
 			}
 
@@ -115,9 +112,6 @@ namespace SGL.Analytics.Client {
 			protected override void Dispose(bool disposing) {
 				storage?.logFilesOpenForWriting?.Remove(logObject.ID);
 				wrapped.Dispose();
-				if (storage != null && disposing) {
-					File.SetLastWriteTime(logObject.FullFileName, DateTime.Now);
-				}
 				if (disposing) storage = null;
 			}
 		}
