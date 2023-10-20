@@ -15,6 +15,7 @@ nuget-package:
     - 'echo Building package version ${VERSION} ...'
     - 'echo "SGL_ANALYTICS_VERSION=${VERSION}" > nuget.env'
     - 'dotnet pack --no-restore -c Release -p:Version="${VERSION}" SGL.Analytics.Client'
+    - 'dotnet pack --no-restore -c Release -p:Version="${VERSION}" SGL.Analytics.ExporterClient'
     - 'dotnet nuget update source SGL --username gitlab-ci-token --password $CI_JOB_TOKEN --store-password-in-clear-text'
     - 'ls */bin/Release/*.*.nupkg'
     - 'dotnet nuget push "*/bin/Release/SGL.Analytics*.${VERSION}.nupkg" --source SGL --symbol-source SGL'
