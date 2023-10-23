@@ -43,19 +43,22 @@ namespace SGL.Analytics.ExporterClient.Implementations {
 		/// If <paramref name="content"/> is null because it couldn't be decrypted, no file is written for it.
 		/// </summary>
 		public async Task ProcessLogFileAsync(LogFileMetadata metadata, Stream? content, CancellationToken ct) {
-			var contentTask = content != null ? Task.Run(() => WriteContentFile(metadata.LogFileId, content, ct), ct) : Task.CompletedTask;
+			var contentTask = content != null ? Task.Run(() => WriteContentFile(metadata, content, ct), ct) : Task.CompletedTask;
 			var metadataTask = Task.Run(() => WriteMetadataFile(metadata, ct), ct);
 			await contentTask.ConfigureAwait(false);
 			await metadataTask.ConfigureAwait(false);
 		}
 
-		private async Task WriteContentFile(Guid id, Stream content, CancellationToken ct) {
+		private async Task WriteContentFile(LogFileMetadata metadata, Stream content, CancellationToken ct) {
+			Guid id = metadata.LogFileId;
 			var fileName = $"{ContentPrefix}{id:D}{ContentSuffix}";
 			string filePath = Path.Combine(DirectoryPath, fileName);
 			var dir = Path.GetDirectoryName(filePath);
 			if (dir != null) Directory.CreateDirectory(dir);
-			using var outputFile = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
-			await content.CopyToAsync(outputFile, ct).ConfigureAwait(false);
+			using (var outputFile = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
+				await content.CopyToAsync(outputFile, ct).ConfigureAwait(false);
+			}
+			File.SetLastWriteTime(filePath, metadata.EndTime);
 		}
 
 		private async Task WriteMetadataFile(LogFileMetadata metadata, CancellationToken ct) {
@@ -63,8 +66,10 @@ namespace SGL.Analytics.ExporterClient.Implementations {
 			var filePath = Path.Combine(DirectoryPath, fileName);
 			var dir = Path.GetDirectoryName(filePath);
 			if (dir != null) Directory.CreateDirectory(dir);
-			using var outputFile = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
-			await JsonSerializer.SerializeAsync(outputFile, metadata, MetadataJsonOptions, ct).ConfigureAwait(false);
+			using (var outputFile = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true)) {
+				await JsonSerializer.SerializeAsync(outputFile, metadata, MetadataJsonOptions, ct).ConfigureAwait(false);
+			}
+			File.SetLastWriteTime(filePath, metadata.EndTime);
 		}
 	}
 }
