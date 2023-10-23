@@ -16,13 +16,13 @@ namespace SGL.Analytics.ExporterClient.Values {
 		/// <summary>
 		/// The client-side timestamp when this log entry was recorded.
 		/// </summary>
-		public DateTime TimeStamp { get; }
+		public DateTimeOffset TimeStamp { get; }
 		/// <summary>
 		/// The payload data for the entry, containing the snapshot payload or event object passed to the <c>Record</c> methods mapped as a dictionary.
 		/// </summary>
 		public IReadOnlyDictionary<string, object?> Payload { get; }
 
-		internal LogFileEntry(string channel, DateTime timeStamp, IReadOnlyDictionary<string, object?> payload) {
+		internal LogFileEntry(string channel, DateTimeOffset timeStamp, IReadOnlyDictionary<string, object?> payload) {
 			Channel = channel;
 			TimeStamp = timeStamp;
 			Payload = payload;
@@ -38,7 +38,7 @@ namespace SGL.Analytics.ExporterClient.Values {
 		/// </summary>
 		public string EventType { get; }
 
-		internal EventLogFileEntry(string channel, DateTime timeStamp, IReadOnlyDictionary<string, object?> payload, string eventType) : base(channel, timeStamp, payload) {
+		internal EventLogFileEntry(string channel, DateTimeOffset timeStamp, IReadOnlyDictionary<string, object?> payload, string eventType) : base(channel, timeStamp, payload) {
 			EventType = eventType;
 		}
 	}
@@ -51,7 +51,7 @@ namespace SGL.Analytics.ExporterClient.Values {
 		/// The object id passed to the <c>RecordSnapshot</c> method to identify of which object's state the snapshot was made.
 		/// </summary>
 		public object? ObjectId { get; }
-		internal SnapshotLogFileEntry(string channel, DateTime timeStamp, IReadOnlyDictionary<string, object?> payload, object? objectId) : base(channel, timeStamp, payload) {
+		internal SnapshotLogFileEntry(string channel, DateTimeOffset timeStamp, IReadOnlyDictionary<string, object?> payload, object? objectId) : base(channel, timeStamp, payload) {
 			ObjectId = objectId;
 		}
 	}

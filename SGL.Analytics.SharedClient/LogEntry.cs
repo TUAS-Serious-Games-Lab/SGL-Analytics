@@ -13,22 +13,22 @@ namespace SGL.Analytics {
 		}
 		public class EntryMetadata {
 			public string Channel { get; private set; }
-			public DateTime TimeStamp { get; private set; }
+			public DateTimeOffset TimeStamp { get; private set; }
 			public LogEntryType EntryType { get; private set; }
 			public string? EventType { get; private set; } = null;
 			public object? ObjectID { get; private set; } = null;
-			private EntryMetadata(string channel, DateTime timeStamp, LogEntryType entryType) {
+			private EntryMetadata(string channel, DateTimeOffset timeStamp, LogEntryType entryType) {
 				Channel = channel;
 				TimeStamp = timeStamp;
 				EntryType = entryType;
 			}
 
-			internal static EntryMetadata NewSnapshotEntry(string channel, DateTime timeStamp, object objectId) {
+			internal static EntryMetadata NewSnapshotEntry(string channel, DateTimeOffset timeStamp, object objectId) {
 				EntryMetadata em = new EntryMetadata(channel, timeStamp, LogEntryType.Snapshot);
 				em.ObjectID = objectId;
 				return em;
 			}
-			internal static EntryMetadata NewEventEntry(string channel, DateTime timeStamp, string eventType) {
+			internal static EntryMetadata NewEventEntry(string channel, DateTimeOffset timeStamp, string eventType) {
 				EntryMetadata em = new EntryMetadata(channel, timeStamp, LogEntryType.Event);
 				em.EventType = eventType;
 				return em;
@@ -51,7 +51,7 @@ namespace SGL.Analytics {
 				throw new JsonException();
 			}
 			string? channel = null;
-			DateTime? timeStamp = null;
+			DateTimeOffset? timeStamp = null;
 			LogEntry.LogEntryType? entryType = null;
 			string? eventType = null;
 			object? objectID = null;
@@ -73,7 +73,7 @@ namespace SGL.Analytics {
 						channel = reader.GetString();
 						break;
 					case "timestamp":
-						timeStamp = JsonSerializer.Deserialize<DateTime>(ref reader, options);
+						timeStamp = JsonSerializer.Deserialize<DateTimeOffset>(ref reader, options);
 						break;
 					case "entrytype":
 						reader.Read();

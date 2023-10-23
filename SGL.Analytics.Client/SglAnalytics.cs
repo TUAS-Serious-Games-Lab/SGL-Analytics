@@ -801,7 +801,7 @@ namespace SGL.Analytics.Client {
 		public void RecordEventUnshared(string channel, object eventObject, string eventType) {
 			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
-			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewEventEntry(channel, DateTime.Now, eventType), eventObject));
+			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewEventEntry(channel, DateTimeOffset.Now, eventType), eventObject));
 		}
 
 		/// <summary>
@@ -833,7 +833,7 @@ namespace SGL.Analytics.Client {
 		public void RecordSnapshotUnshared(string channel, object objectId, object snapshotPayloadData) {
 			if (disableLogWriting) return;
 			if (currentLogQueue is null) { throw new InvalidOperationException("Can't record entries to current event log, because no log was started. Call StartNewLog() before attempting to record entries."); }
-			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewSnapshotEntry(channel, DateTime.Now, objectId), snapshotPayloadData));
+			currentLogQueue.entryQueue.Enqueue(new LogEntry(LogEntry.EntryMetadata.NewSnapshotEntry(channel, DateTimeOffset.Now, objectId), snapshotPayloadData));
 		}
 	}
 }

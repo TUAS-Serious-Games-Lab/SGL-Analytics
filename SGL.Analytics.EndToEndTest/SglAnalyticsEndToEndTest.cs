@@ -268,6 +268,7 @@ namespace SGL.Analytics.EndToEndTest {
 				Assert.Equal(9876, Assert.Contains("Y", log1Entries[0].Payload));
 				Assert.Equal("Hello World!", Assert.Contains("Msg", log1Entries[0].Payload));
 				Assert.InRange(log1Entries[0].TimeStamp, beginTime, endTime);
+				Assert.Equal(DateTimeOffset.Now.Offset, log1Entries[0].TimeStamp.Offset);
 
 				Assert.Equal("Test1", log1Entries[1].Channel);
 				Assert.Equal("OtherTestEvent", Assert.IsAssignableFrom<EventLogFileEntry>(log1Entries[1]).EventType);
@@ -275,6 +276,7 @@ namespace SGL.Analytics.EndToEndTest {
 				Assert.Equal(98.76, Assert.Contains("Y", log1Entries[1].Payload));
 				Assert.Equal("Test!Test!Test!", Assert.Contains("Msg", log1Entries[1].Payload));
 				Assert.InRange(log1Entries[1].TimeStamp, beginTime, endTime);
+				Assert.Equal(DateTimeOffset.Now.Offset, log1Entries[0].TimeStamp.Offset);
 
 				Assert.Equal("Test2", log1Entries[2].Channel);
 				Assert.Equal(snapShotId, Assert.IsAssignableFrom<SnapshotLogFileEntry>(log1Entries[2]).ObjectId);
@@ -283,6 +285,7 @@ namespace SGL.Analytics.EndToEndTest {
 				Assert.Equal("JohnDoe", Assert.Contains("Name", log1Entries[2].Payload));
 				Assert.Equal(new[] { "Apple", "Orange", "WaterBottle" }.AsEnumerable(), Assert.IsAssignableFrom<IEnumerable<object?>>(Assert.Contains("Inventory", log1Entries[2].Payload)));
 				Assert.InRange(log1Entries[2].TimeStamp, beginTime, endTime);
+				Assert.Equal(DateTimeOffset.Now.Offset, log1Entries[0].TimeStamp.Offset);
 			}
 			{
 				var log2 = await exporter.GetDecryptedLogFileByIdAsync(log2Id);

@@ -20,7 +20,7 @@ namespace SGL.Analytics.Client.Tests {
 		[Fact]
 		public async Task SerializedEventLogEntryIsDeserializable() {
 			using (MemoryStream stream = new()) {
-				var entryOrig = new LogEntry(LogEntry.EntryMetadata.NewEventEntry("TestChannel", DateTime.Now, "TestEvent"), new Dictionary<string, object?>() { ["TestA"] = 12345, ["TestB"] = "Hello World!" });
+				var entryOrig = new LogEntry(LogEntry.EntryMetadata.NewEventEntry("TestChannel", DateTimeOffset.Now, "TestEvent"), new Dictionary<string, object?>() { ["TestA"] = 12345, ["TestB"] = "Hello World!" });
 				await JsonSerializer.SerializeAsync(stream, entryOrig, options);
 				stream.Position = 0;
 				output.WriteStreamContents(stream);
@@ -40,7 +40,7 @@ namespace SGL.Analytics.Client.Tests {
 		[Fact]
 		public async Task SerializedSnapshotLogEntryIsDeserializable() {
 			using (MemoryStream stream = new()) {
-				var entryOrig = new LogEntry(LogEntry.EntryMetadata.NewSnapshotEntry("TestChannel", DateTime.Now, "TestObject"), new Dictionary<string, object?>() { ["TestA"] = 12345, ["TestB"] = "Hello World!" });
+				var entryOrig = new LogEntry(LogEntry.EntryMetadata.NewSnapshotEntry("TestChannel", DateTimeOffset.Now, "TestObject"), new Dictionary<string, object?>() { ["TestA"] = 12345, ["TestB"] = "Hello World!" });
 				await JsonSerializer.SerializeAsync(stream, entryOrig, options);
 				stream.Position = 0;
 				output.WriteStreamContents(stream);
