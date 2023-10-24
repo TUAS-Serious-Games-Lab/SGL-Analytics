@@ -200,16 +200,28 @@ namespace SGL.Analytics.ExporterClient {
 			return new LogFileMetadata(mdto.LogFileId, mdto.UserId, mdto.CreationTime, mdto.EndTime, mdto.UploadTime, mdto.NameSuffix, mdto.LogContentEncoding, mdto.Size);
 		}
 
-		private async IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsyncImpl(PerAppState perAppState, KeyId recipientKeyId, KeyPair recipientKeyPair, UserRegistrationQuery query, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
+		private async IAsyncEnumerable<UserRegistrationData> GetDecryptedUserRegistrationsAsyncImpl(PerAppState perAppState, KeyId recipientKeyId, KeyPair recipientKeyPair, UserRegistrationQuery query,
+				Action<int>? onCounted, IProgress<double>? decryptionProgress, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
 			var ct = cts.Token;
 			logger.LogDebug("Getting user registrations by query.");
 			var userClient = perAppState.UserExporterApiClient;
 			var userDTOs = await userClient.GetMetadataForAllUsersAsync(recipientKeyId, ct).ConfigureAwait(false);
 			userDTOs = query.ApplyTo(userDTOs);
+			int userCount = -1;
+			if (decryptionProgress != null) {
+				var userDtoList = userDTOs.ToList();
+				userCount = userDtoList.Count;
+				userDTOs = userDtoList;
+				onCounted?.Invoke(userCount);
+			}
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
+			int decryptedUserRegs = 0;
 			foreach (var udto in userDTOs) {
 				var decryptedProps = await DecryptUserProperties(recipientKeyId, keyDecryptor, udto, ct).ConfigureAwait(false);
+				if (decryptionProgress != null) {
+					decryptionProgress.Report(++decryptedUserRegs / userCount);
+				}
 				yield return new UserRegistrationData(udto.UserId, udto.Username, udto.StudySpecificProperties, decryptedProps);
 			}
 		}

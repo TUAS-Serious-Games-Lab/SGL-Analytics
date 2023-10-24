@@ -233,11 +233,20 @@ namespace SGL.Analytics.ExporterClient {
 		/// <param name="query">A builder function object to construct the query criteria for the user registrations.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A Task representing the asynchronous operation, providing an <see cref="IAsyncEnumerable{UserRegistrationData}"/> with the user data upon success.</returns>
-		public async Task<IAsyncEnumerable<UserRegistrationData>> GetDecryptedUserRegistrationsAsync(Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default) {
+		public Task<IAsyncEnumerable<UserRegistrationData>> GetDecryptedUserRegistrationsAsync(Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default)
+			=> GetDecryptedUserRegistrationsAsync(query, null!, ct);
+		/// <summary>
+		/// Asynchronously retrieve the user registration data from the current application, that fit the query criteria given in <paramref name="query"/> and decrypt the encrypted user properties.
+		/// </summary>
+		/// <param name="query">A builder function object to construct the query criteria for the user registrations.</param>
+		/// <param name="decryptionProgress">Indicates the progression of the decryption process in the range from 0.0 to 1.0.</param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the asynchronous operation, providing an <see cref="IAsyncEnumerable{UserRegistrationData}"/> with the user data upon success.</returns>
+		public async Task<IAsyncEnumerable<UserRegistrationData>> GetDecryptedUserRegistrationsAsync(Func<IUserRegistrationQuery, IUserRegistrationQuery> query, IProgress<double> decryptionProgress, CancellationToken ct = default) {
 			CheckReadyForDecryption();
 			var queryParams = (UserRegistrationQuery)query(new UserRegistrationQuery());
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
-			return GetDecryptedUserRegistrationsAsyncImpl(perAppState, CurrentKeyIds!.Value.DecryptionKeyId, recipientKeyPair!, queryParams, ct);
+			return GetDecryptedUserRegistrationsAsyncImpl(perAppState, CurrentKeyIds!.Value.DecryptionKeyId, recipientKeyPair!, queryParams, null, decryptionProgress, ct);
 		}
 		/// <summary>
 		/// Asynchronously retrieve the user registration data from the current application, that fit the query criteria given in <paramref name="query"/> and decrypt the encrypted user properties.
@@ -248,12 +257,35 @@ namespace SGL.Analytics.ExporterClient {
 		/// <param name="query">A builder function object to construct the query criteria for the user registrations.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A Task representing the asynchronous operation.</returns>
-		public async Task GetDecryptedUserRegistrationsAsync(IUserRegistrationSink sink, Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default) {
-			var users = await GetDecryptedUserRegistrationsAsync(query, ct);
+		public Task GetDecryptedUserRegistrationsAsync(IUserRegistrationSink sink, Func<IUserRegistrationQuery, IUserRegistrationQuery> query, CancellationToken ct = default)
+			=> GetDecryptedUserRegistrationsAsync(sink, query, null, null, ct);
+		/// <summary>
+		/// Asynchronously retrieve the user registration data from the current application, that fit the query criteria given in <paramref name="query"/> and decrypt the encrypted user properties.
+		/// The successfully retrieved data are passed to <see cref="IUserRegistrationSink.ProcessUserRegistrationAsync(UserRegistrationData, CancellationToken)"/>
+		/// on <paramref name="sink"/> for further processing.
+		/// </summary>
+		/// <param name="sink">A sink object to which the data shall be passed for further processing.</param>
+		/// <param name="query">A builder function object to construct the query criteria for the user registrations.</param>
+		/// <param name="decryptionProgress">If not null, indicates the progression of the decryption process in the range from 0.0 to 1.0.</param>
+		/// <param name="sinkProgress">If not null, indicates the progression of the processing by <paramref name="sink"/> in the range from 0.0 to 1.0.</param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the asynchronous operation.</returns>
+		public async Task GetDecryptedUserRegistrationsAsync(IUserRegistrationSink sink, Func<IUserRegistrationQuery, IUserRegistrationQuery> query,
+				IProgress<double>? decryptionProgress, IProgress<double>? sinkProgress, CancellationToken ct = default) {
+			CheckReadyForDecryption();
+			var queryParams = (UserRegistrationQuery)query(new UserRegistrationQuery());
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			int userCount = 0;
+			int processedUsers = 0;
+			var users = GetDecryptedUserRegistrationsAsyncImpl(perAppState, CurrentKeyIds!.Value.DecryptionKeyId, recipientKeyPair!, queryParams,
+				sinkProgress != null ? c => userCount = c : null, decryptionProgress, ct);
 			await foreach (var user in users.ConfigureAwait(false).WithCancellation(ct)) {
 				try {
 					logger.LogTrace("Processing user registration {id}.", user.UserId);
 					await sink.ProcessUserRegistrationAsync(user, ct).ConfigureAwait(false);
+					if (sinkProgress != null) {
+						sinkProgress.Report((double)++processedUsers / userCount);
+					}
 				}
 				catch (Exception ex) {
 					logger.LogError(ex, "Encountered error while processing user registration {id}.", user.UserId);
