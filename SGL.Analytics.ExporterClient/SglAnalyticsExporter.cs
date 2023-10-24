@@ -191,8 +191,8 @@ namespace SGL.Analytics.ExporterClient {
 			CheckReadyForDecryption();
 			var queryParams = (LogFileQuery)query(new LogFileQuery());
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
-			long logCount = 0;
-			long processedLogs = 0;
+			int logCount = 0;
+			int processedLogs = 0;
 			var logs = GetDecryptedLogFilesAsyncImpl(perAppState, CurrentKeyIds!.Value.DecryptionKeyId, recipientKeyPair!, queryParams,
 				sinkProgress != null ? c => logCount = c : null, decryptionProgress, ct);
 			await foreach (var (metadata, content) in logs.ConfigureAwait(false).WithCancellation(ct)) {

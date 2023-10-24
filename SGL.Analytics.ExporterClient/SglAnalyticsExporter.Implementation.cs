@@ -136,14 +136,14 @@ namespace SGL.Analytics.ExporterClient {
 			}
 		}
 
-		private async IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)> GetDecryptedLogFilesAsyncImpl(PerAppState perAppState, KeyId recipientKeyId, KeyPair recipientKeyPair, LogFileQuery query, Action<long>? onCounted, IProgress<double>? decryptionProgress, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
+		private async IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)> GetDecryptedLogFilesAsyncImpl(PerAppState perAppState, KeyId recipientKeyId, KeyPair recipientKeyPair, LogFileQuery query, Action<int>? onCounted, IProgress<double>? decryptionProgress, CancellationToken ctOuter, [EnumeratorCancellation] CancellationToken ctInner = default) {
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(ctOuter, ctInner);
 			var ct = cts.Token;
 			logger.LogDebug("Getting metadata and content for log files by query.");
 			var logClient = perAppState.LogExporterApiClient;
 			var metaDTOs = await logClient.GetMetadataForAllLogsAsync(recipientKeyId, ct).ConfigureAwait(false);
 			metaDTOs = query.ApplyTo(metaDTOs);
-			long logCount = -1;
+			int logCount = -1;
 			if (decryptionProgress != null) {
 				var metaDtoList = metaDTOs.ToList();
 				logCount = metaDtoList.Count;
@@ -152,7 +152,7 @@ namespace SGL.Analytics.ExporterClient {
 			}
 			var keyDecryptor = new KeyDecryptor(recipientKeyPair);
 			var requestConcurrency = configurator.RequestConcurrencyGetter();
-			long decryptedLogs = 0;
+			int decryptedLogs = 0;
 			var logs = metaDTOs.MapBufferedAsync(requestConcurrency, (Func<DownstreamLogMetadataDTO, Task<(LogFileMetadata Metadata, Stream? Content)>>)(async mdto => {
 				try {
 					var encryptedContent = await logClient.GetLogContentByIdAsync(mdto.LogFileId, ct).ConfigureAwait(false);
