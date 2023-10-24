@@ -52,8 +52,10 @@ namespace SGL.Analytics.ExporterClient.Implementations {
 			if (RunConcurrently) {
 				await Task.WhenAll(InnerSinks.Select(innerSink => {
 					if (content != null) {
-						using var contentStream = new MemoryStream(contentBuffer, writable: false);
-						return Task.Run(() => innerSink.ProcessLogFileAsync(metadata, contentStream, ct), ct);
+						return Task.Run(async () => {
+							using var contentStream = new MemoryStream(contentBuffer, writable: false);
+							await innerSink.ProcessLogFileAsync(metadata, contentStream, ct);
+						}, ct);
 					}
 					else {
 						return Task.Run(() => innerSink.ProcessLogFileAsync(metadata, null, ct), ct);
