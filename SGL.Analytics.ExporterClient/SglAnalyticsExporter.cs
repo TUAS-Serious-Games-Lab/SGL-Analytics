@@ -148,11 +148,22 @@ namespace SGL.Analytics.ExporterClient {
 		/// <param name="query">A builder function object to construct the query criteria for the log files.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A Task representing the asynchronous operation, providing tuples of metadata and associated contents.</returns>
-		public async Task<IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)>> GetDecryptedLogFilesAsync(Func<ILogFileQuery, ILogFileQuery> query, CancellationToken ct = default) {
+		public Task<IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)>> GetDecryptedLogFilesAsync(Func<ILogFileQuery, ILogFileQuery> query, CancellationToken ct = default)
+			=> GetDecryptedLogFilesAsync(query, null!, ct);
+		/// <summary>
+		/// Asynchronously downloads and decrypts the log files from the current application, that fit the query criteria given in <paramref name="query"/>.
+		/// The log file data are provided as an <see cref="IAsyncEnumerable{T}"/> over tuples containing corresponding metadata and contents.
+		/// If a file couldn't be downloaded or decrypted, the content field is null.
+		/// </summary>
+		/// <param name="query">A builder function object to construct the query criteria for the log files.</param>
+		/// <param name="decryptionProgress">Indicates the progression of the decryption process in the range from 0.0 to 1.0.</param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the asynchronous operation, providing tuples of metadata and associated contents.</returns>
+		public async Task<IAsyncEnumerable<(LogFileMetadata Metadata, Stream? Content)>> GetDecryptedLogFilesAsync(Func<ILogFileQuery, ILogFileQuery> query, IProgress<double> decryptionProgress, CancellationToken ct = default) {
 			CheckReadyForDecryption();
 			var queryParams = (LogFileQuery)query(new LogFileQuery());
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
-			return GetDecryptedLogFilesAsyncImpl(perAppState, CurrentKeyIds!.Value.DecryptionKeyId, recipientKeyPair!, queryParams, ct);
+			return GetDecryptedLogFilesAsyncImpl(perAppState, CurrentKeyIds!.Value.DecryptionKeyId, recipientKeyPair!, queryParams, null, decryptionProgress, ct);
 		}
 		/// <summary>
 		/// Asynchronously downloads and decrypts the log files from the current application, that fit the query criteria given in <paramref name="query"/>.
@@ -163,12 +174,34 @@ namespace SGL.Analytics.ExporterClient {
 		/// <param name="query">A builder function object to construct the query criteria for the log files.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A Task representing the asynchronous operation.</returns>
-		public async Task GetDecryptedLogFilesAsync(ILogFileSink sink, Func<ILogFileQuery, ILogFileQuery> query, CancellationToken ct = default) {
-			var logs = await GetDecryptedLogFilesAsync(query, ct).ConfigureAwait(false);
+		public Task GetDecryptedLogFilesAsync(ILogFileSink sink, Func<ILogFileQuery, ILogFileQuery> query, CancellationToken ct = default)
+			=> GetDecryptedLogFilesAsync(sink, query, null!, null!, ct);
+		/// <summary>
+		/// Asynchronously downloads and decrypts the log files from the current application, that fit the query criteria given in <paramref name="query"/>.
+		/// The successfully retrieved log file data are passed to <see cref="ILogFileSink.ProcessLogFileAsync(LogFileMetadata, Stream?, CancellationToken)"/>
+		/// on <paramref name="sink"/> for further processing. If a file couldn't be downloaded or decrypted, the content argument is null.
+		/// </summary>
+		/// <param name="sink">A sink object to which the data shall be passed for further processing.</param>
+		/// <param name="query">A builder function object to construct the query criteria for the log files.</param>
+		/// <param name="decryptionProgress">If not null, indicates the progression of the decryption process in the range from 0.0 to 1.0.</param>
+		/// <param name="sinkProgress">If not null, indicates the progression of the processing by <paramref name="sink"/> in the range from 0.0 to 1.0.</param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the asynchronous operation.</returns>
+		public async Task GetDecryptedLogFilesAsync(ILogFileSink sink, Func<ILogFileQuery, ILogFileQuery> query, IProgress<double>? decryptionProgress, IProgress<double>? sinkProgress, CancellationToken ct = default) {
+			CheckReadyForDecryption();
+			var queryParams = (LogFileQuery)query(new LogFileQuery());
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			long logCount = 0;
+			long processedLogs = 0;
+			var logs = GetDecryptedLogFilesAsyncImpl(perAppState, CurrentKeyIds!.Value.DecryptionKeyId, recipientKeyPair!, queryParams,
+				sinkProgress != null ? c => logCount = c : null, decryptionProgress, ct);
 			await foreach (var (metadata, content) in logs.ConfigureAwait(false).WithCancellation(ct)) {
 				try {
 					logger.LogTrace("Procesing log file {id} from user {userId}.", metadata.LogFileId, metadata.UserId);
 					await sink.ProcessLogFileAsync(metadata, content, ct).ConfigureAwait(false);
+					if (sinkProgress != null) {
+						sinkProgress.Report((double)++processedLogs / logCount);
+					}
 				}
 				catch (Exception ex) {
 					logger.LogError(ex, "Encountered error while procesing log file {id} from user {userId}.", metadata.LogFileId, metadata.UserId);
