@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SGL.Analytics.DTO;
+using SGL.Analytics.ExporterClient.Util;
 using SGL.Analytics.ExporterClient.Values;
 using SGL.Utilities.Crypto;
 using SGL.Utilities.Crypto.Certificates;
@@ -313,10 +314,43 @@ namespace SGL.Analytics.ExporterClient {
 		/// Asynchronously parses the given analytics log file contents and provides them as a stream of <see cref="LogFileEntry"/> objects.
 		/// </summary>
 		/// <param name="fileContent">The (decrypted) file content to parse.</param>
+		/// <returns>An asynchronous enumerable providing the parsed entries.</returns>
+		public IAsyncEnumerable<LogFileEntry> ParseLogEntriesAsync(Stream fileContent) =>
+			ParseLogEntriesAsync(fileContent, errorTolerant: false);
+
+		/// <summary>
+		/// Asynchronously parses the given analytics log file contents and provides them as a stream of <see cref="LogFileEntry"/> objects.
+		/// </summary>
+		/// <param name="fileContent">The (decrypted) file content to parse.</param>
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>An asynchronous enumerable providing the parsed entries.</returns>
-		public async IAsyncEnumerable<LogFileEntry> ParseLogEntriesAsync(Stream fileContent, [EnumeratorCancellation] CancellationToken ct = default) {
-			await foreach (var entry in JsonSerializer.DeserializeAsyncEnumerable<LogEntry>(fileContent, JsonOptions.LogEntryOptions, ct).ConfigureAwait(false).WithCancellation(ct)) {
+		public IAsyncEnumerable<LogFileEntry> ParseLogEntriesAsync(Stream fileContent, CancellationToken ct) =>
+			ParseLogEntriesAsync(fileContent, errorTolerant: false, ct);
+
+		/// <summary>
+		/// Asynchronously parses the given analytics log file contents and provides them as a stream of <see cref="LogFileEntry"/> objects.
+		/// </summary>
+		/// <param name="fileContent">The (decrypted) file content to parse.</param>
+		/// <param name="errorTolerant">
+		/// If true, the JSON content is parsed in a way that allows reading the valid part of an incomplete JSON log file.
+		/// The exception for a syntax error is still passed on, but all complete and valid log entries are enumerated before the exception.
+		/// This is useful to recover prematurely truncated log files, that e.g. may be missing their closing <c>}</c>,
+		/// or even have a only partially written entry at the end.
+		/// Such files can present, if a client application has crashed or was otherwise terminated before finishing the log.
+		/// This mode is however slower, because <paramref name="fileContent"/> is read character by character.
+		/// </param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>An asynchronous enumerable providing the parsed entries.</returns>
+		public async IAsyncEnumerable<LogFileEntry> ParseLogEntriesAsync(Stream fileContent, bool errorTolerant, [EnumeratorCancellation] CancellationToken ct = default) {
+			JsonSerializerOptions jsonOptions = JsonOptions.LogEntryOptions;
+			if (errorTolerant) {
+				jsonOptions = new JsonSerializerOptions(jsonOptions) {
+					DefaultBufferSize = 1,
+					AllowTrailingCommas = true
+				};
+				fileContent = new YieldStream(fileContent);
+			}
+			await foreach (var entry in JsonSerializer.DeserializeAsyncEnumerable<LogEntry>(fileContent, jsonOptions, ct).ConfigureAwait(false).WithCancellation(ct)) {
 				if (entry != null) {
 					if (entry.Metadata.EntryType is LogEntry.LogEntryType.Event) {
 						yield return new EventLogFileEntry(entry.Metadata.Channel, entry.Metadata.TimeStamp, (Dictionary<string, object?>)entry.Payload, entry.Metadata.EventType ?? "");
