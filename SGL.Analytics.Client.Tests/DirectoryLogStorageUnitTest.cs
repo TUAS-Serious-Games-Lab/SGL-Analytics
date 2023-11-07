@@ -41,7 +41,7 @@ namespace SGL.Analytics.Client.Tests {
 				content.ForEach(c => writer.WriteLine(c));
 			}
 			output.WriteLogContents(metadata);
-			using (var reader = new StreamReader(metadata.OpenRead())) {
+			using (var reader = new StreamReader(metadata.OpenReadContent())) {
 				Assert.Equal(content, reader.EnumerateLines());
 			}
 		}

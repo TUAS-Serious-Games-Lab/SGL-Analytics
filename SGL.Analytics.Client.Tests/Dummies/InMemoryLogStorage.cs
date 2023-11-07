@@ -149,8 +149,8 @@ namespace SGL.Analytics.Client.Tests {
 
 			public bool Equals(ILogStorage.ILogFile? other) => other is LogFile lfo ? (ID == other.ID && storage == lfo.storage) : false;
 
-			public Stream OpenRead() => new ReadStreamWrapper(content);
-			public Stream OpenReadRaw() => new ReadStreamWrapper(content);
+			public Stream OpenReadContent() => new ReadStreamWrapper(content);
+			public Stream OpenReadEncoded() => new ReadStreamWrapper(content);
 
 			public void Remove() {
 				Deleted = true;

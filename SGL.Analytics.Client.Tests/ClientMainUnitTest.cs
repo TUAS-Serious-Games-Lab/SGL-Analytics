@@ -138,7 +138,7 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync();
 
 			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
-			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenRead()) {
+			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenReadContent()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -185,7 +185,7 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync();
 
 			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
-			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenRead()) {
+			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenReadContent()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -237,7 +237,7 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync();
 
 			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
-			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenRead()) {
+			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenReadContent()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -294,7 +294,7 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync();
 
 			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
-			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenRead()) {
+			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenReadContent()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -347,7 +347,7 @@ namespace SGL.Analytics.Client.Tests {
 			await analytics.FinishAsync();
 
 			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
-			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenRead()) {
+			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenReadContent()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -470,7 +470,7 @@ namespace SGL.Analytics.Client.Tests {
 
 			var logs = userStorage.EnumerateFinishedLogs().GetEnumerator();
 			Assert.True(logs.MoveNext());
-			await using (var stream = logs.Current.OpenRead()) {
+			await using (var stream = logs.Current.OpenReadContent()) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
 					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
 					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test A");
@@ -483,7 +483,7 @@ namespace SGL.Analytics.Client.Tests {
 				}
 			}
 			Assert.True(logs.MoveNext());
-			await using (var stream = logs.Current.OpenRead()) {
+			await using (var stream = logs.Current.OpenReadContent()) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
 					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
 					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test E");
@@ -496,7 +496,7 @@ namespace SGL.Analytics.Client.Tests {
 				}
 			}
 			Assert.True(logs.MoveNext());
-			await using (var stream = logs.Current.OpenRead()) {
+			await using (var stream = logs.Current.OpenReadContent()) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
 					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
 					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test J");
@@ -631,7 +631,7 @@ namespace SGL.Analytics.Client.Tests {
 
 			Assert.Equal(logIds, collectorClient.UploadedLogFileIds);
 
-			await using (var stream = lastLog.OpenRead()) {
+			await using (var stream = lastLog.OpenReadContent()) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
 					var arrEnumerator = jsonDoc.RootElement.EnumerateArray().GetEnumerator();
 					readAndAssertSimpleTestEvent(ref arrEnumerator, "Channel 1", "Test J");

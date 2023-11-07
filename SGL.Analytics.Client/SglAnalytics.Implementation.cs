@@ -363,7 +363,7 @@ namespace SGL.Analytics.Client {
 							logFileEndTime = logFile.EndTime;
 							logFileSuffix = logFile.Suffix;
 							logFileEncoding = logFile.Encoding;
-							contentStream = logFile.OpenReadRaw();
+							contentStream = logFile.OpenReadEncoded();
 						}
 						var dataEncryptor = new DataEncryptor(randomGenerator, numberOfStreams: 1);
 						var encryptionStream = dataEncryptor.OpenEncryptionReadStream(contentStream, 0, leaveOpen: false);

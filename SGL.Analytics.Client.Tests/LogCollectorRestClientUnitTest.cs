@@ -52,7 +52,7 @@ namespace SGL.Analytics.Client.Tests {
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.NoContent));
 
 			var metadataDTO = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding, EncryptionInfo.CreateUnencrypted());
-			await using var stream = logFile.OpenReadRaw();
+			await using var stream = logFile.OpenReadEncoded();
 			client.Authorization = new AuthorizationData(new AuthorizationToken("OK"), DateTime.UtcNow.AddHours(1));
 			await client.UploadLogFileAsync(metadataDTO, stream);
 
@@ -92,7 +92,7 @@ namespace SGL.Analytics.Client.Tests {
 					.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.InternalServerError));
 
 			var metadataDTO = new LogMetadataDTO(logFile.ID, logFile.CreationTime, logFile.EndTime, logFile.Suffix, logFile.Encoding, EncryptionInfo.CreateUnencrypted());
-			await using var stream = logFile.OpenReadRaw();
+			await using var stream = logFile.OpenReadEncoded();
 			client.Authorization = new AuthorizationData(new AuthorizationToken("OK"), DateTime.UtcNow.AddHours(1));
 			var ex = await Assert.ThrowsAsync<HttpApiResponseException>(() => client.UploadLogFileAsync(metadataDTO, stream));
 			Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);

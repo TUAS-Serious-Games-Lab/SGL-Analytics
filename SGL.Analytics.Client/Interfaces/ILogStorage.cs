@@ -37,13 +37,13 @@ namespace SGL.Analytics.Client {
 			/// If the implementation encodes or compresses the files, this needs to provide the uncompressed / decoded content.
 			/// </summary>
 			/// <returns>A <see cref="Stream"/> for reading the log file content.</returns>
-			public Stream OpenRead();
+			public Stream OpenReadContent();
 			/// <summary>
 			/// Opens the represented log file for reading in raw form.
 			/// Implementations may provide the content in compressed or encoded form.
 			/// </summary>
 			/// <returns>A <see cref="Stream"/> for reading the log file content in raw form, with possibly encoded or compressed content.</returns>
-			public Stream OpenReadRaw();
+			public Stream OpenReadEncoded();
 			/// <summary>
 			/// Removes the represented log files.
 			/// Implementations need to ensure that removed files do not appear in <see cref="EnumerateLogs"/> or <see cref="EnumerateFinishedLogs"/>,

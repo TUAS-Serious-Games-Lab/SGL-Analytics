@@ -137,8 +137,8 @@ namespace SGL.Analytics.Client {
 				this.creationTime = creationTime;
 			}
 
-			public Stream OpenRead() {
-				var fileStream = OpenReadRaw();
+			public Stream OpenReadContent() {
+				var fileStream = OpenReadEncoded();
 				if (storage.UseCompressedFiles) {
 					return new GZipStream(fileStream, CompressionMode.Decompress);
 				}
@@ -147,7 +147,7 @@ namespace SGL.Analytics.Client {
 				}
 			}
 
-			public Stream OpenReadRaw() => new FileStream(FullFileName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
+			public Stream OpenReadEncoded() => new FileStream(FullFileName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
 
 			public void Remove() {
 				if (storage.Archiving) {
