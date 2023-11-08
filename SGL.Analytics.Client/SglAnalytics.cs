@@ -633,6 +633,11 @@ namespace SGL.Analytics.Client {
 		/// Other state-changing operations (<c>StartNewLog</c>, <c>RegisterAsync</c>, <c>FinishAsync</c>, or the <c>Record</c>... operations) on the current object must not be called concurrently with this.
 		/// </remarks>
 		public Guid StartNewLog() {
+			if (CurrentClientMode == SglAnalyticsClientMode.Uninitialized) {
+				throw new InvalidOperationException(
+					"Client object is in uninitialized state. Select operation mode first by calling one of the " +
+					"Register..., TryLogin..., or UseOfflineMode... or explicitly disable client object using DeactivateAsync.");
+			}
 			if (disableLogWriting) return Guid.Empty;
 			LogQueue? oldLogQueue;
 			LogQueue? newLogQueue;

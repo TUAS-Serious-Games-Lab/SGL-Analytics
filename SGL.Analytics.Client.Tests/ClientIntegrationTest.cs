@@ -154,6 +154,7 @@ namespace SGL.Analytics.Client.Tests {
 				.RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK)
 					.WithBody(recipientCertsPem));
 
+			await analytics.UseOfflineModeAsync(allowAnonymous: true);
 			var logId1Start = analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test A" });
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test B" });
