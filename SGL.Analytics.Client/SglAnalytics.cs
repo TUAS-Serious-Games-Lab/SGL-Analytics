@@ -211,7 +211,7 @@ namespace SGL.Analytics.Client {
 			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			// login with newly registered credentials to obtain session token
 			await reloginDelegate(ct);
-			createUserLogStore(userId, userData.Username);
+			await createUserLogStore(userId, userData.Username, ct);
 			disableLogWriting = false;
 			lock (lockObject) {
 				// hold on to re-login delegate for token refreshing, capturing needed credentials
@@ -221,13 +221,16 @@ namespace SGL.Analytics.Client {
 			CurrentClientMode = SglAnalyticsClientMode.UsernamePasswordOnline;
 		}
 
-		private void createUserLogStore(Guid? userId, string? username) {
+		private async Task createUserLogStore(Guid? userId, string? username, CancellationToken ct) {
 			var logStore = configurator.UserLogStorageFactory.Factory(new SglAnalyticsConfiguratorAuthenticatedFactoryArguments(appName, appAPIToken, httpClient,
 				dataDirectory, LoggerFactory, randomGenerator, configurator.CustomArgumentFactories, SessionAuthorization, userId, username));
+			ILogStorage? oldLogStore;
 			lock (lockObject) {
+				oldLogStore = userLogStorage;
 				userLogStorage = logStore;
 				currentLogStorage = userLogStorage;
 			}
+			if (oldLogStore != null && configurator.UserLogStorageFactory.Dispose) await disposeIfDisposable(oldLogStore);
 		}
 
 		/// <summary>
@@ -256,7 +259,7 @@ namespace SGL.Analytics.Client {
 			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			// login with newly registered credentials to obtain session token
 			await reloginDelegate(ct);
-			createUserLogStore(userId, userData.Username);
+			await createUserLogStore(userId, userData.Username, ct);
 			disableLogWriting = false;
 			lock (lockObject) {
 				// hold on to re-login delegate for token refreshing, capturing needed credentials
@@ -314,7 +317,7 @@ namespace SGL.Analytics.Client {
 				}
 			};
 			var loginResponse = await reloginDelegate(ct);
-			createUserLogStore(loginResponse.UpstreamUserId, null);
+			await createUserLogStore(loginResponse.UpstreamUserId, null, ct);
 			disableLogWriting = false;
 			lock (lockObject) {
 				// hold on to re-login delegate for token refreshing, capturing needed credentials
@@ -358,7 +361,7 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "An error prevented logging in with stored credentials.");
 				return LoginAttemptResult.NetworkProblem;
 			}
-			createUserLogStore(credentials.UserId, credentials.Username);
+			await createUserLogStore(credentials.UserId, credentials.Username, ct);
 			disableLogWriting = false;
 			lock (lockObject) {
 				// hold on to re-login delegate for token refreshing, capturing needed credentials
@@ -396,7 +399,7 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "An error prevented logging in with stored credentials.");
 				return LoginAttemptResult.NetworkProblem;
 			}
-			createUserLogStore(responseDto.UserId, loginName);
+			await createUserLogStore(responseDto.UserId, loginName, ct);
 			disableLogWriting = false;
 			lock (lockObject) {
 				// hold on to re-login delegate for token refreshing, capturing needed credentials
@@ -451,7 +454,7 @@ namespace SGL.Analytics.Client {
 				logger.LogError(ex, "An error prevented logging in with upstream delegation.");
 				return LoginAttemptResult.NetworkProblem;
 			}
-			createUserLogStore(loginResponse.UpstreamUserId, null);
+			await createUserLogStore(loginResponse.UpstreamUserId, null, ct);
 			disableLogWriting = false;
 			lock (lockObject) {
 				// hold on to re-login delegate for token refreshing, capturing needed credentials
@@ -480,13 +483,19 @@ namespace SGL.Analytics.Client {
 			await FinishAsync(); // Ensure clean state for background tasks if client was used before
 			var credentials = readStoredCredentials();
 			if (credentials.UserId.HasValue || credentials.Username != null) {
-				createUserLogStore(credentials.UserId, credentials.Username);
+				await createUserLogStore(credentials.UserId, credentials.Username, ct);
 				CurrentClientMode = credentials.Username != null ? SglAnalyticsClientMode.UsernamePasswordOnline : SglAnalyticsClientMode.DeviceTokenOnline;
 			}
 			else if (allowAnonymous) {
+				ILogStorage? oldLogStore = null;
 				lock (lockObject) {
+					if (currentLogStorage == userLogStorage) {
+						oldLogStore = userLogStorage;
+						userLogStorage = null!;
+					}
 					currentLogStorage = anonymousLogStorage;
 				}
+				if (oldLogStore != null && configurator.UserLogStorageFactory.Dispose) await disposeIfDisposable(oldLogStore);
 				CurrentClientMode = SglAnalyticsClientMode.AnonymousOffline;
 			}
 			else {
@@ -517,7 +526,7 @@ namespace SGL.Analytics.Client {
 		/// <returns>A Task representing the registration operation.</returns>
 		public async Task UseOfflineModeForDelegatedUserAsync(Guid upstreamUserId, CancellationToken ct = default) {
 			await FinishAsync(); // Ensure clean state for background tasks if client was used before
-			createUserLogStore(upstreamUserId, null);
+			await createUserLogStore(upstreamUserId, null, ct);
 			disableLogWriting = false;
 			lock (lockObject) {
 				disableLogUploading = true;
@@ -552,20 +561,20 @@ namespace SGL.Analytics.Client {
 		/// </summary>
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A Task representing the registration operation.</returns>
-		/// <remarks>
-		/// Currently, this operation isn't actually asynchronous as no operations need to be awaited.
-		/// The asynchronous interface for other session management methods is however kept for consistency and
-		/// to allow future changes that might need asynchronous operations.
-		/// </remarks>
 		public async Task DeactivateAsync(CancellationToken ct = default) {
 			await FinishAsync();
 			disableLogWriting = true;
+			ILogStorage? oldLogStore = null;
 			lock (lockObject) {
 				disableLogUploading = true;
+				if (currentLogStorage == userLogStorage) {
+					oldLogStore = userLogStorage;
+					userLogStorage = null!;
+				}
 				currentLogStorage = null!;
 			}
+			if (oldLogStore != null && configurator.UserLogStorageFactory.Dispose) await disposeIfDisposable(oldLogStore);
 			CurrentClientMode = SglAnalyticsClientMode.Deactivated;
-			await Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
 		/// <summary>
 		/// Checks for and lists locally stored anonymous logs that were recorded in offline mode without a valid user identification
