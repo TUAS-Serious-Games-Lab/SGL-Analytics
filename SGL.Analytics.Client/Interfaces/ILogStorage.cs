@@ -49,7 +49,7 @@ namespace SGL.Analytics.Client {
 
 			/// <summary>
 			/// Removes the represented log files.
-			/// Implementations need to ensure that removed files do not appear in <see cref="EnumerateLogs"/> or <see cref="EnumerateUnfinishedLogsForRecovery"/>,
+			/// Implementations need to ensure that removed files do not appear in <see cref="ListLogs"/> or <see cref="ListUnfinishedLogsForRecovery"/>,
 			/// but they may only logically remove them instead of actually deleting the data.
 			/// E.g., an implementation working with the local file system could just move the removed file to a different directory.
 			/// </summary>
@@ -74,7 +74,7 @@ namespace SGL.Analytics.Client {
 		/// on them as part of a crash recovery procedure.
 		/// </summary>
 		/// <returns>An enumerable to iterate over the objects representing the files and their metadata.</returns>
-		IList<ILogFile> EnumerateUnfinishedLogsForRecovery();
+		IList<ILogFile> ListUnfinishedLogsForRecovery();
 
 		/// <summary>
 		/// Enumerates analytics log files stored by the storage system, excluding unfinished ones.
@@ -84,6 +84,6 @@ namespace SGL.Analytics.Client {
 		/// or their writing <see cref="Stream"/> has been closed, but no call to <see cref="FinishLogFileAsync(ILogFile, CancellationToken)"/>  has completed for them.
 		/// </summary>
 		/// <returns>An enumerable to iterate over the objects representing the files and their metadata.</returns>
-		IList<ILogFile> EnumerateLogs();
+		IList<ILogFile> ListLogs();
 	}
 }

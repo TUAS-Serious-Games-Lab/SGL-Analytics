@@ -171,7 +171,7 @@ namespace SGL.Analytics.Client.Tests {
 
 		public IList<ILogStorage.ILogFile> EnumerateAllLogs() => logs.Where(log => !log.Deleted)
 			.Cast<ILogStorage.ILogFile>().ToList();
-		public IList<ILogStorage.ILogFile> EnumerateLogs() => logs.Where(log => !log.Deleted && log.WriteClosed && log.Finished)
+		public IList<ILogStorage.ILogFile> ListLogs() => logs.Where(log => !log.Deleted && log.WriteClosed && log.Finished)
 			.Cast<ILogStorage.ILogFile>().ToList();
 
 		public void Dispose() {
@@ -200,7 +200,7 @@ namespace SGL.Analytics.Client.Tests {
 			}
 		}
 
-		public IList<ILogStorage.ILogFile> EnumerateUnfinishedLogsForRecovery() =>
+		public IList<ILogStorage.ILogFile> ListUnfinishedLogsForRecovery() =>
 			logs.Where(log => !log.Deleted && log.WriteClosed && !log.Finished).Cast<ILogStorage.ILogFile>().ToList();
 	}
 }

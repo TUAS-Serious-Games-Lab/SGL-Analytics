@@ -33,7 +33,7 @@ namespace SGL.Analytics.Client.Tests {
 			ILogStorage.ILogFile? metadata;
 			using (var stream = fixture.Storage.CreateLogFile(out metadata)) { }
 			await fixture.Storage.FinishLogFileAsync(metadata);
-			Assert.Contains(metadata, fixture.Storage.EnumerateLogs());
+			Assert.Contains(metadata, fixture.Storage.ListLogs());
 		}
 		[Fact]
 		public void WrittenLogContentsArePreserved() {

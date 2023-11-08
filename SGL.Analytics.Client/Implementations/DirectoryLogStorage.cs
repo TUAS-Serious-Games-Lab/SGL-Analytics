@@ -251,7 +251,7 @@ namespace SGL.Analytics.Client {
 		public IList<ILogStorage.ILogFile> ListAllLogs() {
 			var compressedLogs = EnumerateLogs(CompressedFileSuffix, LogContentEncoding.GZipCompressed);
 			var uncompressedLogs = EnumerateLogs(UncompressedFileSuffix, LogContentEncoding.Plain);
-			var unfinishedLogs = EnumerateUnfinishedLogsForRecovery();
+			var unfinishedLogs = ListUnfinishedLogsForRecovery();
 			var allLogs = uncompressedLogs.Concat(compressedLogs).Concat(unfinishedLogs);
 			return allLogs.ToList();
 		}
@@ -275,10 +275,10 @@ namespace SGL.Analytics.Client {
 		/// thus, files open for writing by other processes can not be properly excluded.
 		/// </remarks>
 		/// <returns>A list of the logs.</returns>
-		public IList<ILogStorage.ILogFile> EnumerateLogs() {
+		public IList<ILogStorage.ILogFile> ListLogs() {
 			var compressedLogs = EnumerateLogs(CompressedFileSuffix, LogContentEncoding.GZipCompressed);
 			var uncompressedLogs = EnumerateLogs(UncompressedFileSuffix, LogContentEncoding.Plain);
-			var unfinishedLogIds = EnumerateUnfinishedLogsForRecovery().Select(log => log.ID).ToHashSet();
+			var unfinishedLogIds = ListUnfinishedLogsForRecovery().Select(log => log.ID).ToHashSet();
 			var result = uncompressedLogs.Concat(compressedLogs).Where(log => !unfinishedLogIds.Contains(log.ID)).ToList();
 			return result;
 		}
@@ -328,7 +328,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		public IList<ILogStorage.ILogFile> EnumerateUnfinishedLogsForRecovery() =>
+		public IList<ILogStorage.ILogFile> ListUnfinishedLogsForRecovery() =>
 			EnumerateLogs(UnfinishedFileSuffix, LogContentEncoding.Plain)
 			.Where(log => !logFilesOpenForWriting.Contains(log.ID))
 			.ToList();
