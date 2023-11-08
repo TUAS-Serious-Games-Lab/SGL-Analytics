@@ -231,6 +231,7 @@ namespace SGL.Analytics.Client {
 				currentLogStorage = userLogStorage;
 			}
 			if (oldLogStore != null && configurator.UserLogStorageFactory.Dispose) await disposeIfDisposable(oldLogStore);
+			await performRecoveryForUnfinishedLogs(logStore, ct);
 		}
 
 		/// <summary>
@@ -496,6 +497,7 @@ namespace SGL.Analytics.Client {
 					currentLogStorage = anonymousLogStorage;
 				}
 				if (oldLogStore != null && configurator.UserLogStorageFactory.Dispose) await disposeIfDisposable(oldLogStore);
+				await performRecoveryForUnfinishedLogs(anonymousLogStorage);
 				CurrentClientMode = SglAnalyticsClientMode.AnonymousOffline;
 			}
 			else {

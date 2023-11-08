@@ -449,5 +449,30 @@ namespace SGL.Analytics.Client {
 			}
 			return (encryptedPropsBuffer.ToArray(), dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
 		}
+
+		private async Task performRecoveryForUnfinishedLogs(ILogStorage storage, CancellationToken ct = default) {
+			try {
+				IList<ILogStorage.ILogFile> unfinishedLogs;
+				lock (lockObject) {
+					unfinishedLogs = storage.EnumerateUnfinishedLogsForRecovery();
+				}
+				if (unfinishedLogs.Count == 0) {
+					return;
+				}
+				logger.LogInformation("Performing recovery for perviously unfinished logs...");
+				foreach (var log in unfinishedLogs) {
+					ct.ThrowIfCancellationRequested();
+					logger.LogDebug("Finishing log file {logId} ...", log.ID);
+					await storage.FinishLogFileAsync(log, ct);
+				}
+				logger.LogInformation("... recovery procedure complete.");
+			}
+			catch (OperationCanceledException) {
+				logger.LogInformation("... recovery operation cancelled.");
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "Recovery operation failed.");
+			}
+		}
 	}
 }
