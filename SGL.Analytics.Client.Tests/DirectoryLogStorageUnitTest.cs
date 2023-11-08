@@ -2,6 +2,7 @@ using SGL.Utilities;
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -15,7 +16,7 @@ namespace SGL.Analytics.Client.Tests {
 		}
 		public void Dispose() {
 			Storage.Archiving = false;
-			foreach (var log in Storage.EnumerateLogs()) {
+			foreach (var log in Storage.ListAllLogs()) {
 				log.Remove();
 			}
 		}
@@ -28,10 +29,11 @@ namespace SGL.Analytics.Client.Tests {
 			this.output = output;
 		}
 		[Fact]
-		public void CreatedLogFileIsEnumerated() {
+		public async Task CreatedLogFileIsEnumerated() {
 			ILogStorage.ILogFile? metadata;
 			using (var stream = fixture.Storage.CreateLogFile(out metadata)) { }
-			Assert.Contains(metadata, fixture.Storage.EnumerateFinishedLogs());
+			await fixture.Storage.FinishLogFileAsync(metadata);
+			Assert.Contains(metadata, fixture.Storage.EnumerateLogs());
 		}
 		[Fact]
 		public void WrittenLogContentsArePreserved() {
@@ -74,7 +76,7 @@ namespace SGL.Analytics.Client.Tests {
 			ILogStorage.ILogFile? metadata;
 			using (var stream = fixture.Storage.CreateLogFile(out metadata)) { }
 			metadata.Remove();
-			Assert.DoesNotContain(metadata, fixture.Storage.EnumerateLogs());
+			Assert.DoesNotContain(metadata, fixture.Storage.ListAllLogs());
 		}
 	}
 }

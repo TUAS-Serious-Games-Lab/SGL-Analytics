@@ -587,7 +587,7 @@ namespace SGL.Analytics.Client {
 		public Task<IList<(Guid Id, DateTime Start, DateTime End)>> CheckForAnonymousLogsAsync(CancellationToken ct = default) {
 			List<ILogStorage.ILogFile> existingLogs;
 			lock (lockObject) {
-				existingLogs = anonymousLogStorage.EnumerateFinishedLogs().ToList();
+				existingLogs = anonymousLogStorage.EnumerateLogs().ToList();
 			}
 			var result = existingLogs.Select(log => (log.ID, log.CreationTime, log.EndTime)).ToList();
 			// For consistency, make all session-state methods async, also to allow future expansions that might need async.
@@ -614,7 +614,7 @@ namespace SGL.Analytics.Client {
 			var logIdSet = logIds.ToHashSet();
 			List<ILogStorage.ILogFile> existingLogs;
 			lock (lockObject) {
-				existingLogs = anonymousLogStorage.EnumerateFinishedLogs().ToList();
+				existingLogs = anonymousLogStorage.EnumerateLogs().ToList();
 			}
 			var selectedLogs = existingLogs.Where(log => logIdSet.Contains(log.ID)).ToList();
 			if (selectedLogs.Count == 0) return Task.CompletedTask;

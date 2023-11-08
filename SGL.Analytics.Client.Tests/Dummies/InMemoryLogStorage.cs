@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client.Tests {
@@ -136,7 +137,9 @@ namespace SGL.Analytics.Client.Tests {
 
 			public bool Deleted { get; set; } = false;
 
-			public string Suffix => ".log";
+			public string Suffix => Finished ? ".log" : ".temp";
+
+			public bool Finished { get; set; } = false;
 
 			public LogContentEncoding Encoding => LogContentEncoding.Plain;
 
@@ -166,8 +169,10 @@ namespace SGL.Analytics.Client.Tests {
 			return new WriteStreamWrapper(log.Content, () => { log.EndTime = DateTime.Now; log.WriteClosed = true; });
 		}
 
-		public IEnumerable<ILogStorage.ILogFile> EnumerateLogs() => logs.Where(log => !log.Deleted);
-		public IEnumerable<ILogStorage.ILogFile> EnumerateFinishedLogs() => logs.Where(log => !log.Deleted && log.WriteClosed);
+		public IList<ILogStorage.ILogFile> EnumerateAllLogs() => logs.Where(log => !log.Deleted)
+			.Cast<ILogStorage.ILogFile>().ToList();
+		public IList<ILogStorage.ILogFile> EnumerateLogs() => logs.Where(log => !log.Deleted && log.WriteClosed && log.Finished)
+			.Cast<ILogStorage.ILogFile>().ToList();
 
 		public void Dispose() {
 			foreach (var log in logs) {
@@ -180,5 +185,22 @@ namespace SGL.Analytics.Client.Tests {
 				await log.Content.DisposeAsync();
 			}
 		}
+
+		public Task FinishLogFileAsync(ILogStorage.ILogFile logFileMetadata, CancellationToken ct = default) {
+			var logObj = logFileMetadata as LogFile;
+			if (logObj != null) {
+				if (logObj.Finished) {
+					throw new InvalidOperationException("Already finished.");
+				}
+				logObj.Finished = true;
+				return Task.CompletedTask;
+			}
+			else {
+				throw new ArgumentException("Incompatible ILogFile implementation object.", nameof(logFileMetadata));
+			}
+		}
+
+		public IList<ILogStorage.ILogFile> EnumerateUnfinishedLogsForRecovery() =>
+			logs.Where(log => !log.Deleted && log.WriteClosed && !log.Finished).Cast<ILogStorage.ILogFile>().ToList();
 	}
 }

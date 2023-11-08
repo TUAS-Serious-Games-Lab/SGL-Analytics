@@ -80,15 +80,15 @@ namespace SGL.Analytics.Client.Tests {
 		public async Task EachStartNewLogCreatesLogFile() {
 			var loginResult = await analytics.TryLoginWithStoredCredentialsAsync();
 			Assert.Equal(LoginAttemptResult.Completed, loginResult);
-			Assert.Empty(userStorage.EnumerateLogs());
+			Assert.Empty(userStorage.EnumerateAllLogs());
 			analytics.StartNewLog();
-			Assert.Single(userStorage.EnumerateLogs());
+			Assert.Single(userStorage.EnumerateAllLogs());
 			analytics.StartNewLog();
-			Assert.Equal(2, userStorage.EnumerateLogs().Count());
+			Assert.Equal(2, userStorage.EnumerateAllLogs().Count());
 			analytics.StartNewLog();
-			Assert.Equal(3, userStorage.EnumerateLogs().Count());
+			Assert.Equal(3, userStorage.EnumerateAllLogs().Count());
 			analytics.StartNewLog();
-			Assert.Equal(4, userStorage.EnumerateLogs().Count());
+			Assert.Equal(4, userStorage.EnumerateAllLogs().Count());
 			await analytics.FinishAsync(); // Cleanup background tasks.
 		}
 
@@ -102,7 +102,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.StartNewLog();
 			analytics.StartNewLog();
 			await analytics.FinishAsync();
-			Assert.All(userStorage.EnumerateFinishedLogs().Cast<InMemoryLogStorage.LogFile>(), log => Assert.True(log.WriteClosed));
+			Assert.All(userStorage.EnumerateLogs().Cast<InMemoryLogStorage.LogFile>(), log => Assert.True(log.WriteClosed));
 		}
 
 		public class TestChildObject : ICloneable {
@@ -137,8 +137,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEvent("TestChannel", new ClonableTestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
-			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenReadContent()) {
+			output.WriteLogContents(userStorage.EnumerateLogs().Single());
+			await using (var stream = userStorage.EnumerateLogs().Single().OpenReadContent()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -184,8 +184,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("TestChannel", new TestEvent() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
-			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenReadContent()) {
+			output.WriteLogContents(userStorage.EnumerateLogs().Single());
+			await using (var stream = userStorage.EnumerateLogs().Single().OpenReadContent()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -236,8 +236,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("TestChannel", new TestEventB() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 }, 98765 } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
-			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenReadContent()) {
+			output.WriteLogContents(userStorage.EnumerateLogs().Single());
+			await using (var stream = userStorage.EnumerateLogs().Single().OpenReadContent()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -293,8 +293,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEvent("TestChannel", new ClonableTestEventB() { SomeNumber = 42, SomeString = "Hello World", SomeBool = true, SomeArray = new object[] { "This is a test!", new TestChildObject() { X = "Test Test Test", Y = 12345 } } });
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
-			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenReadContent()) {
+			output.WriteLogContents(userStorage.EnumerateLogs().Single());
+			await using (var stream = userStorage.EnumerateLogs().Single().OpenReadContent()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -346,8 +346,8 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordSnapshotUnshared("TestChannel", 42, snap);
 			await analytics.FinishAsync();
 
-			output.WriteLogContents(userStorage.EnumerateFinishedLogs().Single());
-			await using (var stream = userStorage.EnumerateFinishedLogs().Single().OpenReadContent()) {
+			output.WriteLogContents(userStorage.EnumerateLogs().Single());
+			await using (var stream = userStorage.EnumerateLogs().Single().OpenReadContent()) {
 				var json = await JsonSerializer.DeserializeAsync<JsonElement>(stream);
 				var entries = json.EnumerateArray();
 				Assert.True(entries.MoveNext());
@@ -462,13 +462,13 @@ namespace SGL.Analytics.Client.Tests {
 
 			await analytics.FinishAsync();
 
-			foreach (var logFile in userStorage.EnumerateFinishedLogs()) {
+			foreach (var logFile in userStorage.EnumerateLogs()) {
 				output.WriteLine("");
 				output.WriteLine($"{logFile.ID}:");
 				output.WriteLogContents(logFile);
 			}
 
-			var logs = userStorage.EnumerateFinishedLogs().GetEnumerator();
+			var logs = userStorage.EnumerateLogs().GetEnumerator();
 			Assert.True(logs.MoveNext());
 			await using (var stream = logs.Current.OpenReadContent()) {
 				using (var jsonDoc = await JsonDocument.ParseAsync(stream)) {
@@ -625,7 +625,7 @@ namespace SGL.Analytics.Client.Tests {
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test J" });
 			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test K" });
 			analytics.RecordSnapshotUnshared("Channel 3", 1, "Snap F");
-			var lastLog = userStorage.EnumerateLogs().Last();
+			var lastLog = userStorage.EnumerateAllLogs().Last();
 
 			await analytics.FinishAsync();
 

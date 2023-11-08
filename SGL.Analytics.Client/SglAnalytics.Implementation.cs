@@ -213,6 +213,7 @@ namespace SGL.Analytics.Client {
 						stream.Dispose();
 					}
 				}
+				await currentLogStorage.FinishLogFileAsync(logQueue.logFile);
 				lock (lockObject) {
 					if (disableLogUploading) {
 						logger.LogDebug("Finished writing entries for data log file {logFile}, but skipping upload, because uploading is disabled.", logQueue.logFile.ID);
@@ -427,7 +428,7 @@ namespace SGL.Analytics.Client {
 			List<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
 				if (disableLogUploading) return;
-				existingCompleteLogs = currentLogStorage.EnumerateFinishedLogs().ToList();
+				existingCompleteLogs = currentLogStorage.EnumerateLogs().ToList();
 			}
 			if (existingCompleteLogs.Count == 0) return;
 			logger.LogDebug("Queueing existing data log files for upload...");
