@@ -203,6 +203,8 @@ namespace SGL.Analytics.Client {
 			if (userData.Username == null) {
 				throw new ArgumentNullException($"{nameof(userData)}.{nameof(BaseUserData.Username)}");
 			}
+			await FinishAsync(); // Ensure clean state for background tasks if client was used before
+
 			// TODO: maybe: check password complexity
 			var userId = await RegisterImplAsync(userData, password, rememberCredentials, ct: ct);
 			var loginDto = new IdBasedLoginRequestDTO(appName, appAPIToken, userId, password);
@@ -245,6 +247,8 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="HttpApiRequestFailedException">Indicates a network problem.</exception>
 		/// <exception cref="HttpApiResponseException">Indicates a server-side error, see <see cref="HttpApiResponseException.StatusCode"/> for error code.</exception>
 		public async Task RegisterUserWithDeviceSecretAsync(BaseUserData userData, CancellationToken ct = default) {
+			await FinishAsync(); // Ensure clean state for background tasks if client was used before
+
 			// Generate random secret
 			var secret = SecretGenerator.Instance.GenerateSecret(configurator.LegthOfGeneratedUserSecrets);
 			var userId = await RegisterImplAsync(userData, secret, storeCredentials: true, ct: ct);
@@ -295,6 +299,7 @@ namespace SGL.Analytics.Client {
 		/// <exception cref="HttpApiRequestFailedException">Indicates a network problem.</exception>
 		/// <exception cref="HttpApiResponseException">Indicates a server-side error, see <see cref="HttpApiResponseException.StatusCode"/> for error code.</exception>
 		public async Task RegisterWithUpstreamDelegationAsync(BaseUserData userData, Func<CancellationToken, Task<AuthorizationData>> getUpstreamAuthToken, CancellationToken ct = default) {
+			await FinishAsync(); // Ensure clean state for background tasks if client was used before
 			var userId = await RegisterImplAsync(userData, null, storeCredentials: false, await getUpstreamAuthToken(ct), ct: ct);
 			Func<CancellationToken, Task<DelegatedLoginResponseDTO>> reloginDelegate = async ct2 => {
 				try {
@@ -329,6 +334,7 @@ namespace SGL.Analytics.Client {
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A Task representing the registration operation, providing the result status of the login attempt as its value.</returns>
 		public async Task<LoginAttemptResult> TryLoginWithStoredCredentialsAsync(CancellationToken ct = default) {
+			await FinishAsync(); // Ensure clean state for background tasks if client was used before
 			var credentials = readStoredCredentials();
 			LoginRequestDTO loginDto;
 			if (credentials.UserId.HasValue && !string.IsNullOrWhiteSpace(credentials.UserSecret)) {
@@ -375,6 +381,7 @@ namespace SGL.Analytics.Client {
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A Task representing the registration operation, providing the result status of the login attempt as its value.</returns>
 		public async Task<LoginAttemptResult> TryLoginWithPasswordAsync(string loginName, string password, bool rememberCredentials = false, CancellationToken ct = default) {
+			await FinishAsync(); // Ensure clean state for background tasks if client was used before
 			var loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, loginName, password);
 			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			LoginResponseDTO responseDto;
@@ -415,6 +422,7 @@ namespace SGL.Analytics.Client {
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A Task representing the registration operation, providing the result status of the login attempt as its value.</returns>
 		public async Task<LoginAttemptResult> TryLoginWithUpstreamDelegationAsync(Func<CancellationToken, Task<AuthorizationData>> getUpstreamAuthToken, CancellationToken ct = default) {
+			await FinishAsync(); // Ensure clean state for background tasks if client was used before
 			Func<CancellationToken, Task<DelegatedLoginResponseDTO>> reloginDelegate = async ct2 => {
 				try {
 					logger.LogInformation("Logging in user with upstream delegation ...");
@@ -468,12 +476,8 @@ namespace SGL.Analytics.Client {
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A Task representing the registration operation.</returns>
 		/// <exception cref="InvalidOperationException">When no stored credentials were present to indicate the user and <paramref name="allowAnonymous"/> was false.</exception>
-		/// <remarks>
-		/// Currently, this operation isn't actually asynchronous as no operations need to be awaited.
-		/// The asynchronous interface for other session management methods is however kept for consistency and
-		/// to allow future changes that might need asynchronous operations.
-		/// </remarks>
-		public Task UseOfflineModeAsync(bool allowAnonymous = false, CancellationToken ct = default) {
+		public async Task UseOfflineModeAsync(bool allowAnonymous = false, CancellationToken ct = default) {
+			await FinishAsync(); // Ensure clean state for background tasks if client was used before
 			var credentials = readStoredCredentials();
 			if (credentials.UserId.HasValue || credentials.Username != null) {
 				createUserLogStore(credentials.UserId, credentials.Username);
@@ -496,7 +500,6 @@ namespace SGL.Analytics.Client {
 			lock (lockObject) {
 				disableLogUploading = true;
 			}
-			return Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
 		/// <summary>
 		/// Puts the client in offline mode.
@@ -512,19 +515,14 @@ namespace SGL.Analytics.Client {
 		/// </param>
 		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
 		/// <returns>A Task representing the registration operation.</returns>
-		/// <remarks>
-		/// Currently, this operation isn't actually asynchronous as no operations need to be awaited.
-		/// The asynchronous interface for other session management methods is however kept for consistency and
-		/// to allow future changes that might need asynchronous operations.
-		/// </remarks>
-		public Task UseOfflineModeForDelegatedUserAsync(Guid upstreamUserId, CancellationToken ct = default) {
+		public async Task UseOfflineModeForDelegatedUserAsync(Guid upstreamUserId, CancellationToken ct = default) {
+			await FinishAsync(); // Ensure clean state for background tasks if client was used before
 			createUserLogStore(upstreamUserId, null);
 			disableLogWriting = false;
 			lock (lockObject) {
 				disableLogUploading = true;
 			}
 			CurrentClientMode = SglAnalyticsClientMode.DelegatedOffline;
-			return Task.CompletedTask; // For consistency, make all session-state methods async, also to allow future expansions that might need async.
 		}
 		/// <summary>
 		/// Deletes stored credentials from the root data store.
