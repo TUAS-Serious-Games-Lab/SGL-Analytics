@@ -621,13 +621,14 @@ namespace SGL.Analytics.Client {
 				throw new InvalidOperationException("Can't inherit anonymous logs for upload to user account while uploading is disabled.");
 			}
 			var logIdSet = logIds.ToHashSet();
+			var logOrdering = logIds.Select((log, idx) => (log, idx)).ToDictionary(e => e.log, e => e.idx);
 			List<ILogStorage.ILogFile> existingLogs;
 			lock (lockObject) {
 				existingLogs = anonymousLogStorage.EnumerateLogs().ToList();
 			}
 			var selectedLogs = existingLogs.Where(log => logIdSet.Contains(log.ID)).ToList();
 			if (selectedLogs.Count == 0) return Task.CompletedTask;
-			foreach (var logFile in selectedLogs) {
+			foreach (var logFile in selectedLogs.OrderBy(log => logOrdering.TryGetValue(log.ID, out var idx) ? idx : -1)) {
 				uploadQueue.Enqueue(logFile);
 			}
 			startFileUploadingIfNotRunning();

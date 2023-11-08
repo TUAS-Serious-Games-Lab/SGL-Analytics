@@ -167,7 +167,7 @@ namespace SGL.Analytics.Client.Tests {
 			Assert.Equal(logId1Start, logId1End);
 			Assert.Throws<InvalidOperationException>(() => analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test E" }));
 
-			analytics.StartNewLog();
+			var logId2 = analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test E" });
 			analytics.RecordEventUnshared("Channel 2", new SimpleTestEvent { Name = "Test F" });
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test G" });
@@ -193,6 +193,9 @@ namespace SGL.Analytics.Client.Tests {
 				string password = SecretGenerator.Instance.GenerateSecret(10);
 				await analytics.RegisterUserWithPasswordAsync(user, password, rememberCredentials: true);
 			}
+
+			var anonymousLogs = (await analytics.CheckForAnonymousLogsAsync()).Select(log => log.Id).ToHashSet();
+			await analytics.InheritAnonymousLogsAsync(new[] { logId1Start, logId2 });
 
 			analytics.StartNewLog();
 			analytics.RecordEventUnshared("Channel 1", new SimpleTestEvent { Name = "Test J" });
