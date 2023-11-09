@@ -180,38 +180,30 @@ namespace SGL.Analytics.Client {
 			var delim = Encoding.UTF8.GetBytes(logJsonOptions.WriteIndented ? ("," + Environment.NewLine) : ",");
 			await foreach (var logQueue in pendingLogQueues.DequeueAllAsync()) {
 				logger.LogDebug("Starting to write entries for data log file {logFile}...", logQueue.logFile.ID);
-				var stream = logQueue.writeStream;
-				try {
-					bool first = true;
-					await stream.WriteAsync(arrOpen.AsMemory());
-					await foreach (var logEntry in logQueue.entryQueue.DequeueAllAsync()) {
-						if (!first) {
-							await stream.WriteAsync(delim.AsMemory());
-						}
-						else {
-							first = false;
-						}
-						try {
-							await JsonSerializer.SerializeAsync(stream, logEntry, logJsonOptions);
-						}
-						catch (Exception ex) {
-							logger.LogError(ex, "Couldn't write log entry to stream due to exception while serializing.");
-						}
-						await stream.FlushAsync();
-					}
-					await stream.WriteAsync(arrClose.AsMemory());
-					await stream.FlushAsync();
-				}
-				catch (Exception ex) {
-					logger.LogError(ex, "Unrecoverable error while writing entries to log file {id}.", logQueue.logFile.ID);
+				await using (var stream = logQueue.writeStream) {
 					try {
+						bool first = true;
+						await stream.WriteAsync(arrOpen.AsMemory());
+						await foreach (var logEntry in logQueue.entryQueue.DequeueAllAsync()) {
+							if (!first) {
+								await stream.WriteAsync(delim.AsMemory());
+							}
+							else {
+								first = false;
+							}
+							try {
+								await JsonSerializer.SerializeAsync(stream, logEntry, logJsonOptions);
+							}
+							catch (Exception ex) {
+								logger.LogError(ex, "Couldn't write log entry to stream due to exception while serializing.");
+							}
+							await stream.FlushAsync();
+						}
+						await stream.WriteAsync(arrClose.AsMemory());
 						await stream.FlushAsync();
 					}
-					catch { }
-				}
-				finally { // Need to do this instead of a using block to allow ILogStorage implementations to remove the file behind stream from their 'open for writing'-list in a thread-safe way.
-					lock (lockObject) {  // Not needed if log storage has internal lock, then we can use a normal using block
-						stream.Dispose();
+					catch (Exception ex) {
+						logger.LogError(ex, "Unrecoverable error while writing entries to log file {id}.", logQueue.logFile.ID);
 					}
 				}
 				await logQueue.logFile.FinishAsync();
@@ -352,24 +344,12 @@ namespace SGL.Analytics.Client {
 				bool removing = false;
 				try {
 					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
-					Guid logFileID;
-					DateTime logFileCreationTime;
-					DateTime logFileEndTime;
-					string logFileSuffix;
-					LogContentEncoding logFileEncoding;
-					Stream contentStream = Stream.Null;
-					try {
-						lock (lockObject) { // Access to the log file object needs to be done under lock.
-											// => Now, only finished log files should appear here,
-											// Thus, no implementations should usually not need synchronization here,
-											// If they do, internal synchronization should be used.
-							logFileID = logFile.ID;
-							logFileCreationTime = logFile.CreationTime;
-							logFileEndTime = logFile.EndTime;
-							logFileSuffix = logFile.Suffix;
-							logFileEncoding = logFile.Encoding;
-							contentStream = logFile.OpenReadEncoded();
-						}
+					var logFileID = logFile.ID;
+					var logFileCreationTime = logFile.CreationTime;
+					var logFileEndTime = logFile.EndTime;
+					var logFileSuffix = logFile.Suffix;
+					var logFileEncoding = logFile.Encoding;
+					await using (var contentStream = logFile.OpenReadEncoded()) {
 						var dataEncryptor = new DataEncryptor(randomGenerator, numberOfStreams: 1);
 						var encryptionStream = dataEncryptor.OpenEncryptionReadStream(contentStream, 0, leaveOpen: false);
 						var encryptionInfo = dataEncryptor.GenerateEncryptionInfo(keyEncryptor);
@@ -377,14 +357,8 @@ namespace SGL.Analytics.Client {
 						Validator.ValidateObject(metadataDTO, new ValidationContext(metadataDTO), true);
 						await logCollectorClient.UploadLogFileAsync(metadataDTO, encryptionStream, ct);
 					}
-					finally {
-						await contentStream.DisposeAsync();
-					}
 					removing = true;
-					lock (lockObject) { // ILogStorage implementations may need to do this under lock.
-										// => Consider changing this to internal synchronization
-						logFile.Remove();
-					}
+					logFile.Remove();
 					logger.LogDebug("Successfully uploaded data log file {logFile}.", logFile.ID);
 				}
 				catch (LoginRequiredException) {
@@ -430,11 +404,10 @@ namespace SGL.Analytics.Client {
 
 		private void startUploadingExistingLogs() {
 			if (!logCollectorClient.IsActive) return;
-			IList<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
 				if (disableLogUploading) return;
-				existingCompleteLogs = currentLogStorage.ListLogFiles();  // Could be done after lock if log storage has internal lock
 			}
+			var existingCompleteLogs = currentLogStorage.ListLogFiles();
 			if (existingCompleteLogs.Count == 0) return;
 			logger.LogDebug("Queueing existing data log files for upload...");
 			foreach (var logFile in existingCompleteLogs) {
@@ -456,10 +429,7 @@ namespace SGL.Analytics.Client {
 
 		private async Task performRecoveryForUnfinishedLogs(ILogStorage storage, CancellationToken ct = default) {
 			try {
-				IList<ILogStorage.ILogFile> unfinishedLogs;
-				lock (lockObject) {  // Not needed if log storage has internal lock
-					unfinishedLogs = storage.ListUnfinishedLogFilesForRecovery();
-				}
+				var unfinishedLogs = storage.ListUnfinishedLogFilesForRecovery();
 				if (unfinishedLogs.Count == 0) {
 					return;
 				}

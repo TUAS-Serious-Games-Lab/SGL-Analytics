@@ -594,10 +594,7 @@ namespace SGL.Analytics.Client {
 		/// to allow future changes that might need asynchronous operations.
 		/// </remarks>
 		public Task<IList<(Guid Id, DateTime Start, DateTime End)>> CheckForAnonymousLogsAsync(CancellationToken ct = default) {
-			IList<ILogStorage.ILogFile> existingLogs;
-			lock (lockObject) { // Not needed if log storage has internal lock
-				existingLogs = anonymousLogStorage.ListLogFiles();
-			}
+			var existingLogs = anonymousLogStorage.ListLogFiles();
 			var result = existingLogs.Select(log => (log.ID, log.CreationTime, log.EndTime)).ToList();
 			// For consistency, make all session-state methods async, also to allow future expansions that might need async.
 			return Task.FromResult<IList<(Guid Id, DateTime Start, DateTime End)>>(result);
@@ -622,10 +619,7 @@ namespace SGL.Analytics.Client {
 			}
 			var logIdSet = logIds.ToHashSet();
 			var logOrdering = logIds.Select((log, idx) => (log, idx)).ToDictionary(e => e.log, e => e.idx);
-			IList<ILogStorage.ILogFile> existingLogs;
-			lock (lockObject) { // Not needed if log storage has internal lock
-				existingLogs = anonymousLogStorage.ListLogFiles();
-			}
+			var existingLogs = anonymousLogStorage.ListLogFiles();
 			var selectedLogs = existingLogs.Where(log => logIdSet.Contains(log.ID)).ToList();
 			if (selectedLogs.Count == 0) return Task.CompletedTask;
 			foreach (var logFile in selectedLogs.OrderBy(log => logOrdering.TryGetValue(log.ID, out var idx) ? idx : -1)) {
@@ -652,9 +646,10 @@ namespace SGL.Analytics.Client {
 			LogQueue? oldLogQueue;
 			LogQueue? newLogQueue;
 			Guid logId;
+			var createdQueue = new LogQueue(currentLogStorage.CreateLogFile(out var logFile), logFile);
 			lock (lockObject) {
 				oldLogQueue = currentLogQueue;
-				currentLogQueue = newLogQueue = new LogQueue(currentLogStorage.CreateLogFile(out var logFile), logFile);
+				currentLogQueue = newLogQueue = createdQueue;
 				logId = logFile.ID;
 			}
 			pendingLogQueues.Enqueue(newLogQueue);
