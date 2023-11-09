@@ -120,6 +120,7 @@ namespace SGL.Analytics.Client {
 			public override async ValueTask DisposeAsync() {
 				storage?.logFilesOpenForWriting?.Remove(logObject.ID);
 				await wrapped.DisposeAsync();
+				logObject.OpenForWriting = false;
 				storage = null;
 			}
 
