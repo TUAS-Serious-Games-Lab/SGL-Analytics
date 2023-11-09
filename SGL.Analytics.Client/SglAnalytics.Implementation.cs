@@ -210,7 +210,7 @@ namespace SGL.Analytics.Client {
 					catch { }
 				}
 				finally { // Need to do this instead of a using block to allow ILogStorage implementations to remove the file behind stream from their 'open for writing'-list in a thread-safe way.
-					lock (lockObject) {
+					lock (lockObject) {  // Not needed if log storage has internal lock, then we can use a normal using block
 						stream.Dispose();
 					}
 				}
@@ -360,6 +360,9 @@ namespace SGL.Analytics.Client {
 					Stream contentStream = Stream.Null;
 					try {
 						lock (lockObject) { // Access to the log file object needs to be done under lock.
+											// => Now, only finished log files should appear here,
+											// Thus, no implementations should usually not need synchronization here,
+											// If they do, internal synchronization should be used.
 							logFileID = logFile.ID;
 							logFileCreationTime = logFile.CreationTime;
 							logFileEndTime = logFile.EndTime;
@@ -379,6 +382,7 @@ namespace SGL.Analytics.Client {
 					}
 					removing = true;
 					lock (lockObject) { // ILogStorage implementations may need to do this under lock.
+										// => Consider changing this to internal synchronization
 						logFile.Remove();
 					}
 					logger.LogDebug("Successfully uploaded data log file {logFile}.", logFile.ID);
@@ -429,7 +433,7 @@ namespace SGL.Analytics.Client {
 			IList<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
 				if (disableLogUploading) return;
-				existingCompleteLogs = currentLogStorage.ListLogFiles();
+				existingCompleteLogs = currentLogStorage.ListLogFiles();  // Could be done after lock if log storage has internal lock
 			}
 			if (existingCompleteLogs.Count == 0) return;
 			logger.LogDebug("Queueing existing data log files for upload...");
@@ -453,7 +457,7 @@ namespace SGL.Analytics.Client {
 		private async Task performRecoveryForUnfinishedLogs(ILogStorage storage, CancellationToken ct = default) {
 			try {
 				IList<ILogStorage.ILogFile> unfinishedLogs;
-				lock (lockObject) {
+				lock (lockObject) {  // Not needed if log storage has internal lock
 					unfinishedLogs = storage.ListUnfinishedLogFilesForRecovery();
 				}
 				if (unfinishedLogs.Count == 0) {

@@ -595,7 +595,7 @@ namespace SGL.Analytics.Client {
 		/// </remarks>
 		public Task<IList<(Guid Id, DateTime Start, DateTime End)>> CheckForAnonymousLogsAsync(CancellationToken ct = default) {
 			IList<ILogStorage.ILogFile> existingLogs;
-			lock (lockObject) {
+			lock (lockObject) { // Not needed if log storage has internal lock
 				existingLogs = anonymousLogStorage.ListLogFiles();
 			}
 			var result = existingLogs.Select(log => (log.ID, log.CreationTime, log.EndTime)).ToList();
@@ -623,7 +623,7 @@ namespace SGL.Analytics.Client {
 			var logIdSet = logIds.ToHashSet();
 			var logOrdering = logIds.Select((log, idx) => (log, idx)).ToDictionary(e => e.log, e => e.idx);
 			IList<ILogStorage.ILogFile> existingLogs;
-			lock (lockObject) {
+			lock (lockObject) { // Not needed if log storage has internal lock
 				existingLogs = anonymousLogStorage.ListLogFiles();
 			}
 			var selectedLogs = existingLogs.Where(log => logIdSet.Contains(log.ID)).ToList();
