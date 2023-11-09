@@ -32,7 +32,7 @@ namespace SGL.Analytics.Client.Tests {
 		public async Task CreatedLogFileIsEnumerated() {
 			ILogStorage.ILogFile? metadata;
 			using (var stream = fixture.Storage.CreateLogFile(out metadata)) { }
-			await fixture.Storage.FinishLogFileAsync(metadata);
+			await metadata.FinishAsync();
 			Assert.Contains(metadata, fixture.Storage.ListLogFiles());
 		}
 		[Fact]

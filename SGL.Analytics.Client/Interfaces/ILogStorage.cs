@@ -54,6 +54,7 @@ namespace SGL.Analytics.Client {
 			/// E.g., an implementation working with the local file system could just move the removed file to a different directory.
 			/// </summary>
 			public void Remove();
+			Task FinishAsync(CancellationToken ct = default);
 		}
 		/// <summary>
 		/// Creates a new analytics log file, opens it for writing, and provides a Stream for writing the content as well as an object representing the log file.
@@ -63,7 +64,6 @@ namespace SGL.Analytics.Client {
 		/// <returns>A <see cref="Stream"/> for writing the content of the created file.</returns>
 		Stream CreateLogFile(out ILogFile logFileMetadata);
 
-		Task FinishLogFileAsync(ILogFile logFileMetadata, CancellationToken ct = default);
 
 		/// <summary>
 		/// Enumerates log files stored in the system, that are not currently open for writing,

@@ -235,6 +235,10 @@ namespace SGL.Analytics.Client {
 				}
 			}
 
+			public Task FinishAsync(CancellationToken ct = default) {
+				return storage.FinishLogFileAsync(this, ct);
+			}
+
 			public bool Equals(ILogStorage.ILogFile? other) => other is LogFile lfo ? (ID == other.ID && storage.directory == lfo.storage.directory) : false;
 		}
 
@@ -318,23 +322,19 @@ namespace SGL.Analytics.Client {
 			return result;
 		}
 
-		public async Task FinishLogFileAsync(ILogStorage.ILogFile logFileMetadata, CancellationToken ct = default) {
-			var log = logFileMetadata as LogFile;
-			if (log == null) {
-				throw new ArgumentException("Incompatible log ILogFile object.", nameof(logFileMetadata));
-			}
-			if (log.OpenForWriting) {
+		private async Task FinishLogFileAsync(LogFile logFileMetadata, CancellationToken ct = default) {
+			if (logFileMetadata.OpenForWriting) {
 				throw new InvalidOperationException("Log file that is still open for writing can't be finished.");
 			}
-			if (log.Encoding != LogContentEncoding.Plain) {
+			if (logFileMetadata.Encoding != LogContentEncoding.Plain) {
 				throw new ArgumentException("Can only finish unfinished log files, which are expected to be in plain encoding.", nameof(logFileMetadata));
 			}
-			if (log.Suffix != UnfinishedFileSuffix) {
-				throw new ArgumentException($"Can only finish unfinished log files, which are expected to use suffix '{log.Suffix}'.", nameof(logFileMetadata));
+			if (logFileMetadata.Suffix != UnfinishedFileSuffix) {
+				throw new ArgumentException($"Can only finish unfinished log files, which are expected to use suffix '{logFileMetadata.Suffix}'.", nameof(logFileMetadata));
 			}
 			if (CompressFiles) {
-				var dstFilename = LogFile.GetFullFileName(directory, log.CreationTime, logFileMetadata.ID, CompressedFileSuffix);
-				var srcFilename = log.FullFileName;
+				var dstFilename = LogFile.GetFullFileName(directory, logFileMetadata.CreationTime, logFileMetadata.ID, CompressedFileSuffix);
+				var srcFilename = logFileMetadata.FullFileName;
 				await using (var dstStream = new GZipStream(new FileStream(dstFilename, FileMode.Create, FileAccess.Write,
 							FileShare.None, bufferSize: 4096, FileOptions.Asynchronous | FileOptions.WriteThrough),
 						CompressionLevel.Optimal)) {
@@ -343,23 +343,23 @@ namespace SGL.Analytics.Client {
 					await srcStream.CopyToAsync(dstStream, ct);
 				}
 				File.Delete(srcFilename);
-				log.Suffix = CompressedFileSuffix;
-				log.Encoding = LogContentEncoding.GZipCompressed;
+				logFileMetadata.Suffix = CompressedFileSuffix;
+				logFileMetadata.Encoding = LogContentEncoding.GZipCompressed;
 			}
 			else {
-				var dstFilename = LogFile.GetFullFileName(directory, log.CreationTime, logFileMetadata.ID, UncompressedFileSuffix);
+				var dstFilename = LogFile.GetFullFileName(directory, logFileMetadata.CreationTime, logFileMetadata.ID, UncompressedFileSuffix);
 				await Task.Run(() => {
 #if NETCOREAPP3_0_OR_GREATER
-					File.Move(log.FullFileName, dstFilename, overwrite: true);
+					File.Move(logFileMetadata.FullFileName, dstFilename, overwrite: true);
 #else
 					if (File.Exists(dstFilename)) {
 						File.Delete(dstFilename);
 					}
-					File.Move(log.FullFileName, dstFilename);
+					File.Move(logFileMetadata.FullFileName, dstFilename);
 #endif
 				}, ct);
-				log.Suffix = UncompressedFileSuffix;
-				log.Encoding = LogContentEncoding.Plain;
+				logFileMetadata.Suffix = UncompressedFileSuffix;
+				logFileMetadata.Encoding = LogContentEncoding.Plain;
 			}
 		}
 

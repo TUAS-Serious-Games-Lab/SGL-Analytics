@@ -105,6 +105,14 @@ namespace SGL.Analytics.Client.Tests {
 			public void Remove() {
 				Deleted = true;
 			}
+
+			public Task FinishAsync(CancellationToken ct = default) {
+				if (Finished) {
+					throw new InvalidOperationException("Already finished.");
+				}
+				Finished = true;
+				return Task.CompletedTask;
+			}
 		}
 
 		private List<LogFile> logs = new();
@@ -126,21 +134,6 @@ namespace SGL.Analytics.Client.Tests {
 			.Cast<ILogStorage.ILogFile>().ToList();
 		public IList<ILogStorage.ILogFile> ListLogFiles() => logs.Where(log => !log.Deleted && log.WriteClosed && log.Finished)
 			.Cast<ILogStorage.ILogFile>().ToList();
-
-
-		public Task FinishLogFileAsync(ILogStorage.ILogFile logFileMetadata, CancellationToken ct = default) {
-			var logObj = logFileMetadata as LogFile;
-			if (logObj != null) {
-				if (logObj.Finished) {
-					throw new InvalidOperationException("Already finished.");
-				}
-				logObj.Finished = true;
-				return Task.CompletedTask;
-			}
-			else {
-				throw new ArgumentException("Incompatible ILogFile implementation object.", nameof(logFileMetadata));
-			}
-		}
 
 		public IList<ILogStorage.ILogFile> ListUnfinishedLogFilesForRecovery() =>
 			logs.Where(log => !log.Deleted && log.WriteClosed && !log.Finished).Cast<ILogStorage.ILogFile>().ToList();

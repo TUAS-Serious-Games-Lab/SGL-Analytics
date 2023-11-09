@@ -214,7 +214,7 @@ namespace SGL.Analytics.Client {
 						stream.Dispose();
 					}
 				}
-				await currentLogStorage.FinishLogFileAsync(logQueue.logFile);
+				await logQueue.logFile.FinishAsync();
 				lock (lockObject) {
 					if (disableLogUploading) {
 						logger.LogDebug("Finished writing entries for data log file {logFile}, but skipping upload, because uploading is disabled.", logQueue.logFile.ID);
@@ -467,7 +467,7 @@ namespace SGL.Analytics.Client {
 				foreach (var log in unfinishedLogs) {
 					ct.ThrowIfCancellationRequested();
 					logger.LogDebug("Finishing log file {logId} ...", log.ID);
-					await storage.FinishLogFileAsync(log, ct);
+					await log.FinishAsync(ct);
 				}
 				logger.LogInformation("... recovery procedure complete.");
 			}
