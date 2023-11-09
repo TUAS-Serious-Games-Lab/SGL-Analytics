@@ -71,8 +71,6 @@ namespace SGL.Analytics.Client.Tests {
 
 		public void Dispose() {
 			analytics.DisposeAsync().AsTask().Wait();
-			anonymousStorage.Dispose();
-			userStorage.Dispose();
 			httpClient.Dispose();
 		}
 

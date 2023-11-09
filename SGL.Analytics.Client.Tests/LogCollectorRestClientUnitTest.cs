@@ -31,7 +31,6 @@ namespace SGL.Analytics.Client.Tests {
 		}
 
 		public void Dispose() {
-			storage.Dispose();
 			serverFixture.Reset();
 		}
 
