@@ -24,14 +24,27 @@ namespace SGL.Analytics.Client {
 		private string compressedFileSuffix = ".log.gz";
 		private string uncompressedFileSuffix = ".log";
 		private string unfinishedFileSuffix = ".log.pending";
+		private object configLock = new object();
+		private bool compressFiles = true;
+		private bool archiving = false;
 
 		/// <summary>
 		/// Specifies whether the log files should be compressed.
 		/// This property must not be changed during normal operation but only when no <see cref="SglAnalytics"/> object uses this object.
 		/// Changing it while a <see cref="SglAnalytics"/> is using it can cause problems with files not being found or listed correctly, depending on when the change happens.
 		/// </summary>
-		public bool CompressFiles { get; set; } = true;
-
+		public bool CompressFiles {
+			get {
+				lock (configLock) {
+					return compressFiles;
+				}
+			}
+			set {
+				lock (configLock) {
+					compressFiles = value;
+				}
+			}
+		}
 		/// <summary>
 		/// Specifies the filename suffix for stored log files that are compressed, because they were stored with <see cref="CompressFiles"/> set to true.
 		/// This property must not be changed during normal operation but only when no <see cref="SglAnalytics"/> object uses this object.
@@ -86,8 +99,18 @@ namespace SGL.Analytics.Client {
 		/// <summary>
 		/// Specifies whether removed files are archived in an <c>archive</c> subdirectory, otherwise they are actually deleted.
 		/// </summary>
-		public bool Archiving { get; set; } = false;
-
+		public bool Archiving {
+			get {
+				lock (configLock) {
+					return archiving;
+				}
+			}
+			set {
+				lock (configLock) {
+					archiving = value;
+				}
+			}
+		}
 		/// <summary>
 		/// Instantiates the log storage using the given directory.
 		/// </summary>
