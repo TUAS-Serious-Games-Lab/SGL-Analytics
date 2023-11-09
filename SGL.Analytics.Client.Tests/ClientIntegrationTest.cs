@@ -62,7 +62,7 @@ namespace SGL.Analytics.Client.Tests {
 			rootDS = new FileRootDataStore(dataDirectory);
 			storage = new DirectoryLogStorage(Path.Combine(dataDirectory, "DataLogs"));
 			storage.Archiving = false;
-			foreach (var log in storage.ListAllLogs()) {
+			foreach (var log in storage.ListAllLogFiles()) {
 				log.Remove();
 			}
 
@@ -389,7 +389,7 @@ namespace SGL.Analytics.Client.Tests {
 			if (!finished) analytics.FinishAsync().Wait();
 			analytics.DisposeAsync().AsTask().Wait();
 			storage.Archiving = false;
-			foreach (var log in storage.ListAllLogs()) {
+			foreach (var log in storage.ListAllLogFiles()) {
 				log.Remove();
 			}
 			File.Delete(rootDS.StorageFilePath);

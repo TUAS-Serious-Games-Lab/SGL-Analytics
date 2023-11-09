@@ -169,9 +169,9 @@ namespace SGL.Analytics.Client.Tests {
 			return new WriteStreamWrapper(log.Content, () => { log.EndTime = DateTime.Now; log.WriteClosed = true; });
 		}
 
-		public IList<ILogStorage.ILogFile> EnumerateAllLogs() => logs.Where(log => !log.Deleted)
+		public IList<ILogStorage.ILogFile> ListAllLogFiles() => logs.Where(log => !log.Deleted)
 			.Cast<ILogStorage.ILogFile>().ToList();
-		public IList<ILogStorage.ILogFile> ListLogs() => logs.Where(log => !log.Deleted && log.WriteClosed && log.Finished)
+		public IList<ILogStorage.ILogFile> ListLogFiles() => logs.Where(log => !log.Deleted && log.WriteClosed && log.Finished)
 			.Cast<ILogStorage.ILogFile>().ToList();
 
 		public void Dispose() {
@@ -200,7 +200,7 @@ namespace SGL.Analytics.Client.Tests {
 			}
 		}
 
-		public IList<ILogStorage.ILogFile> ListUnfinishedLogsForRecovery() =>
+		public IList<ILogStorage.ILogFile> ListUnfinishedLogFilesForRecovery() =>
 			logs.Where(log => !log.Deleted && log.WriteClosed && !log.Finished).Cast<ILogStorage.ILogFile>().ToList();
 	}
 }

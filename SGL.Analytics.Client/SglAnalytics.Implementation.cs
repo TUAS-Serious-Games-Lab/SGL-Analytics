@@ -429,7 +429,7 @@ namespace SGL.Analytics.Client {
 			IList<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
 				if (disableLogUploading) return;
-				existingCompleteLogs = currentLogStorage.ListLogs();
+				existingCompleteLogs = currentLogStorage.ListLogFiles();
 			}
 			if (existingCompleteLogs.Count == 0) return;
 			logger.LogDebug("Queueing existing data log files for upload...");
@@ -454,7 +454,7 @@ namespace SGL.Analytics.Client {
 			try {
 				IList<ILogStorage.ILogFile> unfinishedLogs;
 				lock (lockObject) {
-					unfinishedLogs = storage.ListUnfinishedLogsForRecovery();
+					unfinishedLogs = storage.ListUnfinishedLogFilesForRecovery();
 				}
 				if (unfinishedLogs.Count == 0) {
 					return;

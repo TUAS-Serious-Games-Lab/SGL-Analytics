@@ -16,7 +16,7 @@ namespace SGL.Analytics.Client.Tests {
 		}
 		public void Dispose() {
 			Storage.Archiving = false;
-			foreach (var log in Storage.ListAllLogs()) {
+			foreach (var log in Storage.ListAllLogFiles()) {
 				log.Remove();
 			}
 		}
@@ -33,7 +33,7 @@ namespace SGL.Analytics.Client.Tests {
 			ILogStorage.ILogFile? metadata;
 			using (var stream = fixture.Storage.CreateLogFile(out metadata)) { }
 			await fixture.Storage.FinishLogFileAsync(metadata);
-			Assert.Contains(metadata, fixture.Storage.ListLogs());
+			Assert.Contains(metadata, fixture.Storage.ListLogFiles());
 		}
 		[Fact]
 		public void WrittenLogContentsArePreserved() {
@@ -76,7 +76,7 @@ namespace SGL.Analytics.Client.Tests {
 			ILogStorage.ILogFile? metadata;
 			using (var stream = fixture.Storage.CreateLogFile(out metadata)) { }
 			metadata.Remove();
-			Assert.DoesNotContain(metadata, fixture.Storage.ListAllLogs());
+			Assert.DoesNotContain(metadata, fixture.Storage.ListAllLogFiles());
 		}
 	}
 }
