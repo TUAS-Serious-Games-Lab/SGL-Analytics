@@ -19,6 +19,7 @@ namespace SGL.Analytics.Client {
 	/// </summary>
 	public class DirectoryLogStorage : ILogStorage {
 		private string directory;
+		private object stateLock = new object();
 		private HashSet<Guid> logFilesOpenForWriting = new();
 		private string compressedFileSuffix = ".log.gz";
 		private string uncompressedFileSuffix = ".log";
@@ -118,8 +119,12 @@ namespace SGL.Analytics.Client {
 			public override long Position { get => wrapped.Position; set => wrapped.Position = value; }
 
 			public override async ValueTask DisposeAsync() {
-				storage?.logFilesOpenForWriting?.Remove(logObject.ID);
 				await wrapped.DisposeAsync();
+				if (storage != null) {
+					lock (storage.stateLock) {
+						storage.logFilesOpenForWriting.Remove(logObject.ID);
+					}
+				}
 				logObject.OpenForWriting = false;
 				storage = null;
 			}
@@ -145,8 +150,12 @@ namespace SGL.Analytics.Client {
 			}
 
 			protected override void Dispose(bool disposing) {
-				storage?.logFilesOpenForWriting?.Remove(logObject.ID);
 				wrapped.Dispose();
+				if (storage != null) {
+					lock (storage.stateLock) {
+						storage.logFilesOpenForWriting.Remove(logObject.ID);
+					}
+				}
 				logObject.OpenForWriting = false;
 				if (disposing) storage = null;
 			}
@@ -214,7 +223,9 @@ namespace SGL.Analytics.Client {
 			};
 			// Before creating file, mark it as open for writing to prevent time window where
 			// the syscall for creation is done but the file is not yet marked:
-			logFilesOpenForWriting.Add(logFile.ID);
+			lock (stateLock) {
+				logFilesOpenForWriting.Add(logFile.ID);
+			}
 			var fileStream = new FileStream(logFile.FullFileName, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous | FileOptions.WriteThrough);
 			logFileMetadata = logFile;
 			return new StreamWrapper(fileStream, this, logFile);
@@ -329,9 +340,12 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
-		public IList<ILogStorage.ILogFile> ListUnfinishedLogFilesForRecovery() =>
-			EnumerateLogs(UnfinishedFileSuffix, LogContentEncoding.Plain)
-			.Where(log => !logFilesOpenForWriting.Contains(log.ID))
-			.ToList();
+		public IList<ILogStorage.ILogFile> ListUnfinishedLogFilesForRecovery() {
+			var allUnfinishedLogs = EnumerateLogs(UnfinishedFileSuffix, LogContentEncoding.Plain).ToList();
+			lock (stateLock) {
+				allUnfinishedLogs.RemoveAll(log => logFilesOpenForWriting.Contains(log.ID));
+			}
+			return allUnfinishedLogs;
+		}
 	}
 }
