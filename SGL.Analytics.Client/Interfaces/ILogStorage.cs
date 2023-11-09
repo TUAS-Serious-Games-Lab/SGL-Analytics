@@ -54,6 +54,14 @@ namespace SGL.Analytics.Client {
 			/// E.g., an implementation working with the local file system could just move the removed file to a different directory.
 			/// </summary>
 			public void Remove();
+
+			/// <summary>
+			/// Called by <see cref="SglAnalytics"/> after the log file has been fully written to allow the implementation to perform 
+			/// some (potentially asynchronous) post-processing operation and mark the log file as finished.
+			/// A common such post-processing operation is compressing the file content.
+			/// </summary>
+			/// <param name="ct">A CancellationToken to allow cancelling the operation.</param>
+			/// <returns>A task representing the asynchronous operation.</returns>
 			Task FinishAsync(CancellationToken ct = default);
 		}
 		/// <summary>
@@ -64,26 +72,25 @@ namespace SGL.Analytics.Client {
 		/// <returns>A <see cref="Stream"/> for writing the content of the created file.</returns>
 		Stream CreateLogFile(out ILogFile logFileMetadata);
 
-
 		/// <summary>
-		/// Enumerates log files stored in the system, that are not currently open for writing,
-		/// but for which <see cref="FinishLogFileAsync(ILogFile, CancellationToken)"/> was not called (or has not completed).
-		/// As indicated by the method name, such files are usually left behind after a previous crash or process termination 
-		/// before the file was finished (by completing <see cref="FinishLogFileAsync(ILogFile, CancellationToken)"/>.
-		/// This enumeration is used to invoke <see cref="FinishLogFileAsync(ILogFile, CancellationToken)"/> 
-		/// on them as part of a crash recovery procedure.
+		/// Lists log files stored in the system, that are not currently open for writing,
+		/// but for which <see cref="ILogFile.FinishAsync(CancellationToken)"/> was not called (or has not completed).
+		/// Such files are usually left behind after a previous crash or process termination before the file was finished 
+		/// (by completing <see cref="ILogFile.FinishAsync(CancellationToken)"/>.
+		/// As indicated by the method name, this enumeration is used to invoke 
+		/// <see cref="ILogFile.FinishAsync(CancellationToken)"/> on them as part of a crash recovery procedure.
 		/// </summary>
-		/// <returns>An enumerable to iterate over the objects representing the files and their metadata.</returns>
+		/// <returns>A list containting objects representing the files and their metadata.</returns>
 		IList<ILogFile> ListUnfinishedLogFilesForRecovery();
 
 		/// <summary>
-		/// Enumerates analytics log files stored by the storage system, excluding unfinished ones.
+		/// Lists analytics log files stored by the storage system, excluding unfinished ones.
 		/// The logs enumerated by this shall be ready for uploading.
 		/// 
 		/// Unfinished logs are ones that are either currently open for writing, i.e. the <see cref="Stream"/> returned by the call to <see cref="CreateLogFile(out ILogFile)"/> for the log file has not yet been disposed,
 		/// or their writing <see cref="Stream"/> has been closed, but no call to <see cref="FinishLogFileAsync(ILogFile, CancellationToken)"/>  has completed for them.
 		/// </summary>
-		/// <returns>An enumerable to iterate over the objects representing the files and their metadata.</returns>
+		/// <returns>A list containting objects representing the files and their metadata.</returns>
 		IList<ILogFile> ListLogFiles();
 	}
 }

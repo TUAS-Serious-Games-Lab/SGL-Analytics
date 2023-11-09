@@ -12,10 +12,13 @@ using System.Threading.Tasks;
 
 namespace SGL.Analytics.Client {
 	/// <summary>
-	/// An implementation of <see cref="ILogStorage"/> that used a directory on the local filesystem to store the logs as files.
-	/// It uses the filename to associate the <see cref="ILogStorage.ILogFile.ID"/>, and the file timestamps to store the <see cref="ILogStorage.ILogFile.CreationTime"/> and
-	/// <see cref="ILogStorage.ILogFile.EndTime"/> and thus doesn't need a separate metadata storage.
-	/// The implementations also supports optional compression of the files as well as archiving locally removed files in a separate directory.
+	/// An implementation of <see cref="ILogStorage"/> that uses a directory on the local filesystem to store the logs as files.
+	/// It uses the filename to associate the <see cref="ILogStorage.ILogFile.ID"/>, and the file modification timestamp to store <see cref="ILogStorage.ILogFile.EndTime"/>.
+	/// As not all platforms support a creation timestamp, <see cref="ILogStorage.ILogFile.CreationTime"/> is instead encoded as a decimal unix time in the filename.
+	/// The <see cref="ILogStorage.ILogFile.Encoding"/> field is handled using different file suffixes.
+	/// Thus, no separate metadata storage is needed.
+	/// The implementation supports optional compression of the files (controlled by <see cref="CompressFiles"/>, on by default) 
+	/// as well as archiving locally removed files in a separate directory (controlled by <see cref="Archiving"/>, mainly for testing and diagnostic purposes, off by default).
 	/// </summary>
 	public class DirectoryLogStorage : ILogStorage {
 		private string directory;
@@ -30,8 +33,8 @@ namespace SGL.Analytics.Client {
 
 		/// <summary>
 		/// Specifies whether the log files should be compressed.
-		/// This property must not be changed during normal operation but only when no <see cref="SglAnalytics"/> object uses this object.
-		/// Changing it while a <see cref="SglAnalytics"/> is using it can cause problems with files not being found or listed correctly, depending on when the change happens.
+		/// This property applies when a log file is finished, but <see cref="ListLogFiles"/> and <see cref="ListAllLogFiles"/> return both,
+		/// compressed and uncompressed log files.
 		/// </summary>
 		public bool CompressFiles {
 			get {
@@ -284,9 +287,10 @@ namespace SGL.Analytics.Client {
 			}
 		}
 		/// <summary>
-		/// Enumerates all log files in the directory with the currently set <see cref="CompressedFileSuffix"/>.
+		/// Lists all log files in the directory with the currently set <see cref="CompressedFileSuffix"/>, <see cref="UncompressedFileSuffix"/>, 
+		/// and <see cref="UnfinishedFileSuffix"/>, except those currently being written.
 		/// </summary>
-		/// <returns>An enumerable to iterate over the logs.</returns>
+		/// <returns>A list of the logs.</returns>
 		public IList<ILogStorage.ILogFile> ListAllLogFiles() {
 			var compressedLogs = EnumerateLogs(CompressedFileSuffix, LogContentEncoding.GZipCompressed);
 			var uncompressedLogs = EnumerateLogs(UncompressedFileSuffix, LogContentEncoding.Plain);
@@ -305,14 +309,10 @@ namespace SGL.Analytics.Client {
 			select file;
 
 		/// <summary>
-		/// Enumerates the log files in the directory with the currently set <see cref="CompressedFileSuffix"/> and 
+		/// Lists the log files in the directory with the currently set <see cref="CompressedFileSuffix"/> and 
 		/// <see cref="UncompressedFileSuffix"/>, excluding those for which a corresponding unfinished file also exists.
 		/// The latter restriction excludes files for which the finishing operation may not have completed yet.
 		/// </summary>
-		/// <remarks>
-		/// Note that simlutaneous access by multiple processes or by multiple <see cref="DirectoryLogStorage"/> in the same process to the directory is not supported and
-		/// thus, files open for writing by other processes can not be properly excluded.
-		/// </remarks>
 		/// <returns>A list of the logs.</returns>
 		public IList<ILogStorage.ILogFile> ListLogFiles() {
 			var compressedLogs = EnumerateLogs(CompressedFileSuffix, LogContentEncoding.GZipCompressed);
@@ -363,6 +363,15 @@ namespace SGL.Analytics.Client {
 			}
 		}
 
+		/// <summary>
+		/// Lists the unfinished log files in the directory with the currently set <see cref="UnfinishedFileSuffix"/>,
+		/// except those that are currently open for writing.
+		/// </summary>
+		/// <returns>A list of the log file objects.</returns>
+		/// <remarks>
+		/// Note that simlutaneous access by multiple processes or by multiple <see cref="DirectoryLogStorage"/> in the same process to the directory is not supported and
+		/// thus, files open for writing by other processes can not be properly excluded.
+		/// </remarks>
 		public IList<ILogStorage.ILogFile> ListUnfinishedLogFilesForRecovery() {
 			var allUnfinishedLogs = EnumerateLogs(UnfinishedFileSuffix, LogContentEncoding.Plain).ToList();
 			lock (stateLock) {
