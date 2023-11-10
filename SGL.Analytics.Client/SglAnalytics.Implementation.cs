@@ -278,6 +278,7 @@ namespace SGL.Analytics.Client {
 			if (!logCollectorClient.IsActive) return;
 			try {
 				if (!SessionAuthorizationValid) {
+					logger.LogDebug("Refreshing login...");
 					await refreshLoginDelegate(ct);
 				}
 			}
