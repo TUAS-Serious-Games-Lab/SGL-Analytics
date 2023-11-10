@@ -350,6 +350,7 @@ namespace SGL.Analytics.Client {
 			else {
 				return LoginAttemptResult.CredentialsNotAvailable;
 			}
+			logger.LogDebug("Attempting login with stored credentials ...");
 			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			try {
 				await reloginDelegate(ct);
@@ -386,6 +387,7 @@ namespace SGL.Analytics.Client {
 		/// <returns>A Task representing the registration operation, providing the result status of the login attempt as its value.</returns>
 		public async Task<LoginAttemptResult> TryLoginWithPasswordAsync(string loginName, string password, bool rememberCredentials = false, CancellationToken ct = default) {
 			await FinishAsync(); // Ensure clean state for background tasks if client was used before
+			logger.LogDebug("Attempting login with provided credentials ...");
 			var loginDto = new UsernameBasedLoginRequestDTO(appName, appAPIToken, loginName, password);
 			Func<CancellationToken, Task<LoginResponseDTO>> reloginDelegate = async ct2 => await loginAsync(loginDto, ct2);
 			LoginResponseDTO responseDto;
@@ -439,6 +441,7 @@ namespace SGL.Analytics.Client {
 					throw;
 				}
 			};
+			logger.LogDebug("Attempting login with upstream delegation ...");
 			DelegatedLoginResponseDTO loginResponse;
 			try {
 				loginResponse = await reloginDelegate(ct);
@@ -484,10 +487,13 @@ namespace SGL.Analytics.Client {
 			await FinishAsync(); // Ensure clean state for background tasks if client was used before
 			var credentials = readStoredCredentials();
 			if (credentials.UserId.HasValue || credentials.Username != null) {
+				logger.LogDebug("Using offline mode for user with stored credentials.");
 				await createUserLogStore(credentials.UserId, credentials.Username, ct);
 				CurrentClientMode = credentials.Username != null ? SglAnalyticsClientMode.UsernamePasswordOnline : SglAnalyticsClientMode.DeviceTokenOnline;
 			}
 			else if (allowAnonymous) {
+				logger.LogWarning("Using anonymous offline mode. Logs will be stored on device without user association " +
+					$"and need to be inherited by a user using {nameof(InheritAnonymousLogsAsync)} to be uploaded later.");
 				ILogStorage? oldLogStore = null;
 				lock (lockObject) {
 					if (currentLogStorage == userLogStorage) {
@@ -528,6 +534,7 @@ namespace SGL.Analytics.Client {
 		/// <returns>A Task representing the registration operation.</returns>
 		public async Task UseOfflineModeForDelegatedUserAsync(Guid upstreamUserId, CancellationToken ct = default) {
 			await FinishAsync(); // Ensure clean state for background tasks if client was used before
+			logger.LogDebug("Using offline mode for delegated user id.");
 			await createUserLogStore(upstreamUserId, null, ct);
 			disableLogWriting = false;
 			lock (lockObject) {
@@ -545,6 +552,7 @@ namespace SGL.Analytics.Client {
 		/// <returns>A task representing the asynchronous operation.</returns>
 		/// <exception cref="InvalidOperationException">The stored credentials are for a device token and <paramref name="allowDeviceTokenDeletion"/> was false.</exception>
 		public async Task DeleteStoredCredentialsAsync(bool allowDeviceTokenDeletion = false) {
+			logger.LogDebug("Removing stored credentials.");
 			lock (lockObject) {
 				if (rootDataStore.Username == null && !allowDeviceTokenDeletion) {
 					throw new InvalidOperationException("The stored credentials are a device token and device token deletion was not allowed to not make the account inaccessible.");
@@ -565,6 +573,7 @@ namespace SGL.Analytics.Client {
 		/// <returns>A Task representing the registration operation.</returns>
 		public async Task DeactivateAsync(CancellationToken ct = default) {
 			await FinishAsync();
+			logger.LogWarning("Disabling SGL-Analytics client, no data will be recorded.");
 			disableLogWriting = true;
 			ILogStorage? oldLogStore = null;
 			lock (lockObject) {
