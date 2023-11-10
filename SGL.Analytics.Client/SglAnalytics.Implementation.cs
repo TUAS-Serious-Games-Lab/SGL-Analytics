@@ -228,7 +228,17 @@ namespace SGL.Analytics.Client {
 				}
 				if (logWriter is null || logWriter.IsCompleted) {
 					// Enforce that the log writer runs on some threadpool thread to avoid putting additional load on app thread.
-					logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
+					logWriter = Task.Run(async () => {
+						try {
+							await writePendingLogsAsync().ConfigureAwait(false);
+						}
+						catch (OperationCanceledException) {
+							logger.LogDebug("Log writing background task was cancelled.");
+						}
+						catch (Exception ex) {
+							logger.LogError(ex, "Log writing background task failed with exception.");
+						}
+					});
 				}
 			}
 		}
@@ -398,7 +408,17 @@ namespace SGL.Analytics.Client {
 				if (disableLogUploading) return;
 				if (logUploader is null || logUploader.IsCompleted) {
 					// Enforce that the uploader runs on some threadpool thread to avoid putting additional load on app thread.
-					logUploader = Task.Run(async () => await uploadFilesAsync().ConfigureAwait(false));
+					logUploader = Task.Run(async () => {
+						try {
+							await uploadFilesAsync().ConfigureAwait(false);
+						}
+						catch (OperationCanceledException) {
+							logger.LogDebug("Upload background task was cancelled.");
+						}
+						catch (Exception ex) {
+							logger.LogError(ex, "Upload background task failed with exception.");
+						}
+					});
 				}
 			}
 		}
