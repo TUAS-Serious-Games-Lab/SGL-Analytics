@@ -20,4 +20,8 @@
 		<PackageReference Include="SGL.Utilities" Version="0.11.15" />
 	</ItemGroup>
 
+	<PropertyGroup>
+		<DebugType>embedded</DebugType>
+	</PropertyGroup>
+
 </Project>
