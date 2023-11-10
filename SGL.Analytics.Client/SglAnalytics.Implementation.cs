@@ -318,8 +318,9 @@ namespace SGL.Analytics.Client {
 				// e.g. once by the writer worker and once by startUploadingExistingLogs.
 				// Since we removed the file after successfully uploading it, lets not try again, only to fail with a missing file exception.
 				if (completedLogFiles.Contains(logFile.ID)) continue;
+				bool success = false;
 				try {
-					await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
+					success = await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
 				}
 				catch (LoginRequiredException) {
 					logger.LogInformation("Uploading data log {logId} failed because the backend told us that we need to login first. " +
@@ -340,7 +341,7 @@ namespace SGL.Analytics.Client {
 						return;
 					}
 					try {
-						await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
+						success = await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
 					}
 					catch (LoginRequiredException ex) {
 						logger.LogError(ex, "The upload for data log {logId} failed again after obtaining a fresh session token. " +
@@ -348,10 +349,12 @@ namespace SGL.Analytics.Client {
 						return;
 					}
 				}
-				completedLogFiles.Add(logFile.ID);
+				if (success) {
+					completedLogFiles.Add(logFile.ID);
+				}
 			}
 
-			async Task attemptToUploadFileAsync(ILogStorage.ILogFile logFile, KeyEncryptor keyEncryptor, CancellationToken ct = default) {
+			async Task<bool> attemptToUploadFileAsync(ILogStorage.ILogFile logFile, KeyEncryptor keyEncryptor, CancellationToken ct = default) {
 				bool removing = false;
 				try {
 					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
@@ -371,6 +374,7 @@ namespace SGL.Analytics.Client {
 					removing = true;
 					logFile.Remove();
 					logger.LogDebug("Successfully uploaded data log file {logFile}.", logFile.ID);
+					return true;
 				}
 				catch (LoginRequiredException) {
 					throw;
@@ -402,6 +406,7 @@ namespace SGL.Analytics.Client {
 				catch (Exception ex) {
 					logger.LogError(ex, "Removing data log {logId} failed with an unexpected exception.", logFile.ID);
 				}
+				return false;
 			}
 		}
 
