@@ -43,7 +43,8 @@ namespace SGL.Analytics.Client {
 		private Task? logWriter = null;
 		private AsyncConsumerQueue<ILogStorage.ILogFile> uploadQueue = new AsyncConsumerQueue<ILogStorage.ILogFile>();
 
-		private Func<CancellationToken, Task<LoginResponseDTO>> refreshLoginDelegate = ct => Task.FromException<LoginResponseDTO>(new InvalidOperationException());
+		private Func<CancellationToken, Task<LoginResponseDTO>> refreshLoginDelegate =
+			ct => Task.FromException<LoginResponseDTO>(new InvalidOperationException("Attempt to refresh login without previous login."));
 		private SynchronizationContext mainSyncContext;
 		private CancellationTokenSource cts = new CancellationTokenSource();
 		private string dataDirectory;
@@ -179,40 +180,33 @@ namespace SGL.Analytics.Client {
 			var delim = Encoding.UTF8.GetBytes(logJsonOptions.WriteIndented ? ("," + Environment.NewLine) : ",");
 			await foreach (var logQueue in pendingLogQueues.DequeueAllAsync()) {
 				logger.LogDebug("Starting to write entries for data log file {logFile}...", logQueue.logFile.ID);
-				var stream = logQueue.writeStream;
-				try {
-					bool first = true;
-					await stream.WriteAsync(arrOpen.AsMemory());
-					await foreach (var logEntry in logQueue.entryQueue.DequeueAllAsync()) {
-						if (!first) {
-							await stream.WriteAsync(delim.AsMemory());
-						}
-						else {
-							first = false;
-						}
-						try {
-							await JsonSerializer.SerializeAsync(stream, logEntry, logJsonOptions);
-						}
-						catch (Exception ex) {
-							logger.LogError(ex, "Couldn't write log entry to stream due to exception while serializing.");
-						}
-						await stream.FlushAsync();
-					}
-					await stream.WriteAsync(arrClose.AsMemory());
-					await stream.FlushAsync();
-				}
-				catch (Exception ex) {
-					logger.LogError(ex, "Unrecoverable error while writing entries to log file {id}.", logQueue.logFile.ID);
+				await using (var stream = logQueue.writeStream) {
 					try {
+						bool first = true;
+						await stream.WriteAsync(arrOpen.AsMemory());
+						await foreach (var logEntry in logQueue.entryQueue.DequeueAllAsync()) {
+							if (!first) {
+								await stream.WriteAsync(delim.AsMemory());
+							}
+							else {
+								first = false;
+							}
+							try {
+								await JsonSerializer.SerializeAsync(stream, logEntry, logJsonOptions);
+							}
+							catch (Exception ex) {
+								logger.LogError(ex, "Couldn't write log entry to stream due to exception while serializing.");
+							}
+							await stream.FlushAsync();
+						}
+						await stream.WriteAsync(arrClose.AsMemory());
 						await stream.FlushAsync();
 					}
-					catch { }
-				}
-				finally { // Need to do this instead of a using block to allow ILogStorage implementations to remove the file behind stream from their 'open for writing'-list in a thread-safe way.
-					lock (lockObject) {
-						stream.Dispose();
+					catch (Exception ex) {
+						logger.LogError(ex, "Unrecoverable error while writing entries to log file {id}.", logQueue.logFile.ID);
 					}
 				}
+				await logQueue.logFile.FinishAsync();
 				lock (lockObject) {
 					if (disableLogUploading) {
 						logger.LogDebug("Finished writing entries for data log file {logFile}, but skipping upload, because uploading is disabled.", logQueue.logFile.ID);
@@ -234,7 +228,17 @@ namespace SGL.Analytics.Client {
 				}
 				if (logWriter is null || logWriter.IsCompleted) {
 					// Enforce that the log writer runs on some threadpool thread to avoid putting additional load on app thread.
-					logWriter = Task.Run(async () => await writePendingLogsAsync().ConfigureAwait(false));
+					logWriter = Task.Run(async () => {
+						try {
+							await writePendingLogsAsync().ConfigureAwait(false);
+						}
+						catch (OperationCanceledException) {
+							logger.LogDebug("Log writing background task was cancelled.");
+						}
+						catch (Exception ex) {
+							logger.LogError(ex, "Log writing background task failed with exception.");
+						}
+					});
 				}
 			}
 		}
@@ -284,6 +288,7 @@ namespace SGL.Analytics.Client {
 			if (!logCollectorClient.IsActive) return;
 			try {
 				if (!SessionAuthorizationValid) {
+					logger.LogDebug("Refreshing login...");
 					await refreshLoginDelegate(ct);
 				}
 			}
@@ -313,8 +318,9 @@ namespace SGL.Analytics.Client {
 				// e.g. once by the writer worker and once by startUploadingExistingLogs.
 				// Since we removed the file after successfully uploading it, lets not try again, only to fail with a missing file exception.
 				if (completedLogFiles.Contains(logFile.ID)) continue;
+				bool success = false;
 				try {
-					await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
+					success = await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
 				}
 				catch (LoginRequiredException) {
 					logger.LogInformation("Uploading data log {logId} failed because the backend told us that we need to login first. " +
@@ -335,7 +341,7 @@ namespace SGL.Analytics.Client {
 						return;
 					}
 					try {
-						await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
+						success = await attemptToUploadFileAsync(logFile, keyEncryptor, ct);
 					}
 					catch (LoginRequiredException ex) {
 						logger.LogError(ex, "The upload for data log {logId} failed again after obtaining a fresh session token. " +
@@ -343,28 +349,21 @@ namespace SGL.Analytics.Client {
 						return;
 					}
 				}
-				completedLogFiles.Add(logFile.ID);
+				if (success) {
+					completedLogFiles.Add(logFile.ID);
+				}
 			}
 
-			async Task attemptToUploadFileAsync(ILogStorage.ILogFile logFile, KeyEncryptor keyEncryptor, CancellationToken ct = default) {
+			async Task<bool> attemptToUploadFileAsync(ILogStorage.ILogFile logFile, KeyEncryptor keyEncryptor, CancellationToken ct = default) {
 				bool removing = false;
 				try {
 					logger.LogDebug("Uploading data log file {logFile}...", logFile.ID);
-					Guid logFileID;
-					DateTime logFileCreationTime;
-					DateTime logFileEndTime;
-					string logFileSuffix;
-					LogContentEncoding logFileEncoding;
-					Stream contentStream = Stream.Null;
-					try {
-						lock (lockObject) { // Access to the log file object needs to be done under lock.
-							logFileID = logFile.ID;
-							logFileCreationTime = logFile.CreationTime;
-							logFileEndTime = logFile.EndTime;
-							logFileSuffix = logFile.Suffix;
-							logFileEncoding = logFile.Encoding;
-							contentStream = logFile.OpenReadRaw();
-						}
+					var logFileID = logFile.ID;
+					var logFileCreationTime = logFile.CreationTime;
+					var logFileEndTime = logFile.EndTime;
+					var logFileSuffix = logFile.Suffix;
+					var logFileEncoding = logFile.Encoding;
+					await using (var contentStream = logFile.OpenReadEncoded()) {
 						var dataEncryptor = new DataEncryptor(randomGenerator, numberOfStreams: 1);
 						var encryptionStream = dataEncryptor.OpenEncryptionReadStream(contentStream, 0, leaveOpen: false);
 						var encryptionInfo = dataEncryptor.GenerateEncryptionInfo(keyEncryptor);
@@ -372,14 +371,10 @@ namespace SGL.Analytics.Client {
 						Validator.ValidateObject(metadataDTO, new ValidationContext(metadataDTO), true);
 						await logCollectorClient.UploadLogFileAsync(metadataDTO, encryptionStream, ct);
 					}
-					finally {
-						await contentStream.DisposeAsync();
-					}
 					removing = true;
-					lock (lockObject) { // ILogStorage implementations may need to do this under lock.
-						logFile.Remove();
-					}
+					logFile.Remove();
 					logger.LogDebug("Successfully uploaded data log file {logFile}.", logFile.ID);
+					return true;
 				}
 				catch (LoginRequiredException) {
 					throw;
@@ -402,12 +397,16 @@ namespace SGL.Analytics.Client {
 				catch (HttpRequestException ex) {
 					logger.LogError("Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup or explicit retry.", logFile.ID, ex.Message);
 				}
+				catch (SocketException ex) {
+					logger.LogError("Uploading data log {logId} failed due to network issues. The rror message was \"{message}\". It will be retried at next startup or explicit retry.", logFile.ID, ex.Message);
+				}
 				catch (Exception ex) when (!removing) {
 					logger.LogError(ex, "Uploading data log {logId} failed with an unexpected exception. It will be retried at next startup or explicit retry.", logFile.ID);
 				}
 				catch (Exception ex) {
 					logger.LogError(ex, "Removing data log {logId} failed with an unexpected exception.", logFile.ID);
 				}
+				return false;
 			}
 		}
 
@@ -417,18 +416,27 @@ namespace SGL.Analytics.Client {
 				if (disableLogUploading) return;
 				if (logUploader is null || logUploader.IsCompleted) {
 					// Enforce that the uploader runs on some threadpool thread to avoid putting additional load on app thread.
-					logUploader = Task.Run(async () => await uploadFilesAsync().ConfigureAwait(false));
+					logUploader = Task.Run(async () => {
+						try {
+							await uploadFilesAsync().ConfigureAwait(false);
+						}
+						catch (OperationCanceledException) {
+							logger.LogDebug("Upload background task was cancelled.");
+						}
+						catch (Exception ex) {
+							logger.LogError(ex, "Upload background task failed with exception.");
+						}
+					});
 				}
 			}
 		}
 
 		private void startUploadingExistingLogs() {
 			if (!logCollectorClient.IsActive) return;
-			List<ILogStorage.ILogFile> existingCompleteLogs;
 			lock (lockObject) {
 				if (disableLogUploading) return;
-				existingCompleteLogs = currentLogStorage.EnumerateFinishedLogs().ToList();
 			}
+			var existingCompleteLogs = currentLogStorage.ListLogFiles();
 			if (existingCompleteLogs.Count == 0) return;
 			logger.LogDebug("Queueing existing data log files for upload...");
 			foreach (var logFile in existingCompleteLogs) {
@@ -446,6 +454,28 @@ namespace SGL.Analytics.Client {
 				await JsonSerializer.SerializeAsync(compressionStream, properties, userPropertiesJsonOptions, ct);
 			}
 			return (encryptedPropsBuffer.ToArray(), dataEncryptor.GenerateEncryptionInfo(keyEncryptor));
+		}
+
+		private async Task performRecoveryForUnfinishedLogs(ILogStorage storage, CancellationToken ct = default) {
+			try {
+				var unfinishedLogs = storage.ListUnfinishedLogFilesForRecovery();
+				if (unfinishedLogs.Count == 0) {
+					return;
+				}
+				logger.LogInformation("Performing recovery for perviously unfinished logs...");
+				foreach (var log in unfinishedLogs) {
+					ct.ThrowIfCancellationRequested();
+					logger.LogDebug("Finishing log file {logId} ...", log.ID);
+					await log.FinishAsync(ct);
+				}
+				logger.LogInformation("... recovery procedure complete.");
+			}
+			catch (OperationCanceledException) {
+				logger.LogInformation("... recovery operation cancelled.");
+			}
+			catch (Exception ex) {
+				logger.LogError(ex, "Recovery operation failed.");
+			}
 		}
 	}
 }

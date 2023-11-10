@@ -17,6 +17,10 @@
 		<Description>The library used for extracting and decrypting uploaded data from the SGL Analytics service.</Description>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<DebugType>embedded</DebugType>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="SGL.Utilities.Crypto" Version="0.11.15" />
 	</ItemGroup>
