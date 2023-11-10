@@ -489,7 +489,7 @@ namespace SGL.Analytics.Client {
 			if (credentials.UserId.HasValue || credentials.Username != null) {
 				logger.LogDebug("Using offline mode for user with stored credentials.");
 				await createUserLogStore(credentials.UserId, credentials.Username, ct);
-				CurrentClientMode = credentials.Username != null ? SglAnalyticsClientMode.UsernamePasswordOnline : SglAnalyticsClientMode.DeviceTokenOnline;
+				CurrentClientMode = credentials.Username != null ? SglAnalyticsClientMode.UsernamePasswordOffline : SglAnalyticsClientMode.DeviceTokenOffline;
 			}
 			else if (allowAnonymous) {
 				logger.LogWarning("Using anonymous offline mode. Logs will be stored on device without user association " +
