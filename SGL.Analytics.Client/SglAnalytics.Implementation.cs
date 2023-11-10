@@ -393,6 +393,9 @@ namespace SGL.Analytics.Client {
 				catch (HttpRequestException ex) {
 					logger.LogError("Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup or explicit retry.", logFile.ID, ex.Message);
 				}
+				catch (SocketException ex) {
+					logger.LogError("Uploading data log {logId} failed due to network issues. The rror message was \"{message}\". It will be retried at next startup or explicit retry.", logFile.ID, ex.Message);
+				}
 				catch (Exception ex) when (!removing) {
 					logger.LogError(ex, "Uploading data log {logId} failed with an unexpected exception. It will be retried at next startup or explicit retry.", logFile.ID);
 				}
