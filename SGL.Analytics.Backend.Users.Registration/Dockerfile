@@ -8,7 +8,7 @@ EXPOSE 80
 EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine AS build
-RUN dotnet tool install --global dotnet-ef
+RUN dotnet tool install --global --version 6.0.25 dotnet-ef
 ENV PATH="$PATH:/root/.dotnet/tools"
 WORKDIR /src
 COPY ["SGL.Analytics.DTO/SGL.Analytics.DTO.csproj", "SGL.Analytics.DTO/"]
