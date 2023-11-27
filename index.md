@@ -29,4 +29,11 @@ Furthermore, this project contains
 	- An [Nginx-based container image for an API Gateway](SGL.Analytics.Backend.APIGW/) to distribute requests coming into a server to the two backend services, to simplify single-server deployments
 	- The `docker-compose` definition files backend deployment
 
-Note that the end-to-end encryption itself is implemented in the SGL.Utilities.Crypto package, provided by [SGL Utilities sister project](../sgl-utilities), as the encryption is also used in other Serious Games Lab components.
+Note that the end-to-end encryption itself is implemented in the SGL.Utilities.Crypto package, provided by [SGL Utilities](https://github.com/TUAS-Serious-Games-Lab/SGL-Analytics),
+as the encryption is also used in other Serious Games Lab components.
+The actual cryptography primitives used are provided by [the Bouncy Castle project](http://www.bouncycastle.org/csharp/).
+
+Moving this project to Github for public availability is currrently still work in progress.
+For this reason, there may be references to locations on internal Gitlab repository locations that don't work on the public Github repository.
+Continuous integration pipelines and other automations are also not yet implemented.
+We work towards rectifying this to eventually make the repository cleanly available in both environments.
