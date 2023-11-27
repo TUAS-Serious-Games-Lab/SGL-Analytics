@@ -21,7 +21,7 @@ namespace SGL.Analytics.ExporterClient {
 		/// <param name="ct">A <see cref="CancellationToken"/> that is cancelled when the retrieval and processing method if cancelled.</param>
 		/// <returns>A task object representing the asynchronous operation.</returns>
 		/// <remarks>
-		/// Implementations can use <see cref="SglAnalyticsExporter.ParseLogEntriesAsync"/> to parse <paramref name="content"/> into a stream of <see cref="LogFileEntry"/> values.
+		/// Implementations can use <see cref="SglAnalyticsExporter.ParseLogEntriesAsync(Stream, bool, CancellationToken)"/> to parse <paramref name="content"/> into a stream of <see cref="LogFileEntry"/> values.
 		/// </remarks>
 		Task ProcessLogFileAsync(LogFileMetadata metadata, Stream? content, CancellationToken ct);
 	}

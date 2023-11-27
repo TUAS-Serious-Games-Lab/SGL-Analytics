@@ -83,7 +83,7 @@ namespace SGL.Analytics.Client {
 			}
 		}
 		/// <summary>
-		/// Specifies the filename suffix for log files for which <see cref="FinishLogFileAsync(ILogStorage.ILogFile, CancellationToken)"/> has not completed.
+		/// Specifies the filename suffix for log files for which <see cref="ILogStorage.ILogFile.FinishAsync(CancellationToken)"/> has not completed.
 		/// This property must not be changed during normal operation but only when no <see cref="SglAnalytics"/> object uses this object.
 		/// Changing it while a <see cref="SglAnalytics"/> is using it can cause problems with files not being found or listed correctly, depending on when the change happens.
 		/// </summary>

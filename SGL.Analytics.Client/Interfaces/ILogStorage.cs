@@ -88,7 +88,7 @@ namespace SGL.Analytics.Client {
 		/// The logs enumerated by this shall be ready for uploading.
 		/// 
 		/// Unfinished logs are ones that are either currently open for writing, i.e. the <see cref="Stream"/> returned by the call to <see cref="CreateLogFile(out ILogFile)"/> for the log file has not yet been disposed,
-		/// or their writing <see cref="Stream"/> has been closed, but no call to <see cref="FinishLogFileAsync(ILogFile, CancellationToken)"/>  has completed for them.
+		/// or their writing <see cref="Stream"/> has been closed, but no call to <see cref="ILogFile.FinishAsync(CancellationToken)"/>  has completed for them.
 		/// </summary>
 		/// <returns>A list containting objects representing the files and their metadata.</returns>
 		IList<ILogFile> ListLogFiles();
