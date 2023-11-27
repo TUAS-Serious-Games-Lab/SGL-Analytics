@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SGL.Utilities.Crypto" Version="0.11.15" />
+    <PackageReference Include="SGL.Utilities.Crypto" Version="0.11.18" />
   </ItemGroup>
 
 </Project>
