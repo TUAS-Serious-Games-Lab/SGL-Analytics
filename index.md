@@ -1,9 +1,11 @@
 # SGL Analytics
 
-This project provides functionality to record and collect game telemetry logs for serious games.
+This repository contains a system for recording and collecting game telemetry logs for serious games.
 The collected logs are protected using end-to-end encryption.
 To prevent injection of additional recipient public keys, signatures are used for enforcing that only properly signed public keys are accepted by the in-game client.
 The logs are also stored separately form the user accounts in a backend which is split into microservices for additional isolation.
+
+The system was originally developed for collecting in-game telemetry for serious games developed in the Serious Games Lab (SGL) at Trier University of Applied Sciences.
 
 The repository consists the folowing primary components:
 - A client library that is used by games to record gameplay data in the form of events and snapshots.
@@ -26,3 +28,5 @@ Furthermore, this project contains
 	- A [Postgres-based database container image](SGL.Analytics.Backend.DB/) that is automatically prepared with the needed databases and user accounts
 	- An [Nginx-based container image for an API Gateway](SGL.Analytics.Backend.APIGW/) to distribute requests coming into a server to the two backend services, to simplify single-server deployments
 	- The `docker-compose` definition files backend deployment
+
+Note that the end-to-end encryption itself is implemented in the SGL.Utilities.Crypto package, provided by [SGL Utilities sister project](../sgl-utilities), as the encryption is also used in other Serious Games Lab components.
