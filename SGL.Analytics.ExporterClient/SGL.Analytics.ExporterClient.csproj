@@ -22,7 +22,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="SGL.Utilities.Crypto" Version="0.11.18" />
+		<PackageReference Include="SGL.Utilities.Crypto" Version="0.11.19" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -56,8 +56,8 @@
 			<Pack>true</Pack>
 		</Content>
 		<!-- Dependencies from bundled support assemblies above: -->
-		<PackageReference Include="SGL.Utilities" Version="0.11.18" />
-		<PackageReference Include="SGL.Utilities.Crypto.Abstractions" Version="0.11.18" />
+		<PackageReference Include="SGL.Utilities" Version="0.11.19" />
+		<PackageReference Include="SGL.Utilities.Crypto.Abstractions" Version="0.11.19" />
 	</ItemGroup>
 	<!--
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
