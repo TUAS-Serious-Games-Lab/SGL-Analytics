@@ -395,10 +395,16 @@ namespace SGL.Analytics.Client {
 				}
 #endif
 				catch (HttpRequestException ex) {
-					logger.LogError("Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup or explicit retry.", logFile.ID, ex.Message);
+					logger.LogError(ex, "Uploading data log {logId} failed with message \"{message}\". It will be retried at next startup or explicit retry.", logFile.ID, ex.Message);
+				}
+				catch (HttpApiRequestFailedException ex) {
+					logger.LogError(ex, "Uploading data log {logId} failed due to a communication problem with the backend. The error message was \"{message}\". The upload will be retried at next startup or explicit retry.", logFile.ID, ex.Message);
+				}
+				catch (HttpApiResponseException ex) {
+					logger.LogError(ex, "Uploading data log {logId} failed due to an error response from the backend. The status code was {status:G}. The upload will be retried at next startup or explicit retry.", logFile.ID, ex.StatusCode);
 				}
 				catch (SocketException ex) {
-					logger.LogError("Uploading data log {logId} failed due to network issues. The rror message was \"{message}\". It will be retried at next startup or explicit retry.", logFile.ID, ex.Message);
+					logger.LogError(ex, "Uploading data log {logId} failed due to network issues. The error message was \"{message}\". The upload will be retried at next startup or explicit retry.", logFile.ID, ex.Message);
 				}
 				catch (Exception ex) when (!removing) {
 					logger.LogError(ex, "Uploading data log {logId} failed with an unexpected exception. It will be retried at next startup or explicit retry.", logFile.ID);
