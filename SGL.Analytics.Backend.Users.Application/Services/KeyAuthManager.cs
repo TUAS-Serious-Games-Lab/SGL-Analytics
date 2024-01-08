@@ -119,15 +119,15 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				logger.LogError("The key id {keyId} of the public key of the exporter certificate {DN} didn't match the key id in its metadata {metaKeyId}.", certKeyId, keyCert.SubjectDN, keyCertEntry.PublicKeyId);
 				throw new CertificateException("The key id of the public key of the exporter certificate didn't match the key id in its metadata.");
 			}
-			if (options.SignerCertificateFile != null) {
-				var signerValidator = GetSignerValidator();
+			var signerValidator = GetSignerValidator(app);
+			if (signerValidator != null) {
 				if (!signerValidator.CheckCertificate(keyCert)) {
 					logger.LogError("The exporter certificate {DN} with key id {keyId} failed validation.", keyCert.SubjectDN, certKeyId);
 					throw new CertificateException("The exporter certificate failed validation.");
 				}
 			}
 			else {
-				logger.LogWarning("No signer certificate configured, can't check signer certificate of exporter authentication certificate.");
+				logger.LogWarning("No signer certificate(s) configured in app or globally, can't check signer certificate of exporter authentication certificate.");
 			}
 
 			var verifier = new SignatureVerifier(keyCert.PublicKey, state.ChallengeData.DigestAlgorithmToUse);
@@ -160,12 +160,14 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			return response;
 		}
 
-		private CACertTrustValidator GetSignerValidator() {
-			string file = options.SignerCertificateFile!;
-			using var reader = File.OpenText(file);
+		private CACertTrustValidator? GetSignerValidator(ApplicationWithUserProperties app) {
+			string globalCertFile = options.SignerCertificateFile!;
+			using var globalCertReader = File.OpenText(globalCertFile);
 			ILogger<CACertTrustValidator> validatorLogger = serviceProvider.GetService<ILogger<CACertTrustValidator>>() ?? NullLogger<CACertTrustValidator>.Instance;
 			ILogger<CertificateStore> caCertStoreLogger = serviceProvider.GetService<ILogger<CertificateStore>>() ?? NullLogger<CertificateStore>.Instance;
-			return new CACertTrustValidator(reader, file, ignoreValidityPeriod: false, validatorLogger, caCertStoreLogger);
+			using var certListReader = new ConcatReader(app.SignerCertificates.Select(cert => new StringReader(cert.CertificatePem)).Append((TextReader)globalCertReader));
+			var validator = new CACertTrustValidator(certListReader, globalCertFile, ignoreValidityPeriod: false, validatorLogger, caCertStoreLogger);
+			return validator;
 		}
 	}
 }
