@@ -65,6 +65,12 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 			ekac.Property(e => e.PublicKeyId).IsStoredAsByteArray().HasMaxLength(34);
 			ekac.Property(e => e.Label).HasMaxLength(512);
 			ekac.HasOne(e => e.App).WithMany(a => a.AuthorizedExporters);
+
+			var sgncert = modelBuilder.Entity<SignerCertificate>();
+			sgncert.HasKey(e => new { e.AppId, e.PublicKeyId });
+			sgncert.Property(e => e.PublicKeyId).IsStoredAsByteArray().HasMaxLength(34);
+			sgncert.Property(e => e.Label).HasMaxLength(512);
+			app.HasMany(a => a.SignerCertificates).WithOne(sc => (ApplicationWithUserProperties)sc.App);
 		}
 		/// <summary>
 		/// The accessor for the table containing <see cref="UserRegistration"/> objects.
