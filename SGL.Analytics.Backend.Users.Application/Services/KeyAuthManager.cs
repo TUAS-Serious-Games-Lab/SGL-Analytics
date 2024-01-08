@@ -95,7 +95,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 				logger.LogError("Couldn't find an open and not-timed-out challenge with id {id}.", signatureDto.ChallengeId);
 				throw new InvalidChallengeException(signatureDto.ChallengeId, "No open challenge with the given id.");
 			}
-			var app = await appRepo.GetApplicationByNameAsync(state.RequestData.AppName, new ApplicationQueryOptions { FetchExporterCertificate = state.RequestData.KeyId }, ct);
+			var app = await appRepo.GetApplicationByNameAsync(state.RequestData.AppName, new ApplicationQueryOptions { FetchExporterCertificate = state.RequestData.KeyId, FetchSignerCertificates = true }, ct);
 			if (app == null) {
 				logger.LogError("Challenge {id} was opened with a non-existent app name {appname}.", signatureDto.ChallengeId, state.RequestData.AppName);
 				throw new ApplicationDoesNotExistException(state.RequestData.AppName);
@@ -161,12 +161,18 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 		}
 
 		private CACertTrustValidator? GetSignerValidator(ApplicationWithUserProperties app) {
-			string globalCertFile = options.SignerCertificateFile!;
-			using var globalCertReader = File.OpenText(globalCertFile);
 			ILogger<CACertTrustValidator> validatorLogger = serviceProvider.GetService<ILogger<CACertTrustValidator>>() ?? NullLogger<CACertTrustValidator>.Instance;
 			ILogger<CertificateStore> caCertStoreLogger = serviceProvider.GetService<ILogger<CertificateStore>>() ?? NullLogger<CertificateStore>.Instance;
-			using var certListReader = new ConcatReader(app.SignerCertificates.Select(cert => new StringReader(cert.CertificatePem)).Append((TextReader)globalCertReader));
-			var validator = new CACertTrustValidator(certListReader, globalCertFile, ignoreValidityPeriod: false, validatorLogger, caCertStoreLogger);
+			IEnumerable<TextReader> certReaders = app.SignerCertificates.Select(cert => new StringReader(cert.CertificatePem));
+			IEnumerable<string> certNames = app.SignerCertificates.Select(cert => cert.Label);
+			if (options.SignerCertificateFile != null) {
+				string globalCertFile = options.SignerCertificateFile!;
+				var globalCertReader = File.OpenText(globalCertFile);
+				certReaders = certReaders.Append(globalCertReader);
+				certNames = certNames.Append(globalCertFile);
+			}
+			using var certListReader = new ConcatReader(certReaders);
+			var validator = new CACertTrustValidator(certListReader, string.Join(";", certNames), ignoreValidityPeriod: false, validatorLogger, caCertStoreLogger);
 			return validator;
 		}
 	}
