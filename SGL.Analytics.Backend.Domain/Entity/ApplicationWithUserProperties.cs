@@ -27,6 +27,10 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 		/// A collection containing the key certificates for authorized data exporters.
 		/// </summary>
 		public ICollection<ExporterKeyAuthCertificate> AuthorizedExporters { get; set; } = null!;
+		/// <summary>
+		/// A collection containing the key certificates for signers for the application.
+		/// </summary>
+		public ICollection<SignerCertificate> SignerCertificates { get; set; } = null!;
 
 		/// <summary>
 		/// Creates an <see cref="ApplicationWithUserProperties"/> with the given data values, leaving <see cref="UserProperties"/> and <see cref="UserRegistrations"/> empty.
@@ -47,6 +51,7 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			app.UserProperties = new List<ApplicationUserPropertyDefinition>();
 			app.DataRecipients = new List<Recipient>();
 			app.AuthorizedExporters = new List<ExporterKeyAuthCertificate>();
+			app.SignerCertificates = new List<SignerCertificate>();
 			return app;
 		}
 
@@ -86,6 +91,12 @@ namespace SGL.Analytics.Backend.Domain.Entity {
 			var exporter = ExporterKeyAuthCertificate.Create(this, label, certificatePem);
 			AuthorizedExporters.Add(exporter);
 			return exporter;
+		}
+
+		public SignerCertificate AddSignerCertificate(string label, string certificatePem) {
+			var signer = SignerCertificate.Create(this, label, certificatePem);
+			SignerCertificates.Add(signer);
+			return signer;
 		}
 	}
 }

@@ -41,6 +41,10 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Services {
 				KeyId idToFetch = options.FetchExporterCertificate;
 				query = query.Include(a => a.AuthorizedExporters.Where(e => e.PublicKeyId == idToFetch));
 			}
+			if (options?.FetchSignerCertificates ?? false) {
+				query = query.Include(a => a.SignerCertificates);
+				includeCounter++;
+			}
 			if (includeCounter > 1) {
 				query = query.AsSplitQuery();
 			}
