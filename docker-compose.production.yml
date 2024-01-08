@@ -52,13 +52,10 @@ services:
     restart: unless-stopped
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - Logging__Console__LogLevel__SGL.Utilities.Backend.AspNetCore.Authentication=Warning
-      - Logging__Console__LogLevel__SGL.Analytics.Backend.Logs.Application.Services.LogManager=Warning
   users-registration-app:
     restart: unless-stopped
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - Logging__Console__LogLevel__SGL.Utilities.Backend.Security.JwtLoginService=Warning
   api-gateway:
     volumes:
       - "https-certs:/etc/ssl/my:ro"
