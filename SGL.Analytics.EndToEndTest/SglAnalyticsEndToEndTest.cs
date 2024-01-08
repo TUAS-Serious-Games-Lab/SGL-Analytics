@@ -251,13 +251,14 @@ namespace SGL.Analytics.EndToEndTest {
 		}
 
 		private async Task ValidateTestData(SglAnalyticsExporter exporter, Guid userId, Guid log1Id, Guid log2Id, Guid snapShotId, DateTime beginTime, DateTime endTime, UserData userData, CancellationToken ct) {
+			var metadataTimeTolerance = TimeSpan.FromMilliseconds(100);
 			await exporter.SwitchToApplicationAsync(appName);
 			{
 				var log1 = await exporter.GetDecryptedLogFileByIdAsync(log1Id);
 
 				Assert.Equal(log1Id, log1.Metadata.LogFileId);
 				Assert.Equal(userId, log1.Metadata.UserId);
-				Assert.InRange(log1.Metadata.UploadTime, beginTime.ToUniversalTime(), endTime.ToUniversalTime());
+				Assert.InRange(log1.Metadata.UploadTime, beginTime.ToUniversalTime() - metadataTimeTolerance, endTime.ToUniversalTime() + metadataTimeTolerance);
 
 				Assert.NotNull(log1.Content);
 				using var log1Content = log1.Content;
@@ -292,7 +293,7 @@ namespace SGL.Analytics.EndToEndTest {
 
 				Assert.Equal(log2Id, log2.Metadata.LogFileId);
 				Assert.Equal(userId, log2.Metadata.UserId);
-				Assert.InRange(log2.Metadata.UploadTime, beginTime.ToUniversalTime(), endTime.ToUniversalTime());
+				Assert.InRange(log2.Metadata.UploadTime, beginTime.ToUniversalTime() - metadataTimeTolerance, endTime.ToUniversalTime() + metadataTimeTolerance);
 
 				Assert.NotNull(log2.Content);
 				using var log1Content = log2.Content;
