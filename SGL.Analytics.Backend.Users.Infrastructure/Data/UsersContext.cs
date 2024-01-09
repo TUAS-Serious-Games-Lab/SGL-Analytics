@@ -67,6 +67,7 @@ namespace SGL.Analytics.Backend.Users.Infrastructure.Data {
 			ekac.HasOne(e => e.App).WithMany(a => a.AuthorizedExporters);
 
 			var sgncert = modelBuilder.Entity<SignerCertificate>();
+			sgncert.ToTable("SignerCertificates");
 			sgncert.HasKey(e => new { e.AppId, e.PublicKeyId });
 			sgncert.Property(e => e.PublicKeyId).IsStoredAsByteArray().HasMaxLength(34);
 			sgncert.Property(e => e.Label).HasMaxLength(512);
