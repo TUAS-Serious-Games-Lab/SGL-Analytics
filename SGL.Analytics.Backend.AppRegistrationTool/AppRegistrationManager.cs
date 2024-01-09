@@ -148,6 +148,47 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			return changed;
 		}
 
+		/// <summary>
+		/// Update signer certificate list in <paramref name="oldApplication"/> to fit that from <paramref name="newApplication"/>.
+		/// </summary>
+		/// <returns>True if anything was changed, false otherwise.</returns>
+		public bool PushSignerCerts(string apiName, ApplicationWithUserProperties newApplication, ApplicationWithUserProperties oldApplication) {
+			var appName = oldApplication.Name;
+			var missingSigners = oldApplication.SignerCertificates.Where(r1 => !newApplication.SignerCertificates.Any(r2 => r1.PublicKeyId == r2.PublicKeyId)).ToList();
+			var addedSigners = newApplication.SignerCertificates.Where(r1 => !oldApplication.SignerCertificates.Any(r2 => r1.PublicKeyId == r2.PublicKeyId)).ToList();
+			var commonSigners = oldApplication.SignerCertificates.Join(newApplication.SignerCertificates, r => r.PublicKeyId, r => r.PublicKeyId, (or, nr) => (Old: or, New: nr));
+			var changedSigners = commonSigners.Where(pair => pair.Old.Label != pair.New.Label || pair.Old.CertificatePem != pair.New.CertificatePem).ToList();
+			bool changed = false;
+			if (missingSigners.Any()) {
+				foreach (var mexp in missingSigners) {
+					logger.LogInformation("Removing signer {keyId} (with label \"{label}\") from application {appName} in {apiName}.", mexp.PublicKeyId, mexp.Label, appName, apiName);
+					oldApplication.SignerCertificates.Remove(mexp);
+				}
+			}
+			if (addedSigners.Any()) {
+				changed = true;
+				foreach (var ae in addedSigners) {
+					logger.LogInformation("Adding new signer {keyId} (with label \"{label}\") to application {appName} in {apiName}.", ae.PublicKeyId, ae.Label, appName, apiName);
+					oldApplication.AddSignerCertificate(ae.Label, ae.CertificatePem);
+				}
+			}
+			if (changedSigners.Any()) {
+				changed = true;
+				foreach (var pair in changedSigners) {
+					if (pair.Old.Label != pair.New.Label) {
+						logger.LogInformation("Changing label for signer {keyid} in application {appName} in {apiName} from \"{old}\" to \"{new}\".",
+							pair.Old.PublicKeyId, appName, apiName, pair.Old.Label, pair.New.Label);
+						pair.Old.Label = pair.New.Label;
+					}
+					if (pair.Old.CertificatePem != pair.New.CertificatePem) {
+						logger.LogInformation("Updating certificate PEM for signer {keyid} in application {appName} in {apiName}.", pair.Old.PublicKeyId, appName, apiName);
+						pair.Old.CertificatePem = pair.New.CertificatePem;
+					}
+				}
+			}
+			return changed;
+		}
+
 		private async Task<PushResult> PushLogsApplication(Domain.Entity.Application application, CancellationToken ct = default) {
 			var queryOpts = new Logs.Application.Interfaces.ApplicationQueryOptions { FetchRecipients = true };
 			try {
@@ -184,7 +225,12 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		}
 		private async Task<PushResult> PushUsersApplication(ApplicationWithUserProperties application, CancellationToken ct = default) {
 			try {
-				var queryOpts = new Users.Application.Interfaces.ApplicationQueryOptions { FetchRecipients = true, FetchUserProperties = true, FetchExporterCertificates = true };
+				var queryOpts = new Users.Application.Interfaces.ApplicationQueryOptions {
+					FetchRecipients = true,
+					FetchUserProperties = true,
+					FetchExporterCertificates = true,
+					FetchSignerCertificates = true
+				};
 				var existingApp = await usersAppRepo.GetApplicationByNameAsync(application.Name, queryOpts, ct: ct);
 				if (existingApp != null) {
 					bool changed = false;
@@ -202,6 +248,9 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 						changed = true;
 					}
 					if (PushExporterCerts("UsersAPI", application, existingApp)) {
+						changed = true;
+					}
+					if (PushSignerCerts("UsersAPI", application, existingApp)) {
 						changed = true;
 					}
 					var newProperties = application.UserProperties.Where(prop => existingApp.UserProperties.Count(exProp => exProp.Name == prop.Name) == 0);
