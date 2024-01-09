@@ -176,6 +176,11 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			if (!validator.TrustedCACertificates.Any()) {
 				return null;
 			}
+			if (logger.IsEnabled(LogLevel.Trace)) {
+				logger.LogTrace("Trusting the following signer certificates:\n{certs}",
+					string.Join("\n", validator.TrustedCACertificates.Select(cert =>
+					$" • {cert.SubjectDN} ({cert.PublicKey.CalculateId()}) issued by {cert.IssuerDN}")));
+			}
 			return validator;
 		}
 	}
