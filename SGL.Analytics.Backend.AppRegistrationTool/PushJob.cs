@@ -67,7 +67,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				// We can't run push operations concurrently, because it is not supported by DbContext. Therefore, we need to await each push operation separately.
 				foreach (var appDef in definitions) {
 					if (appDef == null) continue;
-					results.AddRange(await appRegMgr.PushApplicationAsync(appDef, ct));
+					results.AddRange(await appRegMgr.PushApplicationAsync(appDef, opts.AllowRelatedEntryDelete, ct));
 				}
 
 				if (results.Any(res => res == AppRegistrationManager.PushResult.Error)) {
