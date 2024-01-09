@@ -58,10 +58,14 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		/// Asynchronously pushes the given application definition into the service databases.
 		/// </summary>
 		/// <param name="application">The application definition to push.</param>
+		/// <param name="allowRelatedEntryDeletion">Allow deletion of less critical related table entries associated with the registration, 
+		/// e.g. exporter and signer certificates, i.e. those that are not generally forbidden in push operations due to risk of data loss.
+		/// If false, warnings are logged instead of deleting the entry.
+		/// </param>
 		/// <param name="ct">A cancellation token allowing the cancellation of the operation.</param>
 		/// <returns>A task object representing the operation, providing an enumerable with one <see cref="PushResult"/> for each target database.</returns>
-		public async Task<IEnumerable<PushResult>> PushApplicationAsync(ApplicationWithUserProperties application, CancellationToken ct = default) {
-			return await Task.WhenAll(PushLogsApplication(application, ct), PushUsersApplication(application, ct));
+		public async Task<IEnumerable<PushResult>> PushApplicationAsync(ApplicationWithUserProperties application, bool allowRelatedEntryDeletion, CancellationToken ct = default) {
+			return await Task.WhenAll(PushLogsApplication(application, ct), PushUsersApplication(application, allowRelatedEntryDeletion, ct));
 		}
 
 		/// <summary>
@@ -111,7 +115,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 		/// Update exporter certificate list in <paramref name="oldApplication"/> to fit that from <paramref name="newApplication"/>.
 		/// </summary>
 		/// <returns>True if anything was changed, false otherwise.</returns>
-		public bool PushExporterCerts(string apiName, ApplicationWithUserProperties newApplication, ApplicationWithUserProperties oldApplication) {
+		public bool PushExporterCerts(string apiName, ApplicationWithUserProperties newApplication, ApplicationWithUserProperties oldApplication, bool allowRelatedEntryDeletion) {
 			var appName = oldApplication.Name;
 			var missingExporters = oldApplication.AuthorizedExporters.Where(r1 => !newApplication.AuthorizedExporters.Any(r2 => r1.PublicKeyId == r2.PublicKeyId)).ToList();
 			var addedExporters = newApplication.AuthorizedExporters.Where(r1 => !oldApplication.AuthorizedExporters.Any(r2 => r1.PublicKeyId == r2.PublicKeyId)).ToList();
@@ -121,8 +125,14 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			if (missingExporters.Any()) {
 				changed = true;
 				foreach (var mexp in missingExporters) {
-					logger.LogInformation("Removing data exporter {keyId} (with label \"{label}\") from application {appName} in {apiName}.", mexp.PublicKeyId, mexp.Label, appName, apiName);
-					oldApplication.AuthorizedExporters.Remove(mexp);
+					if (allowRelatedEntryDeletion) {
+						logger.LogInformation("Removing data exporter {keyId} (with label \"{label}\") from application {appName} in {apiName}.", mexp.PublicKeyId, mexp.Label, appName, apiName);
+						oldApplication.AuthorizedExporters.Remove(mexp);
+					}
+					else {
+						logger.LogWarning("The data exporter {keyId} (with label \"{label}\") is no longer present in application {appName} in {apiName}. " +
+							"It is however not removed, as deleting related entries was not enabled through parameters.", mexp.PublicKeyId, mexp.Label, appName, apiName);
+					}
 				}
 			}
 			if (addedExporters.Any()) {
@@ -142,6 +152,54 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 					}
 					if (pair.Old.CertificatePem != pair.New.CertificatePem) {
 						logger.LogInformation("Updating certificate PEM for exporter {keyid} in application {appName} in {apiName}.", pair.Old.PublicKeyId, appName, apiName);
+						pair.Old.CertificatePem = pair.New.CertificatePem;
+					}
+				}
+			}
+			return changed;
+		}
+
+		/// <summary>
+		/// Update signer certificate list in <paramref name="oldApplication"/> to fit that from <paramref name="newApplication"/>.
+		/// </summary>
+		/// <returns>True if anything was changed, false otherwise.</returns>
+		public bool PushSignerCerts(string apiName, ApplicationWithUserProperties newApplication, ApplicationWithUserProperties oldApplication, bool allowRelatedEntryDeletion) {
+			var appName = oldApplication.Name;
+			var missingSigners = oldApplication.SignerCertificates.Where(r1 => !newApplication.SignerCertificates.Any(r2 => r1.PublicKeyId == r2.PublicKeyId)).ToList();
+			var addedSigners = newApplication.SignerCertificates.Where(r1 => !oldApplication.SignerCertificates.Any(r2 => r1.PublicKeyId == r2.PublicKeyId)).ToList();
+			var commonSigners = oldApplication.SignerCertificates.Join(newApplication.SignerCertificates, r => r.PublicKeyId, r => r.PublicKeyId, (or, nr) => (Old: or, New: nr));
+			var changedSigners = commonSigners.Where(pair => pair.Old.Label != pair.New.Label || pair.Old.CertificatePem != pair.New.CertificatePem).ToList();
+			bool changed = false;
+			if (missingSigners.Any()) {
+				changed = true;
+				foreach (var msgn in missingSigners) {
+					if (allowRelatedEntryDeletion) {
+						logger.LogInformation("Removing signer {keyId} (with label \"{label}\") from application {appName} in {apiName}.", msgn.PublicKeyId, msgn.Label, appName, apiName);
+						oldApplication.SignerCertificates.Remove(msgn);
+					}
+					else {
+						logger.LogWarning("The signer {keyId} (with label \"{label}\") is no longer present in application {appName} in {apiName}. " +
+							"It is however not removed, as deleting related entries was not enabled through parameters.", msgn.PublicKeyId, msgn.Label, appName, apiName);
+					}
+				}
+			}
+			if (addedSigners.Any()) {
+				changed = true;
+				foreach (var ae in addedSigners) {
+					logger.LogInformation("Adding new signer {keyId} (with label \"{label}\") to application {appName} in {apiName}.", ae.PublicKeyId, ae.Label, appName, apiName);
+					oldApplication.AddSignerCertificate(ae.Label, ae.CertificatePem);
+				}
+			}
+			if (changedSigners.Any()) {
+				changed = true;
+				foreach (var pair in changedSigners) {
+					if (pair.Old.Label != pair.New.Label) {
+						logger.LogInformation("Changing label for signer {keyid} in application {appName} in {apiName} from \"{old}\" to \"{new}\".",
+							pair.Old.PublicKeyId, appName, apiName, pair.Old.Label, pair.New.Label);
+						pair.Old.Label = pair.New.Label;
+					}
+					if (pair.Old.CertificatePem != pair.New.CertificatePem) {
+						logger.LogInformation("Updating certificate PEM for signer {keyid} in application {appName} in {apiName}.", pair.Old.PublicKeyId, appName, apiName);
 						pair.Old.CertificatePem = pair.New.CertificatePem;
 					}
 				}
@@ -183,9 +241,14 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				return PushResult.Error;
 			}
 		}
-		private async Task<PushResult> PushUsersApplication(ApplicationWithUserProperties application, CancellationToken ct = default) {
+		private async Task<PushResult> PushUsersApplication(ApplicationWithUserProperties application, bool allowRelatedEntryDeletion, CancellationToken ct = default) {
 			try {
-				var queryOpts = new Users.Application.Interfaces.ApplicationQueryOptions { FetchRecipients = true, FetchUserProperties = true, FetchExporterCertificates = true };
+				var queryOpts = new Users.Application.Interfaces.ApplicationQueryOptions {
+					FetchRecipients = true,
+					FetchUserProperties = true,
+					FetchExporterCertificates = true,
+					FetchSignerCertificates = true
+				};
 				var existingApp = await usersAppRepo.GetApplicationByNameAsync(application.Name, queryOpts, ct: ct);
 				if (existingApp != null) {
 					bool changed = false;
@@ -202,7 +265,10 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 					if (PushRecipients("UsersAPI", application, existingApp)) {
 						changed = true;
 					}
-					if (PushExporterCerts("UsersAPI", application, existingApp)) {
+					if (PushExporterCerts("UsersAPI", application, existingApp, allowRelatedEntryDeletion)) {
+						changed = true;
+					}
+					if (PushSignerCerts("UsersAPI", application, existingApp, allowRelatedEntryDeletion)) {
 						changed = true;
 					}
 					var newProperties = application.UserProperties.Where(prop => existingApp.UserProperties.Count(exProp => exProp.Name == prop.Name) == 0);

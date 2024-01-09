@@ -55,6 +55,15 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			/// </summary>
 			[Value(0, MetaName = "APP_DEFINITIONS_DIRECTORY", HelpText = "(Default: Current Directory) The directory in which there is one json file for each application to push. Note: appsettings.*.json and appsettings.json files are ignored.")]
 			public string AppDefinitionsDirectory { get; set; } = Environment.CurrentDirectory;
+			/// <summary>
+			/// If set to true, allows deletion of less critical related table entries associated with the app registrations,
+			/// such as exporter and signer certificates, i.e. those that are not generally forbidden in push operations due to risk of data loss.
+			/// If false, warnings are logged instead of deleting the entry.
+			/// </summary>
+			[Option('d', "allow-related-entry-delete", Default = false, HelpText = "Allow deletion of less critical related table entries associated with the app registrations," +
+				" such as exporter and signer certificates, i.e. those that are not generally forbidden in push operations due to risk of data loss." +
+				" If false, warnings are logged instead of deleting the entry.")]
+			public bool AllowRelatedEntryDelete { get; set; } = false;
 		}
 		/// <summary>
 		/// Represents the command line options for the currently unimplemented <c>remove-property</c> verb.

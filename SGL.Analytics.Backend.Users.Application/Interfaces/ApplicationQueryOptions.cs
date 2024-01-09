@@ -23,5 +23,6 @@ namespace SGL.Analytics.Backend.Users.Application.Interfaces {
 		/// If true, indicates to fetch the exporter certificate with the given key id for each fetched application.
 		/// </summary>
 		public KeyId? FetchExporterCertificate { get; set; } = null;
+		public bool FetchSignerCertificates { get; set; } = false;
 	}
 }

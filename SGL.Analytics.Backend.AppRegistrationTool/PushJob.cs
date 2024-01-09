@@ -67,7 +67,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 				// We can't run push operations concurrently, because it is not supported by DbContext. Therefore, we need to await each push operation separately.
 				foreach (var appDef in definitions) {
 					if (appDef == null) continue;
-					results.AddRange(await appRegMgr.PushApplicationAsync(appDef, ct));
+					results.AddRange(await appRegMgr.PushApplicationAsync(appDef, opts.AllowRelatedEntryDelete, ct));
 				}
 
 				if (results.Any(res => res == AppRegistrationManager.PushResult.Error)) {
@@ -115,16 +115,23 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 					.Where(item => item.Certificate.AllowedKeyUsages.HasValue &&
 							item.Certificate.AllowedKeyUsages.Value.HasFlag(KeyUsages.DigitalSignature))
 					.Select(item => createExporterKeyAuth(item.Certificate, generateCertLabel(item.Certificate, item.File))).ToList();
+				definition.SignerCertificates = certificates.Where(item => item.Certificate.AllowedKeyUsages.HasValue &&
+							item.Certificate.AllowedKeyUsages.Value.HasFlag(KeyUsages.KeyCertSign))
+					.Select(item => createSignerCert(item.Certificate, generateCertLabel(item.Certificate, item.File))).ToList();
 				if (!definition.DataRecipients.Any()) {
 					logger.LogWarning("No associated data recipient certificates found for app {app} from definition file '{definitionFile}'.", definition.Name, filename);
 				}
 				if (!definition.AuthorizedExporters.Any()) {
 					logger.LogWarning("No associated authorized exporter certificates found for app {app} from definition file '{definitionFile}'.", definition.Name, filename);
 				}
+				if (!definition.SignerCertificates.Any()) {
+					logger.LogWarning("No associated signer certificates found for app {app} from definition file '{definitionFile}'.", definition.Name, filename);
+				}
 				var unusedCertificates = certificates
 					.Where(item => !item.Certificate.AllowedKeyUsages.HasValue ||
 						(!item.Certificate.AllowedKeyUsages.Value.HasFlag(KeyUsages.KeyEncipherment) &&
-						!item.Certificate.AllowedKeyUsages.Value.HasFlag(KeyUsages.DigitalSignature))).ToList();
+						!item.Certificate.AllowedKeyUsages.Value.HasFlag(KeyUsages.DigitalSignature) &&
+						!item.Certificate.AllowedKeyUsages.Value.HasFlag(KeyUsages.KeyCertSign))).ToList();
 				if (unusedCertificates.Any()) {
 					foreach (var cert in unusedCertificates) {
 						logger.LogWarning("The certificate {subjectDN} with key id {keyid} was not installed because it did have neither " +
@@ -170,6 +177,12 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			using var strWriter = new StringWriter();
 			cert.StoreToPem(strWriter);
 			return new ExporterKeyAuthCertificate(Guid.Empty, cert.PublicKey.CalculateId(), label, strWriter.ToString());
+		}
+
+		private SignerCertificate createSignerCert(Certificate cert, string label) {
+			using var strWriter = new StringWriter();
+			cert.StoreToPem(strWriter);
+			return new SignerCertificate(Guid.Empty, cert.PublicKey.CalculateId(), label, strWriter.ToString());
 		}
 
 		/// <summary>
