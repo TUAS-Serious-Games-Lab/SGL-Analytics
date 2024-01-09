@@ -173,6 +173,9 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			}
 			using var certListReader = new ConcatReader(certReaders);
 			var validator = new CACertTrustValidator(certListReader, string.Join(";", certNames), ignoreValidityPeriod: false, validatorLogger, caCertStoreLogger);
+			if (!validator.TrustedCACertificates.Any()) {
+				return null;
+			}
 			return validator;
 		}
 	}
