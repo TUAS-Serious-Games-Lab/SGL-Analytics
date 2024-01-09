@@ -119,6 +119,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			var changedExporters = commonExporters.Where(pair => pair.Old.Label != pair.New.Label || pair.Old.CertificatePem != pair.New.CertificatePem).ToList();
 			bool changed = false;
 			if (missingExporters.Any()) {
+				changed = true;
 				foreach (var mexp in missingExporters) {
 					logger.LogInformation("Removing data exporter {keyId} (with label \"{label}\") from application {appName} in {apiName}.", mexp.PublicKeyId, mexp.Label, appName, apiName);
 					oldApplication.AuthorizedExporters.Remove(mexp);
@@ -160,6 +161,7 @@ namespace SGL.Analytics.Backend.AppRegistrationTool {
 			var changedSigners = commonSigners.Where(pair => pair.Old.Label != pair.New.Label || pair.Old.CertificatePem != pair.New.CertificatePem).ToList();
 			bool changed = false;
 			if (missingSigners.Any()) {
+				changed = true;
 				foreach (var mexp in missingSigners) {
 					logger.LogInformation("Removing signer {keyId} (with label \"{label}\") from application {appName} in {apiName}.", mexp.PublicKeyId, mexp.Label, appName, apiName);
 					oldApplication.SignerCertificates.Remove(mexp);
