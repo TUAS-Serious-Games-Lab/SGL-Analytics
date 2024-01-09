@@ -40,6 +40,8 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 		public RandomGenerator Random { get; } = new RandomGenerator();
 		public PublicKey SignerPublicKey => signerKeyPair.Public;
 		private KeyPair signerKeyPair;
+		private Certificate signerCertificate;
+		private string signerCertificatePem;
 		public List<Certificate> Certificates = new List<Certificate>();
 		public DistinguishedName SignerIdentity { get; } = new DistinguishedName(new KeyValuePair<string, string>[] { new("o", "SGL"), new("ou", "Utility"), new("ou", "Tests"), new("cn", "Test Signer") });
 
@@ -75,6 +77,11 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			TokenValidator = new JwtTokenValidator(JwtOptions.Issuer, JwtOptions.Audience, JwtOptions.SymmetricKey);
 
 			signerKeyPair = KeyPair.GenerateEllipticCurves(Random, 521);
+			signerCertificate = Certificate.Generate(SignerIdentity, signerKeyPair.Private, SignerIdentity, signerKeyPair.Public, TimeSpan.FromHours(2), Random, 128, keyUsages: KeyUsages.KeyCertSign, caConstraint: (true, null));
+			using (var pemBuff = new StringWriter()) {
+				signerCertificate.StoreToPem(pemBuff);
+				signerCertificatePem = pemBuff.ToString();
+			}
 		}
 
 		private string createCertificatePem(string cn, List<Certificate>? certificateList, out KeyPair keyPair) {
@@ -104,12 +111,14 @@ namespace SGL.Analytics.Backend.Users.Registration.Tests {
 			app.AddRecipient("test recipient 2", createCertificatePem("Test 2", Certificates, out _));
 			app.AddRecipient("test recipient 3", createCertificatePem("Test 3", Certificates, out _));
 			app.AddAuthorizedExporter("test exporter 1", createKeyAuthCertificatePem("Exporter 1", out ExporterKeyPair, out ExporterCertificate));
+			app.AddSignerCertificate($"{SignerIdentity}", signerCertificatePem);
 			context.Applications.Add(app);
 			var app2 = ApplicationWithUserProperties.Create(AppName + "_2", AppApiToken + "_2");
 			app2.AddProperty("Foo", UserPropertyType.String, true);
 			app2.AddProperty("Bar", UserPropertyType.String);
 			app2.AddRecipient("other test recipient 1", createCertificatePem("Other Test 1", null, out _));
 			app2.AddRecipient("other test recipient 2", createCertificatePem("Other Test 2", null, out _));
+			app2.AddSignerCertificate($"{SignerIdentity}", signerCertificatePem);
 			context.Applications.Add(app2);
 
 			var user1 = createUserRegistration(app, out User1Id, out User1Props, "test user 1");
