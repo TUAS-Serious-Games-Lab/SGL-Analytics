@@ -34,13 +34,13 @@
 			lblAuthKeyId = new Label();
 			label6 = new Label();
 			label5 = new Label();
-			lblKeyPassphrase = new TextBox();
+			txtKeyPassphrase = new TextBox();
 			label4 = new Label();
 			btnBrowseKeyFile = new Button();
 			lblKeyFilePath = new Label();
 			label3 = new Label();
 			groupBox3 = new GroupBox();
-			chkUserRegistrations = new CheckBox();
+			chkRekeyUserRegistrations = new CheckBox();
 			chkRekeyLogs = new CheckBox();
 			lstDstCerts = new ListBox();
 			groupBox4 = new GroupBox();
@@ -75,6 +75,7 @@
 			txtAppName.Name = "txtAppName";
 			txtAppName.Size = new Size(701, 23);
 			txtAppName.TabIndex = 3;
+			txtAppName.Leave += onChangeDataRepository;
 			// 
 			// label2
 			// 
@@ -94,6 +95,7 @@
 			cmbBackendSystem.Name = "cmbBackendSystem";
 			cmbBackendSystem.Size = new Size(701, 23);
 			cmbBackendSystem.TabIndex = 1;
+			cmbBackendSystem.SelectedIndexChanged += onChangeDataRepository;
 			// 
 			// label1
 			// 
@@ -111,7 +113,7 @@
 			groupBox2.Controls.Add(lblAuthKeyId);
 			groupBox2.Controls.Add(label6);
 			groupBox2.Controls.Add(label5);
-			groupBox2.Controls.Add(lblKeyPassphrase);
+			groupBox2.Controls.Add(txtKeyPassphrase);
 			groupBox2.Controls.Add(label4);
 			groupBox2.Controls.Add(btnBrowseKeyFile);
 			groupBox2.Controls.Add(lblKeyFilePath);
@@ -157,14 +159,15 @@
 			label5.TabIndex = 5;
 			label5.Text = "Authentication Key Info";
 			// 
-			// lblKeyPassphrase
+			// txtKeyPassphrase
 			// 
-			lblKeyPassphrase.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-			lblKeyPassphrase.Location = new Point(153, 45);
-			lblKeyPassphrase.Name = "lblKeyPassphrase";
-			lblKeyPassphrase.PasswordChar = '*';
-			lblKeyPassphrase.Size = new Size(620, 23);
-			lblKeyPassphrase.TabIndex = 4;
+			txtKeyPassphrase.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			txtKeyPassphrase.Location = new Point(153, 45);
+			txtKeyPassphrase.Name = "txtKeyPassphrase";
+			txtKeyPassphrase.PasswordChar = '*';
+			txtKeyPassphrase.Size = new Size(620, 23);
+			txtKeyPassphrase.TabIndex = 4;
+			txtKeyPassphrase.Validated += updateSrcKeyInfo;
 			// 
 			// label4
 			// 
@@ -184,6 +187,7 @@
 			btnBrowseKeyFile.TabIndex = 2;
 			btnBrowseKeyFile.Text = "Browse";
 			btnBrowseKeyFile.UseVisualStyleBackColor = true;
+			btnBrowseKeyFile.Click += btnBrowseKeyFile_Click;
 			// 
 			// lblKeyFilePath
 			// 
@@ -205,7 +209,7 @@
 			// groupBox3
 			// 
 			groupBox3.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-			groupBox3.Controls.Add(chkUserRegistrations);
+			groupBox3.Controls.Add(chkRekeyUserRegistrations);
 			groupBox3.Controls.Add(chkRekeyLogs);
 			groupBox3.Controls.Add(lstDstCerts);
 			groupBox3.Location = new Point(12, 232);
@@ -215,16 +219,16 @@
 			groupBox3.TabStop = false;
 			groupBox3.Text = "User receiving access";
 			// 
-			// chkUserRegistrations
+			// chkRekeyUserRegistrations
 			// 
-			chkUserRegistrations.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-			chkUserRegistrations.AutoSize = true;
-			chkUserRegistrations.Location = new Point(97, 150);
-			chkUserRegistrations.Name = "chkUserRegistrations";
-			chkUserRegistrations.Size = new Size(154, 19);
-			chkUserRegistrations.TabIndex = 2;
-			chkUserRegistrations.Text = "Rekey User Registrations";
-			chkUserRegistrations.UseVisualStyleBackColor = true;
+			chkRekeyUserRegistrations.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+			chkRekeyUserRegistrations.AutoSize = true;
+			chkRekeyUserRegistrations.Location = new Point(97, 150);
+			chkRekeyUserRegistrations.Name = "chkRekeyUserRegistrations";
+			chkRekeyUserRegistrations.Size = new Size(154, 19);
+			chkRekeyUserRegistrations.TabIndex = 2;
+			chkRekeyUserRegistrations.Text = "Rekey User Registrations";
+			chkRekeyUserRegistrations.UseVisualStyleBackColor = true;
 			// 
 			// chkRekeyLogs
 			// 
@@ -280,6 +284,7 @@
 			btnStart.TabIndex = 2;
 			btnStart.Text = "Start";
 			btnStart.UseVisualStyleBackColor = true;
+			btnStart.Click += btnStart_Click;
 			// 
 			// btnCancel
 			// 
@@ -290,6 +295,7 @@
 			btnCancel.TabIndex = 1;
 			btnCancel.Text = "Cancel";
 			btnCancel.UseVisualStyleBackColor = true;
+			btnCancel.Click += btnCancel_Click;
 			// 
 			// logMessages
 			// 
@@ -350,7 +356,7 @@
 		private Label label3;
 		private Label lblKeyFilePath;
 		private Button btnBrowseKeyFile;
-		private TextBox lblKeyPassphrase;
+		private TextBox txtKeyPassphrase;
 		private Label label4;
 		private Label lblAuthKeyId;
 		private Label label6;
@@ -358,7 +364,7 @@
 		private Label lblDecryptionKeyId;
 		private ListBox lstDstCerts;
 		private Utilities.WinForms.Controls.LogGui.LogMessageList logMessages;
-		private CheckBox chkUserRegistrations;
+		private CheckBox chkRekeyUserRegistrations;
 		private CheckBox chkRekeyLogs;
 		private Button btnCancel;
 		private Button btnStart;
