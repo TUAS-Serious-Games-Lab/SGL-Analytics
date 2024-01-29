@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+	<OutputType>WinExe</OutputType>
+	<EnableWindowsTargeting>true</EnableWindowsTargeting>
+	<TargetFramework>net6.0-windows</TargetFramework>
+	<Nullable>enable</Nullable>
+	<UseWindowsForms>true</UseWindowsForms>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<ApplicationIcon>AppIcon.ico</ApplicationIcon>
+	<AssemblyVersion>0.0.6</AssemblyVersion>
+	<FileVersion>0.0.6</FileVersion>
+	<Version>0.0.6</Version>
+  </PropertyGroup>
+
+</Project>
