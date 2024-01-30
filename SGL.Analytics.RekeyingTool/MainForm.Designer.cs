@@ -27,11 +27,11 @@
 			groupBox1 = new GroupBox();
 			txtAppName = new TextBox();
 			label2 = new Label();
-			cmbBackendSystem = new ComboBox();
+			cmbBackends = new ComboBox();
 			label1 = new Label();
 			groupBox2 = new GroupBox();
-			lblDecryptionKeyId = new Label();
-			lblAuthKeyId = new Label();
+			lblDecryptionKeyInfo = new Label();
+			lblAuthKeyInfo = new Label();
 			label6 = new Label();
 			label5 = new Label();
 			txtKeyPassphrase = new TextBox();
@@ -48,6 +48,7 @@
 			btnStart = new Button();
 			btnCancel = new Button();
 			logMessages = new Utilities.WinForms.Controls.LogGui.LogMessageList();
+			browseKeyFileDialog = new OpenFileDialog();
 			groupBox1.SuspendLayout();
 			groupBox2.SuspendLayout();
 			groupBox3.SuspendLayout();
@@ -59,7 +60,7 @@
 			groupBox1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 			groupBox1.Controls.Add(txtAppName);
 			groupBox1.Controls.Add(label2);
-			groupBox1.Controls.Add(cmbBackendSystem);
+			groupBox1.Controls.Add(cmbBackends);
 			groupBox1.Controls.Add(label1);
 			groupBox1.Location = new Point(12, 8);
 			groupBox1.Name = "groupBox1";
@@ -75,7 +76,7 @@
 			txtAppName.Name = "txtAppName";
 			txtAppName.Size = new Size(701, 23);
 			txtAppName.TabIndex = 3;
-			txtAppName.Leave += onChangeDataRepository;
+			txtAppName.Leave += txtAppName_Leave;
 			// 
 			// label2
 			// 
@@ -86,16 +87,16 @@
 			label2.TabIndex = 2;
 			label2.Text = "Application Name";
 			// 
-			// cmbBackendSystem
+			// cmbBackends
 			// 
-			cmbBackendSystem.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-			cmbBackendSystem.DropDownStyle = ComboBoxStyle.DropDownList;
-			cmbBackendSystem.FormattingEnabled = true;
-			cmbBackendSystem.Location = new Point(153, 16);
-			cmbBackendSystem.Name = "cmbBackendSystem";
-			cmbBackendSystem.Size = new Size(701, 23);
-			cmbBackendSystem.TabIndex = 1;
-			cmbBackendSystem.SelectedIndexChanged += onChangeDataRepository;
+			cmbBackends.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			cmbBackends.DropDownStyle = ComboBoxStyle.DropDownList;
+			cmbBackends.FormattingEnabled = true;
+			cmbBackends.Location = new Point(153, 16);
+			cmbBackends.Name = "cmbBackends";
+			cmbBackends.Size = new Size(701, 23);
+			cmbBackends.TabIndex = 1;
+			cmbBackends.SelectedValueChanged += cmbBackends_SelectedValueChangedAsync;
 			// 
 			// label1
 			// 
@@ -109,8 +110,8 @@
 			// groupBox2
 			// 
 			groupBox2.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-			groupBox2.Controls.Add(lblDecryptionKeyId);
-			groupBox2.Controls.Add(lblAuthKeyId);
+			groupBox2.Controls.Add(lblDecryptionKeyInfo);
+			groupBox2.Controls.Add(lblAuthKeyInfo);
 			groupBox2.Controls.Add(label6);
 			groupBox2.Controls.Add(label5);
 			groupBox2.Controls.Add(txtKeyPassphrase);
@@ -120,31 +121,31 @@
 			groupBox2.Controls.Add(label3);
 			groupBox2.Location = new Point(12, 91);
 			groupBox2.Name = "groupBox2";
-			groupBox2.Size = new Size(860, 135);
+			groupBox2.Size = new Size(860, 162);
 			groupBox2.TabIndex = 1;
 			groupBox2.TabStop = false;
 			groupBox2.Text = "User giving access";
 			// 
-			// lblDecryptionKeyId
+			// lblDecryptionKeyInfo
 			// 
-			lblDecryptionKeyId.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-			lblDecryptionKeyId.Location = new Point(153, 102);
-			lblDecryptionKeyId.Name = "lblDecryptionKeyId";
-			lblDecryptionKeyId.Size = new Size(620, 23);
-			lblDecryptionKeyId.TabIndex = 8;
+			lblDecryptionKeyInfo.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			lblDecryptionKeyInfo.Location = new Point(153, 114);
+			lblDecryptionKeyInfo.Name = "lblDecryptionKeyInfo";
+			lblDecryptionKeyInfo.Size = new Size(620, 40);
+			lblDecryptionKeyInfo.TabIndex = 8;
 			// 
-			// lblAuthKeyId
+			// lblAuthKeyInfo
 			// 
-			lblAuthKeyId.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-			lblAuthKeyId.Location = new Point(153, 74);
-			lblAuthKeyId.Name = "lblAuthKeyId";
-			lblAuthKeyId.Size = new Size(620, 23);
-			lblAuthKeyId.TabIndex = 7;
+			lblAuthKeyInfo.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			lblAuthKeyInfo.Location = new Point(153, 74);
+			lblAuthKeyInfo.Name = "lblAuthKeyInfo";
+			lblAuthKeyInfo.Size = new Size(620, 40);
+			lblAuthKeyInfo.TabIndex = 7;
 			// 
 			// label6
 			// 
 			label6.AutoSize = true;
-			label6.Location = new Point(6, 102);
+			label6.Location = new Point(6, 114);
 			label6.Name = "label6";
 			label6.Size = new Size(111, 15);
 			label6.TabIndex = 6;
@@ -167,7 +168,7 @@
 			txtKeyPassphrase.PasswordChar = '*';
 			txtKeyPassphrase.Size = new Size(620, 23);
 			txtKeyPassphrase.TabIndex = 4;
-			txtKeyPassphrase.Validated += updateSrcKeyInfo;
+			txtKeyPassphrase.Leave += updateSrcKeyInfo;
 			// 
 			// label4
 			// 
@@ -212,7 +213,7 @@
 			groupBox3.Controls.Add(chkRekeyUserRegistrations);
 			groupBox3.Controls.Add(chkRekeyLogs);
 			groupBox3.Controls.Add(lstDstCerts);
-			groupBox3.Location = new Point(12, 232);
+			groupBox3.Location = new Point(12, 259);
 			groupBox3.Name = "groupBox3";
 			groupBox3.Size = new Size(860, 175);
 			groupBox3.TabIndex = 2;
@@ -259,9 +260,9 @@
 			groupBox4.Controls.Add(btnStart);
 			groupBox4.Controls.Add(btnCancel);
 			groupBox4.Controls.Add(logMessages);
-			groupBox4.Location = new Point(12, 413);
+			groupBox4.Location = new Point(12, 440);
 			groupBox4.Name = "groupBox4";
-			groupBox4.Size = new Size(860, 142);
+			groupBox4.Size = new Size(860, 150);
 			groupBox4.TabIndex = 3;
 			groupBox4.TabStop = false;
 			groupBox4.Text = "Log and progress";
@@ -269,7 +270,7 @@
 			// progActivity
 			// 
 			progActivity.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-			progActivity.Location = new Point(6, 113);
+			progActivity.Location = new Point(6, 121);
 			progActivity.Name = "progActivity";
 			progActivity.Size = new Size(686, 23);
 			progActivity.Style = ProgressBarStyle.Marquee;
@@ -278,7 +279,7 @@
 			// btnStart
 			// 
 			btnStart.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-			btnStart.Location = new Point(698, 113);
+			btnStart.Location = new Point(698, 121);
 			btnStart.Name = "btnStart";
 			btnStart.Size = new Size(75, 23);
 			btnStart.TabIndex = 2;
@@ -289,7 +290,7 @@
 			// btnCancel
 			// 
 			btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-			btnCancel.Location = new Point(779, 113);
+			btnCancel.Location = new Point(779, 121);
 			btnCancel.Name = "btnCancel";
 			btnCancel.Size = new Size(75, 23);
 			btnCancel.TabIndex = 1;
@@ -313,18 +314,22 @@
 			logMessages.Name = "logMessages";
 			logMessages.SelectedItemBackground = SystemColors.Highlight;
 			logMessages.SelectedItemForeground = SystemColors.HighlightText;
-			logMessages.Size = new Size(847, 91);
+			logMessages.Size = new Size(847, 99);
 			logMessages.TabIndex = 0;
 			logMessages.TraceItemBackground = Color.White;
 			logMessages.TraceItemForeground = Color.Gray;
 			logMessages.WarningItemBackground = Color.Yellow;
 			logMessages.WarningItemForeground = Color.Black;
 			// 
+			// browseKeyFileDialog
+			// 
+			browseKeyFileDialog.Filter = "Key Files|*.key";
+			// 
 			// MainForm
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new Size(884, 561);
+			ClientSize = new Size(884, 596);
 			Controls.Add(groupBox4);
 			Controls.Add(groupBox3);
 			Controls.Add(groupBox2);
@@ -350,7 +355,7 @@
 		private GroupBox groupBox3;
 		private GroupBox groupBox4;
 		private Label label1;
-		private ComboBox cmbBackendSystem;
+		private ComboBox cmbBackends;
 		private TextBox txtAppName;
 		private Label label2;
 		private Label label3;
@@ -358,10 +363,10 @@
 		private Button btnBrowseKeyFile;
 		private TextBox txtKeyPassphrase;
 		private Label label4;
-		private Label lblAuthKeyId;
+		private Label lblAuthKeyInfo;
 		private Label label6;
 		private Label label5;
-		private Label lblDecryptionKeyId;
+		private Label lblDecryptionKeyInfo;
 		private ListBox lstDstCerts;
 		private Utilities.WinForms.Controls.LogGui.LogMessageList logMessages;
 		private CheckBox chkRekeyUserRegistrations;
@@ -369,5 +374,6 @@
 		private Button btnCancel;
 		private Button btnStart;
 		private ProgressBar progActivity;
+		private OpenFileDialog browseKeyFileDialog;
 	}
 }

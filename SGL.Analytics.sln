@@ -148,7 +148,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.KeyTool", "SG
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Users.TestUpstreamBackend", "SGL.Analytics.Backend.Users.TestUpstreamBackend\SGL.Analytics.Backend.Users.TestUpstreamBackend.csproj", "{0FCFCB5F-E5C2-483E-86C1-117B8DAF833C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SGL.Analytics.RekeyingTool", "SGL.Analytics.RekeyingTool\SGL.Analytics.RekeyingTool.csproj", "{16BE61FE-ADCB-476F-BA1C-1A310ABF2A9C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.RekeyingTool", "SGL.Analytics.RekeyingTool\SGL.Analytics.RekeyingTool.csproj", "{16BE61FE-ADCB-476F-BA1C-1A310ABF2A9C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{215F35B0-D32C-4121-A56F-762EB7FB97C3} = {215F35B0-D32C-4121-A56F-762EB7FB97C3}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
