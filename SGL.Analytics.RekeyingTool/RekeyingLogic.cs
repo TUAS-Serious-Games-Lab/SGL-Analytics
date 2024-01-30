@@ -12,8 +12,11 @@ namespace SGL.Analytics.RekeyingTool {
 	public class RekeyingLogic : IAsyncDisposable {
 		private HttpClient httpClient;
 		private SglAnalyticsExporter sglAnalytics;
+		private CACertTrustValidator dstCertValidator;
+		private readonly ILoggerFactory loggerFactory;
 
 		public RekeyingLogic(ILoggerFactory loggerFactory) {
+			this.loggerFactory = loggerFactory;
 			httpClient = new HttpClient();
 			sglAnalytics = new SglAnalyticsExporter(httpClient, config => {
 				config.UseLoggerFactory(args => loggerFactory, dispose: false);
@@ -40,6 +43,15 @@ namespace SGL.Analytics.RekeyingTool {
 		public async ValueTask DisposeAsync() {
 			await sglAnalytics.DisposeAsync();
 			httpClient.Dispose();
+		}
+		public async Task LoadSignerCertificateAsync(string path, bool ignoreValidityPeriod, CancellationToken ct = default) {
+			using var pemBuffer = new MemoryStream();
+			using (var fileStream = File.OpenRead(path)) {
+				await fileStream.CopyToAsync(pemBuffer, ct);
+			}
+			using var pemReader = new StreamReader(pemBuffer);
+			dstCertValidator = new CACertTrustValidator(pemReader, path, ignoreValidityPeriod,
+				loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
 		}
 	}
 }

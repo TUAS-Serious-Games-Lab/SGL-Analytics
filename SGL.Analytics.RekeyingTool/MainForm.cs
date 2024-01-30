@@ -252,5 +252,30 @@ namespace SGL.Analytics.RekeyingTool {
 				}
 			}
 		}
+
+		private async void btnBrowseSignerCert_Click(object sender, EventArgs e) {
+			if (browseSignerCertFileDialog.ShowDialog() == DialogResult.OK) {
+				lblSignerCertPath.Text = browseSignerCertFileDialog.FileName;
+				if (!string.IsNullOrWhiteSpace(txtAppName.Text) &&
+					!string.IsNullOrWhiteSpace(browseKeyFileDialog.FileName) &&
+					!string.IsNullOrWhiteSpace(txtKeyPassphrase.Text)) {
+					try {
+						using var cts = new CancellationTokenSource();
+						ctsActivity = cts;
+						var ct = cts.Token;
+						setUiStateForActivity(true);
+						await logic.LoadSignerCertificateAsync(lblSignerCertPath.Text, settings.IgnoreSignerValidityPeriod, ct);
+						await updateDstCertList(ct);
+					}
+					catch (OperationCanceledException) { }
+					catch (Exception ex) {
+						logger.LogError(ex, "Error while updating signer certificate: {msg}", ex.Message);
+					}
+					finally {
+						setUiStateForActivity(false);
+					}
+				}
+			}
+		}
 	}
 }

@@ -8,5 +8,6 @@ namespace SGL.Analytics.RekeyingTool {
 	public class RekeyToolSettings {
 		public Dictionary<string, Uri> Backends { get; set; } = new Dictionary<string, Uri>();
 		public string AppName { get; set; } = "CarlsWortspiele";
+		public bool IgnoreSignerValidityPeriod { get; set; } = false;
 	}
 }

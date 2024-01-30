@@ -40,6 +40,9 @@
 			lblKeyFilePath = new Label();
 			label3 = new Label();
 			groupBox3 = new GroupBox();
+			btnBrowseSignerCert = new Button();
+			lblSignerCertPath = new Label();
+			label7 = new Label();
 			chkRekeyUserRegistrations = new CheckBox();
 			chkRekeyLogs = new CheckBox();
 			lstDstCerts = new ListBox();
@@ -49,6 +52,7 @@
 			btnCancel = new Button();
 			logMessages = new Utilities.WinForms.Controls.LogGui.LogMessageList();
 			browseKeyFileDialog = new OpenFileDialog();
+			browseSignerCertFileDialog = new OpenFileDialog();
 			groupBox1.SuspendLayout();
 			groupBox2.SuspendLayout();
 			groupBox3.SuspendLayout();
@@ -210,21 +214,52 @@
 			// groupBox3
 			// 
 			groupBox3.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			groupBox3.Controls.Add(btnBrowseSignerCert);
+			groupBox3.Controls.Add(lblSignerCertPath);
+			groupBox3.Controls.Add(label7);
 			groupBox3.Controls.Add(chkRekeyUserRegistrations);
 			groupBox3.Controls.Add(chkRekeyLogs);
 			groupBox3.Controls.Add(lstDstCerts);
 			groupBox3.Location = new Point(12, 259);
 			groupBox3.Name = "groupBox3";
-			groupBox3.Size = new Size(860, 175);
+			groupBox3.Size = new Size(860, 191);
 			groupBox3.TabIndex = 2;
 			groupBox3.TabStop = false;
 			groupBox3.Text = "User receiving access";
+			// 
+			// btnBrowseSignerCert
+			// 
+			btnBrowseSignerCert.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			btnBrowseSignerCert.Location = new Point(779, 19);
+			btnBrowseSignerCert.Name = "btnBrowseSignerCert";
+			btnBrowseSignerCert.Size = new Size(75, 23);
+			btnBrowseSignerCert.TabIndex = 5;
+			btnBrowseSignerCert.Text = "Browse";
+			btnBrowseSignerCert.UseVisualStyleBackColor = true;
+			btnBrowseSignerCert.Click += btnBrowseSignerCert_Click;
+			// 
+			// lblSignerCertPath
+			// 
+			lblSignerCertPath.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			lblSignerCertPath.Location = new Point(183, 19);
+			lblSignerCertPath.Name = "lblSignerCertPath";
+			lblSignerCertPath.Size = new Size(590, 23);
+			lblSignerCertPath.TabIndex = 4;
+			// 
+			// label7
+			// 
+			label7.AutoSize = true;
+			label7.Location = new Point(7, 19);
+			label7.Name = "label7";
+			label7.Size = new Size(170, 15);
+			label7.TabIndex = 3;
+			label7.Text = "Signer Certificate for Validation";
 			// 
 			// chkRekeyUserRegistrations
 			// 
 			chkRekeyUserRegistrations.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 			chkRekeyUserRegistrations.AutoSize = true;
-			chkRekeyUserRegistrations.Location = new Point(97, 150);
+			chkRekeyUserRegistrations.Location = new Point(97, 166);
 			chkRekeyUserRegistrations.Name = "chkRekeyUserRegistrations";
 			chkRekeyUserRegistrations.Size = new Size(154, 19);
 			chkRekeyUserRegistrations.TabIndex = 2;
@@ -235,7 +270,7 @@
 			// 
 			chkRekeyLogs.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 			chkRekeyLogs.AutoSize = true;
-			chkRekeyLogs.Location = new Point(6, 150);
+			chkRekeyLogs.Location = new Point(6, 166);
 			chkRekeyLogs.Name = "chkRekeyLogs";
 			chkRekeyLogs.Size = new Size(85, 19);
 			chkRekeyLogs.TabIndex = 1;
@@ -248,9 +283,9 @@
 			lstDstCerts.FormattingEnabled = true;
 			lstDstCerts.IntegralHeight = false;
 			lstDstCerts.ItemHeight = 15;
-			lstDstCerts.Location = new Point(7, 22);
+			lstDstCerts.Location = new Point(7, 45);
 			lstDstCerts.Name = "lstDstCerts";
-			lstDstCerts.Size = new Size(847, 122);
+			lstDstCerts.Size = new Size(847, 115);
 			lstDstCerts.TabIndex = 0;
 			// 
 			// groupBox4
@@ -260,9 +295,9 @@
 			groupBox4.Controls.Add(btnStart);
 			groupBox4.Controls.Add(btnCancel);
 			groupBox4.Controls.Add(logMessages);
-			groupBox4.Location = new Point(12, 440);
+			groupBox4.Location = new Point(12, 456);
 			groupBox4.Name = "groupBox4";
-			groupBox4.Size = new Size(860, 150);
+			groupBox4.Size = new Size(860, 134);
 			groupBox4.TabIndex = 3;
 			groupBox4.TabStop = false;
 			groupBox4.Text = "Log and progress";
@@ -270,7 +305,7 @@
 			// progActivity
 			// 
 			progActivity.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-			progActivity.Location = new Point(6, 121);
+			progActivity.Location = new Point(6, 105);
 			progActivity.Name = "progActivity";
 			progActivity.Size = new Size(686, 23);
 			progActivity.Style = ProgressBarStyle.Marquee;
@@ -279,7 +314,7 @@
 			// btnStart
 			// 
 			btnStart.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-			btnStart.Location = new Point(698, 121);
+			btnStart.Location = new Point(698, 105);
 			btnStart.Name = "btnStart";
 			btnStart.Size = new Size(75, 23);
 			btnStart.TabIndex = 2;
@@ -290,7 +325,7 @@
 			// btnCancel
 			// 
 			btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-			btnCancel.Location = new Point(779, 121);
+			btnCancel.Location = new Point(779, 105);
 			btnCancel.Name = "btnCancel";
 			btnCancel.Size = new Size(75, 23);
 			btnCancel.TabIndex = 1;
@@ -314,7 +349,7 @@
 			logMessages.Name = "logMessages";
 			logMessages.SelectedItemBackground = SystemColors.Highlight;
 			logMessages.SelectedItemForeground = SystemColors.HighlightText;
-			logMessages.Size = new Size(847, 99);
+			logMessages.Size = new Size(847, 83);
 			logMessages.TabIndex = 0;
 			logMessages.TraceItemBackground = Color.White;
 			logMessages.TraceItemForeground = Color.Gray;
@@ -324,6 +359,10 @@
 			// browseKeyFileDialog
 			// 
 			browseKeyFileDialog.Filter = "Key Files|*.key";
+			// 
+			// browseSignerCertFileDialog
+			// 
+			browseSignerCertFileDialog.Filter = "Certificate Files|*.cert;*.pem";
 			// 
 			// MainForm
 			// 
@@ -375,5 +414,9 @@
 		private Button btnStart;
 		private ProgressBar progActivity;
 		private OpenFileDialog browseKeyFileDialog;
+		private Button btnBrowseSignerCert;
+		private Label lblSignerCertPath;
+		private Label label7;
+		private OpenFileDialog browseSignerCertFileDialog;
 	}
 }
