@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using SGL.Analytics.ExporterClient;
+using SGL.Utilities.Crypto.Certificates;
 using SGL.Utilities.WinForms.Controls.LogGui;
 using System;
 using System.Collections.Generic;
@@ -127,6 +128,17 @@ namespace SGL.Analytics.RekeyingTool {
 		}
 
 		private async Task updateDstCertList(CancellationToken ct) {
+			var prevSelectedItem = lstDstCerts.SelectedItem as Certificate;
+			CertificateStore certs = await logic.LoadLogRecipientCertsAsync(ct);
+			lstDstCerts.Items.Clear();
+			lstDstCerts.Items.AddRange(certs.ListKnownCertificates().ToArray());
+			if (prevSelectedItem != null) {
+				var keyId = prevSelectedItem.PublicKey.CalculateId();
+				var index = lstDstCerts.Items.Cast<Certificate>().ToList().FindIndex(cert => cert.PublicKey.CalculateId() == keyId);
+				if (index >= 0) {
+					lstDstCerts.SelectedIndex = index;
+				}
+			}
 		}
 
 		private void btnCancel_Click(object sender, EventArgs e) {
@@ -299,6 +311,16 @@ namespace SGL.Analytics.RekeyingTool {
 				updatingDstCertList = false;
 				ctsActivity = null;
 				setUiStateForActivity(false);
+			}
+		}
+
+		private void lstDstCerts_Format(object sender, ListControlConvertEventArgs e) {
+			var cert = e.ListItem as Certificate;
+			if (cert != null) {
+				e.Value = $"{cert.PublicKey.CalculateId()} {cert.SubjectDN}";
+			}
+			else {
+				e.Value = "[error: unexpected type]";
 			}
 		}
 	}

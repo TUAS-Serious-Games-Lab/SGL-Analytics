@@ -54,5 +54,14 @@ namespace SGL.Analytics.RekeyingTool {
 			dstCertValidator = new CACertTrustValidator(pemReader, path, ignoreValidityPeriod,
 				loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
 		}
+
+		public async Task<CertificateStore> LoadLogRecipientCertsAsync(CancellationToken ct) {
+			if (dstCertValidator == null) {
+				throw new InvalidOperationException("No signer certificate for validation.");
+			}
+			var certStore = new CertificateStore(dstCertValidator, loggerFactory.CreateLogger<CertificateStore>());
+			await sglAnalytics.LoadLogFileRecipientCertificatesAsync(certStore, ct);
+			return certStore;
+		}
 	}
 }

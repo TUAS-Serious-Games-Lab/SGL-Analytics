@@ -230,7 +230,7 @@
 			// radRekeyUserRegistrations
 			// 
 			radRekeyUserRegistrations.AutoSize = true;
-			radRekeyUserRegistrations.Location = new Point(118, 165);
+			radRekeyUserRegistrations.Location = new Point(118, 166);
 			radRekeyUserRegistrations.Name = "radRekeyUserRegistrations";
 			radRekeyUserRegistrations.Size = new Size(153, 19);
 			radRekeyUserRegistrations.TabIndex = 7;
@@ -289,6 +289,7 @@
 			lstDstCerts.Name = "lstDstCerts";
 			lstDstCerts.Size = new Size(847, 115);
 			lstDstCerts.TabIndex = 0;
+			lstDstCerts.Format += lstDstCerts_Format;
 			// 
 			// groupBox4
 			// 
