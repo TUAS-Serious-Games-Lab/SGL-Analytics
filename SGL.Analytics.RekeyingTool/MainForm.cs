@@ -103,6 +103,7 @@ namespace SGL.Analytics.RekeyingTool {
 			txtAppName.Enabled = !active;
 			btnBrowseKeyFile.Enabled = !active;
 			txtKeyPassphrase.Enabled = !active;
+			btnBrowseSignerCert.Enabled = !active;
 			lstDstCerts.Enabled = !active;
 			radRekeyLogs.Enabled = !active;
 			radRekeyUserRegistrations.Enabled = !active;
