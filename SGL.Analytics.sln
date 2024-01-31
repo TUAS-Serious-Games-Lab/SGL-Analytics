@@ -148,6 +148,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.KeyTool", "SG
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.Backend.Users.TestUpstreamBackend", "SGL.Analytics.Backend.Users.TestUpstreamBackend\SGL.Analytics.Backend.Users.TestUpstreamBackend.csproj", "{0FCFCB5F-E5C2-483E-86C1-117B8DAF833C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SGL.Analytics.RekeyingTool", "SGL.Analytics.RekeyingTool\SGL.Analytics.RekeyingTool.csproj", "{16BE61FE-ADCB-476F-BA1C-1A310ABF2A9C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{215F35B0-D32C-4121-A56F-762EB7FB97C3} = {215F35B0-D32C-4121-A56F-762EB7FB97C3}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -262,6 +267,10 @@ Global
 		{0FCFCB5F-E5C2-483E-86C1-117B8DAF833C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0FCFCB5F-E5C2-483E-86C1-117B8DAF833C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0FCFCB5F-E5C2-483E-86C1-117B8DAF833C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16BE61FE-ADCB-476F-BA1C-1A310ABF2A9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16BE61FE-ADCB-476F-BA1C-1A310ABF2A9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16BE61FE-ADCB-476F-BA1C-1A310ABF2A9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16BE61FE-ADCB-476F-BA1C-1A310ABF2A9C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -303,6 +312,7 @@ Global
 		{4AB84E28-972B-4A78-A2CF-3AE60912480C} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
 		{470CABA9-AE3C-4225-AF9A-9619EC5A3541} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
 		{0FCFCB5F-E5C2-483E-86C1-117B8DAF833C} = {ACAEC860-19A2-4FFA-B958-F16A7532F38C}
+		{16BE61FE-ADCB-476F-BA1C-1A310ABF2A9C} = {C3D88173-D9D7-48A6-A053-0A56FC059808}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9107486E-74EF-450A-956B-BF17C61467C5}

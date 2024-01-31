@@ -369,6 +369,18 @@ namespace SGL.Analytics.ExporterClient {
 			}
 		}
 
+		public async Task LoadLogFileRecipientCertificatesAsync(CertificateStore certificateStore, CancellationToken ct = default) {
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			var logClient = perAppState.LogExporterApiClient;
+			await logClient.GetRecipientCertificates(perAppState.AppName, certificateStore, ct);
+		}
+
+		public async Task LoadUserRegistrationRecipientCertificatesAsync(CertificateStore certificateStore, CancellationToken ct = default) {
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			var logClient = perAppState.UserExporterApiClient;
+			await logClient.GetRecipientCertificates(perAppState.AppName, certificateStore, ct);
+		}
+
 		/// <summary>
 		/// Asynchronously rekeys the log files in the current application to grant access to the user identified by <paramref name="keyIdToGrantAccessTo"/>.
 		/// The actual public key of the grantee is obtained from the backend that provides certificates which are validated using <paramref name="keyCertValidator"/>.
@@ -409,8 +421,13 @@ namespace SGL.Analytics.ExporterClient {
 						var decryptedKey = keyDecryptor.DecryptKey(logFileInfo.Value);
 						if (decryptedKey == null) {
 							logger.LogWarning("Couldn't decrypt data key for log file {fileId} for rekeying operation.", logFileInfo.Key);
-							logger.LogTrace("File uses encryption mode {mode} and the server returned the following keys:\n{keys}", logFileInfo.Value.DataMode,
-								string.Join("; ", logFileInfo.Value.DataKeys.Select(dk => $"{dk.Key} => {dk.Value}")));
+							if (logFileInfo.Value.DataKeys.Any()) {
+								logger.LogTrace("File uses encryption mode {mode} and the server returned the following keys:\n{keys}", logFileInfo.Value.DataMode,
+									string.Join("; ", logFileInfo.Value.DataKeys.Select(dk => $"{dk.Key} => Mode={dk.Value.Mode},EncKey={Convert.ToHexString(dk.Value.EncryptedKey)}")));
+							}
+							else {
+								logger.LogTrace("File uses encryption mode {mode} and the server returned no encrypted data keys.", logFileInfo.Value.DataMode);
+							}
 							return (LogId: logFileInfo.Key, DataKeyInfo: null);
 						}
 						var (recipientKeys, sharedMsgPubKey) = keyEncryptor.EncryptDataKey(decryptedKey);
