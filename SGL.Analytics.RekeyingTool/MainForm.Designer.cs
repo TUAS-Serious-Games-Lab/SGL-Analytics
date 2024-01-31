@@ -371,6 +371,7 @@
 			logMessages.TraceItemForeground = Color.Gray;
 			logMessages.WarningItemBackground = Color.Yellow;
 			logMessages.WarningItemForeground = Color.Black;
+			logMessages.ItemDoubleClicked += logMessages_ItemDoubleClicked;
 			// 
 			// browseKeyFileDialog
 			// 

@@ -353,5 +353,18 @@ namespace SGL.Analytics.RekeyingTool {
 		private void btnClearLog_Click(object sender, EventArgs e) {
 			logMessages.ClearItems();
 		}
+
+		private void logMessages_ItemDoubleClicked(object sender, SGL.Utilities.WinForms.Controls.LogGui.LogMessageList.ItemDoubleClickedEventArgs e) {
+			var sb = new StringBuilder();
+			sb.AppendLine($"{e.Item.Time} {e.Item.LogLevel} {e.Item.CategoryName}:");
+			sb.AppendLine(e.Item.FormattedMessage);
+			if (e.Item.FormattedSopes.Count > 0) {
+				sb.AppendLine(string.Join(", ", e.Item.FormattedSopes));
+			}
+			if (e.Item.Exception != null) {
+				sb.AppendLine(e.Item.Exception.ToString());
+			}
+			Clipboard.SetText(sb.ToString());
+		}
 	}
 }
