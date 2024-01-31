@@ -369,6 +369,18 @@ namespace SGL.Analytics.ExporterClient {
 			}
 		}
 
+		public async Task LoadLogFileRecipientCertificatesAsync(CertificateStore certificateStore, CancellationToken ct = default) {
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			var logClient = perAppState.LogExporterApiClient;
+			await logClient.GetRecipientCertificates(perAppState.AppName, certificateStore, ct);
+		}
+
+		public async Task LoadUserRegistrationRecipientCertificatesAsync(CertificateStore certificateStore, CancellationToken ct = default) {
+			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
+			var logClient = perAppState.UserExporterApiClient;
+			await logClient.GetRecipientCertificates(perAppState.AppName, certificateStore, ct);
+		}
+
 		/// <summary>
 		/// Asynchronously rekeys the log files in the current application to grant access to the user identified by <paramref name="keyIdToGrantAccessTo"/>.
 		/// The actual public key of the grantee is obtained from the backend that provides certificates which are validated using <paramref name="keyCertValidator"/>.
