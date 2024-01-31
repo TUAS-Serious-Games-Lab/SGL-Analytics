@@ -102,7 +102,7 @@ namespace SGL.Analytics.Backend.Users.Application.Services {
 			}
 			var keyCertEntry = app.AuthorizedExporters.SingleOrDefault(ekac => ekac.PublicKeyId == state.RequestData.KeyId);
 			if (keyCertEntry == null) {
-				logger.LogError("Challend {id} was opened with a key id {keyId} for which there is no exporter certificate registered in the app {appName}.", signatureDto.ChallengeId, state.RequestData.KeyId, state.RequestData.AppName);
+				logger.LogError("Challenge {id} was opened with a key id {keyId} for which there is no exporter certificate registered in the app {appName}.", signatureDto.ChallengeId, state.RequestData.KeyId, state.RequestData.AppName);
 				throw new NoCertificateForKeyIdException(state.RequestData.KeyId, "Could'n find an exporter certificate for the key id.");
 			}
 			var keyCert = keyCertEntry.Certificate;
