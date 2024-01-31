@@ -49,6 +49,7 @@ namespace SGL.Analytics.RekeyingTool {
 			using (var fileStream = File.OpenRead(path)) {
 				await fileStream.CopyToAsync(pemBuffer, ct);
 			}
+			pemBuffer.Position = 0;
 			using var pemReader = new StreamReader(pemBuffer);
 			dstCertValidator = new CACertTrustValidator(pemReader, path, ignoreValidityPeriod,
 				loggerFactory.CreateLogger<CACertTrustValidator>(), loggerFactory.CreateLogger<CertificateStore>());
