@@ -47,6 +47,7 @@
 			label7 = new Label();
 			lstDstCerts = new ListBox();
 			groupBox4 = new GroupBox();
+			btnClearLog = new Button();
 			progActivity = new ProgressBar();
 			btnStart = new Button();
 			btnCancel = new Button();
@@ -294,6 +295,7 @@
 			// groupBox4
 			// 
 			groupBox4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			groupBox4.Controls.Add(btnClearLog);
 			groupBox4.Controls.Add(progActivity);
 			groupBox4.Controls.Add(btnStart);
 			groupBox4.Controls.Add(btnCancel);
@@ -305,12 +307,23 @@
 			groupBox4.TabStop = false;
 			groupBox4.Text = "Log and progress";
 			// 
+			// btnClearLog
+			// 
+			btnClearLog.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+			btnClearLog.Location = new Point(6, 105);
+			btnClearLog.Name = "btnClearLog";
+			btnClearLog.Size = new Size(75, 23);
+			btnClearLog.TabIndex = 4;
+			btnClearLog.Text = "Clear";
+			btnClearLog.UseVisualStyleBackColor = true;
+			btnClearLog.Click += btnClearLog_Click;
+			// 
 			// progActivity
 			// 
 			progActivity.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-			progActivity.Location = new Point(6, 105);
+			progActivity.Location = new Point(87, 105);
 			progActivity.Name = "progActivity";
-			progActivity.Size = new Size(686, 23);
+			progActivity.Size = new Size(605, 23);
 			progActivity.Style = ProgressBarStyle.Marquee;
 			progActivity.TabIndex = 3;
 			// 
@@ -421,5 +434,6 @@
 		private OpenFileDialog browseSignerCertFileDialog;
 		private RadioButton radRekeyUserRegistrations;
 		private RadioButton radRekeyLogs;
+		private Button btnClearLog;
 	}
 }

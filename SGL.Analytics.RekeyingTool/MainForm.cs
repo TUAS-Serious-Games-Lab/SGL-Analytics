@@ -324,5 +324,9 @@ namespace SGL.Analytics.RekeyingTool {
 				e.Value = "[error: unexpected type]";
 			}
 		}
+
+		private void btnClearLog_Click(object sender, EventArgs e) {
+			logMessages.ClearItems();
+		}
 	}
 }
