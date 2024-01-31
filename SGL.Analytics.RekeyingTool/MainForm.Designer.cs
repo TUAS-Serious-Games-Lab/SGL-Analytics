@@ -40,11 +40,11 @@
 			lblKeyFilePath = new Label();
 			label3 = new Label();
 			groupBox3 = new GroupBox();
+			radRekeyUserRegistrations = new RadioButton();
+			radRekeyLogs = new RadioButton();
 			btnBrowseSignerCert = new Button();
 			lblSignerCertPath = new Label();
 			label7 = new Label();
-			chkRekeyUserRegistrations = new CheckBox();
-			chkRekeyLogs = new CheckBox();
 			lstDstCerts = new ListBox();
 			groupBox4 = new GroupBox();
 			progActivity = new ProgressBar();
@@ -214,11 +214,11 @@
 			// groupBox3
 			// 
 			groupBox3.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			groupBox3.Controls.Add(radRekeyUserRegistrations);
+			groupBox3.Controls.Add(radRekeyLogs);
 			groupBox3.Controls.Add(btnBrowseSignerCert);
 			groupBox3.Controls.Add(lblSignerCertPath);
 			groupBox3.Controls.Add(label7);
-			groupBox3.Controls.Add(chkRekeyUserRegistrations);
-			groupBox3.Controls.Add(chkRekeyLogs);
 			groupBox3.Controls.Add(lstDstCerts);
 			groupBox3.Location = new Point(12, 259);
 			groupBox3.Name = "groupBox3";
@@ -226,6 +226,30 @@
 			groupBox3.TabIndex = 2;
 			groupBox3.TabStop = false;
 			groupBox3.Text = "User receiving access";
+			// 
+			// radRekeyUserRegistrations
+			// 
+			radRekeyUserRegistrations.AutoSize = true;
+			radRekeyUserRegistrations.Location = new Point(118, 165);
+			radRekeyUserRegistrations.Name = "radRekeyUserRegistrations";
+			radRekeyUserRegistrations.Size = new Size(153, 19);
+			radRekeyUserRegistrations.TabIndex = 7;
+			radRekeyUserRegistrations.Text = "Rekey User Registrations";
+			radRekeyUserRegistrations.UseVisualStyleBackColor = true;
+			radRekeyUserRegistrations.CheckedChanged += updateDstCertList;
+			// 
+			// radRekeyLogs
+			// 
+			radRekeyLogs.AutoSize = true;
+			radRekeyLogs.Checked = true;
+			radRekeyLogs.Location = new Point(7, 166);
+			radRekeyLogs.Name = "radRekeyLogs";
+			radRekeyLogs.Size = new Size(105, 19);
+			radRekeyLogs.TabIndex = 6;
+			radRekeyLogs.TabStop = true;
+			radRekeyLogs.Text = "Rekey Log Files";
+			radRekeyLogs.UseVisualStyleBackColor = true;
+			radRekeyLogs.CheckedChanged += updateDstCertList;
 			// 
 			// btnBrowseSignerCert
 			// 
@@ -254,28 +278,6 @@
 			label7.Size = new Size(170, 15);
 			label7.TabIndex = 3;
 			label7.Text = "Signer Certificate for Validation";
-			// 
-			// chkRekeyUserRegistrations
-			// 
-			chkRekeyUserRegistrations.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-			chkRekeyUserRegistrations.AutoSize = true;
-			chkRekeyUserRegistrations.Location = new Point(97, 166);
-			chkRekeyUserRegistrations.Name = "chkRekeyUserRegistrations";
-			chkRekeyUserRegistrations.Size = new Size(154, 19);
-			chkRekeyUserRegistrations.TabIndex = 2;
-			chkRekeyUserRegistrations.Text = "Rekey User Registrations";
-			chkRekeyUserRegistrations.UseVisualStyleBackColor = true;
-			// 
-			// chkRekeyLogs
-			// 
-			chkRekeyLogs.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-			chkRekeyLogs.AutoSize = true;
-			chkRekeyLogs.Location = new Point(6, 166);
-			chkRekeyLogs.Name = "chkRekeyLogs";
-			chkRekeyLogs.Size = new Size(85, 19);
-			chkRekeyLogs.TabIndex = 1;
-			chkRekeyLogs.Text = "Rekey Logs";
-			chkRekeyLogs.UseVisualStyleBackColor = true;
 			// 
 			// lstDstCerts
 			// 
@@ -408,8 +410,6 @@
 		private Label lblDecryptionKeyInfo;
 		private ListBox lstDstCerts;
 		private Utilities.WinForms.Controls.LogGui.LogMessageList logMessages;
-		private CheckBox chkRekeyUserRegistrations;
-		private CheckBox chkRekeyLogs;
 		private Button btnCancel;
 		private Button btnStart;
 		private ProgressBar progActivity;
@@ -418,5 +418,7 @@
 		private Label lblSignerCertPath;
 		private Label label7;
 		private OpenFileDialog browseSignerCertFileDialog;
+		private RadioButton radRekeyUserRegistrations;
+		private RadioButton radRekeyLogs;
 	}
 }

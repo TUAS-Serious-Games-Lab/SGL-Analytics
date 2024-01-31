@@ -24,10 +24,13 @@ namespace SGL.Analytics.RekeyingTool {
 		private RekeyToolSettings settings;
 		private string prevAppname;
 		private bool appSelected;
+		private bool updatingDstCertList = false;
 
 		public MainForm() {
 			InitializeComponent();
-			loggerFactory = LoggerFactory.Create(config => config.AddProvider(new MessageListLoggingProvider(this.logMessages, LogLevel.Trace)));
+			loggerFactory = LoggerFactory.Create(config => config
+				.AddProvider(new MessageListLoggingProvider(this.logMessages, LogLevel.Trace))
+				.SetMinimumLevel(LogLevel.Trace));
 			logger = loggerFactory.CreateLogger(nameof(Program));
 			logic = new RekeyingLogic(loggerFactory);
 			setUiStateForActivity(false);
@@ -100,8 +103,8 @@ namespace SGL.Analytics.RekeyingTool {
 			btnBrowseKeyFile.Enabled = !active;
 			txtKeyPassphrase.Enabled = !active;
 			lstDstCerts.Enabled = !active;
-			chkRekeyLogs.Enabled = !active;
-			chkRekeyUserRegistrations.Enabled = !active;
+			radRekeyLogs.Enabled = !active;
+			radRekeyUserRegistrations.Enabled = !active;
 			btnStart.Enabled = !active;
 			btnCancel.Enabled = active;
 			progActivity.Visible = active;
@@ -275,6 +278,27 @@ namespace SGL.Analytics.RekeyingTool {
 						setUiStateForActivity(false);
 					}
 				}
+			}
+		}
+
+		private async void updateDstCertList(object sender, EventArgs e) {
+			if (updatingDstCertList) return;
+			try {
+				updatingDstCertList = true;
+				setUiStateForActivity(true);
+				using var cts = new CancellationTokenSource();
+				ctsActivity = cts;
+				var ct = cts.Token;
+				await updateDstCertList(ct);
+			}
+			catch (OperationCanceledException) { }
+			catch (Exception ex) {
+				logger.LogError(ex, "Error updating certificate list: {msg}", ex.Message);
+			}
+			finally {
+				updatingDstCertList = false;
+				ctsActivity = null;
+				setUiStateForActivity(false);
 			}
 		}
 	}
