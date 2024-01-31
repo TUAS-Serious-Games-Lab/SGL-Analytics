@@ -145,12 +145,23 @@ namespace SGL.Analytics.RekeyingTool {
 			if (!appSelected) return;
 			if (!keyLoaded) return;
 			var prevSelectedItem = lstDstCerts.SelectedItem as Certificate;
-			CertificateStore certs = await logic.LoadLogRecipientCertsAsync(ct);
+			CertificateStore certs;
+			if (radRekeyLogs.Checked) {
+				certs = await logic.LoadLogRecipientCertsAsync(ct);
+			}
+			else if (radRekeyUserRegistrations.Checked) {
+				certs = await logic.LoadUserRegRecipientCertsAsync(ct);
+			}
+			else {
+				lstDstCerts.Items.Clear();
+				return;
+			}
 			lstDstCerts.Items.Clear();
 			lstDstCerts.Items.AddRange(certs.ListKnownCertificates().ToArray());
 			if (prevSelectedItem != null) {
 				var keyId = prevSelectedItem.PublicKey.CalculateId();
-				var index = lstDstCerts.Items.Cast<Certificate>().ToList().FindIndex(cert => cert.PublicKey.CalculateId() == keyId);
+				var index = lstDstCerts.Items.Cast<Certificate>().ToList()
+					.FindIndex(cert => cert.PublicKey.CalculateId() == keyId && cert.SubjectDN.Equals(prevSelectedItem.SubjectDN));
 				if (index >= 0) {
 					lstDstCerts.SelectedIndex = index;
 				}
