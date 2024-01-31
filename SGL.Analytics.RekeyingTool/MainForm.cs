@@ -174,14 +174,46 @@ namespace SGL.Analytics.RekeyingTool {
 
 		private async void btnStart_Click(object sender, EventArgs e) {
 			try {
+				var selectedCert = lstDstCerts.SelectedItem as Certificate;
+				if (selectedCert == null) {
+					logger.LogInformation("No recipient key selected.");
+					lstDstCerts.Focus();
+					return;
+				}
 				setUiStateForActivity(true);
 				using var cts = new CancellationTokenSource();
 				ctsActivity = cts;
 				var ct = cts.Token;
-				while (true) {
-					await Task.Delay(100);
-					cts.Token.ThrowIfCancellationRequested();
+				var selectedCertKeyId = selectedCert.PublicKey.CalculateId();
+				RekeyingOperationResult resultStats;
+				if (radRekeyLogs.Checked) {
+					if (MessageBox.Show($"Are you sure you want to grant access to the logs files of app {txtAppName.Text} to the following recipient key:\n" +
+						$"Common Name: {selectedCert.SubjectDN}\n" +
+						$"Key Id: {selectedCertKeyId}", "Please confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
+						MessageBoxDefaultButton.Button1) == DialogResult.Yes) {
+						resultStats = await logic.RekeyLogFilesAsync(selectedCertKeyId, ct);
+					}
+					else {
+						return;
+					}
 				}
+				else if (radRekeyUserRegistrations.Checked) {
+					if (MessageBox.Show($"Are you sure you want to grant access to the user registrations of app {txtAppName.Text} to the following recipient key:\n" +
+						$"Common Name: {selectedCert.SubjectDN}\n" +
+						$"Key Id: {selectedCertKeyId}", "Please confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
+						MessageBoxDefaultButton.Button1) == DialogResult.Yes) {
+						resultStats = await logic.RekeyUserRegistrationsAsync(selectedCertKeyId, ct);
+					}
+					else {
+						return;
+					}
+				}
+				else {
+					return;
+				}
+				logger.LogInformation("Completed rekeying operation: Total data objects processed: {total}\tSuccessfully rekeyed: {successful}\t" +
+					"Skipped due to Error: {error}\tUnencrypted data objects: {unencrypted}",
+					resultStats.TotalToRekey, resultStats.Successful, resultStats.SkippedDueToError, resultStats.Unencrypted);
 			}
 			catch (OperationCanceledException) { }
 			catch (Exception ex) {

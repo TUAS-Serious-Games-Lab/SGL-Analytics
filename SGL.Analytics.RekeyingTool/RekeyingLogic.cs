@@ -71,5 +71,12 @@ namespace SGL.Analytics.RekeyingTool {
 			await sglAnalytics.LoadUserRegistrationRecipientCertificatesAsync(certStore, ct);
 			return certStore;
 		}
+
+		public Task<RekeyingOperationResult> RekeyLogFilesAsync(KeyId dstKeyId, CancellationToken ct) {
+			return sglAnalytics.RekeyLogFilesForRecipientKey(dstKeyId, dstCertValidator, ct);
+		}
+		public Task<RekeyingOperationResult> RekeyUserRegistrationsAsync(KeyId dstKeyId, CancellationToken ct) {
+			return sglAnalytics.RekeyUserRegistrationsForRecipientKey(dstKeyId, dstCertValidator, ct);
+		}
 	}
 }
