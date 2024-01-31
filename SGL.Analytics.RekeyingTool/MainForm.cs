@@ -24,8 +24,10 @@ namespace SGL.Analytics.RekeyingTool {
 		private string prevKeyPassphrase;
 		private RekeyToolSettings settings;
 		private string prevAppname;
-		private bool appSelected;
+		private bool appSelected = false;
+		private bool keyLoaded = false;
 		private bool updatingDstCertList = false;
+		private bool signerLoaded = false;
 
 		public MainForm() {
 			InitializeComponent();
@@ -124,11 +126,24 @@ namespace SGL.Analytics.RekeyingTool {
 		}
 		private async Task updateSrcKeyInfoAsync() {
 			await tryLoadKeyFile();
-			lblAuthKeyInfo.Text = $"Key Id: {logic.AuthenticationKeyId}\nCN: {logic.AuthenticationCertificate?.SubjectDN}";
-			lblDecryptionKeyInfo.Text = $"Key Id: {logic.DecryptionKeyId}\nCN: {logic.DecryptionCertificate?.SubjectDN}";
+			if (logic.AuthenticationKeyId != null || logic.AuthenticationCertificate != null) {
+				lblAuthKeyInfo.Text = $"Key Id: {logic.AuthenticationKeyId}\nCN: {logic.AuthenticationCertificate?.SubjectDN}";
+			}
+			else {
+				lblAuthKeyInfo.Text = "";
+			}
+			if (logic.DecryptionKeyId != null || logic.DecryptionCertificate != null) {
+				lblDecryptionKeyInfo.Text = $"Key Id: {logic.DecryptionKeyId}\nCN: {logic.DecryptionCertificate?.SubjectDN}";
+			}
+			else {
+				lblDecryptionKeyInfo.Text = "";
+			}
 		}
 
 		private async Task updateDstCertList(CancellationToken ct) {
+			if (!signerLoaded) return;
+			if (!appSelected) return;
+			if (!keyLoaded) return;
 			var prevSelectedItem = lstDstCerts.SelectedItem as Certificate;
 			CertificateStore certs = await logic.LoadLogRecipientCertsAsync(ct);
 			lstDstCerts.Items.Clear();
@@ -177,6 +192,7 @@ namespace SGL.Analytics.RekeyingTool {
 				var ct = cts.Token;
 				setUiStateForActivity(true);
 				await logic.LoadKeyFile(browseKeyFileDialog.FileName, () => txtKeyPassphrase.Text.ToCharArray(), ct);
+				keyLoaded = true;
 				prevKeyFilePath = browseKeyFileDialog.FileName;
 				prevKeyPassphrase = txtKeyPassphrase.Text;
 				await updateDstCertList(ct);
@@ -194,7 +210,7 @@ namespace SGL.Analytics.RekeyingTool {
 		}
 
 		private async void txtAppName_Leave(object sender, EventArgs e) {
-			if (!appSelected || prevAppname != txtAppName.Text) {
+			if (keyLoaded && (!appSelected || prevAppname != txtAppName.Text)) {
 				try {
 					using var cts = new CancellationTokenSource();
 					ctsActivity = cts;
@@ -214,7 +230,6 @@ namespace SGL.Analytics.RekeyingTool {
 					setUiStateForActivity(false);
 				}
 			}
-
 		}
 
 		private async void cmbBackends_SelectedValueChangedAsync(object sender, EventArgs e) {
@@ -239,8 +254,10 @@ namespace SGL.Analytics.RekeyingTool {
 					appSelected = false;
 					prevKeyFilePath = "";
 					prevKeyPassphrase = "";
+					keyLoaded = false;
 					if (!string.IsNullOrWhiteSpace(browseKeyFileDialog.FileName) && !string.IsNullOrWhiteSpace(txtKeyPassphrase.Text)) {
 						await logic.LoadKeyFile(browseKeyFileDialog.FileName, () => txtKeyPassphrase.Text.ToCharArray(), ct);
+						keyLoaded = true;
 						prevKeyFilePath = browseKeyFileDialog.FileName;
 						prevKeyPassphrase = txtKeyPassphrase.Text;
 					}
@@ -272,24 +289,21 @@ namespace SGL.Analytics.RekeyingTool {
 		private async void btnBrowseSignerCert_Click(object sender, EventArgs e) {
 			if (browseSignerCertFileDialog.ShowDialog() == DialogResult.OK) {
 				lblSignerCertPath.Text = browseSignerCertFileDialog.FileName;
-				if (!string.IsNullOrWhiteSpace(txtAppName.Text) &&
-					!string.IsNullOrWhiteSpace(browseKeyFileDialog.FileName) &&
-					!string.IsNullOrWhiteSpace(txtKeyPassphrase.Text)) {
-					try {
-						using var cts = new CancellationTokenSource();
-						ctsActivity = cts;
-						var ct = cts.Token;
-						setUiStateForActivity(true);
-						await logic.LoadSignerCertificateAsync(lblSignerCertPath.Text, settings.IgnoreSignerValidityPeriod, ct);
-						await updateDstCertList(ct);
-					}
-					catch (OperationCanceledException) { }
-					catch (Exception ex) {
-						logger.LogError(ex, "Error while updating signer certificate: {msg}", ex.Message);
-					}
-					finally {
-						setUiStateForActivity(false);
-					}
+				try {
+					using var cts = new CancellationTokenSource();
+					ctsActivity = cts;
+					var ct = cts.Token;
+					setUiStateForActivity(true);
+					await logic.LoadSignerCertificateAsync(lblSignerCertPath.Text, settings.IgnoreSignerValidityPeriod, ct);
+					signerLoaded = true;
+					await updateDstCertList(ct);
+				}
+				catch (OperationCanceledException) { }
+				catch (Exception ex) {
+					logger.LogError(ex, "Error while updating signer certificate: {msg}", ex.Message);
+				}
+				finally {
+					setUiStateForActivity(false);
 				}
 			}
 		}
