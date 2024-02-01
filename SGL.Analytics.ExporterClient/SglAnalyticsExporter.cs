@@ -395,7 +395,7 @@ namespace SGL.Analytics.ExporterClient {
 		/// uploads those new encrypted data keys to the backend.
 		/// After this, the other user can use those added keys for access.
 		/// </remarks>
-		public async Task<RekeyingOperationResult> RekeyLogFilesForRecipientKey(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
+		public async Task<RekeyingOperationResult> RekeyLogFilesForRecipientKeyAsync(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
 			CheckReadyForDecryption();
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
 			var logClient = perAppState.LogExporterApiClient;
@@ -468,7 +468,7 @@ namespace SGL.Analytics.ExporterClient {
 		/// uploads those new encrypted data keys to the backend.
 		/// After this, the other user can use those added keys for access.
 		/// </remarks>
-		public async Task<RekeyingOperationResult> RekeyUserRegistrationsForRecipientKey(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
+		public async Task<RekeyingOperationResult> RekeyUserRegistrationsForRecipientKeyAsync(KeyId keyIdToGrantAccessTo, ICertificateValidator keyCertValidator, CancellationToken ct = default) {
 			CheckReadyForDecryption();
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
 			var usersClient = perAppState.UserExporterApiClient;

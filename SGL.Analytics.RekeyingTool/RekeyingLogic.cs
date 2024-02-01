@@ -73,10 +73,10 @@ namespace SGL.Analytics.RekeyingTool {
 		}
 
 		public Task<RekeyingOperationResult> RekeyLogFilesAsync(KeyId dstKeyId, CancellationToken ct) {
-			return sglAnalytics.RekeyLogFilesForRecipientKey(dstKeyId, dstCertValidator, ct);
+			return sglAnalytics.RekeyLogFilesForRecipientKeyAsync(dstKeyId, dstCertValidator, ct);
 		}
 		public Task<RekeyingOperationResult> RekeyUserRegistrationsAsync(KeyId dstKeyId, CancellationToken ct) {
-			return sglAnalytics.RekeyUserRegistrationsForRecipientKey(dstKeyId, dstCertValidator, ct);
+			return sglAnalytics.RekeyUserRegistrationsForRecipientKeyAsync(dstKeyId, dstCertValidator, ct);
 		}
 	}
 }
