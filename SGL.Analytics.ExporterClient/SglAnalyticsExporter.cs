@@ -369,12 +369,26 @@ namespace SGL.Analytics.ExporterClient {
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously loads the list of authorized recipients for log files, registered for the current app in the backend and adds the certificates for thier public keys to the given <paramref name="certificateStore"/>.
+		/// The downloaded certificates are checked for validity using the certificate store's validation mechanism before being added. Only valid certificates are added.
+		/// </summary>
+		/// <param name="certificateStore">The certifiacte store in which to place the loaded certificates.</param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the asynchronous operation.</returns>
 		public async Task LoadLogFileRecipientCertificatesAsync(CertificateStore certificateStore, CancellationToken ct = default) {
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
 			var logClient = perAppState.LogExporterApiClient;
 			await logClient.GetRecipientCertificates(perAppState.AppName, certificateStore, ct);
 		}
 
+		/// <summary>
+		/// Asynchronously loads the list of authorized recipients for user registration data, registered for the current app in the backend and adds the certificates for thier public keys to the given <paramref name="certificateStore"/>.
+		/// The downloaded certificates are checked for validity using the certificate store's validation mechanism before being added. Only valid certificates are added.
+		/// </summary>
+		/// <param name="certificateStore">The certifiacte store in which to place the loaded certificates.</param>
+		/// <param name="ct">A cancellation token to allow cancelling the asynchronous operation.</param>
+		/// <returns>A Task representing the asynchronous operation.</returns>
 		public async Task LoadUserRegistrationRecipientCertificatesAsync(CertificateStore certificateStore, CancellationToken ct = default) {
 			var perAppState = await GetPerAppStateAsync(ct).ConfigureAwait(false);
 			var logClient = perAppState.UserExporterApiClient;
