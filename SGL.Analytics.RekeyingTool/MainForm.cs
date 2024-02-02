@@ -20,10 +20,10 @@ namespace SGL.Analytics.RekeyingTool {
 		private ILoggerFactory loggerFactory;
 		private ILogger logger;
 		private RekeyingLogic logic;
-		private string prevKeyFilePath;
-		private string prevKeyPassphrase;
-		private RekeyToolSettings settings;
-		private string prevAppname;
+		private string prevKeyFilePath = "";
+		private string prevKeyPassphrase = "";
+		private RekeyToolSettings settings = new RekeyToolSettings();
+		private string prevAppname = "";
 		private bool appSelected = false;
 		private bool keyLoaded = false;
 		private bool updatingDstCertList = false;

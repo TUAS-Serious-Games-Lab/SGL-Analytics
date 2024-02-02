@@ -12,7 +12,7 @@ namespace SGL.Analytics.RekeyingTool {
 	public class RekeyingLogic : IAsyncDisposable {
 		private HttpClient httpClient;
 		private SglAnalyticsExporter sglAnalytics;
-		private CACertTrustValidator dstCertValidator;
+		private CACertTrustValidator? dstCertValidator;
 		private readonly ILoggerFactory loggerFactory;
 
 		public RekeyingLogic(ILoggerFactory loggerFactory) {
@@ -73,9 +73,15 @@ namespace SGL.Analytics.RekeyingTool {
 		}
 
 		public Task<RekeyingOperationResult> RekeyLogFilesAsync(KeyId dstKeyId, CancellationToken ct) {
+			if (dstCertValidator == null) {
+				throw new InvalidOperationException("No signer certificate for validation.");
+			}
 			return sglAnalytics.RekeyLogFilesForRecipientKeyAsync(dstKeyId, dstCertValidator, ct);
 		}
 		public Task<RekeyingOperationResult> RekeyUserRegistrationsAsync(KeyId dstKeyId, CancellationToken ct) {
+			if (dstCertValidator == null) {
+				throw new InvalidOperationException("No signer certificate for validation.");
+			}
 			return sglAnalytics.RekeyUserRegistrationsForRecipientKeyAsync(dstKeyId, dstCertValidator, ct);
 		}
 	}
