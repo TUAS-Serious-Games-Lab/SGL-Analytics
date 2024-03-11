@@ -17,6 +17,11 @@
           "fileUrls": [
             "https://raw.githubusercontent.com/bcgit/bc-csharp/release-2.0.0/LICENSE.md"
           ]
+        },
+        "MIT": {
+          "fileUrls": [
+            "https://github.com/bcgit/bc-csharp/blob/release-2.3.0/LICENSE.md"
+          ]
         }
       }
     },
